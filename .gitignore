@@ -1,0 +1,7 @@
+build
+obj
+Debug
+vendor/boost*
+resources/*
+actio
+cmake-build-debug
