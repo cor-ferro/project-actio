@@ -1,13 +1,13 @@
 #ifndef TEXTURE_H_
 #define TEXTURE_H_
 
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <string>
 #include <boost/thread.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/regex.hpp>
 #include <assimp/scene.h>
+#include <unordered_map>
 #include "../lib/image_loader.h"
 #include "../app/app.h"
 #include "../lib/console.h"
@@ -17,26 +17,54 @@
     #include <GL/gl.h>
 #endif
 
+#ifdef GRAPHIC_API_OPENGL
+typedef GLuint TextureId;
+#endif
+
+static boost::mutex textureInitMutex;
 static boost::mutex textureLoaderMutex;
 
+typedef std::unordered_map<char, ImageLoader::Data> TextureImages;
+
+enum Texture_Type {
+	Texture_Diffuse = 1,
+	Texture_Specular = 2,
+	Texture_Height = 3,
+	Texture_Normal = 4,
+	Texture_Cube = 5
+};
+
 struct Texture {
+	Texture();
+	Texture(const Texture& texture);
 	~Texture();
 	static Texture White();
-	static std::vector<Texture> loadFromMaterial(aiMaterial *, aiTextureType, const Resource::Assimp * assimpResource);
+	static Texture Cube();
+	static Texture loadFromMaterial(aiMaterial *, aiTextureType, const Resource::Assimp * assimpResource);
 
 	void initTexture();
-	void bindData();
+	void setup2d();
+	void setupCube();
 	void unbindData();
-	void setData(Loader::ImageData * imageData);
+	void setData(ImageLoader::Data imageData);
+	void setData(ImageLoader::Data imageData, char);
+	void freeData();
 
-	std::string type;
+	void setAsDiffuse();
+	void setAsSpecular();
+	void setAsHeight();
+	void setAsNormal();
+	void setAsCube();
+
+	Texture_Type type;
+	std::string name;
 
 	#ifdef GRAPHIC_API_OPENGL
-	unsigned int textureID;
-	void freeData();
+	TextureId textureID;
+	GLenum textureTarget;
 	#endif
 private:
-	Loader::ImageData * imageData_;
+	TextureImages images_;
 };
 
 #endif

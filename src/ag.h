@@ -20,6 +20,7 @@
 #include "./helpers/arrow_helper.h"
 #include "./helpers/camera_orientation_helper.h"
 #include "./resources/resources.h"
+#include "./lib/image_loader.h"
 
 namespace AG
 {
@@ -35,6 +36,7 @@ namespace AG
 
 	namespace Models {
 		Model * create(Resource::File);
+		Model * skybox(std::vector<Resource::File> faces);
 	}
 
 	namespace Helper {

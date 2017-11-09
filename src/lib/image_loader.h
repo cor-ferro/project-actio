@@ -1,48 +1,46 @@
 #ifndef IMAGE_LOADER_H_
 #define IMAGE_LOADER_H_
 
+#include <memory>
+#include <unordered_map>
 #include <boost/thread.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/regex.hpp>
 #include <GL/glew.h>
 #include "SOIL.h"
 #include <IL/il.h>
 #include <IL/ilu.h>
 #include "../lib/console.h"
 
-namespace Loader {
-	struct ImageData {
-		ImageData();
-		~ImageData();
+namespace ImageLoader {
+	typedef char DataIndex;
+	typedef unsigned char RawData;
+
+	struct Data {
+		Data();
+		Data(const Data& other);
+		Data(RawData * data, int width, int height);
+		~Data();
+
+		bool isReady();
+		void calcSize();
+		void set(RawData * data, size_t size);
+		void free();
+		RawData * get();
 
 		int width;
 		int height;
 		int size;
 		int format;
-
-		bool isReady();
-		void calcSize();
-		void set(unsigned char * data, size_t size);
-		void free();
-		unsigned char * get();
 	protected:
-		unsigned char * data_;
+		std::shared_ptr<RawData> data_;
 	};
 
-	struct ImageDataSoil : ImageData {
-		~ImageDataSoil();
-		void free();
-	};
+	Data load(std::string path);
+	inline Data loadBySoil(std::string path);
+	inline Data loadByIl(std::string path);
 
-	struct ImageDataIl : ImageData {
-		~ImageDataIl();
-		static int componentSize(int format);
-		void free();
-
-		ILuint id;
-	};
-
-	ImageData * Image(char const * path);
-	inline ImageData * ImageSoil(char const * path);
-	inline ImageData * ImageIl(char const * path);
+	int componentSize(int format);
 }
 
 static boost::mutex imageLoaderMutex;

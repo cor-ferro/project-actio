@@ -93,6 +93,21 @@ void Scene::allocLights(unsigned int count)
 	spotLights_->reserve(count);
 }
 
+Model * Scene::getSkybox()
+{
+	return skybox_;
+}
+
+void Scene::setSkybox(Model * model)
+{
+	skybox_ = model;
+}
+
+bool Scene::hasSkybox()
+{
+	return skybox_ != nullptr;
+}
+
 Camera * Scene::getActiveCamera()
 {
 	return camera_;

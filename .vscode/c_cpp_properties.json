@@ -15,6 +15,7 @@
             "browse": {
                 "path": [
                     "/usr/local/include",
+                    "/usr/local/include/boost",
                     "${workspaceRoot}/src",
                     "${workspaceRoot}/vendor/assimp/include",
                     "${workspaceRoot}/vendor/DevIL/DevIL/include",

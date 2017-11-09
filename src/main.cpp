@@ -59,6 +59,17 @@ int main(int argc, char **argv) {
 
 	std::shared_ptr<AG::LightDirectional> light(AG::Light::directional(vec3(1.0f), vec3(1.0f), vec3(1.0f)));
 
+	std::vector<Resource::File> skyboxFaces = {
+		Resource::File("envmap_stormydays/stormydays_ft.tga"),
+		Resource::File("envmap_stormydays/stormydays_bk.tga"),
+		Resource::File("envmap_stormydays/stormydays_dn.tga"),
+		Resource::File("envmap_stormydays/stormydays_up.tga"),
+		Resource::File("envmap_stormydays/stormydays_rt.tga"),
+		Resource::File("envmap_stormydays/stormydays_lf.tga"),
+	};
+
+	std::shared_ptr<Model> skybox(AG::Models::skybox(skyboxFaces));
+
 	CameraControl cameraControl(camera.get());
 
 	camera->setPosition(0.0f, 5.0f, 10.0f);
@@ -68,9 +79,9 @@ int main(int argc, char **argv) {
 	inputHandler.pointerToCenter();
 
 	light->setAmbient(0.5f, 0.5f, 0.5f);
-	light->setDiffuse(1.2f, 1.25f, 1.2f);
-	light->setSpecular(vec3(0.05f));
-	light->setDirection(vec3(0.1f, 0.1f, 0.1f));
+	light->setDiffuse(0.1f, 0.05f, 0.01f);
+	light->setSpecular(vec3(0.15f));
+	light->setDirection(vec3(0.1f, 1.1f, 0.1f));
 
 	Resource::File nanosuitResource("nanosuit/nanosuit.obj");
 	Resource::File airboatResource("airboat.obj");
@@ -89,6 +100,17 @@ int main(int argc, char **argv) {
 	Resource::File lichKingResource("Lich_King/lich_king.fbx");
 	Resource::File subzeroResource("subzero-b-posicao-vitoria/source/SubZero_B__movimentos_MKX_Android.fbx");
 	Resource::File kasumiResource("kasumi-fbx-mmd-danca-dance/source/DOA5_Kasumi_MMD.fbx");
+	Resource::File twobResource("2b/source/2B.fbx");
+	Resource::File ironmanResource("ironman/source/TONY/IRON.obj");
+	Resource::File zeusResource("zeus/zeus_econ.fbx"); // not work
+	Resource::File techiesResource("techies/techies_econ.fbx");
+	Resource::File sandkingResource("sand_king/sand_king_econ.fbx");
+	Resource::File invokerResource("invoker/invoker_econ.fbx");
+	Resource::File svenResource("sven/sven_econ.fbx");
+	Resource::File mechResource("mech_ghost/source/GhostSF.FBX");
+	Resource::File phantomGuardResource("phantom-guard/source/phantom-guard.fbx");
+	Resource::File kiminaroResource("kiminaro/source/kiminaro.fbx");
+	Resource::File kageResource("kage/source/Kage-sketfab2.fbx");
 
 	console::info("start init scene");
 
@@ -98,6 +120,8 @@ int main(int argc, char **argv) {
 	scene->add(camera.get());
 	scene->add(light.get());
 	scene->setActiveCamera(camera.get());
+	
+	scene->setSkybox(skybox.get());
 
 	renderer->setScene(scene.get());
 	renderer->setupScene();
@@ -106,17 +130,19 @@ int main(int argc, char **argv) {
 
 	cameraOrientationHelper->setLength(1.0);
 
-	renderCycle.addTickHandler([&renderer, &inputHandler, &cameraOrientationHelper, &camera]() {
-//		cameraOrientationHelperPtr->setPosition(cameraPtr->getPosition() + vec3(0.0f, 0.0f, -0.5f));
-//		cameraOrientationHelperPtr->setDirection(cameraPtr->getRotation());
-		
+	renderCycle.addTickHandler([&renderer, &inputHandler, &cameraOrientationHelper, &camera, &light](float time) {
+		// vec3 lightDirection = light->getDirection();
+		// lightDirection.y = glm::sin(time * 0.1f) * 0.1f;
+
+		// light->setDirection(lightDirection);
 		renderer->draw();
 		inputHandler.onFrame();
 	});
 
-	std::shared_ptr<Model> testModel(AG::Models::create(nanosuitResource ));
-	// testModel->setMeshScale(vec3(0.05f));
-	// testModel->setMeshRotate(vec3(1.0f, 0.0f, 0.0f), -(3.14f / 2.0f));
+	std::shared_ptr<Model> testModel(AG::Models::create(kageResource));
+	testModel->scale(vec3(0.05f));
+	// testModel->rotate(vec3(1.0f, 0.0f, 0.0f), -(3.14f)); // subzero
+	// testModel->rotate(vec3(1.0f, 0.0f, 0.0f), -(3.14f / 2.0f)); // kasumi
 	scene->add(testModel.get());
 
 	Cycle::mailLoop();

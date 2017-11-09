@@ -17,7 +17,7 @@
 #define CYCLE_TIMER_ID 1
 
 void timerFunction(int timerId);
-typedef std::function<void()> callback;
+typedef std::function<void(float time)> CycleCallback;
 
 struct Cycle {
 	Cycle(int id) : id_(id) {}
@@ -28,17 +28,17 @@ struct Cycle {
 	}
 
 	void onFrame() {
-		frameSignals_();
+		frameSignals_(glutGet(GLUT_ELAPSED_TIME) * 0.008f);
 	}
 
-	void addTickHandler(callback handler) {
+	void addTickHandler(CycleCallback handler) {
 		console::warn("add frame handler");
 		frameSignals_.connect(handler);
 	}
 
 private:
 	int id_;
-	boost::signals2::signal<void ()> frameSignals_;
+	boost::signals2::signal<void (float time)> frameSignals_;
 };
 
 Cycle renderCycle(1);

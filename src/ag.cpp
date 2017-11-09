@@ -16,6 +16,22 @@ namespace AG
 		Model * create(Resource::File fileResource) {
 			return new Model(fileResource);
 		}
+
+		Model * skybox(std::vector<Resource::File> faces) {
+			Texture texture = Texture::Cube();
+			Geometry geometry = Geometry::Box();
+
+			for (char i = 0; i < 6; i++) {
+				// @todo: переделать на потоки
+				ImageLoader::Data imageData = ImageLoader::load(faces[i].getPath());
+				texture.setData(imageData, i);
+			}
+
+			Mesh * mesh = new Mesh(PhongMaterial(texture), geometry);
+			Model * model = new Model(mesh);
+
+			return model;
+		}
 	}
 
 	namespace Helper {

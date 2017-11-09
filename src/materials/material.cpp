@@ -5,16 +5,39 @@ Material::Material()
 	wireframe = false;
 }
 
+Material::Material(Texture texture)
+{
+	addTexture(texture);
+}
+
 Material::~Material()
 {
 
 }
 
-void Material::texturesBindData()
+void Material::addTexture(Texture texture)
 {
-	for (auto &texture : textures_)
+	textures_.push_back(texture);
+}
+
+void Material::setupTextures()
+{
+	for (Texture& texture : textures_)
 	{
-		texture.bindData();
+		switch(texture.type)
+		{
+			case Texture_Diffuse:
+			case Texture_Specular:
+			case Texture_Height:
+			case Texture_Normal:
+				texture.setup2d();
+				break;
+			case Texture_Cube:
+				texture.setupCube();
+				break;
+			default:
+				console::warn("setup unknown texture type", texture.type, texture.name);
+		}
 	}
 }
 
@@ -27,6 +50,8 @@ const std::vector<Texture>& Material::getTextures()
 {
 	return textures_;
 }
+
+PhongMaterial::PhongMaterial(Texture texture) : Material(texture) {};
 
 PhongMaterial::PhongMaterial()
 {
@@ -50,7 +75,10 @@ void PhongMaterial::initFromAi(aiMaterial * material, const Resource::Assimp * a
 	aiColor3D diffuseColor(0.0f, 0.0f, 0.0f);
 	aiColor3D specularColor(0.0f, 0.0f, 0.0f);
 	aiColor3D ambientColor(0.0f, 0.0f, 0.0f);
-	float shininessValue = 0.0;
+	float shininessValue = 0.0f;
+	float reflectivity = 0.0f;
+	float refracti = 0.0f;
+	float colorReflective = 0.0f;
 	bool isWireframe = false;
 
 	// @todo: uncomment get material color and fix shader
@@ -58,7 +86,7 @@ void PhongMaterial::initFromAi(aiMaterial * material, const Resource::Assimp * a
 	//material->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
 	//material->Get(AI_MATKEY_COLOR_AMBIENT, ambientColor);
 	material->Get(AI_MATKEY_SHININESS, shininessValue);
-	// material->Get(AI_MATKEY_WIREFRAME, wireframe); error: AI_MATKEY_WIREFRAME was not declared in this scope
+	material->Get(AI_MATKEY_ENABLE_WIREFRAME, wireframe);
 
 	PhongMaterial meshMaterial;
 
@@ -68,38 +96,37 @@ void PhongMaterial::initFromAi(aiMaterial * material, const Resource::Assimp * a
 	setWireframe(isWireframe);
 	setShininess(shininessValue);
 
-	std::vector<Texture> diffuseMaps = Texture::loadFromMaterial(material, aiTextureType_DIFFUSE, assimpResource);
-	std::vector<Texture> specularMaps = Texture::loadFromMaterial(material, aiTextureType_SPECULAR, assimpResource);
-	std::vector<Texture> heightMaps = Texture::loadFromMaterial(material, aiTextureType_HEIGHT, assimpResource);
-	std::vector<Texture> normalMaps = Texture::loadFromMaterial(material, aiTextureType_NORMALS, assimpResource);
-
-	unsigned int countTextures = diffuseMaps.size() + specularMaps.size() + heightMaps.size();
+	Texture diffuseMap  = Texture::loadFromMaterial(material, aiTextureType_DIFFUSE, assimpResource);
+	Texture specularMap = Texture::loadFromMaterial(material, aiTextureType_SPECULAR, assimpResource);
+	Texture heightMap   = Texture::loadFromMaterial(material, aiTextureType_HEIGHT, assimpResource);
+	Texture normalMap   = Texture::loadFromMaterial(material, aiTextureType_NORMALS, assimpResource);
 
 	textures_.clear();
-	textures_ = std::vector<Texture>();
-	textures_.reserve(countTextures);
-
-	textures_.insert(textures_.end(), diffuseMaps.begin(), diffuseMaps.end());
-	textures_.insert(textures_.end(), specularMaps.begin(), specularMaps.end());
-	textures_.insert(textures_.end(), heightMaps.begin(), heightMaps.end());
+	textures_.reserve(4);
+	textures_.push_back(diffuseMap);
+	textures_.push_back(specularMap);
+	textures_.push_back(heightMap);
+	textures_.push_back(normalMap);
 }
 
 void PhongMaterial::initEmptyTextures()
 {
-	std::vector<Texture> diffuseMaps { Texture::White() };
-	std::vector<Texture> specularMaps { Texture::White() };
-	std::vector<Texture> heightMaps { Texture::White() };
-	std::vector<Texture> normalMaps { Texture::White() };
+	Texture diffuseMap  = Texture::White();
+	Texture specularMap = Texture::White();
+	Texture heightMap   = Texture::White();
+	Texture normalMap   = Texture::White();
 
-	unsigned int countTextures = diffuseMaps.size() + specularMaps.size() + heightMaps.size();
+	diffuseMap.setAsDiffuse();
+	specularMap.setAsSpecular();
+	heightMap.setAsHeight();
+	normalMap.setAsNormal();
 
 	textures_.clear();
-	textures_ = std::vector<Texture>();
-	textures_.reserve(countTextures);
-
-	textures_.insert(textures_.end(), diffuseMaps.begin(), diffuseMaps.end());
-	textures_.insert(textures_.end(), specularMaps.begin(), specularMaps.end());
-	textures_.insert(textures_.end(), heightMaps.begin(), heightMaps.end());
+	textures_.reserve(4);
+	textures_.push_back(diffuseMap);
+	textures_.push_back(specularMap);
+	textures_.push_back(heightMap);
+	textures_.push_back(normalMap);
 }
 
 void PhongMaterial::setAmbient(vec3 ambient) { this->ambient = ambient; }

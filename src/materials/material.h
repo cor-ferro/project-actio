@@ -12,11 +12,13 @@
 
 struct Material {
 	Material();
+	Material(Texture);
 	~Material();
 
 	void setWireframe(bool);
-	void texturesBindData();
+	void setupTextures();
 
+	void addTexture(Texture texture);
 	const std::vector<Texture>& getTextures();
 	bool wireframe;
 
@@ -26,6 +28,7 @@ protected:
 
 struct PhongMaterial : Material {
 	PhongMaterial();
+	PhongMaterial(Texture texture);
 	PhongMaterial(aiMaterial * material, const Resource::Assimp * assimpResource);
 	~PhongMaterial();
 

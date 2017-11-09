@@ -37,6 +37,10 @@ struct Scene {
 	void remove(Model *);
 	void remove(Camera *);
 
+	Model * getSkybox();
+	void setSkybox(Model *);
+	bool hasSkybox();
+
 	std::vector<Renderer::Light::Directional*> * getDirectionalLights();
 	std::vector<Renderer::Light::Point*> * getPointLights();
 	std::vector<Renderer::Light::Spot*> * getSpotLights();
@@ -49,6 +53,7 @@ struct Scene {
 	void remove(Renderer::Light::Spot *);
 
 private:
+	Model * skybox_ = nullptr;
 	std::vector<Model*> * models_;
 	std::vector<Camera*> * cameras_;
 

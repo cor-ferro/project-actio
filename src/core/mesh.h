@@ -28,6 +28,7 @@ enum MeshDrawItem {
 
 struct Mesh : Object3D {
 	Mesh();
+	Mesh(PhongMaterial material, Geometry geometry);
 	Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource);
 	Mesh(const Mesh& mesh);
 	~Mesh();

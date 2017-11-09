@@ -5,6 +5,10 @@ namespace Renderer {
 Opengl::Program forwardProgram;
 Opengl::Program edgeProgram;
 Opengl::Program geometryPassProgram;
+Opengl::Program skyboxProgram;
+
+const float timeScale = 0.008f;
+GLint maxTextureUnits;
 
 OpenglRenderer::OpenglRenderer(RendererParams params) : BaseRenderer(params)
 {
@@ -52,6 +56,9 @@ void OpenglRenderer::start()
 		return;
 	}
 
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+	console::info("GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS", maxTextureUnits);
+
 	forwardProgram.init("forward");
 	forwardProgram.initUniformCache({ "model", "diffuseTexture", "heightTexture", "specularTexture" });
 	forwardProgram.bindBlock("Matrices", 0);
@@ -59,6 +66,8 @@ void OpenglRenderer::start()
 
 	geometryPassProgram.init("geometry_pass");
 	geometryPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
+
+	skyboxProgram.init("skybox");
 
 	initMatricesBuffer();
 //	initLightsBuffer();
@@ -93,10 +102,10 @@ void OpenglRenderer::forwardRender()
 	Camera * camera = scene->getActiveCamera();
 
 	const RendererParams& renderParams = getParams();
-	const float timeScale = 0.008f;
 	GLfloat time = glutGet(GLUT_ELAPSED_TIME) * timeScale;
 
 	glEnable(GL_DEPTH_TEST);
+	// glDepthMask(GL_TRUE);
 	glEnable(GL_MULTISAMPLE);
 	glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
 	glOrtho(-renderParams.aspectRatio, renderParams.aspectRatio, -1, 1, -1, 1);
@@ -118,6 +127,20 @@ void OpenglRenderer::forwardRender()
 	matricesBuffer.nouse();
 
 	forwardProgram.use();
+	forwardProgram.setFloat("time", time);
+	forwardProgram.setVec("viewPos", camera->getPosition());
+
+	bool isHasSkybox = scene->hasSkybox();
+
+	if (isHasSkybox) {
+		Model * skyboxModel = scene->getSkybox();
+		Mesh * mesh = skyboxModel->getMeshes()->at(0);
+		Texture texture = mesh->material.getTextures().at(0);
+
+		glActiveTexture(GL_TEXTURE0 + maxTextureUnits - 1);
+		glBindTexture(texture.textureTarget, texture.textureID);
+		forwardProgram.setInt("cubeTexture", maxTextureUnits - 1);
+	}
 
 	std::vector<Renderer::Light::Directional*> * dirLights = scene->getDirectionalLights();
 	std::vector<Renderer::Light::Point*> * pointLights = scene->getPointLights();
@@ -169,8 +192,6 @@ void OpenglRenderer::forwardRender()
 	forwardProgram.setInt("countPointLights", pointLights->size());
 	forwardProgram.setInt("countSpotLights", spotLights->size());
 
-	doFrameHandlers();
-
 	std::vector<Model*> * models = scene->getModels();
 	for (auto model = models->begin(); model != models->end(); model++)
 	{
@@ -179,6 +200,24 @@ void OpenglRenderer::forwardRender()
 		{
 			(*mesh)->draw(forwardProgram);
 		}
+	}
+
+	if (isHasSkybox)
+	{
+		glDepthFunc(GL_LEQUAL);
+		skyboxProgram.use();
+		skyboxProgram.setMat("projection", projection);
+		skyboxProgram.setMat("view", glm::mat4(glm::mat3(view)));
+
+		Model * skyboxModel = scene->getSkybox();
+		std::vector<Mesh*> * meshes = skyboxModel->getMeshes();
+
+		for(auto mesh = meshes->begin(); mesh != meshes->end(); mesh++)
+		{
+			(*mesh)->draw(skyboxProgram);
+		}
+
+		glDepthFunc(GL_LESS);
 	}
 }
 
@@ -192,7 +231,6 @@ void OpenglRenderer::defferedRender()
 //	geometryPassProgram.setMat("view", view);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	gbuffer.bindForReading();
 
@@ -270,7 +308,7 @@ void OpenglRenderer::draw()
 
 	preRender();
 
-	glClearColor(0, 0, 0, 1);
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_CULL_FACE);
 

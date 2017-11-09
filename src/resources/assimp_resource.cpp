@@ -19,12 +19,12 @@ namespace Resource {
 		aiString tex;
 		mat->GetTexture(type, index, &tex);
 
-		std::string path = basePath_ + "/" + tex.C_Str();
+		console::info("aiString", strlen(tex.data));
 
-		return path;
+		return std::string(basePath_ + "/" + tex.C_Str());
 	}
 
 	std::string Assimp::getDefaultTexturePath() const {
-		return App::instance().resourcePath("white_hills.jpg");
+		return App::instance().resourcePath("ilzq98O.png");
 	}
 }

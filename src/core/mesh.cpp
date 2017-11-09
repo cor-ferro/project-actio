@@ -6,6 +6,12 @@ Mesh::Mesh()
 	setDrawItem(MESH_DRAW_ITEM_ARRAY);
 }
 
+Mesh::Mesh(PhongMaterial material, Geometry geometry) : material(material), geometry(geometry)
+{
+	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
+	setDrawItem(MESH_DRAW_ITEM_ARRAY);
+}
+
 Mesh::Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource)
 {
 	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
@@ -63,6 +69,15 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 	// 	console::info("boneName", boneName);
 	// }
 
+	console::info("mesh", mesh->mName.C_Str());
+	if (mesh->mNumBones > 0) {
+		for (unsigned int i = 0; i < mesh->mNumBones; i++) {
+			unsigned int boneIndex = 0;
+			std::string boneName(mesh->mBones[i]->mName.data);
+			// console::info(" ++ boneName", boneName);
+		}
+	}
+
 	if (mesh->mMaterialIndex >= 0) {
 		material.initFromAi(assimpResource->scene->mMaterials[mesh->mMaterialIndex], assimpResource);
 	} else{
@@ -105,22 +120,16 @@ void Mesh::setDrawItem(MeshDrawItem item)
 
 void Mesh::draw(Opengl::Program &program)
 {
-	unsigned int diffuseNr = 1;
-	unsigned int specularNr = 1;
-	unsigned int normalNr = 1;
-	unsigned int heightNr = 1;
-
 	std::vector<Vertex> * vertices = geometry.getVertices();
 	std::vector<MeshIndex> * indices = geometry.getIndices();
 
 	unsigned int textureIndex = 0;
 	const std::vector<Texture>& textures = material.getTextures();
-
 	for (const Texture& texture : textures)
 	{
 		glActiveTexture(GL_TEXTURE0 + textureIndex);
-		glBindTexture(GL_TEXTURE_2D, texture.textureID);
-		program.setInt(texture.type, textureIndex);
+		glBindTexture(texture.textureTarget, texture.textureID);
+		program.setInt(texture.name, textureIndex);
 		textureIndex++;
 	}
 
@@ -176,7 +185,7 @@ void Mesh::setup()
 	std::vector<Vertex> * vertices = geometry.getVertices();
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW); // in example pass &vertices[0]
+	glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
 
 	if (drawItemGl_ == MESH_DRAW_ITEM_ELEMENTS)
 	{

@@ -44,10 +44,11 @@ struct Program {
 
 	Shader * vertexShader;
 	Shader * fragmentShader;
+
+	std::string name;
 private:
 	bool isUsed;
 	bool success;
-	std::string name;
 	std::string getShaderPath(std::string);
 	std::unordered_map<std::string, unsigned int> uniformIndexCache;
 };

@@ -1,36 +1,37 @@
 #include "geometry.h"
 
 Geometry::Geometry() {
-	allocVertices(0);
-	allocIndices(0);
+	vertices_.reset(new std::vector<Vertex>());
+	indices_.reset(new std::vector<MeshIndex>());
+
+	allocVertices(1);
+	allocIndices(1);
 }
 
 Geometry::Geometry(aiMesh * mesh, const Resource::Assimp * assimpResource) {
+	vertices_.reset(new std::vector<Vertex>());
+	indices_.reset(new std::vector<MeshIndex>());
+
 	initFromAi(mesh, assimpResource);
 }
 
 Geometry::Geometry(const Geometry& other)
 {
-	console::info("copy geometry");
-	freeVerties();
-	freeIndices();
 	vertices_ = other.vertices_;
 	indices_ = other.indices_;
+
+	console::info("geometry copy vertices_", vertices_->size());
 }
 
 Geometry::~Geometry()
 {
-	freeVerties();
-	freeIndices();
 }
 
 void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 {
-	freeVerties();
 	unsigned int numVertices = mesh->mNumVertices;
 	allocVertices(numVertices);
 
-	AddTotalCountVertices(numVertices);
 	GetTotalCountVertices(); // why?
 
 	for (unsigned int i = 0; i < numVertices; i++)
@@ -84,23 +85,25 @@ void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource
 
 std::vector<Vertex> * Geometry::getVertices()
 {
-	return vertices_;
+	return vertices_.get();
 }
 
 std::vector<MeshIndex> * Geometry::getIndices()
 {
-	return indices_;
+	return indices_.get();
 }
 
 void Geometry::addVertex(Vertex vertex)
 {
 	vertices_->push_back(vertex);
+	AddTotalCountVertices(1);
 }
 
 void Geometry::addVertex(float x, float y, float z)
 {
 	Vertex v(x, y, z);
 	vertices_->push_back(v);
+	AddTotalCountVertices(1);
 }
 
 void Geometry::addVertex(std::vector<float>& vertices)
@@ -114,13 +117,11 @@ void Geometry::addVertex(std::vector<float>& vertices)
 
 void Geometry::allocVertices(unsigned int count)
 {
-	vertices_ = new std::vector<Vertex>();
 	vertices_->reserve(count);
 }
 
 void Geometry::allocIndices(unsigned int count)
 {
-	indices_ = new std::vector<MeshIndex>();
 	indices_->reserve(count);
 }
 
@@ -154,80 +155,144 @@ void Geometry::fillIndices()
 
 void Geometry::freeVerties() {
 	SubTotalCountVertices(vertices_->size());
-	delete vertices_;
-	vertices_ = nullptr;
+	vertices_->clear();
 }
 
 void Geometry::freeIndices() {
-	delete indices_;
-	indices_ = nullptr;
+	indices_->clear();
+	// if (indices_ != nullptr) {
+	// 	delete indices_;
+	// 	indices_ = nullptr;
+	// }
 }
 
+// Geometry Geometry::Box() {
+// 	Geometry geometry;
 
+// 	const int verticesCount = 8 * 3;
+// 	float vertices[verticesCount] {
+// 		1.0f, -1.0f, -1.0f,
+// 		1.0f, -1.0f, 1.0f,
+// 		-1.0f, -1.0f, 1.0f,
+// 		-1.0f, -1.0f, -1.0f,
+// 		1.0f, 1.0f, -1.0f,
+// 		1.0f, 1.0f, 1.0f,
+// 		-1.0f, 1.0f, 1.0f,
+// 		-1.0f, 1.0f, -1.0f
+// 	};
 
+// 	const int normalsCount = 6 * 3;
+// 	float normals[normalsCount] {
+// 		0.0f, -1.0f, 0.0f,
+// 		0.0f, 1.0f, 0.0f,
+// 		1.0f, 0.0f, 0.0f,
+// 		0.0f, 0.0f, 1.0f,
+// 		-1.0f, -0.0f, 0.0f,
+// 		0.0f, 0.0f, -1.0f
+// 	};
 
-GeometryBox::GeometryBox() : Geometry()
-{
-	const int verticesCount = 8 * 3;
-	float vertices[verticesCount] {
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, 1.0f,
-		-1.0f, -1.0f, 1.0f,
+// 	const int facesCount = 12 * 3;
+// 	const int faceSize = 2;
+// 	float faces[facesCount][faceSize] = {
+// 		{2,1}, {4,1}, {1,1},
+// 		{8,2}, {6,2}, {5,2},
+// 		{5,3}, {2,3}, {1,3},
+// 		{6,4}, {3,4}, {2,4},
+// 		{3,5}, {8,5}, {4,5},
+// 		{1,6}, {8,6}, {5,6},
+// 		{2,1}, {3,1}, {4,1},
+// 		{8,2}, {7,2}, {6,2},
+// 		{5,3}, {6,3}, {2,3},
+// 		{6,4}, {7,4}, {3,4},
+// 		{3,5}, {7,5}, {8,5},
+// 		{1,6}, {4,6}, {8,6}
+// 	};
+
+// 	geometry.freeVerties();
+// 	geometry.freeIndices();
+// 	geometry.allocVertices(verticesCount);
+
+// 	for (int i = 0; i < facesCount; i++) {
+// 		char vertexIndex = faces[i][0];
+// 		char normalIndex = faces[i][1];
+
+// 		vec3 vertex = vec3(vertices[vertexIndex], vertices[vertexIndex + 1], vertices[vertexIndex + 2]);
+// 		vec3 normal = vec3(normals[normalIndex], normals[normalIndex + 1], normals[normalIndex + 2]);
+
+// 		Vertex face;
+
+// 		face.Position = vertex;
+// 		face.Normal = normal;
+// 		face.TexCoords = vec2(0.1f, 0.1f);
+// 		face.Tangent = vec3(0.0f);
+// 		face.Bitangent = vec3(0.0f);
+
+// 		geometry.addVertex(face);
+// 	}
+
+// 	geometry.fillIndices();
+
+// 	return geometry;
+// }
+
+Geometry Geometry::Box() {
+	Geometry geometry;
+
+	
+	float vertices[] {
+		-1.0f,  1.0f, -1.0f,
 		-1.0f, -1.0f, -1.0f,
-		1.0f, 1.0f, -1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, -1.0f
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+	
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+	
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+	
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+	
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+	
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
 	};
+	const int verticesCount = 36;
 
-	const int normalsCount = 6 * 3;
-	float normals[normalsCount] {
-		0.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f,
-		-1.0f, -0.0f, 0.0f,
-		0.0f, 0.0f, -1.0f
-	};
+	geometry.freeVerties();
+	geometry.allocVertices(verticesCount);
 
-	const int facesCount = 12 * 3;
-	const int faceSize = 2;
-	float faces[facesCount][faceSize] = {
-		{2,1}, {4,1}, {1,1},
-		{8,2}, {6,2}, {5,2},
-		{5,3}, {2,3}, {1,3},
-		{6,4}, {3,4}, {2,4},
-		{3,5}, {8,5}, {4,5},
-		{1,6}, {8,6}, {5,6},
-		{2,1}, {3,1}, {4,1},
-		{8,2}, {7,2}, {6,2},
-		{5,3}, {6,3}, {2,3},
-		{6,4}, {7,4}, {3,4},
-		{3,5}, {7,5}, {8,5},
-		{1,6}, {4,6}, {8,6}
-	};
-
-	for (int i = 0; i < facesCount; i++) {
-		char vertexIndex = faces[i][0];
-		char normalIndex = faces[i][1];
-
-		vec3 vertex = vec3(vertices[vertexIndex], vertices[vertexIndex] + 1, vertices[vertexIndex] + 2);
-		vec3 normal = vec3(normals[normalIndex], normals[normalIndex] + 1, normals[normalIndex] + 2);
-
-		Vertex face;
-
-		face.Position = vertex;
-		face.Normal = normal;
-		face.TexCoords = vec2(0.1f, 0.1f);
-		face.Tangent = vec3(0.0f);
-		face.Bitangent = vec3(0.0f);
-
-		addVertex(face);
+	for (int i = 0; i < verticesCount; i++) {
+		Vertex vertex(vertices[i * 3], vertices[i * 3 + 1], vertices[i * 3 + 2]);
+		geometry.addVertex(vertex);
 	}
+
+	console::info("Box", geometry.getVertices()->size());
+
+	return geometry;
 }
-
-GeometryBox::~GeometryBox()
-{
-
-}
-

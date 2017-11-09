@@ -27,6 +27,8 @@ struct Geometry {
 	static void SubTotalCountVertices(size_t count) { TotalCountVertices-= count; }
 	static size_t GetTotalCountVertices() {	return TotalCountVertices; }
 
+	static Geometry Box();
+
 	void initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource);
 	std::vector<Vertex> * getVertices();
 	std::vector<MeshIndex> * getIndices();
@@ -43,13 +45,8 @@ protected:
 	void freeVerties();
 	void freeIndices();
 
-	std::vector<Vertex> * vertices_;
-	std::vector<MeshIndex> * indices_;
-};
-
-struct GeometryBox : Geometry {
-	GeometryBox();
-	~GeometryBox();
+	std::shared_ptr<std::vector<Vertex>> vertices_;
+	std::shared_ptr<std::vector<MeshIndex>> indices_;
 };
 
 #endif

@@ -17,6 +17,7 @@ out vec4 vertexPosition;
 out vec4 vertexColor;
 out vec3 fragmentPosition;
 out vec3 normal;
+out vec3 normal1;
 out vec2 texCoord;
 out mat3 TBN;
 
@@ -32,6 +33,7 @@ void main()
 	vertexPosition = vec4(pos, 1.0);
 	fragmentPosition = vec3(model * vec4(aPos, 1.0));
 	normal = mat3(transpose(inverse(model))) * aNormal;
+	normal1 = aNormal;
 	
 	texCoord = aTexCoord;
 	
