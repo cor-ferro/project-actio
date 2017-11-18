@@ -13,7 +13,6 @@ uniform Matrices {
 	mat4 view;
 };
 
-out vec4 vertexPosition;
 out vec4 vertexColor;
 out vec3 fragmentPosition;
 out vec3 normal;
@@ -26,13 +25,25 @@ uniform mat4 model;
 
 uniform float time;
 
+uniform mat4 bones[64];
+
 void main()
 {
 	vec3 pos = aPos;
+	int boneId1 = int(BoneIDs[0]);
+	// int boneId2 = min(BoneIDs.y, 0);
+	// int boneId3 = min(BoneIDs.z, 0);
+	// int boneId4 = min(BoneIDs.w, 0);
 
-	vertexPosition = vec4(pos, 1.0);
-	fragmentPosition = vec3(model * vec4(aPos, 1.0));
-	normal = mat3(transpose(inverse(model))) * aNormal;
+	mat4 boneTransform = bones[boneId1] * Weights[0];
+	// boneTransform+= bones[boneId2] * 1.0;
+	// boneTransform+= bones[boneId3] * 1.0;
+	// boneTransform+= bones[boneId4] * 1.0;
+
+	// boneTransform = mat4(1.0);
+
+	fragmentPosition = vec3(model * boneTransform * vec4(aPos, 1.0));
+	normal = mat3(transpose(inverse(model))) * (boneTransform * vec4(aNormal, 1.0)).xyz; // @todo: пустое преобразование ломает нормали
 	normal1 = aNormal;
 	
 	texCoord = aTexCoord;

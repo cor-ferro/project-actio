@@ -46,7 +46,7 @@ void Material::setWireframe(bool flag)
 	wireframe = flag;
 }
 
-const std::vector<Texture>& Material::getTextures()
+const MaterialTextures& Material::getTextures()
 {
 	return textures_;
 }

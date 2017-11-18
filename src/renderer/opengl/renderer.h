@@ -57,6 +57,9 @@ struct OpenglRenderer : BaseRenderer {
 	void addPreRenderHandler(callback handler);
 	void addPostRenderHandler(callback handler);
 
+	size_t elaspsedTime = 0;
+	size_t time = 1000;
+
 	GLuint uboLights = 0;
 	GLuint uboMatrices = 0;
 

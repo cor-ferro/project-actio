@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
 	Resource::File mechResource("mech_ghost/source/GhostSF.FBX");
 	Resource::File phantomGuardResource("phantom-guard/source/phantom-guard.fbx");
 	Resource::File kiminaroResource("kiminaro/source/kiminaro.fbx");
-	Resource::File kageResource("kage/source/Kage-sketfab2.fbx");
+	Resource::File kageResource("kage/source/Kage-sketfab.fbx");
 
 	console::info("start init scene");
 

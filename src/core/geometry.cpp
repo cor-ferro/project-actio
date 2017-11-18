@@ -1,16 +1,16 @@
 #include "geometry.h"
 
 Geometry::Geometry() {
-	vertices_.reset(new std::vector<Vertex>());
-	indices_.reset(new std::vector<MeshIndex>());
+	vertices_.reset(new GeometryVertices());
+	indices_.reset(new GeometryIndices());
 
 	allocVertices(1);
 	allocIndices(1);
 }
 
 Geometry::Geometry(aiMesh * mesh, const Resource::Assimp * assimpResource) {
-	vertices_.reset(new std::vector<Vertex>());
-	indices_.reset(new std::vector<MeshIndex>());
+	vertices_.reset(new GeometryVertices());
+	indices_.reset(new GeometryIndices());
 
 	initFromAi(mesh, assimpResource);
 }
@@ -29,7 +29,10 @@ Geometry::~Geometry()
 
 void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 {
+	console::info("geometry vertices: ", mesh->mNumVertices);
+
 	unsigned int numVertices = mesh->mNumVertices;
+	unsigned int numBones = mesh->mNumBones;
 	allocVertices(numVertices);
 
 	GetTotalCountVertices(); // why?
@@ -69,6 +72,19 @@ void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource
 		addVertex(vertex);
 	}
 
+	// console::info("+++ geometry init ", mesh->mName.C_Str(), " - ", numBones);
+
+	// for (unsigned int boneId = 0; boneId < numBones; boneId++) {
+	// 	aiBone * bone = mesh->mBones[boneId];
+
+	// 	for (unsigned int j = 0; j < bone->mNumWeights; j++) {
+	// 		const aiVertexWeight vertexWeight = bone->mWeights[j];
+
+	// 		vertices_->at(vertexWeight.mVertexId).BonedIDs = vec4(0, 0, 0, 0);
+	// 		vertices_->at(vertexWeight.mVertexId).Weights = vec4(1.0f, 0.0f, 0.0f, 0.0f);
+	// 	}
+	// }
+
 	unsigned int numFaces = mesh->mNumFaces;
 	freeIndices();
 	allocIndices(numFaces);
@@ -83,12 +99,12 @@ void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource
 	}
 }
 
-std::vector<Vertex> * Geometry::getVertices()
+GeometryVertices * Geometry::getVertices()
 {
 	return vertices_.get();
 }
 
-std::vector<MeshIndex> * Geometry::getIndices()
+GeometryIndices * Geometry::getIndices()
 {
 	return indices_.get();
 }
@@ -113,6 +129,11 @@ void Geometry::addVertex(std::vector<float>& vertices)
 	{
 		addVertex(vertices[i], vertices[i+1], vertices[i+2]);
 	}
+}
+
+Vertex& Geometry::getVertex(unsigned int index)
+{
+	return vertices_->at(index);
 }
 
 void Geometry::allocVertices(unsigned int count)

@@ -1,5 +1,30 @@
 #include "model.h"
 
+// #define THREAD_INIT_AI_
+
+ModelNode::ModelNode() 
+	: name("")
+	{}
+
+ModelNode::ModelNode(aiNode * node) 
+	: name(std::string(node->mName.C_Str()))
+{
+	meshes.reserve(node->mNumMeshes);
+	children.reserve(node->mNumChildren);
+
+	transformation = aiMatToMat(node->mTransformation);
+}
+
+void ModelNode::addMesh(Mesh * mesh)
+{
+	meshes.push_back(std::shared_ptr<Mesh>(mesh));
+}
+
+void ModelNode::addNode(ModelNode * node)
+{
+	children.push_back(std::shared_ptr<ModelNode>(node));
+}
+
 Model::Model()
 {
 	createId();
@@ -12,12 +37,13 @@ Model::Model(const Model& other)
 	freeMeshes();
 	id_ = other.id_;
 	meshes_ = other.meshes_;
+	nodes_ = other.nodes_;
+	animations_ = other.animations_;
 }
 
 Model::Model(Mesh * mesh)
 {
 	allocMeshes(1);
-	// mesh->setScale(vec3(15.0));
 	mesh->setup();
 	mesh->material.setupTextures();
 	addMesh(mesh);
@@ -38,13 +64,17 @@ Model::Model(Resource::File fileResource)
 		return;
 	}
 
-	// processNode(scene->mRootNode, assimpResource, 1);
+	this->GlobalInverseTransform = aiMatToMat(scene->mRootNode->mTransformation);
+	this->GlobalInverseTransform = glm::inverse(GlobalInverseTransform);
 
 	if (scene->mNumAnimations > 0) {
 		console::info("animations:", scene->mNumAnimations);
 		for (int i = 0; i < scene->mNumAnimations; i++)
 		{
-			const aiAnimation * animation = scene->mAnimations[i];
+			const Animation * animation = new Animation(scene->mAnimations[i]);
+			addAnimation(animation);
+
+			/*const aiAnimation * animation = scene->mAnimations[i];
 			console::info("+ animation:", animation->mName.C_Str());
 
 			if (animation->mNumChannels > 0)
@@ -69,11 +99,12 @@ Model::Model(Resource::File fileResource)
 				}
 			} else {
 				console::warn("no channels");
-			}
+			}*/
 		}
 
-		currentAnimation = scene->mAnimations[scene->mNumAnimations - 1]->mName.C_Str();
-		console::info("currentAnimation", currentAnimation);
+		if (animations_.size() > 0) {
+			setCurrentAnimation("idle");
+		}
 	} else {
 		console::warn("no animations");
 	}
@@ -110,16 +141,18 @@ void Model::createId()
 
 void Model::allocMeshes(unsigned int count)
 {
-	meshes_ = new std::vector<Mesh*>();
-	meshes_->reserve(count);
+	meshes_.clear();
+	meshes_.reserve(count);
 }
 
 void Model::freeMeshes()
 {
-	if (meshes_ != 0) {
-		delete meshes_;
-		meshes_ = 0;
-	}
+	meshes_.clear();
+}
+
+void Model::freeNodes()
+{
+	// @todo
 }
 
 void Model::initFromAi(const Resource::Assimp * assimpResource)
@@ -127,22 +160,30 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 	freeMeshes();
 	allocMeshes(assimpResource->scene->mNumMeshes);
 
-	boost::thread_group tg;
+	// boost::thread_group tg;
+	// unsigned int numMeshes = assimpResource->scene->mNumMeshes;
+	// for (unsigned int i = 0; i < numMeshes; i++) {
+	// 	#ifndef THREAD_INIT_AI
+	// 	processMesh(assimpResource->scene->mMeshes[i], assimpResource);
+	// 	#endif
+	// 	#ifdef THREAD_INIT_AI
+	// 	tg.add_thread(
+	// 		new boost::thread(
+	// 			&Model::processMesh, this, assimpResource->scene->mMeshes[i], assimpResource
+	// 		)
+	// 	);
+	// 	#endif
+	// }
 
-	unsigned int numMeshes = assimpResource->scene->mNumMeshes;
-	for (unsigned int i = 0; i < numMeshes; i++) {
-		processMesh(assimpResource->scene->mMeshes[i], assimpResource);
-		
-		// tg.add_thread(
-		// 	new boost::thread(
-		// 		&Model::processMesh, this, assimpResource->scene->mMeshes[i], assimpResource
-		// 	)
-		// );
-	}
-
+	// #ifdef THREAD_INIT_AI
 	// tg.join_all();
+	// #endif
 
-	for(auto mesh = meshes_->begin(); mesh != meshes_->end(); mesh++)
+	rootNode_ = new ModelNode(assimpResource->scene->mRootNode);
+
+	processNode(assimpResource->scene->mRootNode, rootNode_, assimpResource);
+
+	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
 	{
 		(*mesh)->setup();
 		(*mesh)->material.setupTextures();
@@ -151,43 +192,159 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 
 void Model::addMesh(Mesh * mesh)
 {
-	meshes_->push_back(mesh);
+	meshes_.push_back(std::shared_ptr<Mesh>(mesh));
 }
 
-void Model::processNode(aiNode * node, const Resource::Assimp * assimpResource, int depth = 1)
+void Model::addNode(ModelNode * node)
 {
-	std::string indent = std::string(depth, '+');
-	console::info(indent, "node", node->mName.C_Str());
-	console::info(indent, "mNumMeshes", node->mNumMeshes);
+	nodes_.insert(
+		std::pair<std::string, std::shared_ptr<ModelNode>>(node->name, std::shared_ptr<ModelNode>(node))
+	);
+}
 
-	for (int i = 0; i < node->mNumChildren; i++) {
-		processNode(node->mChildren[i], assimpResource, ++depth);
+void Model::processNode(aiNode * node, ModelNode * modelNode, const Resource::Assimp * assimpResource)
+{
+	addNode(modelNode);
+
+	// console::info("======= node", modelNode->name, node->mNumMeshes);
+
+	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+		unsigned int meshIndex = node->mMeshes[i];
+		aiMesh * mesh = assimpResource->scene->mMeshes[meshIndex];
+		Mesh * modelMesh = new Mesh(mesh, assimpResource);
+		addMesh(modelMesh);
+		modelNode->addMesh(modelMesh);
+	}
+
+	for (unsigned int i = 0; i < node->mNumChildren; i++) {
+		aiNode * childNode = node->mChildren[i];
+		ModelNode * childModelNode = new ModelNode(childNode);
+		modelNode->addNode(childModelNode);
+		processNode(childNode, childModelNode, assimpResource);
 	}
 }
 
-
-void Model::processMesh(aiMesh * mesh, const Resource::Assimp * assimpResource)
-{
-	Mesh * modelMesh = new Mesh(mesh, assimpResource);
-	// modelMesh->setup();
-	addMesh(modelMesh);
-}
-
-std::vector<Mesh*>* Model::getMeshes()
+const ModelMeshes& Model::getMeshes()
 {
 	return meshes_;
 }
 
+Mesh * Model::getFirstMesh()
+{
+	return meshes_.at(0).get();
+}
+
 void Model::scale(vec3 scale) {
-	for(auto mesh = meshes_->begin(); mesh != meshes_->end(); mesh++)
+	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
 	{
 		(*mesh)->setScale(scale);
 	}
 }
 
 void Model::rotate(vec3 rotate, float angle) {
-	for(auto mesh = meshes_->begin(); mesh != meshes_->end(); mesh++)
+	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
 	{
 		(*mesh)->rotate(rotate, angle);
+	}
+}
+
+void Model::setCurrentAnimation(std::string animationName)
+{
+	const Animation * animation = getAnimation(animationName);
+
+	if (animation == nullptr) {
+		currentAnimation.setAnimation(nullptr);
+		console::warn("set current animation failed. animation not found: ", animationName);
+		return;
+	}
+
+	currentAnimation.setAnimation(animation);
+}
+
+void Model::addAnimation(const Animation * animation)
+{
+	std::string animationName = animation->getName();
+	std::shared_ptr<const Animation> animationPtr(animation);
+
+	animations_.insert(
+		std::pair<std::string, std::shared_ptr<const Animation>>(animationName, animationPtr)
+	);
+}
+
+const Animation * const Model::getAnimation(const std::string& name)
+{
+	auto it = animations_.find(name);
+	
+	if (it == animations_.end()) {
+		return nullptr;
+	}
+
+	return it->second.get();
+}
+
+void Model::processCurrentAnimation()
+{
+	processAnimation(currentAnimation);
+}
+
+void Model::processAnimation(AnimationProcess& animationProcess)
+{
+	const Animation * animation = animationProcess.getAnimation();
+
+	if (animation == nullptr) {
+		console::warn("not found animation");
+		return;
+	}
+
+	double tick = animationProcess.getCurrentTick();
+
+	// console::info("tick ", tick);
+
+	// console::info("process animation", animation->getName());
+	mat4 rootTransform(1.0);
+	processNodeAnimation(rootNode_, animation, rootTransform, tick);
+	// рекурсивно проходимся по нодам модели, начиная с рутовой
+	// в объекте анимации находим анимацию ноды по названию самой ноды
+	// в ноде анимации вычисляем интерполированные значения на основе времени для вращения/положения/скейла
+	// нужно установить значения костям соответствующим ноде анимации
+	// в ноде находим меши и кости равным названию самой ноды, и выставить значения матрицы
+}
+
+// @todo: оптимизировать обход по иерархии нод
+void Model::processNodeAnimation(ModelNode * node, const Animation * animation, mat4& rootTransform, double tick)
+{
+	const NodeAnimation * nodeAnim = animation->findNode(node->name);
+
+	if (nodeAnim != nullptr) {
+		const AnimKeyPosition& positionKey = nodeAnim->findPosition(tick);
+		const AnimKeyRotation& rotateKey = nodeAnim->findRotation(tick);
+		const AnimKeyScale& scaleKey = nodeAnim->findScale(tick);
+
+		mat4 nodeTransform(1.0);
+
+		mat4 position = glm::translate(mat4(1.0), positionKey.value);
+		mat4 rotate = glm::toMat4(rotateKey.value);
+		mat4 scale = glm::scale(mat4(1.0), scaleKey.value);
+
+		nodeTransform = position * rotate * scale;
+		mat4 newRootTransform(GlobalInverseTransform * rootTransform * nodeTransform);
+
+		// @todo: мы проходимся по всем мешам в поиске нужных костей - оптимизировать обход
+		for (auto it = meshes_.begin(); it != meshes_.end(); it++) {
+			auto boneIt = (*it)->bones.find(node->name);
+
+			if (boneIt != (*it)->bones.end()) {
+				mat4 finalTransform = newRootTransform * boneIt->second.getOffset();
+				boneIt->second.setTransform(finalTransform);
+			}
+		}
+		
+		for (auto it = node->children.begin(); it != node->children.end(); it++) {
+			processNodeAnimation((*it).get(), animation, newRootTransform, tick);
+		}
+	} else {
+		for (auto it = node->children.begin(); it != node->children.end(); it++) {
+			processNodeAnimation((*it).get(), animation, rootTransform, tick);
+		}
 	}
 }

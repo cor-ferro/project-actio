@@ -1,18 +1,73 @@
 #include "mesh.h"
 
+MeshBone::MeshBone()
+	: offset(mat4(1.0))
+	, transform(mat4(1.0))
+	, index(0)
+{
+
+}
+
+MeshBone::MeshBone(aiBone * bone) 
+	: offset(aiMatToMat(bone->mOffsetMatrix))
+	, transform(mat4(1.0))
+	, index(0)
+{
+
+}
+
+unsigned int MeshBone::getIndex() const
+{
+	return index;
+}
+
+mat4 MeshBone::getTransform() const
+{
+	return transform;
+}
+
+mat4 MeshBone::getOffset() const
+{
+	return offset;
+}
+
+void MeshBone::setOffset(mat4& newOffset)
+{
+	offset = newOffset;
+}
+
+void MeshBone::setTransform(mat4& newTransform)
+{
+	transform = newTransform;
+}
+
+void MeshBone::setIndex(unsigned int& newIndex)
+{
+	index = newIndex;
+}
+
+
 Mesh::Mesh()
+	: name("")
+	, isSetupReady(false)
 {
 	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
 	setDrawItem(MESH_DRAW_ITEM_ARRAY);
 }
 
-Mesh::Mesh(PhongMaterial material, Geometry geometry) : material(material), geometry(geometry)
+Mesh::Mesh(PhongMaterial material, Geometry geometry) 
+	: name("")
+	, isSetupReady(false)
+	, material(material)
+	, geometry(geometry)
 {
 	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
 	setDrawItem(MESH_DRAW_ITEM_ARRAY);
 }
 
 Mesh::Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource)
+	: name("")
+	, isSetupReady(false)
 {
 	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
 	setDrawItem(MESH_DRAW_ITEM_ELEMENTS);
@@ -31,13 +86,15 @@ Mesh::Mesh(const Mesh& other)
 	VAO = other.VAO;
 	VBO = other.VBO;
 	EBO = other.EBO;
-	drawModeGl_ = other.drawModeGl_;
-	drawItemGl_ = other.drawItemGl_;
+	drawModeGl = other.drawModeGl;
+	drawItemGl = other.drawItemGl;
 	#endif
-	drawMode_ = other.drawMode_;
+	name = other.name;
+	drawMode = other.drawMode;
 	material = other.material;
 	geometry = other.geometry;
-	setup_ = other.setup_;
+	isSetupReady = other.isSetupReady;
+	bones = other.bones;
 }
 
 Mesh::~Mesh()
@@ -45,11 +102,6 @@ Mesh::~Mesh()
 	freeGeometry();
 	freeMaterial();
 	freeBuffers();
-}
-
-void Mesh::draw()
-{
-	console::info("empty draw");
 }
 
 void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
@@ -60,23 +112,8 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 	freeGeometry();
 	freeMaterial();
 
-	// console::warn("mesh name", mesh->mName.C_Str());
-
-	// console::info("mNumBones", mesh->mNumBones);
-	// for (unsigned int i = 0; i < mesh->mNumBones; i++) {
-	// 	unsigned int boneIndex = 0;
-	// 	std::string boneName(mesh->mBones[i]->mName.data);
-	// 	console::info("boneName", boneName);
-	// }
-
-	console::info("mesh", mesh->mName.C_Str());
-	if (mesh->mNumBones > 0) {
-		for (unsigned int i = 0; i < mesh->mNumBones; i++) {
-			unsigned int boneIndex = 0;
-			std::string boneName(mesh->mBones[i]->mName.data);
-			// console::info(" ++ boneName", boneName);
-		}
-	}
+	setName(mesh->mName.C_Str());
+	console::info(" +++ mesh ", getName());
 
 	if (mesh->mMaterialIndex >= 0) {
 		material.initFromAi(assimpResource->scene->mMaterials[mesh->mMaterialIndex], assimpResource);
@@ -89,21 +126,114 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 	}
 
 	geometry.initFromAi(mesh, assimpResource);
+
+	if (mesh->mNumBones > 0) {
+		console::info("bones count: ", mesh->mNumBones);
+		GeometryVertices * vertices = geometry.getVertices();
+		const int verticesCount = vertices->size();
+
+		std::unique_ptr<VerticesMap> verticesMap(new VerticesMap());
+
+		for (unsigned int boneId = 0; boneId < mesh->mNumBones; boneId++) {
+			aiBone * bone = mesh->mBones[boneId];
+
+			MeshBone meshBone(bone);
+
+			std::string boneName(bone->mName.data);
+			mat4 offsetBone = aiMatToMat(bone->mOffsetMatrix);
+
+			meshBone.setIndex(boneId);
+
+			bones.insert(
+				std::pair<std::string, MeshBone>(boneName, meshBone)
+			);
+			
+			console::info("bone ", boneName, " ", bone->mNumWeights);
+			for (unsigned int j = 0; j < bone->mNumWeights; j++) {
+				const aiVertexWeight vertexWeight = bone->mWeights[j];
+
+				auto vertexIt = verticesMap->find(vertexWeight.mVertexId);
+
+				if (vertexIt != verticesMap->end()) {
+					vertexIt->second.push_back(BoneVertexWeight(boneId, vertexWeight.mWeight));
+				} else {
+					std::vector<BoneVertexWeight> mapping { BoneVertexWeight(boneId, vertexWeight.mWeight) };
+					verticesMap->insert(
+						std::pair<uint, std::vector<BoneVertexWeight>>(vertexWeight.mVertexId, mapping)
+					);
+				}
+			}
+		}
+
+		console::info("verticesMap ", verticesMap->size());
+
+		for (auto it = verticesMap->begin(); it != verticesMap->end(); ++it) {
+			const uint& vertexId = it->first;
+			std::vector<BoneVertexWeight>& boneWeights = it->second;
+
+			Vertex& vertex = geometry.getVertex(vertexId);
+
+			auto itBoneWeights = boneWeights.begin();
+			unsigned int boneMappingIndex = 0;
+			for (; itBoneWeights != boneWeights.end(); itBoneWeights++) {
+				// vertex.BonedIDs[boneMappingIndex] = itBoneWeights->first;
+				// vertex.Weights[boneMappingIndex] = itBoneWeights->second;
+
+				// if (itBoneWeights->first < 0 || itBoneWeights->first > 35) {
+				// 	console::warn("++++++++++++++++++", itBoneWeights->first);
+				// }
+
+				// console::info("itBoneWeights->first ", itBoneWeights->first);
+
+				vertex.BonedIDs[0] = (float)(itBoneWeights->first);
+				vertex.BonedIDs[1] = 0.0f;
+				vertex.BonedIDs[2] = 0.0f;
+				vertex.BonedIDs[3] = 0.0f;
+
+				vertex.Weights[0] = (float)(itBoneWeights->second);
+				vertex.Weights[1] = 1.0f;
+				vertex.Weights[2] = 1.0f;
+				vertex.Weights[3] = 1.0f;
+
+				boneMappingIndex++;
+				assert(boneMappingIndex < 4);
+			}
+
+			if (boneWeights.size() > 1) {
+				console::info("boneWeights", vertexId, boneWeights.size());
+			}
+		}
+	}
 }
 
 void Mesh::freeGeometry() {}
 void Mesh::freeMaterial() {}
 
+std::string Mesh::getName()
+{
+	return name;
+}
+
+void Mesh::setName(std::string newName)
+{
+	name = newName;
+}
+
+void Mesh::setName(const char * newName)
+{
+	name = std::string(newName);
+}
+
 void Mesh::setDrawMode(MeshDrawMode mode)
 {
-	drawMode_ = mode;
+	drawMode = mode;
 	#ifdef GRAPHIC_API_OPENGL
-	switch (drawMode_) {
+	switch (drawMode) {
 	case MESH_DRAW_MODE_TRIANGLE:
-		drawModeGl_ = GL_TRIANGLES;
+		drawModeGl = GL_TRIANGLES;
 		break;
 	case MESH_DRAW_MODE_LINE:
-		drawModeGl_ = GL_LINE_LOOP;
+		drawModeGl = GL_LINE_LOOP;
 		break;
 	}
 	#endif
@@ -112,19 +242,24 @@ void Mesh::setDrawMode(MeshDrawMode mode)
 void Mesh::setDrawItem(MeshDrawItem item)
 {
 	#ifdef GRAPHIC_API_OPENGL
-	drawItemGl_ = item;
+	drawItemGl = item;
 	#endif
+}
+
+void Mesh::draw()
+{
+	console::info("empty draw");
 }
 
 #ifdef GRAPHIC_API_OPENGL
 
 void Mesh::draw(Opengl::Program &program)
 {
-	std::vector<Vertex> * vertices = geometry.getVertices();
-	std::vector<MeshIndex> * indices = geometry.getIndices();
+	GeometryVertices * vertices = geometry.getVertices();
+	GeometryIndices * indices = geometry.getIndices();
 
 	unsigned int textureIndex = 0;
-	const std::vector<Texture>& textures = material.getTextures();
+	const MaterialTextures& textures = material.getTextures();
 	for (const Texture& texture : textures)
 	{
 		glActiveTexture(GL_TEXTURE0 + textureIndex);
@@ -142,6 +277,50 @@ void Mesh::draw(Opengl::Program &program)
 	}
 
 	updateModelMatrix(false);
+
+	unsigned int boneIndex;
+
+	if (bones.size() == 0)
+	{
+		// console::info("mesh ", getName(), " ", "no bones");
+		// program.setMat("bones[0]", mat4(1.0));
+	}
+
+	// if (getName() == "Kage") {
+	// 	console::info("count bones: ", bones.size());
+	// }
+
+	std::vector<mat4> * boneTransforms = new std::vector<mat4>();
+	boneTransforms->reserve(bones.size());
+
+	for (unsigned int i = 0; i < bones.size(); i++) {
+		boneTransforms->push_back(mat4(1.0));
+	}
+
+	for (auto it = bones.begin(); it != bones.end(); it++) {
+		MeshBone& bone = it->second;
+
+		// console::info("bone.getIndex()", bone.getIndex());
+
+		boneTransforms->at(bone.getIndex()) = bone.getTransform();
+	}
+
+	program.setMat("bones[]", boneTransforms);
+	delete boneTransforms;
+
+	// for (auto it = bones.begin(); it != bones.end(); it++)
+	// {
+	// 	MeshBone& bone = it->second;
+
+	// 	std::string path("bones[" + std::to_string(bone.getIndex()) + "]");
+
+	// 	// console::info(path, " ", glm::to_string(bone.getTransform()));
+
+	// 	program.setMat(path, bone.getTransform());
+
+	// 	boneIndex++;
+	// }
+
 	program.setMat("model", modelMatrix);
 
 	program.setVec("material.ambient", material.ambient);
@@ -149,13 +328,13 @@ void Mesh::draw(Opengl::Program &program)
 	program.setVec("material.specular", material.specular);
 	program.setFloat("material.shininess", material.shininess);
 
-	switch (drawItemGl_)
+	switch (drawItemGl)
 	{
 	case MESH_DRAW_ITEM_ARRAY:
-		glDrawArrays(drawModeGl_, 0, vertices->size());
+		glDrawArrays(drawModeGl, 0, vertices->size());
 		break;
 	case MESH_DRAW_ITEM_ELEMENTS:
-		glDrawElements(drawModeGl_, indices->size(), GL_UNSIGNED_INT, 0);
+		glDrawElements(drawModeGl, indices->size(), GL_UNSIGNED_INT, 0);
 		break;
 	}
 
@@ -171,9 +350,9 @@ void Mesh::draw(Opengl::Program &program)
 
 void Mesh::setup()
 {
-	if (setup_ == true)
+	if (isSetupReady == true)
 	{
-		console::warn("mesh already setuped");
+		console::warn("mesh already setup");
 		return;
 	}
 
@@ -182,15 +361,17 @@ void Mesh::setup()
 
 	glBindVertexArray(VAO);
 
-	std::vector<Vertex> * vertices = geometry.getVertices();
+	GeometryVertices * vertices = geometry.getVertices();
+
+	console::info("vertices size", vertices->size());
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
 
-	if (drawItemGl_ == MESH_DRAW_ITEM_ELEMENTS)
+	if (drawItemGl == MESH_DRAW_ITEM_ELEMENTS)
 	{
 		glGenBuffers(1, &EBO);
-		std::vector<MeshIndex> * indices = geometry.getIndices();
+		GeometryIndices * indices = geometry.getIndices();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), GL_STATIC_DRAW);
 	}
@@ -199,7 +380,7 @@ void Mesh::setup()
 
 	glBindVertexArray(0);
 
-	setup_ = true;
+	isSetupReady = true;
 }
 
 void Mesh::setupVertex(Vertex& v)
@@ -220,7 +401,8 @@ void Mesh::setupVertex(Vertex& v)
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 
 	glEnableVertexAttribArray(5);
-	glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
+	// glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
+	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
 
 	glEnableVertexAttribArray(6);
 	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Weights));

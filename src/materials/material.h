@@ -10,6 +10,8 @@
 #include "../core/texture.h"
 #include "../resources/resources.h"
 
+typedef std::vector<Texture> MaterialTextures;
+
 struct Material {
 	Material();
 	Material(Texture);
@@ -19,11 +21,11 @@ struct Material {
 	void setupTextures();
 
 	void addTexture(Texture texture);
-	const std::vector<Texture>& getTextures();
+	const MaterialTextures& getTextures();
 	bool wireframe;
 
 protected:
-	std::vector<Texture> textures_;
+	MaterialTextures textures_;
 };
 
 struct PhongMaterial : Material {

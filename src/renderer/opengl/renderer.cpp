@@ -57,10 +57,10 @@ void OpenglRenderer::start()
 	}
 
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
-	console::info("GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS", maxTextureUnits);
+	console::info("GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ", maxTextureUnits);
 
 	forwardProgram.init("forward");
-	forwardProgram.initUniformCache({ "model", "diffuseTexture", "heightTexture", "specularTexture" });
+	forwardProgram.initUniformCache({ "model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]" });
 	forwardProgram.bindBlock("Matrices", 0);
 //	forwardProgram.bindBlock("Lights", 1);
 
@@ -102,7 +102,10 @@ void OpenglRenderer::forwardRender()
 	Camera * camera = scene->getActiveCamera();
 
 	const RendererParams& renderParams = getParams();
-	GLfloat time = glutGet(GLUT_ELAPSED_TIME) * timeScale;
+
+	size_t newTime = glutGet(GLUT_ELAPSED_TIME);
+	this->elaspsedTime = newTime - this->time;
+	this->time = newTime;
 
 	glEnable(GL_DEPTH_TEST);
 	// glDepthMask(GL_TRUE);
@@ -127,14 +130,14 @@ void OpenglRenderer::forwardRender()
 	matricesBuffer.nouse();
 
 	forwardProgram.use();
-	forwardProgram.setFloat("time", time);
+	forwardProgram.setFloat("time", time / 1000.0f);
 	forwardProgram.setVec("viewPos", camera->getPosition());
 
 	bool isHasSkybox = scene->hasSkybox();
 
 	if (isHasSkybox) {
 		Model * skyboxModel = scene->getSkybox();
-		Mesh * mesh = skyboxModel->getMeshes()->at(0);
+		Mesh * mesh = skyboxModel->getFirstMesh();
 		Texture texture = mesh->material.getTextures().at(0);
 
 		glActiveTexture(GL_TEXTURE0 + maxTextureUnits - 1);
@@ -193,15 +196,24 @@ void OpenglRenderer::forwardRender()
 	forwardProgram.setInt("countSpotLights", spotLights->size());
 
 	std::vector<Model*> * models = scene->getModels();
-	for (auto model = models->begin(); model != models->end(); model++)
+	for (auto modelIt = models->begin(); modelIt != models->end(); modelIt++)
 	{
-		std::vector<Mesh*> * meshes = (*model)->getMeshes();
-		for(auto mesh = meshes->begin(); mesh != meshes->end(); mesh++)
+		Model * model = *modelIt;
+
+		if (model->currentAnimation.isSet())
+		{
+			model->currentAnimation.tick(this->elaspsedTime);
+			model->processCurrentAnimation();
+		}
+
+		const ModelMeshes& meshes = model->getMeshes();
+		for(auto mesh = meshes.begin(); mesh != meshes.end(); mesh++)
 		{
 			(*mesh)->draw(forwardProgram);
 		}
 	}
 
+	// @todo: скайбокс закинуть в юниформ
 	if (isHasSkybox)
 	{
 		glDepthFunc(GL_LEQUAL);
@@ -210,9 +222,9 @@ void OpenglRenderer::forwardRender()
 		skyboxProgram.setMat("view", glm::mat4(glm::mat3(view)));
 
 		Model * skyboxModel = scene->getSkybox();
-		std::vector<Mesh*> * meshes = skyboxModel->getMeshes();
+		const ModelMeshes& meshes = skyboxModel->getMeshes();
 
-		for(auto mesh = meshes->begin(); mesh != meshes->end(); mesh++)
+		for(auto mesh = meshes.begin(); mesh != meshes.end(); mesh++)
 		{
 			(*mesh)->draw(skyboxProgram);
 		}

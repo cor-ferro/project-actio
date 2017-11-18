@@ -44,17 +44,6 @@ void BaseRenderer::setupScene()
 		console::warn("Cannot setup scene. Pointer is null");
 		return;
 	}
-
-	std::vector<Model*>* models = scene_->getModels();
-
-	for (auto model = models->begin(); model != models->end(); model++) {
-		std::vector<Mesh*>* meshes = (*model)->getMeshes();
-
-		for(auto mesh = meshes->begin(); mesh != meshes->end(); mesh++)
-		{
-			// (*mesh)->setup();
-		}
-	}
 }
 
 void BaseRenderer::addFrameHandler(callback cb)

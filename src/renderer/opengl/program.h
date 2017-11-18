@@ -31,6 +31,8 @@ struct Program {
 	void setMat(const std::string &, const mat3 &) const;
 	void setMat(const std::string &, const mat2 &) const;
 
+	void setMat(const std::string &, const std::vector<mat4>*) const;
+
 	void setVec(const std::string &, const vec2 &) const;
 	void setVec(const std::string &, const vec3 &) const;
 	void setVec(const std::string &, const vec4 &) const;

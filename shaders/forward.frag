@@ -50,7 +50,6 @@ uniform mat4 model;
 
 in vec3 normal;
 in vec3 normal1;
-in vec4 vertexPosition;
 in vec3 fragmentPosition;
 in vec2 texCoord;
 in mat3 TBN;
@@ -79,6 +78,7 @@ uniform Light light;
 uniform sampler2D diffuseTexture;
 uniform sampler2D specularTexture;
 uniform sampler2D heightTexture;
+uniform sampler2D normalTexture;
 uniform samplerCube cubeTexture;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
@@ -159,8 +159,8 @@ void main()
 
 	result+= vec3(texture(diffuseTexture, texCoord));
 
-	// for(int i = 0; i < countDirLights; i++)
-	// 	result += CalcDirLight(dirLights[i], norm, viewDir);
+	for(int i = 0; i < countDirLights; i++)
+		result += CalcDirLight(dirLights[i], norm, viewDir);
 
 	// for(int i = 0; i < countPointLights; i++)
 	// 	result += CalcPointLight(pointLights[i], norm, fragmentPosition, viewDir);
@@ -168,12 +168,7 @@ void main()
 	// for(int i = 0; i < countSpotLights; i++)
 	// 	result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
 
-	// result+= material.ambient + material.diffuse + material.specular;
-	// result = vec3(texture(diffuseTexture, texCoord));
-
-	// result = fragmentPosition;
-	//result = 0.5 + vec3(vec3(vertexPosition) * normal);
-	// result = vec3(1.0);
+	result+= material.ambient + material.diffuse + material.specular;
 
 	vec3 skyboxReflect = reflect(viewDir, normalize(normal));
 	// vec3 skyboxRefract = refract(viewDir, normalize(normal), 1.0);

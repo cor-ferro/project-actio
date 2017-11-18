@@ -18,9 +18,6 @@ namespace Resource {
 	std::string Assimp::getTexturePath(aiMaterial * mat, aiTextureType type, unsigned int index) const {
 		aiString tex;
 		mat->GetTexture(type, index, &tex);
-
-		console::info("aiString", strlen(tex.data));
-
 		return std::string(basePath_ + "/" + tex.C_Str());
 	}
 

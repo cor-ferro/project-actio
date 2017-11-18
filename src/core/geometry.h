@@ -13,6 +13,9 @@
 #include "vertex.h"
 
 typedef unsigned int MeshIndex;
+typedef std::vector<Vertex> GeometryVertices;
+typedef std::vector<MeshIndex> GeometryIndices;
+
 
 static size_t TotalCountVertices = 0;
 
@@ -30,12 +33,13 @@ struct Geometry {
 	static Geometry Box();
 
 	void initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource);
-	std::vector<Vertex> * getVertices();
-	std::vector<MeshIndex> * getIndices();
+	GeometryVertices * getVertices();
+	GeometryIndices * getIndices();
 
 	void addVertex(Vertex vertex);
 	void addVertex(float x, float y, float z);
 	void addVertex(std::vector<float>& vertices);
+	Vertex& getVertex(unsigned int index);
 
 	void fillIndices();
 
@@ -45,8 +49,8 @@ protected:
 	void freeVerties();
 	void freeIndices();
 
-	std::shared_ptr<std::vector<Vertex>> vertices_;
-	std::shared_ptr<std::vector<MeshIndex>> indices_;
+	std::shared_ptr<GeometryVertices> vertices_;
+	std::shared_ptr<GeometryIndices> indices_;
 };
 
 #endif

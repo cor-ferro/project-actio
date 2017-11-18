@@ -97,7 +97,7 @@ void Program::initUniformCache(std::vector<std::string> locations)
 		unsigned int index = getUniformLoc(locationName.c_str());
 
 		if (index == -1) {
-			console::warn("uniform", locationName, "cache failed.");
+			console::warn("uniform ", locationName, " cache failed.");
 		}
 
 		uniformIndexCache.insert({locationName, index});
@@ -127,7 +127,14 @@ unsigned int Program::getUniformCacheLoc(std::string locationName) const
 
 	#ifndef OPENGL_PROGRAM_UNIFORM_CACHE
 	if (got == uniformIndexCache.end()) {
-//		console::warn("Uniform not found. Program:", this->name, " location:", locationName);
+		// console::warn("Cache uniform not found. Program:", this->name, " location:", locationName);
+
+		// unsigned int loc = getUniformLoc(locationName.c_str());
+		// if (loc == -1 && this->name == "forward")
+		// 	console::warn("Uniform not found. Program: ", this->name, ", location: ", locationName);
+		
+		// return loc;
+
 		return getUniformLoc(locationName.c_str());
 	} else {
 		return got->second;
@@ -165,6 +172,12 @@ void Program::setMat(const std::string &name, const glm::mat3 &mat) const
 void Program::setMat(const std::string &name, const glm::mat4 &mat) const
 {
 	glUniformMatrix4fv(getUniformCacheLoc(name), 1, GL_FALSE, &mat[0][0]);
+}
+
+/* Mat 4x4 vector */
+void Program::setMat(const std::string &name, const std::vector<glm::mat4> * mats) const
+{
+	glUniformMatrix4fv(getUniformCacheLoc(name), mats->size(), GL_FALSE, &mats->front()[0][0]);
 }
 
 /* Vec2 */

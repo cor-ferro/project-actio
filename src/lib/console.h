@@ -14,7 +14,7 @@ namespace console {
 	static void log(Arg... arg)
 	{
 		using expander = int[];
-		(void) expander{ (std::cout << " " << std::forward<Arg>(arg), void(), 0)... };
+		(void) expander{ (std::cout << "" << std::forward<Arg>(arg), void(), 0)... };
 		std::cout << std::endl;
 	}
 
@@ -22,7 +22,7 @@ namespace console {
 	static void info(Arg... arg)
 	{
 		std::cout << CONSOLE_ESC COLOR_CYAN;
-		std::cout << "[info]";
+		std::cout << "[info] ";
 		std::cout << CONSOLE_ESC CONSOLE_RESET;
 		log(arg...);
 	}
@@ -31,7 +31,7 @@ namespace console {
 	static void warn(Arg... arg)
 	{
 		std::cout << CONSOLE_ESC COLOR_YELLOW;
-		std::cout << "[warn]";
+		std::cout << "[warn] ";
 		std::cout << CONSOLE_ESC CONSOLE_RESET;
 		log(arg...);
 	}

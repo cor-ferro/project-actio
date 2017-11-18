@@ -11,9 +11,9 @@ BoundingBox::BoundingBox(Model * model)
 
 void BoundingBox::determinateBounding()
 {
-	std::vector<Mesh*> * modelMeshes = model_->getMeshes();
+	const ModelMeshes& modelMeshes = model_->getMeshes();
 
-	for (auto mesh = modelMeshes->begin(); mesh != modelMeshes->end(); mesh++)
+	for (auto mesh = modelMeshes.begin(); mesh != modelMeshes.end(); mesh++)
 	{
 		std::vector<Vertex>* vertices = (*mesh)->geometry.getVertices();
 
