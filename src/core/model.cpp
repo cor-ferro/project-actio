@@ -68,42 +68,23 @@ Model::Model(Resource::File fileResource)
 	this->GlobalInverseTransform = glm::inverse(GlobalInverseTransform);
 
 	if (scene->mNumAnimations > 0) {
-		console::info("animations:", scene->mNumAnimations);
+		console::info("animations: ", scene->mNumAnimations);
 		for (int i = 0; i < scene->mNumAnimations; i++)
 		{
 			const Animation * animation = new Animation(scene->mAnimations[i]);
 			addAnimation(animation);
-
-			/*const aiAnimation * animation = scene->mAnimations[i];
-			console::info("+ animation:", animation->mName.C_Str());
-
-			if (animation->mNumChannels > 0)
-			{
-				console::info("++ num channels:", animation->mNumChannels);
-				for (int j = 0; j < animation->mNumChannels; j++)
-				{
-					const aiNodeAnim * channel = animation->mChannels[i];
-					console::info("++ channel", channel->mNodeName.C_Str());
-					console::info("++ keys", channel->mNumPositionKeys, channel->mNumRotationKeys, channel->mNumScalingKeys);
-					// console::info("++ mNumPositionKeys", channel->mNumPositionKeys);
-					// for (int k = 0; k < channel->mNumPositionKeys; k++) {
-					// 	console::info("++ mPositionKeys mTime", (float)channel->mPositionKeys[k].mTime);
-					// }
-					// for (int k = 0; k < channel->mNumRotationKeys; k++) {
-					// 	console::info("++ mRotationKeys mTime", (float)channel->mRotationKeys[k].mTime);
-					// }
-					// for (int k = 0; k < channel->mNumScalingKeys; k++) {
-					// 	console::info("++ mScalingKeys mTime", (float)channel->mScalingKeys[k].mTime);
-					// }
-					console::info(" ");
-				}
-			} else {
-				console::warn("no channels");
-			}*/
 		}
 
 		if (animations_.size() > 0) {
-			setCurrentAnimation("idle");
+			// setCurrentAnimation("idle");
+			setCurrentAnimation("Armature|soco baixo combo direito pesada 81");
+			// setCurrentAnimation("test_arm|test_arm|test_arm|motion_bone|test_arm|motion_bone");
+			// auto it = animations_.begin();
+
+			// if (it != animations_.end()) {
+			// 	setCurrentAnimation(it->second->getName());
+			// 	console::info("+++++ set current animation +++++ ", it->second->getName());
+			// }
 		}
 	} else {
 		console::warn("no animations");
@@ -297,17 +278,8 @@ void Model::processAnimation(AnimationProcess& animationProcess)
 	}
 
 	double tick = animationProcess.getCurrentTick();
-
-	// console::info("tick ", tick);
-
-	// console::info("process animation", animation->getName());
 	mat4 rootTransform(1.0);
 	processNodeAnimation(rootNode_, animation, rootTransform, tick);
-	// рекурсивно проходимся по нодам модели, начиная с рутовой
-	// в объекте анимации находим анимацию ноды по названию самой ноды
-	// в ноде анимации вычисляем интерполированные значения на основе времени для вращения/положения/скейла
-	// нужно установить значения костям соответствующим ноде анимации
-	// в ноде находим меши и кости равным названию самой ноды, и выставить значения матрицы
 }
 
 // @todo: оптимизировать обход по иерархии нод
@@ -316,18 +288,11 @@ void Model::processNodeAnimation(ModelNode * node, const Animation * animation, 
 	const NodeAnimation * nodeAnim = animation->findNode(node->name);
 
 	if (nodeAnim != nullptr) {
-		const AnimKeyPosition& positionKey = nodeAnim->findPosition(tick);
-		const AnimKeyRotation& rotateKey = nodeAnim->findRotation(tick);
-		const AnimKeyScale& scaleKey = nodeAnim->findScale(tick);
+		const AnimKey positionKey = nodeAnim->findPosition(tick, true);
+		const AnimKey& rotateKey = nodeAnim->findRotation(tick, true);
+		const AnimKey& scaleKey = nodeAnim->findScale(tick, true);
 
-		mat4 nodeTransform(1.0);
-
-		mat4 position = glm::translate(mat4(1.0), positionKey.value);
-		mat4 rotate = glm::toMat4(rotateKey.value);
-		mat4 scale = glm::scale(mat4(1.0), scaleKey.value);
-
-		nodeTransform = position * rotate * scale;
-		mat4 newRootTransform(GlobalInverseTransform * rootTransform * nodeTransform);
+		mat4 newRootTransform(rootTransform * positionKey.value * rotateKey.value * scaleKey.value);
 
 		// @todo: мы проходимся по всем мешам в поиске нужных костей - оптимизировать обход
 		for (auto it = meshes_.begin(); it != meshes_.end(); it++) {
@@ -339,6 +304,7 @@ void Model::processNodeAnimation(ModelNode * node, const Animation * animation, 
 			}
 		}
 		
+		// @todo: одинаковые куски кода здесь и ниже кроме newRootTransform
 		for (auto it = node->children.begin(); it != node->children.end(); it++) {
 			processNodeAnimation((*it).get(), animation, newRootTransform, tick);
 		}

@@ -16,7 +16,7 @@ struct Vertex {
 	vec2 TexCoords;
 	vec3 Tangent;
 	vec3 Bitangent;
-	vec4 BonedIDs;
+	ivec4 BonedIDs;
 	vec4 Weights;
 };
 

@@ -1,5 +1,32 @@
 #include "animation.h"
 
+double inf = std::numeric_limits<double>::infinity();
+
+AnimKey interpolateKey(const AnimKey& key1, const AnimKey& key2, double time) {
+    if (key1.time == key2.time) {
+        return key1;
+    }
+
+    double diff = time - key1.time;
+
+    AnimKey interpolatedKey;
+
+    if (diff > 0.0) {
+        double delta = 1.0 - (key2.time - time) / (key2.time - key1.time);
+
+        interpolatedKey.time = time;
+        interpolatedKey.value = glm::mix(key1.value, key2.value, delta);
+
+        return interpolatedKey;
+    } else if (diff < 0.0) {
+        return key1;
+    } else {
+        return key1;
+    }
+
+    return interpolatedKey;
+}
+
 NodeAnimation::NodeAnimation(const NodeAnimation& other)
 {
     name = other.name;
@@ -17,68 +44,89 @@ NodeAnimation::NodeAnimation(const aiNodeAnim * nodeAnim)
     for (int i = 0; i < nodeAnim->mNumPositionKeys; i++) {
         // console::info("++++++ NodeAnimation position time", nodeAnim->mPositionKeys[i].mTime);
 
-        AnimKeyPosition key;
+        AnimKey key;
         key.time = nodeAnim->mPositionKeys[i].mTime;
-        key.value = vec3(
+        key.value = glm::translate(mat4(1.0), vec3(
             nodeAnim->mPositionKeys[i].mValue.x,
             nodeAnim->mPositionKeys[i].mValue.y,
             nodeAnim->mPositionKeys[i].mValue.z
-        );
+        ));
 
-        positions.insert(std::pair<double, AnimKeyPosition>(key.time, key));
+        positions.insert(std::pair<double, AnimKey>(key.time, key));
     }
 
     for (int i = 0; i < nodeAnim->mNumRotationKeys; i++) {
-        AnimKeyRotation key;
+        AnimKey key;
         key.time = nodeAnim->mRotationKeys[i].mTime;
-        key.value = quat(
+        key.value = glm::toMat4(quat(
             nodeAnim->mRotationKeys[i].mValue.w, // @todo: в примере был первым по счету
             nodeAnim->mRotationKeys[i].mValue.x, 
             nodeAnim->mRotationKeys[i].mValue.y, 
             nodeAnim->mRotationKeys[i].mValue.z
-        );
+        ));
         
-        rotations.insert(std::pair<double, AnimKeyRotation>(key.time, key));
+        rotations.insert(std::pair<double, AnimKey>(key.time, key));
     }
 
     for (int i = 0; i < nodeAnim->mNumScalingKeys; i++) {
-        AnimKeyScale key;
+        AnimKey key;
         key.time = nodeAnim->mScalingKeys[i].mTime;
-        key.value = vec3(
+        key.value = glm::scale(mat4(1.0), vec3(
             nodeAnim->mScalingKeys[i].mValue.x, 
             nodeAnim->mScalingKeys[i].mValue.y, 
             nodeAnim->mScalingKeys[i].mValue.z
-        );
+        ));
         
-        scalings.insert(std::pair<double, AnimKeyScale>(key.time, key));
+        scalings.insert(std::pair<double, AnimKey>(key.time, key));
     }
 }
 
-const AnimKeyPosition& NodeAnimation::findPosition(double time) const
+const AnimKey NodeAnimation::findPosition(double time, bool interpolate) const
 {
-    auto it = positions.lower_bound(time);
+    auto it = positions.lower_bound(floor(time));
 
-    return it == positions.end() 
-        ? positions.begin()->second
-        : it->second;
+    if (it == positions.end()) return positions.begin()->second;
+
+    if (interpolate == true) {
+        auto nextIt = std::next(it, 1);
+        if (nextIt == positions.end()) return it->second;
+
+        return interpolateKey(it->second, nextIt->second, time);
+    }
+
+    return it->second;
 }
 
-const AnimKeyRotation& NodeAnimation::findRotation(double time) const
+const AnimKey NodeAnimation::findRotation(double time, bool interpolate) const
 {
-    auto it = rotations.lower_bound(time);
+    auto it = rotations.lower_bound(floor(time));
 
-    return it == rotations.end()
-        ? rotations.begin()->second
-        : it->second;
+    if (it == rotations.end()) return rotations.begin()->second;
+
+    if (interpolate == true) {
+        auto nextIt = std::next(it, 1);
+        if (nextIt == positions.end()) return it->second;
+
+        return interpolateKey(it->second, nextIt->second, time);
+    }
+
+    return it->second;
 }
 
-const AnimKeyScale& NodeAnimation::findScale(double time) const
+const AnimKey NodeAnimation::findScale(double time, bool interpolate) const
 {
-    auto it = scalings.lower_bound(time);
+    auto it = scalings.lower_bound(floor(time));
 
-    return it == scalings.end()
-        ? scalings.begin()->second
-        : it->second;
+    if (it == scalings.end()) return scalings.begin()->second;
+
+    if (interpolate == true) {
+        auto nextIt = std::next(it, 1);
+        if (nextIt == positions.end()) return it->second;
+
+        return interpolateKey(it->second, nextIt->second, time);
+    }
+
+    return it->second;
 }
 
 void NodeAnimation::setName(std::string newName)
@@ -127,18 +175,6 @@ Animation::Animation(aiAnimation * animation)
             std::pair<std::string, std::shared_ptr<const NodeAnimation>>(nodeName, std::shared_ptr<const NodeAnimation>(nodeAnim))
         );
     }
-
-    // if (name == "idle")
-    // {
-    //     for (auto it = nodeAnimations.begin(); it != nodeAnimations.end(); it++)
-    //     {
-    //         const NodeAnimation * na = it->second.get();
-    //         for (auto it2 = na->positions.begin(); it2 != na->positions.end(); it2++)
-    //         {
-    //             // console::info("idle ", na->getName(), " ", it2->second.time);
-    //         }
-    //     }
-    // }
 }
 
 const NodeAnimation * Animation::findNode(std::string name) const

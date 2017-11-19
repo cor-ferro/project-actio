@@ -1,10 +1,12 @@
 #version 430 core
+#define MAX_BONES 100
+
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
 layout (location = 3) in vec3 aTangent;
 layout (location = 4) in vec3 aBitangent;
-layout (location = 5) in vec4 BoneIDs;
+layout (location = 5) in ivec4 BoneIDs;
 layout (location = 6) in vec4 Weights;
 
 layout (std140, binding = 0)
@@ -25,22 +27,29 @@ uniform mat4 model;
 
 uniform float time;
 
-uniform mat4 bones[64];
+uniform mat4 bones[MAX_BONES];
+
+subroutine mat4 BoneTransform();
+
+subroutine (BoneTransform) mat4 BoneTransformEnabled() {
+	mat4 boneTransform = bones[BoneIDs[0]] * Weights[0];
+	boneTransform+= bones[BoneIDs[1]] * Weights[1];
+	boneTransform+= bones[BoneIDs[2]] * Weights[2];
+	boneTransform+= bones[BoneIDs[3]] * Weights[3];
+
+	return boneTransform;
+}
+
+subroutine (BoneTransform) mat4 BoneTransformDisabled() {
+	return mat4(1.0);
+}
+
+subroutine uniform BoneTransform getBoneTransform;
 
 void main()
 {
 	vec3 pos = aPos;
-	int boneId1 = int(BoneIDs[0]);
-	// int boneId2 = min(BoneIDs.y, 0);
-	// int boneId3 = min(BoneIDs.z, 0);
-	// int boneId4 = min(BoneIDs.w, 0);
-
-	mat4 boneTransform = bones[boneId1] * Weights[0];
-	// boneTransform+= bones[boneId2] * 1.0;
-	// boneTransform+= bones[boneId3] * 1.0;
-	// boneTransform+= bones[boneId4] * 1.0;
-
-	// boneTransform = mat4(1.0);
+	mat4 boneTransform = getBoneTransform();
 
 	fragmentPosition = vec3(model * boneTransform * vec4(aPos, 1.0));
 	normal = mat3(transpose(inverse(model))) * (boneTransform * vec4(aNormal, 1.0)).xyz; // @todo: пустое преобразование ломает нормали

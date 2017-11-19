@@ -6,39 +6,34 @@
 #include <vector>
 #include <memory>
 #include <assimp/scene.h>
+#include <cmath>
+#include <limits>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/quaternion.hpp"
 #include "../resources/resources.h"
 #include "../lib/console.h"
 #include "../lib/types.h"
 
-struct AnimKeyPosition {
+struct AnimKey {
     double time;
-    vec3 value;
-};
-
-struct AnimKeyRotation {
-    double time;
-    quat value;
-};
-
-struct AnimKeyScale {
-    double time;
-    vec3 value;
+    mat4 value;
 };
 
 struct NodeAnimation {
     NodeAnimation(const NodeAnimation& other);
     NodeAnimation(const aiNodeAnim *);
-    const AnimKeyPosition& findPosition(double time) const;
-    const AnimKeyRotation& findRotation(double time) const;
-    const AnimKeyScale& findScale(double time) const;
+    const AnimKey findPosition(double time, bool interpolate) const;
+    const AnimKey findRotation(double time, bool interpolate) const;
+    const AnimKey findScale(double time, bool interpolate) const;
     void setName(std::string name);
     void setName(const char * name);
     std::string getName() const;
 private:
     std::string name;
-    std::map<double, AnimKeyPosition> positions;
-    std::map<double, AnimKeyRotation> rotations;
-    std::map<double, AnimKeyScale> scalings;
+    std::map<double, AnimKey> positions;
+    std::map<double, AnimKey> rotations;
+    std::map<double, AnimKey> scalings;
 };
 
 struct Animation {

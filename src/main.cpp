@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 		inputHandler.onFrame();
 	});
 
-	std::shared_ptr<Model> testModel(AG::Models::create(kageResource));
+	std::shared_ptr<Model> testModel(AG::Models::create(subzeroResource));
 	testModel->scale(vec3(0.05f));
 	// testModel->rotate(vec3(1.0f, 0.0f, 0.0f), -(3.14f)); // subzero
 	// testModel->rotate(vec3(1.0f, 0.0f, 0.0f), -(3.14f / 2.0f)); // kasumi

@@ -2,7 +2,7 @@
 
 namespace ImageLoader {
 	Data load(std::string path) {
-		// std::replace(path.begin(), path.end(), '\\', '/');
+		std::replace(path.begin(), path.end(), '\\', '/');
 		
 		// std::size_t fixPosE = path.find("e:");
 		// std::size_t fixPosD = path.find("D:");

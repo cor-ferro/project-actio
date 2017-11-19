@@ -104,6 +104,22 @@ void Program::initUniformCache(std::vector<std::string> locations)
 	}
 }
 
+void Program::enableSubroutine(unsigned int shaderType, std::string& subroutineName)
+{
+	unsigned int routineIndex = getSubroutineCacheIndex(shaderType, subroutineName);
+	glUniformSubroutinesuiv(shaderType, 1, &routineIndex);
+}
+
+void Program::enableVertexSubroutine(std::string& subroutineName)
+{
+	enableSubroutine(GL_VERTEX_SHADER, subroutineName);
+}
+
+void Program::enableFragmentSubroutine(std::string& subroutineName)
+{
+	enableSubroutine(GL_FRAGMENT_SHADER, subroutineName);
+}
+
 void Program::bindBlock(const char *blockName, int point)
 {
 	GLuint uniformBlockIndex = glGetUniformBlockIndex(handle, blockName);
@@ -144,6 +160,34 @@ unsigned int Program::getUniformCacheLoc(std::string locationName) const
 	#ifdef OPENGL_PROGRAM_UNIFORM_CACHE
 	return got->second;
 	#endif
+}
+
+unsigned int Program::getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName)
+{
+	return glGetSubroutineIndex(handle, shaderType, soubroutineName.c_str());
+}
+
+unsigned int Program::getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName)
+{
+	std::unordered_map<std::string, unsigned int> * subroutineIndexCache = nullptr;
+
+	if (shaderType == GL_VERTEX_SHADER) {
+		subroutineIndexCache = &subroutineVertexIndexCache;
+	} else if (shaderType == GL_FRAGMENT_SHADER) {
+		subroutineIndexCache = &subroutineFragmentIndexCache;
+	} else {
+		assert(false);
+	}
+
+	auto it = subroutineIndexCache->find(soubroutineName);
+
+	if (it == subroutineIndexCache->end()) {
+		unsigned int index = getSubroutineIndex(shaderType, soubroutineName);
+		subroutineIndexCache->insert(std::pair<std::string, unsigned int>(soubroutineName, index));
+		return -1;
+	}
+
+	return it->second;
 }
 
 void Program::setInt(const std::string &name, const int &value) const

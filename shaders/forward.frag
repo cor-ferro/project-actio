@@ -3,6 +3,7 @@
 #define NUM_DIR_LIGHTS 8
 #define NUM_POINT_LIGHTS 8
 #define NUM_SPOT_LIGHTS 8
+#define SHININESS_FACTOR 3
 
 const float Epsilon = 0.0000001;
 
@@ -150,10 +151,6 @@ void main()
 	norm = normalize(normal * 2.0 - 1.0);
 	norm = normalize(TBN * normal);
 
-	// norm = texture(heightTexture, texCoord).rgb;
-	// norm = normalize(norm * 2.0 - 1.0);
-	// norm = normalize(TBN * norm);
-
 	vec3 viewDir = normalize(viewPos - fragmentPosition);
 	vec3 result = vec3(0.0);
 
@@ -162,21 +159,20 @@ void main()
 	for(int i = 0; i < countDirLights; i++)
 		result += CalcDirLight(dirLights[i], norm, viewDir);
 
-	// for(int i = 0; i < countPointLights; i++)
-	// 	result += CalcPointLight(pointLights[i], norm, fragmentPosition, viewDir);
+	for(int i = 0; i < countPointLights; i++)
+		result += CalcPointLight(pointLights[i], norm, fragmentPosition, viewDir);
 		
-	// for(int i = 0; i < countSpotLights; i++)
-	// 	result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
+	for(int i = 0; i < countSpotLights; i++)
+		result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
 
 	result+= material.ambient + material.diffuse + material.specular;
 
 	vec3 skyboxReflect = reflect(viewDir, normalize(normal));
-	// vec3 skyboxRefract = refract(viewDir, normalize(normal), 1.0);
 
 	result = mix(
 		result,
-		texture(cubeTexture, -skyboxReflect).rgb,
-		0.1
+		texture(cubeTexture, -skyboxReflect).rgb * 0.5,
+		min(1.0, (max(material.shininess, 0.0) / 1000.0))
 	);
 
 	FragColor = vec4(result, 1.0);

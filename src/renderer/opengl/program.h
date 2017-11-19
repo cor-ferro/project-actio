@@ -25,17 +25,24 @@ struct Program {
 	unsigned int getUniformLoc(const char *) const;
 	unsigned int getUniformCacheLoc(std::string locationName) const;
 
-	void setFloat(const std::string &, const float &) const;
-	void setInt(const std::string &, const int &) const;
-	void setMat(const std::string &, const mat4 &) const;
-	void setMat(const std::string &, const mat3 &) const;
-	void setMat(const std::string &, const mat2 &) const;
+	unsigned int getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName);
+	unsigned int getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName);
 
-	void setMat(const std::string &, const std::vector<mat4>*) const;
+	void setFloat(const std::string&, const float&) const;
+	void setInt(const std::string&, const int&) const;
+	void setMat(const std::string&, const mat4&) const;
+	void setMat(const std::string&, const mat3&) const;
+	void setMat(const std::string&, const mat2&) const;
 
-	void setVec(const std::string &, const vec2 &) const;
-	void setVec(const std::string &, const vec3 &) const;
-	void setVec(const std::string &, const vec4 &) const;
+	void setMat(const std::string&, const std::vector<mat4>*) const;
+
+	void setVec(const std::string&, const vec2 &) const;
+	void setVec(const std::string&, const vec3 &) const;
+	void setVec(const std::string&, const vec4 &) const;
+
+	void enableSubroutine(unsigned int shaderType, std::string& subroutinName);
+	void enableVertexSubroutine(std::string& subroutinName);
+	void enableFragmentSubroutine(std::string& subroutinName);
 
 	void bindBlock(const char *blockName, int point);
 
@@ -53,6 +60,8 @@ private:
 	bool success;
 	std::string getShaderPath(std::string);
 	std::unordered_map<std::string, unsigned int> uniformIndexCache;
+	std::unordered_map<std::string, unsigned int> subroutineVertexIndexCache;
+	std::unordered_map<std::string, unsigned int> subroutineFragmentIndexCache;
 };
 
 }

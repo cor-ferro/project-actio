@@ -6,7 +6,7 @@ Vertex::Vertex()
 	, TexCoords(vec2(1.0f))
 	, Tangent(vec3(1.0f))
 	, Bitangent(vec3(1.0f))
-	, BonedIDs(vec4(0.0f))
+	, BonedIDs(ivec4(0))
 	, Weights(vec4(1.0))
 {}
 

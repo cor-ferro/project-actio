@@ -113,7 +113,6 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 	freeMaterial();
 
 	setName(mesh->mName.C_Str());
-	console::info(" +++ mesh ", getName());
 
 	if (mesh->mMaterialIndex >= 0) {
 		material.initFromAi(assimpResource->scene->mMaterials[mesh->mMaterialIndex], assimpResource);
@@ -148,7 +147,7 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 				std::pair<std::string, MeshBone>(boneName, meshBone)
 			);
 			
-			console::info("bone ", boneName, " ", bone->mNumWeights);
+			// console::info("bone ", boneName, " ", bone->mNumWeights);
 			for (unsigned int j = 0; j < bone->mNumWeights; j++) {
 				const aiVertexWeight vertexWeight = bone->mWeights[j];
 
@@ -165,42 +164,22 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 			}
 		}
 
-		console::info("verticesMap ", verticesMap->size());
-
 		for (auto it = verticesMap->begin(); it != verticesMap->end(); ++it) {
 			const uint& vertexId = it->first;
 			std::vector<BoneVertexWeight>& boneWeights = it->second;
 
 			Vertex& vertex = geometry.getVertex(vertexId);
 
-			auto itBoneWeights = boneWeights.begin();
 			unsigned int boneMappingIndex = 0;
-			for (; itBoneWeights != boneWeights.end(); itBoneWeights++) {
-				// vertex.BonedIDs[boneMappingIndex] = itBoneWeights->first;
-				// vertex.Weights[boneMappingIndex] = itBoneWeights->second;
-
-				// if (itBoneWeights->first < 0 || itBoneWeights->first > 35) {
-				// 	console::warn("++++++++++++++++++", itBoneWeights->first);
-				// }
-
-				// console::info("itBoneWeights->first ", itBoneWeights->first);
-
-				vertex.BonedIDs[0] = (float)(itBoneWeights->first);
-				vertex.BonedIDs[1] = 0.0f;
-				vertex.BonedIDs[2] = 0.0f;
-				vertex.BonedIDs[3] = 0.0f;
-
-				vertex.Weights[0] = (float)(itBoneWeights->second);
-				vertex.Weights[1] = 1.0f;
-				vertex.Weights[2] = 1.0f;
-				vertex.Weights[3] = 1.0f;
+			for (auto itBoneWeights = boneWeights.begin(); itBoneWeights != boneWeights.end(); itBoneWeights++) {
+				vertex.BonedIDs[boneMappingIndex] = itBoneWeights->first;
+				vertex.Weights[boneMappingIndex] = itBoneWeights->second;
 
 				boneMappingIndex++;
-				assert(boneMappingIndex < 4);
-			}
-
-			if (boneWeights.size() > 1) {
-				console::info("boneWeights", vertexId, boneWeights.size());
+				if (boneMappingIndex > 4) {
+					console::info("boneWeights.size() ", boneWeights.size());
+				}
+				assert(boneMappingIndex <= 4);
 			}
 		}
 	}
@@ -278,48 +257,29 @@ void Mesh::draw(Opengl::Program &program)
 
 	updateModelMatrix(false);
 
-	unsigned int boneIndex;
+	std::string boneTransformType;
 
-	if (bones.size() == 0)
-	{
-		// console::info("mesh ", getName(), " ", "no bones");
-		// program.setMat("bones[0]", mat4(1.0));
+	if (bones.size() > 0) {
+		boneTransformType = "BoneTransformEnabled";
+		std::unique_ptr<std::vector<mat4>> boneTransforms(new std::vector<mat4>());
+		boneTransforms->reserve(bones.size());
+
+		for (unsigned int i = 0; i < bones.size(); i++) {
+			boneTransforms->push_back(mat4(0.0));
+		}
+
+		for (auto it = bones.begin(); it != bones.end(); it++) {
+			MeshBone& bone = it->second;
+
+			boneTransforms->at(bone.getIndex()) = bone.getTransform();
+		}
+
+		program.setMat("bones[]", boneTransforms.get());
+	} else {
+		boneTransformType = "BoneTransformDisabled";
 	}
 
-	// if (getName() == "Kage") {
-	// 	console::info("count bones: ", bones.size());
-	// }
-
-	std::vector<mat4> * boneTransforms = new std::vector<mat4>();
-	boneTransforms->reserve(bones.size());
-
-	for (unsigned int i = 0; i < bones.size(); i++) {
-		boneTransforms->push_back(mat4(1.0));
-	}
-
-	for (auto it = bones.begin(); it != bones.end(); it++) {
-		MeshBone& bone = it->second;
-
-		// console::info("bone.getIndex()", bone.getIndex());
-
-		boneTransforms->at(bone.getIndex()) = bone.getTransform();
-	}
-
-	program.setMat("bones[]", boneTransforms);
-	delete boneTransforms;
-
-	// for (auto it = bones.begin(); it != bones.end(); it++)
-	// {
-	// 	MeshBone& bone = it->second;
-
-	// 	std::string path("bones[" + std::to_string(bone.getIndex()) + "]");
-
-	// 	// console::info(path, " ", glm::to_string(bone.getTransform()));
-
-	// 	program.setMat(path, bone.getTransform());
-
-	// 	boneIndex++;
-	// }
+	program.enableVertexSubroutine(boneTransformType);
 
 	program.setMat("model", modelMatrix);
 
@@ -363,7 +323,7 @@ void Mesh::setup()
 
 	GeometryVertices * vertices = geometry.getVertices();
 
-	console::info("vertices size", vertices->size());
+	// console::info("vertices size", vertices->size());
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
@@ -401,8 +361,8 @@ void Mesh::setupVertex(Vertex& v)
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 
 	glEnableVertexAttribArray(5);
-	// glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
-	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
+	glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
+	// glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
 
 	glEnableVertexAttribArray(6);
 	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Weights));
