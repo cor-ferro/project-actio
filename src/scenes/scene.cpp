@@ -227,17 +227,17 @@ bool Scene::initFromFile(Resource::File& file)
 		console::info("lightFound: ", lightFound);
 		if (lightFound) {
 			std::string lightTypeKey = iniLightSection + ":Type";
+			std::string lightAmbientKey = iniLightSection + ":Ambient";
+			std::string lightDiffuseKey = iniLightSection + ":Diffuse";
+			std::string lightSpecularKey = iniLightSection + ":Specular";
+			
 			const char * iniLightType = iniparser_getstring(ini, lightTypeKey.c_str(), "");
+			const char * iniLightAmbient = iniparser_getstring(ini, lightAmbientKey.c_str(), "1.0");
+			const char * iniLightDiffuse = iniparser_getstring(ini, lightDiffuseKey.c_str(), "1.0");
+			const char * iniLightSpecular = iniparser_getstring(ini, lightSpecularKey.c_str(), "1.0");
 
 			if (strcmp(iniLightType, "directional") == 0) {
-				std::string lightAmbientKey = iniLightSection + ":Ambient";
-				std::string lightDiffuseKey = iniLightSection + ":Diffuse";
-				std::string lightSpecularKey = iniLightSection + ":Specular";
 				std::string lightDirectionKey = iniLightSection + ":Direction";
-
-				const char * iniLightAmbient = iniparser_getstring(ini, lightAmbientKey.c_str(), "1.0");
-				const char * iniLightDiffuse = iniparser_getstring(ini, lightDiffuseKey.c_str(), "1.0");
-				const char * iniLightSpecular = iniparser_getstring(ini, lightSpecularKey.c_str(), "1.0");
 				const char * iniLightDirection = iniparser_getstring(ini, lightDirectionKey.c_str(), "1.0");
 
 				AG::LightDirectional * light = AG::Light::directional(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
@@ -251,7 +251,50 @@ bool Scene::initFromFile(Resource::File& file)
 				light->setDiffuse(parseVec(iniLightDiffuse));
 				light->setSpecular(parseVec(iniLightSpecular));
 				light->setDirection(parseVec(iniLightDirection));
-				console::info("add light");
+
+				add(light);
+			} else if (strcmp(iniLightType, "point") == 0) {
+				std::string lightPositionKey = iniLightSection + ":Position";
+				std::string lightConstantKey = iniLightSection + ":Constant";
+				std::string lightLinearKey = iniLightSection + ":Linear";
+				std::string lightQuadraticKey = iniLightSection + ":Quadratic";
+				const char * iniLightPosition = iniparser_getstring(ini, lightPositionKey.c_str(), "1.0");
+				const double iniLightConstant = iniparser_getdouble(ini, lightConstantKey.c_str(), 1.0);
+				const double iniLightLinear = iniparser_getdouble(ini, lightLinearKey.c_str(), 0.09);
+				const double iniLightQuadratic = iniparser_getdouble(ini, lightQuadraticKey.c_str(), 0.032);
+
+				AG::LightPoint * light = AG::Light::point(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
+				light->setAmbient(parseVec(iniLightAmbient));
+				light->setDiffuse(parseVec(iniLightDiffuse));
+				light->setSpecular(parseVec(iniLightSpecular));
+				light->setPosition(parseVec(iniLightPosition));
+				light->setAttenuation((float)iniLightConstant, (float)iniLightLinear, (float)iniLightQuadratic);
+
+				add(light);
+			} else if (strcmp(iniLightType, "spot") == 0) {
+				std::string lightPositionKey = iniLightSection + ":Position";
+				std::string lightDirectionKey = iniLightSection + ":Direction";
+				std::string lightConstantKey = iniLightSection + ":Constant";
+				std::string lightLinearKey = iniLightSection + ":Linear";
+				std::string lightQuadraticKey = iniLightSection + ":Quadratic";
+				std::string lightCutOffKey = iniLightSection + ":CutOff";
+				std::string lightOuterCutOff = iniLightSection + ":OuterCutOff";
+				const char * iniLightPosition = iniparser_getstring(ini, lightPositionKey.c_str(), "1.0");
+				const char * iniLightDirection = iniparser_getstring(ini, lightDirectionKey.c_str(), "1.0");
+				const double iniLightConstant = iniparser_getdouble(ini, lightConstantKey.c_str(), 1.0);
+				const double iniLightLinear = iniparser_getdouble(ini, lightLinearKey.c_str(), 0.09);
+				const double iniLightQuadratic = iniparser_getdouble(ini, lightQuadraticKey.c_str(), 0.22);
+				const double iniLightOuterCutOff = iniparser_getdouble(ini, lightOuterCutOff.c_str(), 0.82);
+
+				AG::LightSpot * light = AG::Light::spot(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
+				light->setAmbient(parseVec(iniLightAmbient));
+				light->setDiffuse(parseVec(iniLightDiffuse));
+				light->setSpecular(parseVec(iniLightSpecular));
+				light->setPosition(parseVec(iniLightPosition));
+				light->setDirection(parseVec(iniLightPosition));
+				light->setAttenuation((float)iniLightConstant, (float)iniLightLinear, (float)iniLightQuadratic);
+				light->setCutoff((float)iniLightQuadratic, (float)iniLightOuterCutOff);
+
 				add(light);
 			} else {
 				console::warn("unsupported light type: ", iniLightType);

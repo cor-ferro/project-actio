@@ -22,6 +22,12 @@ out vec3 normal1;
 out vec2 texCoord;
 out mat3 TBN;
 
+out vec3 TangentViewPos;
+out vec3 TangentLightDir;
+out vec3 TangentFragPos;
+
+uniform vec3 viewPos;
+
 uniform mat4 mvp;
 uniform mat4 model;
 
@@ -60,7 +66,10 @@ void main()
 	vec3 T = normalize(vec3(model * vec4(aTangent, 0.0)));
 	vec3 B = normalize(vec3(model * vec4(aBitangent, 0.0)));
 	vec3 N = normalize(vec3(model * vec4(aNormal, 0.0)));
-	TBN = mat3(T, B, N);
+	TBN = transpose(mat3(T, B, N));
+
+	TangentViewPos = TBN * viewPos;
+	TangentFragPos = TBN * fragmentPosition;
 
 	gl_Position = projection * view * vec4(fragmentPosition, 1.0);
 }

@@ -18,7 +18,6 @@ namespace ImageLoader {
 		// 	path.erase(fixPosWow - 16, endPos - fixPosWow + 16 + 4);
 		// }
 
-
 		return loadByIl(path);
 	}
 

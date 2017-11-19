@@ -18,8 +18,8 @@ Texture::~Texture()
 
 Texture Texture::White()
 {
-	ImageLoader::RawData * image = new ImageLoader::RawData[1]{255};
-	ImageLoader::Data imageData(image, 1, 1);
+	ImageLoader::RawData * image = new ImageLoader::RawData[4]{255, 255, 255, 255};
+	ImageLoader::Data imageData(image, 2, 2);
 	imageData.format = GL_RGB;
 
 	Texture texture;
@@ -45,6 +45,7 @@ Texture Texture::loadFromMaterial(aiMaterial * mat, aiTextureType type, const Re
 
 	if (countTextures > 0) {
 		std::string path = assimpResource->getTexturePath(mat, type, 0);
+
 		ImageLoader::Data imageData = ImageLoader::load(path);
 
 		if (!imageData.isReady()) {
@@ -54,7 +55,7 @@ Texture Texture::loadFromMaterial(aiMaterial * mat, aiTextureType type, const Re
 
 		texture.setData(imageData);
 	} else {
-		// console::info("texture", type, "not exist, create empty");
+		console::warn("texture ", type, " not exist, create empty");
 		texture = Texture::White();
 	}
 
