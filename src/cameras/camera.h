@@ -10,15 +10,32 @@
 #include "../lib/types.h"
 #include <iostream>
 
+namespace CameraParam {
+	enum Param {
+		FOV,
+		ASPECT,
+		NEAR,
+		FAR,
+		SPEED,
+		FRICTION,
+		LEFT,
+		RIGHT,
+		TOP,
+		BOTTOM
+	};
+}
+
 struct Camera {
 	Camera();
 	virtual ~Camera();
 
 	virtual void updateProjection() = 0;
+	virtual void setParam(CameraParam::Param, float value) = 0;
+	virtual float getParam(CameraParam::Param) = 0;
 	void lookAt(vec3 target);
 
-	void setFov(float fov);
-	void setAspect(float aspect);
+	void setNear(float near);
+	void setFar(float far);
 	void setPosition(vec3 position);
 	void setPosition(float x, float y, float z);
 	void setRotation(vec3 rotation);
@@ -39,10 +56,8 @@ protected:
 	void updateViewMatrix();
 
 	mat4 projection_;
-
 	vec3 front_;
 	vec3 up_;
-
 	float speed_;
 	float friction_;
 };
@@ -51,6 +66,8 @@ struct PerspectiveCamera : Camera {
 	PerspectiveCamera(float fov, float aspect, float near, float far);
 	~PerspectiveCamera();
 	void updateProjection();
+	void setParam(CameraParam::Param, float value);
+	float getParam(CameraParam::Param);
 private:
 	float fov_;
 	float aspect_;
@@ -62,6 +79,8 @@ struct OrthographicCamera : Camera {
 	OrthographicCamera(float left, float right, float top, float bottom, float near, float far);
 	~OrthographicCamera();
 	void updateProjection();
+	void setParam(CameraParam::Param, float value);
+	float getParam(CameraParam::Param);
 private:
 	float left_;
 	float right_;

@@ -21,9 +21,22 @@ typedef std::vector<std::shared_ptr<Mesh>> ModelMeshes;
 static size_t idCounter = 0;
 static ModelId newId()
 {
-	console::info("create id");
 	return ++idCounter;
 }
+
+struct ModelConfig {
+	ModelConfig();
+	ModelConfig(const ModelConfig& other);
+
+	std::string name;
+	Resource::File file;
+	bool flipUv;
+	vec3 position;
+	vec3 rotation;
+	float rotationAngle;
+	vec3 scale;
+	std::string animation;
+};
 
 struct ModelNode {
 	ModelNode();
@@ -40,7 +53,8 @@ struct ModelNode {
 
 struct Model {
 	Model();
-	Model(Resource::File);
+	// Model(Resource::File);
+	Model(ModelConfig& modelConfig);
 	Model(Mesh * mesh);
 	Model(const Model& model);
 	~Model();
@@ -53,6 +67,7 @@ struct Model {
 	
 	void scale(vec3 scale);
 	void rotate(vec3 rotate, float angle);
+	void position(vec3 position);
 
 	void setCurrentAnimation(std::string animationName);
 	void addAnimation(const Animation *);
@@ -60,6 +75,9 @@ struct Model {
 	void processCurrentAnimation();
 	void processAnimation(AnimationProcess& animationProcess);
 	void processNodeAnimation(ModelNode * node, const Animation * const animation, mat4& transform, double tick);
+
+	void enableAnimIterpolation();
+	void disableAnimIterpolation();
 
 	const ModelMeshes& getMeshes();
 	Mesh * getFirstMesh();
@@ -80,6 +98,7 @@ private:
 	ModelId id_;
 	ModelMeshes meshes_;
 	ModelNode * rootNode_;
+	bool animInterpolation_;
 	std::unordered_map<std::string, std::shared_ptr<const ModelNode>> nodes_;
 	std::unordered_map<std::string, std::shared_ptr<const Animation>> animations_;
 };

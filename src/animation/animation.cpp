@@ -105,7 +105,7 @@ const AnimKey NodeAnimation::findRotation(double time, bool interpolate) const
 
     if (interpolate == true) {
         auto nextIt = std::next(it, 1);
-        if (nextIt == positions.end()) return it->second;
+        if (nextIt == rotations.end()) return it->second;
 
         return interpolateKey(it->second, nextIt->second, time);
     }
@@ -121,7 +121,7 @@ const AnimKey NodeAnimation::findScale(double time, bool interpolate) const
 
     if (interpolate == true) {
         auto nextIt = std::next(it, 1);
-        if (nextIt == positions.end()) return it->second;
+        if (nextIt == scalings.end()) return it->second;
 
         return interpolateKey(it->second, nextIt->second, time);
     }

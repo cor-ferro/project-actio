@@ -95,6 +95,7 @@ Mesh::Mesh(const Mesh& other)
 	geometry = other.geometry;
 	isSetupReady = other.isSetupReady;
 	bones = other.bones;
+	transforms = other.transforms;
 }
 
 Mesh::~Mesh()
@@ -128,6 +129,7 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 
 	if (mesh->mNumBones > 0) {
 		console::info("bones count: ", mesh->mNumBones);
+		transforms.reserve(mesh->mNumBones);
 		GeometryVertices * vertices = geometry.getVertices();
 		const int verticesCount = vertices->size();
 
@@ -146,6 +148,8 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 			bones.insert(
 				std::pair<std::string, MeshBone>(boneName, meshBone)
 			);
+
+			transforms.push_back(mat4(0.0f));
 			
 			// console::info("bone ", boneName, " ", bone->mNumWeights);
 			for (unsigned int j = 0; j < bone->mNumWeights; j++) {
@@ -261,20 +265,9 @@ void Mesh::draw(Opengl::Program &program)
 
 	if (bones.size() > 0) {
 		boneTransformType = "BoneTransformEnabled";
-		std::unique_ptr<std::vector<mat4>> boneTransforms(new std::vector<mat4>());
-		boneTransforms->reserve(bones.size());
+		std::vector<mat4> * boneTransforms = &transforms;
 
-		for (unsigned int i = 0; i < bones.size(); i++) {
-			boneTransforms->push_back(mat4(0.0));
-		}
-
-		for (auto it = bones.begin(); it != bones.end(); it++) {
-			MeshBone& bone = it->second;
-
-			boneTransforms->at(bone.getIndex()) = bone.getTransform();
-		}
-
-		program.setMat("bones[]", boneTransforms.get());
+		program.setMat("bones[]", boneTransforms);
 	} else {
 		boneTransformType = "BoneTransformDisabled";
 	}

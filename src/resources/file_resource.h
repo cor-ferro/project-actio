@@ -15,7 +15,9 @@
 namespace Resource {
 
 	struct File {
+		File();
 		File(std::string path);
+		File(const File& other);
 		~File();
 
 		std::string getPath();

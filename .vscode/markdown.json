@@ -1,0 +1,9 @@
+{
+    "Console::info": {
+        "prefix": "cli",
+        "body": [
+            "console::info($0);"
+        ],
+        "description": "For Loop"
+    }
+}

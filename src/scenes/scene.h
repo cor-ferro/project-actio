@@ -6,7 +6,12 @@
 #include <assimp/postprocess.h>
 #include <vector>
 #include <string>
-#include "./scene_context_loader.h"
+#include <sstream>
+#include <iostream>
+#include "iniparser/src/iniparser.h"
+#include "iniparser/src/dictionary.h"
+#include "../ag.h"
+#include "../resources/resources.h"
 #include "../core/model.h"
 #include "../cameras/camera.h"
 #include "../lights/direction_light.h"
@@ -21,7 +26,7 @@
 struct Scene {
 	Scene();
 
-	bool testInit();
+	bool initFromFile(Resource::File& file);
 	bool init();
 	std::vector<Model*>* getModels();
 	
@@ -64,6 +69,6 @@ private:
 	Camera * camera_;
 };
 
-
+vec3 parseVec(const char * str);
 
 #endif

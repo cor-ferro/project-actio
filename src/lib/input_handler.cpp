@@ -137,8 +137,8 @@ void InputHandler::setWinSize(int width, int height)
 	winWidth = width;
 	winHeight = height;
 
-	console::info("winWidth", winWidth);
-	console::info("winHeight", winHeight);
+	console::info("window width ", winWidth);
+	console::info("window height ", winHeight);
 }
 
 void InputHandler::pointerToCenter() {

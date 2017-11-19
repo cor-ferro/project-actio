@@ -1,59 +1,265 @@
 #include "scene.h"
 
+vec3 parseVec(const char * chars) {
+	std::string str(chars);
+	const char delimiter = ',';
+	std::string part = "";
+	std::vector<std::string> parts;	
+
+	for (auto it = str.begin(); it != str.end(); it++) {
+		if ((*it) != delimiter) {
+			part+= (*it);
+		} else {
+			parts.push_back(part);
+			part = "";
+		}
+	}
+
+	if (part != "") {
+		parts.push_back(part);
+	}
+
+	if (parts.size() == 1) {
+		return vec3(std::stof(parts[0]));
+	} else if (parts.size() == 3) {
+		
+		return vec3(
+			std::stof(parts[0]),
+			std::stof(parts[1]),
+			std::stof(parts[2])
+		);
+	} else {
+		return vec3(0.0f);
+	}
+
+	return vec3(0.0f);
+}
+
 Scene::Scene()
 {
 	allocCameras(5);
 	allocLights(5);
 }
 
-bool Scene::testInit()
+bool Scene::initFromFile(Resource::File& file)
 {
-//	const std::string pFile = App::instance().resourcePath("nanosuit/nanosuit.obj");
-//	const std::string pFile = App::instance().resourcePath("airboat.obj");
-//	const std::string pFile = App::instance().resourcePath("monkey2.obj");
-//	const std::string pFile = App::instance().resourcePath("spider.obj");
-//	const std::string pFile = App::instance().resourcePath("buddha/buddha.obj");
-//	const std::string pFile = App::instance().resourcePath("bunny/bunny.obj");
-//	const std::string pFile = App::instance().resourcePath("sponza/sponza.obj");
-//	const std::string pFile = App::instance().resourcePath("sponza2/sponza.obj");
-//	const std::string pFile = App::instance().resourcePath("serapis/serapis.stl");
+	dictionary * ini = iniparser_load(file.getPath().c_str());
+	
+	const char * iniModels = iniparser_getstring(ini, "scene:models", "");
+	const char * iniLights = iniparser_getstring(ini, "scene:lights", "");
+	const char * iniSkybox = iniparser_getstring(ini, "scene:skybox", "");
+	const char * iniCamera = iniparser_getstring(ini, "scene:camera", "");
+	
+	console::info(" ");
 
-//	console::info("pFile", pFile);
-//
-//	Assimp::Importer importer;
-//	SceneContextLoader *sceneContextLoader = new SceneContextLoader();
-//
-//	console::info("start read scene");
-//
-//	const aiScene* scene = importer.ReadFile(pFile,
-//		aiProcess_CalcTangentSpace |
-//		aiProcess_Triangulate |
-//		aiProcess_JoinIdenticalVertices |
-//		aiProcess_SortByPType |
-//		aiProcess_GenNormals
-//	);
-//
-//	console::info("scene ready");
-//
-//	if(!scene)
-//	{
-//		console::err(importer.GetErrorString());
-//		return false;
-//	}
-//
-////	sceneContextLoader->setScene(scene);
-//	sceneContextLoader->setBaseFilePath(App::instance().resourcePath("nanosuit"));
-//
-//	allocModels(1);
-//
-//	Model * modelBox = new Model(scene);
-//	add(modelBox);
-//
-//	importer.FreeScene();
-//
-//	console::info("scene test init success");
+	std::vector<ModelConfig> * modelConfigs = new std::vector<ModelConfig>();
+	Model * skyboxModel = nullptr;
 
-	init();
+	std::istringstream models(iniModels);
+	std::string model;
+	while (getline(models, model, ' ')) {
+		console::info("scene model: ", model);
+		std::string iniModelSection("model.");
+		iniModelSection+= model;
+
+		int modelFound = iniparser_find_entry(ini, iniModelSection.c_str());
+
+		if (modelFound) {
+			std::string modelFileKey = iniModelSection + ":File";
+			std::string modelFlipUvKey = iniModelSection + ":FlipUv";
+			std::string modelPositionKey = iniModelSection + ":Position";
+			std::string modelRotationKey = iniModelSection + ":Rotation";
+			std::string modelRotationAngleKey = iniModelSection + ":RotationAngle";
+			std::string modelScaleKey = iniModelSection + ":Scale";
+			std::string modelAnimationKey = iniModelSection + ":Animation";
+
+			const char * iniModelFile = iniparser_getstring(ini, modelFileKey.c_str(), "");
+			const int iniModelFlipUv = iniparser_getboolean(ini, modelFlipUvKey.c_str(), 0);
+			const char * iniModelPosition = iniparser_getstring(ini, modelPositionKey.c_str(), "0.0");
+			const char * iniModelRotation = iniparser_getstring(ini, modelRotationKey.c_str(), "1.0");
+			const double iniModelRotationAngle = iniparser_getdouble(ini, modelRotationAngleKey.c_str(), 0.0);
+			const char * iniModelScale = iniparser_getstring(ini, modelScaleKey.c_str(), "1.0");
+			const char * iniModelAnimation = iniparser_getstring(ini, modelAnimationKey.c_str(), "");
+
+			ModelConfig modelConfig;
+			modelConfig.name = model;
+			modelConfig.file = Resource::File(iniModelFile);
+			modelConfig.flipUv = iniModelFlipUv;
+			modelConfig.position = parseVec(iniModelPosition);
+			modelConfig.rotation = parseVec(iniModelRotation);
+			modelConfig.rotationAngle = (float)iniModelRotationAngle;
+			modelConfig.scale = parseVec(iniModelScale);
+			modelConfig.animation = std::string(iniModelAnimation);
+
+			modelConfigs->push_back(modelConfig);
+		} else {
+			console::warn("ini model not found: ", iniModelSection);
+		}
+	}
+
+	unsigned int modelsCount = 0;
+	modelsCount+= modelConfigs->size();
+
+	allocModels(modelsCount);
+
+	for (auto it = modelConfigs->begin(); it != modelConfigs->end(); it++) {
+		ModelConfig& modelConfig = (*it);
+		Model * model = AG::Models::create(modelConfig); // @todo: удалять модель
+
+		add(model);
+	}
+
+	std::string skybox(iniSkybox);
+	if (skybox != "") {
+		std::string skyboxSection("skybox.");
+		skyboxSection+= skybox;
+
+		int skyboxFound = iniparser_find_entry(ini, skyboxSection.c_str());
+
+		if (skyboxFound) {
+			std::string iniSkyboxPositiveXKey = skyboxSection + ":PositiveX";
+			std::string iniSkyboxNegativeXKey = skyboxSection + ":NegativeX";
+			std::string iniSkyboxPositiveYKey = skyboxSection + ":PositiveY";
+			std::string iniSkyboxNegativeYKey = skyboxSection + ":NegativeY";
+			std::string iniSkyboxPositiveZKey = skyboxSection + ":PositiveZ";
+			std::string iniSkyboxNegativeZKey = skyboxSection + ":NegativeZ";
+
+			const char * iniSkyboxPositiveX = iniparser_getstring(ini, iniSkyboxPositiveXKey.c_str(), "");
+			const char * iniSkyboxNegativeX = iniparser_getstring(ini, iniSkyboxNegativeXKey.c_str(), "");
+			const char * iniSkyboxPositiveY = iniparser_getstring(ini, iniSkyboxPositiveYKey.c_str(), "");
+			const char * iniSkyboxNegativeY = iniparser_getstring(ini, iniSkyboxNegativeYKey.c_str(), "");
+			const char * iniSkyboxPositiveZ = iniparser_getstring(ini, iniSkyboxPositiveZKey.c_str(), "");
+			const char * iniSkyboxNegativeZ = iniparser_getstring(ini, iniSkyboxNegativeZKey.c_str(), "");
+
+			std::vector<Resource::File> skyboxFaces = {
+				Resource::File(iniSkyboxPositiveX),
+				Resource::File(iniSkyboxNegativeX),
+				Resource::File(iniSkyboxPositiveY),
+				Resource::File(iniSkyboxNegativeY),
+				Resource::File(iniSkyboxPositiveZ),
+				Resource::File(iniSkyboxNegativeZ),
+			};
+
+			skyboxModel = AG::Models::skybox(skyboxFaces); // @todo: удаление
+			setSkybox(skyboxModel);
+		}
+	}
+
+	std::string camera(iniCamera);
+	if (camera != "") {
+		std::string cameraSection("camera.");
+		cameraSection+= camera;
+
+		int cameraFound = iniparser_find_entry(ini, cameraSection.c_str());
+
+		if (cameraFound) {
+			std::string iniCameraTypeKey = cameraSection + ":Type";
+			std::string iniCameraPositionKey = cameraSection + ":Position";
+			std::string iniCameraTargetKey = cameraSection + ":Target";
+			std::string iniCameraNearKey = cameraSection + ":Near";
+			std::string iniCameraFarKey = cameraSection + ":Far";
+			const char * iniCameraType = iniparser_getstring(ini, iniCameraTypeKey.c_str(), "");
+			const char * iniCameraPosition = iniparser_getstring(ini, iniCameraPositionKey.c_str(), "0.0");
+			const char * iniCameraTarget = iniparser_getstring(ini, iniCameraTargetKey.c_str(), "-3.0");
+			const double iniCameraNear = iniparser_getdouble(ini, iniCameraNearKey.c_str(), 0.1);
+			const double iniCameraFar = iniparser_getdouble(ini, iniCameraFarKey.c_str(), 100.0);
+
+			if (strcmp(iniCameraType, "perspective") == 0) {
+				std::string iniCameraFovKey = cameraSection + ":Fov";
+				std::string iniCameraAspectRatioKey = cameraSection + ":AspectRatio";
+
+				const double iniCameraFov = iniparser_getdouble(ini, iniCameraFovKey.c_str(), 45.0);
+				const double iniCameraAspectRatio = iniparser_getdouble(ini, iniCameraAspectRatioKey.c_str(), 1.77);
+				
+
+				PerspectiveCamera * camera = AG::createPerspectiveCamera( // @todo: удалять
+					(float)iniCameraFov, 
+					(float)iniCameraAspectRatio, 
+					(float)iniCameraNear, 
+					(float)iniCameraFar
+				);
+
+				camera->setPosition(parseVec(iniCameraPosition));
+				camera->lookAt(camera->getPosition() + parseVec(iniCameraTarget));
+
+				setActiveCamera(camera);
+			}
+			else if (strcmp(iniCameraType, "ortho") == 0) {
+				std::string iniCameraLeftKey = cameraSection + ":Left";
+				std::string iniCameraRightKey = cameraSection + ":Right";
+				std::string iniCameraTopKey = cameraSection + ":Top";
+				std::string iniCameraBottomKey = cameraSection + ":Bottom";
+
+				const double iniCameraLeft = iniparser_getdouble(ini, iniCameraLeftKey.c_str(), 45.0);
+				const double iniCameraRight = iniparser_getdouble(ini, iniCameraRightKey.c_str(), 1.77);
+				const double iniCameraTop = iniparser_getdouble(ini, iniCameraTopKey.c_str(), 0.1);
+				const double iniCameraBottom = iniparser_getdouble(ini, iniCameraBottomKey.c_str(), 100.0);
+
+				OrthographicCamera * camera = AG::createOrthographicCamera( // @todo: удалять
+					(float)iniCameraLeft,
+					(float)iniCameraRight,
+					(float)iniCameraTop,
+					(float)iniCameraBottom,
+					(float)iniCameraNear, 
+					(float)iniCameraFar
+				);
+
+				camera->setPosition(parseVec(iniCameraPosition));
+				camera->lookAt(camera->getPosition() + parseVec(iniCameraTarget));
+
+				setActiveCamera(camera);
+			} else {
+				console::warn("unsupported camera type: ", iniCameraType);
+			}
+		} else {
+			console::warn("required scene camera");
+		}
+	}
+
+	std::istringstream lights(iniLights);
+	std::string light;
+	while (getline(lights, light, ' ')) {
+		console::info("scene light: ", light);
+		std::string iniLightSection("light.");
+		iniLightSection+= light;
+
+		int lightFound = iniparser_find_entry(ini, iniLightSection.c_str());
+		console::info("lightFound: ", lightFound);
+		if (lightFound) {
+			std::string lightTypeKey = iniLightSection + ":Type";
+			const char * iniLightType = iniparser_getstring(ini, lightTypeKey.c_str(), "");
+
+			if (strcmp(iniLightType, "directional") == 0) {
+				std::string lightAmbientKey = iniLightSection + ":Ambient";
+				std::string lightDiffuseKey = iniLightSection + ":Diffuse";
+				std::string lightSpecularKey = iniLightSection + ":Specular";
+				std::string lightDirectionKey = iniLightSection + ":Direction";
+
+				const char * iniLightAmbient = iniparser_getstring(ini, lightAmbientKey.c_str(), "1.0");
+				const char * iniLightDiffuse = iniparser_getstring(ini, lightDiffuseKey.c_str(), "1.0");
+				const char * iniLightSpecular = iniparser_getstring(ini, lightSpecularKey.c_str(), "1.0");
+				const char * iniLightDirection = iniparser_getstring(ini, lightDirectionKey.c_str(), "1.0");
+
+				AG::LightDirectional * light = AG::Light::directional(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
+
+				console::info("iniLightAmbient: ", iniLightAmbient);
+				console::info("iniLightDiffuse: ", iniLightDiffuse);
+				console::info("iniLightSpecular: ", iniLightSpecular);
+				console::info("iniLightDirection: ", iniLightDirection);
+
+				light->setAmbient(parseVec(iniLightAmbient));
+				light->setDiffuse(parseVec(iniLightDiffuse));
+				light->setSpecular(parseVec(iniLightSpecular));
+				light->setDirection(parseVec(iniLightDirection));
+				console::info("add light");
+				add(light);
+			} else {
+				console::warn("unsupported light type: ", iniLightType);
+			}
+		}
+	}
+
+	iniparser_freedict(ini);
 
 	return true;
 }

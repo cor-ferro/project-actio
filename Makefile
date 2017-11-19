@@ -19,6 +19,7 @@ LDFLAGS_BUILD  	=\
 				-Lvendor/entityx/ \
 				-Lvendor/DevIL/DevIL/build/lib/x64 \
 				vendor/soil/lib/libSOIL.a \
+				vendor/iniparser/libiniparser.a \
 				-Wl,-Bstatic -lassimp -lentityx -lSOIL -lboost_thread -lboost_system -lboost_timer -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_regex -pthread \
 				-Wl,-Bdynamic -lglut -lGL -lGLU -lGLEW -lz -lIL -lILU -lILUT
 

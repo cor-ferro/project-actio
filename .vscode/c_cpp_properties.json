@@ -8,6 +8,7 @@
                 "${workspaceRoot}/vendor/assimp/include",
                 "${workspaceRoot}/vendor/DevIL/DevIL/include",
                 "${workspaceRoot}/vendor/glm",
+                "${workspaceRoot}/vendor/iniparser/src",
                 "${workspaceRoot}/vendor/soil/src"
             ],
             "defines": [],
@@ -20,6 +21,7 @@
                     "${workspaceRoot}/vendor/assimp/include",
                     "${workspaceRoot}/vendor/DevIL/DevIL/include",
                     "${workspaceRoot}/vendor/glm",
+                    "${workspaceRoot}/vendor/iniparser/src",
                     "${workspaceRoot}/vendor/soil/src"
                 ],
                 "limitSymbolsToIncludedHeaders": true,

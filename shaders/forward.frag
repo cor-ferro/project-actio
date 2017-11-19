@@ -154,18 +154,16 @@ void main()
 	vec3 viewDir = normalize(viewPos - fragmentPosition);
 	vec3 result = vec3(0.0);
 
-	result+= vec3(texture(diffuseTexture, texCoord));
-
 	for(int i = 0; i < countDirLights; i++)
 		result += CalcDirLight(dirLights[i], norm, viewDir);
 
-	for(int i = 0; i < countPointLights; i++)
-		result += CalcPointLight(pointLights[i], norm, fragmentPosition, viewDir);
+	// for(int i = 0; i < countPointLights; i++)
+	// 	result += CalcPointLight(pointLights[i], norm, fragmentPosition, viewDir);
 		
-	for(int i = 0; i < countSpotLights; i++)
-		result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
+	// for(int i = 0; i < countSpotLights; i++)
+	// 	result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
 
-	result+= material.ambient + material.diffuse + material.specular;
+	//result+= material.ambient + material.diffuse + material.specular;
 
 	vec3 skyboxReflect = reflect(viewDir, normalize(normal));
 

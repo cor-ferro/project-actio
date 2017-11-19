@@ -61,7 +61,6 @@ void Camera::updateViewMatrix()
 
 	transM = glm::translate(mat4(1.0f), position_ * -1.0f);
 
-//	view_ = glm::lookAt(position_, position_ + front_, up_);
 	view_ = rotM * transM; // for 3d person reverse operands
 }
 
@@ -74,10 +73,10 @@ mat4& Camera::getProjection() { return projection_; }
 
 
 PerspectiveCamera::PerspectiveCamera(float fov, float aspect, float near, float far)
-: fov_(fov),
-  aspect_(aspect),
-  near_(near),
-  far_(far)
+	: fov_(fov)
+	, aspect_(aspect)
+	, near_(near)
+	, far_(far)
 {
 	updateProjection();
 }
@@ -89,15 +88,35 @@ void PerspectiveCamera::updateProjection()
 	projection_ = glm::perspective(glm::radians(fov_), aspect_, near_, far_);
 }
 
+void PerspectiveCamera::setParam(CameraParam::Param param, float value)
+{
+	switch (param) {
+		case CameraParam::FOV: 		fov_ = value; break;
+		case CameraParam::ASPECT: 	aspect_ = value; break;
+		case CameraParam::NEAR: 	near_ = value; break;
+		case CameraParam::FAR: 		far_ = value; break;
+	}
+}
+
+float PerspectiveCamera::getParam(CameraParam::Param param)
+{
+	switch (param) {
+		case CameraParam::FOV: 		return fov_;
+		case CameraParam::ASPECT: 	return aspect_;
+		case CameraParam::NEAR: 	return near_;
+		case CameraParam::FAR: 		return far_;
+	}
+}
+
 
 
 OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top, float near, float far)
-: left_(left),
-  right_(right),
-  bottom_(bottom),
-  top_(top),
-  near_(near),
-  far_(far)
+	: left_(left)
+	, right_(right)
+	, bottom_(bottom)
+	, top_(top)
+	, near_(near)
+	, far_(far)
 {
 	updateProjection();
 }
@@ -109,4 +128,26 @@ void OrthographicCamera::updateProjection()
 	projection_ = glm::ortho(left_, right_, bottom_, top_, near_, far_);
 }
 
+void OrthographicCamera::setParam(CameraParam::Param param, float value)
+{
+	switch (param) {
+		case CameraParam::LEFT: left_ = value; break;
+		case CameraParam::RIGHT: right_ = value; break;
+		case CameraParam::TOP: top_ = value; break;
+		case CameraParam::BOTTOM: bottom_ = value; break;
+		case CameraParam::NEAR: near_ = value; break;
+		case CameraParam::FAR: far_ = value; break;
+	}
+}
 
+float OrthographicCamera::getParam(CameraParam::Param param)
+{
+	switch (param) {
+		case CameraParam::LEFT: 	return left_;
+		case CameraParam::RIGHT: 	return right_;
+		case CameraParam::TOP: 		return top_;
+		case CameraParam::BOTTOM: 	return bottom_;
+		case CameraParam::NEAR: 	return near_;
+		case CameraParam::FAR: 		return far_;
+	}
+}

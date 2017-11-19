@@ -2,6 +2,28 @@
 
 // #define THREAD_INIT_AI_
 
+ModelConfig::ModelConfig()
+	: name("")
+	, flipUv(false)
+	, position(vec3(0.0f))
+	, rotation(vec3(1.0f))
+	, rotationAngle(0.0f)
+	, scale(vec3(1.0f))
+	, animation("")
+{}
+
+ModelConfig::ModelConfig(const ModelConfig& other)
+{
+	name = other.name;
+	file = other.file;
+	flipUv = other.flipUv;
+	position = other.position;
+	rotation = other.rotation;
+	rotationAngle = other.rotationAngle;
+	scale = other.scale;
+	animation = other.animation;
+}
+
 ModelNode::ModelNode() 
 	: name("")
 	{}
@@ -26,6 +48,7 @@ void ModelNode::addNode(ModelNode * node)
 }
 
 Model::Model()
+	: animInterpolation_(true)
 {
 	createId();
 	allocMeshes(0);
@@ -39,9 +62,11 @@ Model::Model(const Model& other)
 	meshes_ = other.meshes_;
 	nodes_ = other.nodes_;
 	animations_ = other.animations_;
+	animInterpolation_ = other.animInterpolation_;
 }
 
 Model::Model(Mesh * mesh)
+	: animInterpolation_(true)
 {
 	allocMeshes(1);
 	mesh->setup();
@@ -49,12 +74,18 @@ Model::Model(Mesh * mesh)
 	addMesh(mesh);
 }
 
-Model::Model(Resource::File fileResource)
+Model::Model(ModelConfig& config)
+	: animInterpolation_(true)
 {
 	Assimp::Importer importer;
 
-	std::string pFile = fileResource.getPath();
-	unsigned int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_Triangulate/* | aiProcess_FlipUVs*/;
+	std::string pFile = config.file.getPath();
+	unsigned int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_Triangulate;
+
+	if (config.flipUv) {
+		flags|= aiProcess_FlipUVs;
+	}
+
 	const aiScene * scene = importer.ReadFile(pFile, flags);
 	const Resource::Assimp * assimpResource = new Resource::Assimp(scene, pFile);
 
@@ -74,18 +105,6 @@ Model::Model(Resource::File fileResource)
 			const Animation * animation = new Animation(scene->mAnimations[i]);
 			addAnimation(animation);
 		}
-
-		if (animations_.size() > 0) {
-			// setCurrentAnimation("idle");
-			setCurrentAnimation("Armature|soco baixo combo direito pesada 81");
-			// setCurrentAnimation("test_arm|test_arm|test_arm|motion_bone|test_arm|motion_bone");
-			// auto it = animations_.begin();
-
-			// if (it != animations_.end()) {
-			// 	setCurrentAnimation(it->second->getName());
-			// 	console::info("+++++ set current animation +++++ ", it->second->getName());
-			// }
-		}
 	} else {
 		console::warn("no animations");
 	}
@@ -94,11 +113,16 @@ Model::Model(Resource::File fileResource)
 	console::info("meshes", scene->mNumMeshes);
 
 	createId();
-	console::info("alloc meshes");
 	allocMeshes(0);
-	console::info("init from ai");
 	initFromAi(assimpResource);
-	console::info("init from ai done");
+
+	position(config.position);
+	rotate(config.rotation, config.rotationAngle);
+	scale(config.scale);
+
+	if (config.animation != "") {
+		setCurrentAnimation(config.animation);
+	}
 
 	importer.FreeScene();
 	delete assimpResource;
@@ -215,18 +239,35 @@ Mesh * Model::getFirstMesh()
 	return meshes_.at(0).get();
 }
 
-void Model::scale(vec3 scale) {
+void Model::scale(vec3 scale)
+{
 	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
 	{
 		(*mesh)->setScale(scale);
 	}
 }
 
-void Model::rotate(vec3 rotate, float angle) {
+void Model::rotate(vec3 rotate, float angle)
+{
 	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
 	{
 		(*mesh)->rotate(rotate, angle);
 	}
+}
+
+void Model::position(vec3 position)
+{
+	// @todo
+}
+
+void Model::enableAnimIterpolation()
+{
+	animInterpolation_ = true;
+}
+
+void Model::disableAnimIterpolation()
+{
+	animInterpolation_ = false;
 }
 
 void Model::setCurrentAnimation(std::string animationName)
@@ -288,19 +329,22 @@ void Model::processNodeAnimation(ModelNode * node, const Animation * animation, 
 	const NodeAnimation * nodeAnim = animation->findNode(node->name);
 
 	if (nodeAnim != nullptr) {
-		const AnimKey positionKey = nodeAnim->findPosition(tick, true);
-		const AnimKey& rotateKey = nodeAnim->findRotation(tick, true);
-		const AnimKey& scaleKey = nodeAnim->findScale(tick, true);
+		const AnimKey positionKey = nodeAnim->findPosition(tick, animInterpolation_);
+		const AnimKey rotateKey = nodeAnim->findRotation(tick, animInterpolation_);
+		const AnimKey scaleKey = nodeAnim->findScale(tick, animInterpolation_);
 
 		mat4 newRootTransform(rootTransform * positionKey.value * rotateKey.value * scaleKey.value);
 
-		// @todo: мы проходимся по всем мешам в поиске нужных костей - оптимизировать обход
+		// // @todo: мы проходимся по всем мешам в поиске нужных костей - оптимизировать обход
 		for (auto it = meshes_.begin(); it != meshes_.end(); it++) {
-			auto boneIt = (*it)->bones.find(node->name);
+			Mesh * mesh = (*it).get();
+			auto boneIt = mesh->bones.find(node->name);
 
-			if (boneIt != (*it)->bones.end()) {
-				mat4 finalTransform = newRootTransform * boneIt->second.getOffset();
-				boneIt->second.setTransform(finalTransform);
+			if (boneIt != mesh->bones.end()) {
+				MeshBone& bone = boneIt->second;
+				mat4 finalTransform = newRootTransform * bone.getOffset();
+				bone.setTransform(finalTransform);
+				mesh->transforms.at(bone.getIndex()) = finalTransform;
 			}
 		}
 		

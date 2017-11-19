@@ -84,6 +84,7 @@ struct Mesh : Object3D {
 	#endif
 
 	std::unordered_map<std::string, MeshBone> bones;
+	std::vector<mat4> transforms;
 
 	PhongMaterial material;
 	Geometry geometry;

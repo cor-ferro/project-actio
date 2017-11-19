@@ -12,7 +12,6 @@
 #include "./core/mesh.h"
 #include "./core/geometry.h"
 #include "./cameras/camera.h"
-#include "./scenes/scene.h"
 #include "./materials/material.h"
 #include "./lights/direction_light.h"
 #include "./lights/point_light.h"
@@ -31,11 +30,12 @@ namespace AG
 	typedef Renderer::Light::Point LightPoint;
 	typedef Renderer::Light::Spot LightSpot;
 
-	Scene * createScene();
 	PerspectiveCamera * createPerspectiveCamera(float, float, float, float);
+	OrthographicCamera * createOrthographicCamera(float, float, float, float, float, float);
 
 	namespace Models {
-		Model * create(Resource::File);
+		// Model * create(Resource::File);
+		Model * create(ModelConfig& modelConfig);
 		Model * skybox(std::vector<Resource::File> faces);
 	}
 

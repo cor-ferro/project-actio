@@ -2,19 +2,22 @@
 
 namespace AG
 {
-	Scene * createScene()
-	{
-		return new Scene();
-	}
-
 	PerspectiveCamera * createPerspectiveCamera(float fov, float aspect, float near, float far)
 	{
 		return new PerspectiveCamera(fov, aspect, near, far);
 	}
 
+	OrthographicCamera * createOrthographicCamera(float left, float right, float bottom, float top, float near, float far) {
+		return new OrthographicCamera(left, right, bottom, top, near, far);
+	}
+
 	namespace Models {
-		Model * create(Resource::File fileResource) {
-			return new Model(fileResource);
+		// Model * create(Resource::File fileResource) {
+		// 	return new Model(fileResource);
+		// }
+
+		Model * create(ModelConfig& modelConfig) {
+			return new Model(modelConfig);
 		}
 
 		Model * skybox(std::vector<Resource::File> faces) {
