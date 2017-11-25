@@ -145,9 +145,9 @@ void OpenglRenderer::forwardRender()
 		forwardProgram.setInt("cubeTexture", maxTextureUnits - 1);
 	}
 
-	std::vector<Renderer::Light::Directional*> * dirLights = scene->getDirectionalLights();
-	std::vector<Renderer::Light::Point*> * pointLights = scene->getPointLights();
-	std::vector<Renderer::Light::Spot*> * spotLights = scene->getSpotLights();
+	std::vector<Light::Directional*> * dirLights = scene->getDirectionalLights();
+	std::vector<Light::Point*> * pointLights = scene->getPointLights();
+	std::vector<Light::Spot*> * spotLights = scene->getSpotLights();
 
 	int dirLightIndex = 0;
 	for (auto dirLight = dirLights->begin(); dirLight != dirLights->end(); ++dirLight)

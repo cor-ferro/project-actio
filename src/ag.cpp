@@ -179,19 +179,19 @@ namespace AG
 	}
 
 	namespace Light {
-		LightDirectional * directional(vec3 ambient, vec3 diffuse, vec3 specular)
+		::Light::Directional * directional(vec3 ambient, vec3 diffuse, vec3 specular)
 		{
-			return new Renderer::Light::Directional(ambient, diffuse, specular);
+			return new ::Light::Directional(ambient, diffuse, specular);
 		}
 
-		LightPoint * point(vec3 ambient, vec3 diffuse, vec3 specular)
+		::Light::Point * point(vec3 position, vec3 ambient, vec3 diffuse, vec3 specular)
 		{
-			return new Renderer::Light::Point(ambient, diffuse, specular);
+			return new ::Light::Point(position, ambient, diffuse, specular);
 		}
 
-		LightSpot * spot(vec3 ambient, vec3 diffuse, vec3 specular)
+		::Light::Spot * spot(vec3 ambient, vec3 diffuse, vec3 specular)
 		{
-			return new Renderer::Light::Spot(ambient, diffuse, specular);
+			return new ::Light::Spot(ambient, diffuse, specular);
 		}
 	}
 }

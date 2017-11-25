@@ -26,10 +26,6 @@ namespace AG
 	typedef RenderHelpers::Arrow HelperArrow;
 	typedef RenderHelpers::CameraOrientation HelperCameraOrientation;
 
-	typedef Renderer::Light::Directional LightDirectional;
-	typedef Renderer::Light::Point LightPoint;
-	typedef Renderer::Light::Spot LightSpot;
-
 	PerspectiveCamera * createPerspectiveCamera(float, float, float, float);
 	OrthographicCamera * createOrthographicCamera(float, float, float, float, float, float);
 
@@ -54,9 +50,9 @@ namespace AG
 	}
 
 	namespace Light {
-		LightDirectional * directional(vec3, vec3, vec3);
-		LightPoint * point(vec3, vec3, vec3);
-		LightSpot * spot(vec3, vec3, vec3);
+		::Light::Directional * directional(vec3, vec3, vec3);
+		::Light::Point * point(vec3, vec3, vec3, vec3);
+		::Light::Spot * spot(vec3, vec3, vec3);
 	}
 }
 

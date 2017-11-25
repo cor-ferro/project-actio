@@ -16,6 +16,7 @@
 #include "./lights/direction_light.h"
 #include "./core/model.h"
 #include "./helpers/arrow_helper.h"
+#include "./helpers/point_light_helper.h"
 #include "./helpers/camera_orientation_helper.h"
 #include "./resources/resources.h"
 
@@ -45,15 +46,16 @@ int main(int argc, char **argv) {
 	std::shared_ptr<AG::HelperArrow> arrowHelper(AG::Helper::arrow(vec3(0.0f), vec3(1.0f, 0.0f, 0.0f), 1.0f));
 	std::shared_ptr<AG::HelperCameraOrientation> cameraOrientationHelper(AG::Helper::cameraOrientation(vec3(0.0f), vec3(1.0f, 0.0f, 0.0f), 1.0f));
 
-	std::shared_ptr<AG::LightDirectional> light(AG::Light::directional(vec3(1.0f), vec3(1.0f), vec3(1.0f)));
+	std::shared_ptr<Light::Point> light(AG::Light::point(vec3(1.0f), vec3(1.0f), vec3(1.0f), vec3(1.0f)));
 
 	inputHandler.setWinSize(rendererParams.width, rendererParams.height);
 	inputHandler.pointerToCenter();
 
 	light->setAmbient(0.5f, 0.5f, 0.5f);
-	light->setDiffuse(0.1f, 0.05f, 0.01f);
+	light->setDiffuse(1.1f, 1.05f, 1.01f);
 	light->setSpecular(vec3(0.15f));
-	light->setDirection(vec3(0.1f, 1.1f, 0.1f));
+	light->setPosition(vec3(0.0f, 10.0f, 5.0f));
+	light->setAttenuation(1.0f, 0.01f, 0.012f);
 
 	console::info("init scene");
 
@@ -70,15 +72,17 @@ int main(int argc, char **argv) {
 	renderer->addPreRenderHandler(boost::bind(&CameraControl::update, &cameraControl));
 	renderer->start();
 
-	Model * boxModel = AG::Models::box();
-	Model * planeModel = AG::Models::plane(1, 1, 5, 5);
-	Model * sphereModel = AG::Models::sphere(5.0f, 32, 32);
-	Model * circleModel = AG::Models::circle(5.0f, 12);
-	Model * cylinderModel = AG::Models::cylinder(5.0f, 5.0f, 10.0f, 16, 16);
-	Model * coneModel = AG::Models::cone(3.0f, 5.0f, 5, 16);
-	Model * ringModel = AG::Models::ring(2.0f, 5.0f, 16);
-	Model * torusModel = AG::Models::torus(5.0f, 1.0f, 16, 100);
-	Model * octahedronModel = AG::Models::octahedron(1.0f);
+	// Model * boxModel = AG::Models::box();
+	// Model * planeModel = AG::Models::plane(1, 1, 5, 5);
+	// Model * sphereModel = AG::Models::sphere(5.0f, 32, 32);
+	// Model * circleModel = AG::Models::circle(5.0f, 12);
+	// Model * cylinderModel = AG::Models::cylinder(5.0f, 5.0f, 10.0f, 16, 16);
+	// Model * coneModel = AG::Models::cone(3.0f, 5.0f, 5, 16);
+	// Model * ringModel = AG::Models::ring(2.0f, 5.0f, 16);
+	// Model * torusModel = AG::Models::torus(5.0f, 1.0f, 16, 100);
+	// Model * octahedronModel = AG::Models::octahedron(1.0f);
+
+	RenderHelpers::PointLight * pointLightHelper = new RenderHelpers::PointLight(light.get());
 
 	// scene->add(planeModel);
 	// scene->add(boxModel);
@@ -88,11 +92,22 @@ int main(int argc, char **argv) {
 	// scene->add(coneModel);
 	// scene->add(ringModel);
 	// scene->add(torusModel);
-	scene->add(octahedronModel);
+	// scene->add(octahedronModel);
+	scene->add(light.get());
+	scene->add(pointLightHelper);
 
 	cameraOrientationHelper->setLength(1.0);
+	
+	renderCycle.addTickHandler([&renderer, &inputHandler, &pointLightHelper, &light](float time) {
+		vec3 centerPoint(0.0, 10.0f, 0.0f);
 
-	renderCycle.addTickHandler([&renderer, &inputHandler, &cameraOrientationHelper, &sceneActiveCamera, &light](float time) {
+		float rad = (glm::sin(time * 0.1f)) * glm::pi<float>();
+		quat newQuat = glm::angleAxis(rad, vec3(0.0f, 1.0f, 1.0f));
+		vec3 newLightPos = centerPoint * newQuat;
+
+		light->setPosition(newLightPos);
+
+		pointLightHelper->beforeRender();
 		renderer->draw();
 		inputHandler.onFrame();
 	});

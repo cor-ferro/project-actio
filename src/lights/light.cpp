@@ -1,23 +1,18 @@
 #include "light.h"
 
-namespace Renderer {
 namespace Light {
 
 Light::Light()
-: ambient(vec3(1.0)),
-  diffuse(vec3(1.0)),
-  specular(vec3(1.0))
-{
-
-}
+	: ambient(vec3(1.0))
+	, diffuse(vec3(1.0))
+	, specular(vec3(1.0))
+{}
 
 Light::Light(vec3 ambient, vec3 diffuse, vec3 specular)
-: ambient(ambient),
-  diffuse(diffuse),
-  specular(specular)
-{
-
-}
+	: ambient(ambient)
+	, diffuse(diffuse)
+	, specular(specular)
+{}
 
 void Light::setAmbient(vec3 ambient) { this->ambient = ambient; }
 void Light::setAmbient(float r, float g, float b)
@@ -47,5 +42,4 @@ vec3 Light::getAmbient() { return ambient; }
 vec3 Light::getDiffuse() { return diffuse; }
 vec3 Light::getSpecular() { return specular; }
 
-}
 }

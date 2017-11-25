@@ -240,7 +240,7 @@ bool Scene::initFromFile(Resource::File& file)
 				std::string lightDirectionKey = iniLightSection + ":Direction";
 				const char * iniLightDirection = iniparser_getstring(ini, lightDirectionKey.c_str(), "1.0");
 
-				AG::LightDirectional * light = AG::Light::directional(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
+				Light::Directional * light = AG::Light::directional(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
 
 				console::info("iniLightAmbient: ", iniLightAmbient);
 				console::info("iniLightDiffuse: ", iniLightDiffuse);
@@ -263,7 +263,7 @@ bool Scene::initFromFile(Resource::File& file)
 				const double iniLightLinear = iniparser_getdouble(ini, lightLinearKey.c_str(), 0.09);
 				const double iniLightQuadratic = iniparser_getdouble(ini, lightQuadraticKey.c_str(), 0.032);
 
-				AG::LightPoint * light = AG::Light::point(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
+				Light::Point * light = AG::Light::point(vec3(1.0f), vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
 				light->setAmbient(parseVec(iniLightAmbient));
 				light->setDiffuse(parseVec(iniLightDiffuse));
 				light->setSpecular(parseVec(iniLightSpecular));
@@ -286,7 +286,7 @@ bool Scene::initFromFile(Resource::File& file)
 				const double iniLightQuadratic = iniparser_getdouble(ini, lightQuadraticKey.c_str(), 0.22);
 				const double iniLightOuterCutOff = iniparser_getdouble(ini, lightOuterCutOff.c_str(), 0.82);
 
-				AG::LightSpot * light = AG::Light::spot(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
+				Light::Spot * light = AG::Light::spot(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
 				light->setAmbient(parseVec(iniLightAmbient));
 				light->setDiffuse(parseVec(iniLightDiffuse));
 				light->setSpecular(parseVec(iniLightSpecular));
@@ -332,13 +332,13 @@ void Scene::allocCameras(unsigned int count)
 
 void Scene::allocLights(unsigned int count)
 {
-	directionalLights_ = new std::vector<Renderer::Light::Directional*>();
+	directionalLights_ = new std::vector<Light::Directional*>();
 	directionalLights_->reserve(count);
 
-	pointLights_ = new std::vector<Renderer::Light::Point*>();
+	pointLights_ = new std::vector<Light::Point*>();
 	pointLights_->reserve(count);
 
-	spotLights_ = new std::vector<Renderer::Light::Spot*>();
+	spotLights_ = new std::vector<Light::Spot*>();
 	spotLights_->reserve(count);
 }
 
@@ -382,40 +382,40 @@ void Scene::remove(Camera * camera)
 
 /* ---------- Lights ---------- */
 
-std::vector<Renderer::Light::Directional*> * Scene::getDirectionalLights()
+std::vector<Light::Directional*> * Scene::getDirectionalLights()
 {
 	return directionalLights_;
 }
 
-std::vector<Renderer::Light::Point*> * Scene::getPointLights()
+std::vector<Light::Point*> * Scene::getPointLights()
 {
 	return pointLights_;
 }
 
-std::vector<Renderer::Light::Spot*> * Scene::getSpotLights()
+std::vector<Light::Spot*> * Scene::getSpotLights()
 {
 	return spotLights_;
 }
 
-void Scene::add(Renderer::Light::Directional *light) { directionalLights_->push_back(light); }
-void Scene::add(Renderer::Light::Point *light) { pointLights_->push_back(light); }
-void Scene::add(Renderer::Light::Spot *light) { spotLights_->push_back(light); }
+void Scene::add(Light::Directional *light) { directionalLights_->push_back(light); }
+void Scene::add(Light::Point *light) { pointLights_->push_back(light); }
+void Scene::add(Light::Spot *light) { spotLights_->push_back(light); }
 
-void Scene::remove(Renderer::Light::Directional * light)
+void Scene::remove(Light::Directional * light)
 {
 	directionalLights_->erase(
 		std::remove(directionalLights_->begin(), directionalLights_->end(), light), directionalLights_->end()
 	);
 }
 
-void Scene::remove(Renderer::Light::Point *light)
+void Scene::remove(Light::Point *light)
 {
 	pointLights_->erase(
 		std::remove(pointLights_->begin(), pointLights_->end(), light), pointLights_->end()
 	);
 }
 
-void Scene::remove(Renderer::Light::Spot *light)
+void Scene::remove(Light::Spot *light)
 {
 	spotLights_->erase(
 		std::remove(spotLights_->begin(), spotLights_->end(), light), spotLights_->end()

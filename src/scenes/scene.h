@@ -46,25 +46,25 @@ struct Scene {
 	void setSkybox(Model *);
 	bool hasSkybox();
 
-	std::vector<Renderer::Light::Directional*> * getDirectionalLights();
-	std::vector<Renderer::Light::Point*> * getPointLights();
-	std::vector<Renderer::Light::Spot*> * getSpotLights();
+	std::vector<Light::Directional*> * getDirectionalLights();
+	std::vector<Light::Point*> * getPointLights();
+	std::vector<Light::Spot*> * getSpotLights();
 
-	void add(Renderer::Light::Directional *);
-	void add(Renderer::Light::Point *);
-	void add(Renderer::Light::Spot *);
-	void remove(Renderer::Light::Directional *);
-	void remove(Renderer::Light::Point *);
-	void remove(Renderer::Light::Spot *);
+	void add(Light::Directional *);
+	void add(Light::Point *);
+	void add(Light::Spot *);
+	void remove(Light::Directional *);
+	void remove(Light::Point *);
+	void remove(Light::Spot *);
 
 private:
 	Model * skybox_ = nullptr;
 	std::vector<Model*> * models_;
 	std::vector<Camera*> * cameras_;
 
-	std::vector<Renderer::Light::Directional*> * directionalLights_;
-	std::vector<Renderer::Light::Point*> * pointLights_;
-	std::vector<Renderer::Light::Spot*> * spotLights_;
+	std::vector<Light::Directional*> * directionalLights_;
+	std::vector<Light::Point*> * pointLights_;
+	std::vector<Light::Spot*> * spotLights_;
 
 	Camera * camera_;
 };

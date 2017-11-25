@@ -51,7 +51,7 @@ Model::Model()
 	: animInterpolation_(true)
 {
 	createId();
-	allocMeshes(0);
+	allocMeshes(1);
 }
 
 Model::Model(const Model& other)
