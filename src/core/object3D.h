@@ -21,6 +21,7 @@ struct Object3D {
 	void rotate(quat rotateQuat);
 	void setPosition(vec3 vec);
 	void setScale(vec3 vec);
+	void setScale(float s);
 	void setPosition(float x, float y, float z);
 	void setQuaternion(quat& newQuat);
 	void setRotation(vec3& vector);

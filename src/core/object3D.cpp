@@ -46,6 +46,11 @@ void Object3D::setScale(vec3 vector)
 	needUpdateMatrix = true;
 }
 
+void Object3D::setScale(float s)
+{
+	setScale(vec3(s));
+}
+
 void Object3D::setRotation(float x, float y, float z)
 {
 	quat newQuat(vec3(x, y, z));

@@ -57,8 +57,8 @@ void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource
 			vertex.TexCoords = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
 		}
 		else
-		{
-			vertex.TexCoords = vec2(0.1f, 0.1f);
+		{			
+			vertex.TexCoords = vec2(0.0f, 0.0f);
 		}
 
 		if (mesh->mTangents != nullptr) {
@@ -71,19 +71,6 @@ void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource
 
 		addVertex(vertex);
 	}
-
-	// console::info("+++ geometry init ", mesh->mName.C_Str(), " - ", numBones);
-
-	// for (unsigned int boneId = 0; boneId < numBones; boneId++) {
-	// 	aiBone * bone = mesh->mBones[boneId];
-
-	// 	for (unsigned int j = 0; j < bone->mNumWeights; j++) {
-	// 		const aiVertexWeight vertexWeight = bone->mWeights[j];
-
-	// 		vertices_->at(vertexWeight.mVertexId).BonedIDs = vec4(0, 0, 0, 0);
-	// 		vertices_->at(vertexWeight.mVertexId).Weights = vec4(1.0f, 0.0f, 0.0f, 0.0f);
-	// 	}
-	// }
 
 	unsigned int numFaces = mesh->mNumFaces;
 	freeIndices();
@@ -156,7 +143,7 @@ void Geometry::fillIndices()
 		for (int j = 0; j < vertices_->size(); j++)
 		{
 			if (j == i) {
-				indices_->push_back(i);
+				addIndex(i);
 				continue;
 			}
 
@@ -164,14 +151,26 @@ void Geometry::fillIndices()
 
 			if (glm::all(glm::epsilonEqual(primaryVertex.Position, secondaryVertex.Position, 0.01f)))
 			{
-				indices_->push_back(i);
+				addIndex(i);
 			}
 			else
 			{
-				indices_->push_back(j);
+				addIndex(j);
 			}
 		}
 	}
+
+	console::info("fillIndices: ", indices_->size());
+}
+
+void Geometry::addIndex(unsigned int i) {
+	indices_->push_back(i);
+}
+
+void Geometry::addFace(unsigned int i1, unsigned int i2, unsigned int i3) {
+	indices_->push_back(i1);
+	indices_->push_back(i2);
+	indices_->push_back(i3);
 }
 
 void Geometry::freeVerties() {
@@ -181,139 +180,483 @@ void Geometry::freeVerties() {
 
 void Geometry::freeIndices() {
 	indices_->clear();
-	// if (indices_ != nullptr) {
-	// 	delete indices_;
-	// 	indices_ = nullptr;
-	// }
 }
-
-// Geometry Geometry::Box() {
-// 	Geometry geometry;
-
-// 	const int verticesCount = 8 * 3;
-// 	float vertices[verticesCount] {
-// 		1.0f, -1.0f, -1.0f,
-// 		1.0f, -1.0f, 1.0f,
-// 		-1.0f, -1.0f, 1.0f,
-// 		-1.0f, -1.0f, -1.0f,
-// 		1.0f, 1.0f, -1.0f,
-// 		1.0f, 1.0f, 1.0f,
-// 		-1.0f, 1.0f, 1.0f,
-// 		-1.0f, 1.0f, -1.0f
-// 	};
-
-// 	const int normalsCount = 6 * 3;
-// 	float normals[normalsCount] {
-// 		0.0f, -1.0f, 0.0f,
-// 		0.0f, 1.0f, 0.0f,
-// 		1.0f, 0.0f, 0.0f,
-// 		0.0f, 0.0f, 1.0f,
-// 		-1.0f, -0.0f, 0.0f,
-// 		0.0f, 0.0f, -1.0f
-// 	};
-
-// 	const int facesCount = 12 * 3;
-// 	const int faceSize = 2;
-// 	float faces[facesCount][faceSize] = {
-// 		{2,1}, {4,1}, {1,1},
-// 		{8,2}, {6,2}, {5,2},
-// 		{5,3}, {2,3}, {1,3},
-// 		{6,4}, {3,4}, {2,4},
-// 		{3,5}, {8,5}, {4,5},
-// 		{1,6}, {8,6}, {5,6},
-// 		{2,1}, {3,1}, {4,1},
-// 		{8,2}, {7,2}, {6,2},
-// 		{5,3}, {6,3}, {2,3},
-// 		{6,4}, {7,4}, {3,4},
-// 		{3,5}, {7,5}, {8,5},
-// 		{1,6}, {4,6}, {8,6}
-// 	};
-
-// 	geometry.freeVerties();
-// 	geometry.freeIndices();
-// 	geometry.allocVertices(verticesCount);
-
-// 	for (int i = 0; i < facesCount; i++) {
-// 		char vertexIndex = faces[i][0];
-// 		char normalIndex = faces[i][1];
-
-// 		vec3 vertex = vec3(vertices[vertexIndex], vertices[vertexIndex + 1], vertices[vertexIndex + 2]);
-// 		vec3 normal = vec3(normals[normalIndex], normals[normalIndex + 1], normals[normalIndex + 2]);
-
-// 		Vertex face;
-
-// 		face.Position = vertex;
-// 		face.Normal = normal;
-// 		face.TexCoords = vec2(0.1f, 0.1f);
-// 		face.Tangent = vec3(0.0f);
-// 		face.Bitangent = vec3(0.0f);
-
-// 		geometry.addVertex(face);
-// 	}
-
-// 	geometry.fillIndices();
-
-// 	return geometry;
-// }
 
 Geometry Geometry::Box() {
 	Geometry geometry;
 
-	
 	float vertices[] {
-		-1.0f,  1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, 1.0f,
+		-1.0f, -1.0f, 1.0f,
 		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-	
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-	
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-	
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-	
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-	
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
+		1.0f, 1.0f, -1.0f,
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, -1.0f,
 	};
-	const int verticesCount = 36;
 
-	geometry.freeVerties();
+	float normals[] {
+		0.0f, -1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		1.0f, -0.0f, 0.0f,
+		0.0f, -0.0f, 1.0f,
+		-1.0f, -0.0f, -0.0f,
+		0.0f, 0.0f, -1.0f
+	};
+	
+	uint indices[] {
+		1, 3, 0,
+		7, 5, 4,
+		4, 1, 0,
+		5, 2, 1,
+		2, 7, 3,
+		0, 7, 4,
+		1, 2, 3,
+		7, 6, 5,
+		4, 5, 1,
+		5, 6, 2,
+		2, 6, 7,
+		0, 3, 7
+	};
+
+	const int verticesCount = 24;
+	const int normalsCount = 18;
+	const int indicesCount = 33;
+
 	geometry.allocVertices(verticesCount);
+	geometry.allocIndices(indicesCount);
 
-	for (int i = 0; i < verticesCount; i++) {
-		Vertex vertex(vertices[i * 3], vertices[i * 3 + 1], vertices[i * 3 + 2]);
+	for (int i = 0; i <= verticesCount; i+=3) {
+		Vertex vertex;
+		vertex.Position = vec3(vertices[i], vertices[i+1], vertices[i+2]);
 		geometry.addVertex(vertex);
 	}
 
-	console::info("Box", geometry.getVertices()->size());
+	for (int i = 0; i <= indicesCount; i+=3) {
+		geometry.addFace(indices[i], indices[i+1], indices[i+2]);
+	}
+
+	return geometry;
+}
+
+Geometry Geometry::Plane(uint width, uint height, uint widthSegments, uint heightSegments) {
+	Geometry geometry;
+
+	float width_half = (float)width / 2.0f;
+	float height_half = (float)height / 2.0f;
+
+	uint gridX = widthSegments;
+	uint gridY = heightSegments;
+
+	uint gridX1 = gridX + 1;
+	uint gridY1 = gridY + 1;
+
+	float segment_width = (float)width / (float)gridX;
+	float segment_height = (float)height / (float)gridY;
+
+	geometry.allocVertices(gridY1 * gridX1);
+	geometry.allocIndices(gridY * gridX);
+
+	for (uint iy = 0; iy < gridY1; iy++) {
+		float y = (float)iy * segment_height - height_half;
+
+		for (uint ix = 0; ix < gridX1; ix++) {
+			float x = (float)ix * segment_width - width_half;
+
+			Vertex vertex;
+			vertex.Position = vec3(x, -y, 0.0f);
+			vertex.Normal = vec3(0.0f, 0.0f, 1.0f);
+
+			geometry.addVertex(vertex);
+		}
+	}
+
+	for (uint iy = 0; iy < gridY; iy++) {
+		for (uint ix = 0; ix < gridX; ix++) {
+			uint a = ix + gridX1 * iy;
+			uint b = ix + gridX1 * (iy + 1);
+			uint c = (ix + 1) + gridX1 * (iy + 1);
+			uint d = (ix + 1) + gridX1 * iy;
+
+			geometry.addFace(a, b, d);
+			geometry.addFace(b, c, d);
+		}
+	}
+
+	return geometry;
+}
+
+Geometry Geometry::Sphere(float radius,	uint widthSegments,	uint heightSegments, float phiStart, float phiLength, float thetaStart, float thetaLength) {
+	Geometry geometry;
+	
+	uint minWidthSegments = 3;
+	uint minHeightSegments = 2;
+
+	widthSegments = glm::max(minWidthSegments, widthSegments);
+	heightSegments = glm::max(minHeightSegments, heightSegments);
+
+	float thetaEnd = thetaStart + thetaLength;
+
+	uint index = 0;
+	std::vector<std::vector<uint>> grid;
+
+	for (uint iy = 0; iy <= heightSegments; iy ++ ) {
+		std::vector<uint> verticesRow;
+
+		float v = (float)iy / (float)heightSegments;
+		for (uint ix = 0; ix <= widthSegments; ix ++ ) {
+			float u = (float)ix / (float)widthSegments;
+
+			Vertex vertex;
+
+			vertex.Position = vec3(
+				-radius * glm::cos(phiStart + u * phiLength) * glm::sin(thetaStart + v * thetaLength),
+				radius * glm::cos(thetaStart + v * thetaLength),
+				radius * glm::sin(phiStart + u * phiLength) * glm::sin(thetaStart + v * thetaLength)
+			);
+
+			vertex.Normal = glm::normalize(vec3(
+				vertex.Position.x,
+				vertex.Position.y,
+				vertex.Position.z
+			));
+
+			geometry.addVertex(vertex);
+
+			verticesRow.push_back(index ++);
+		}
+
+		grid.push_back(verticesRow);
+	}
+
+	// indices
+	for (uint iy = 0; iy < heightSegments; iy++) {
+		for (uint ix = 0; ix < widthSegments; ix++) {
+			uint a = grid[iy][ix + 1];
+			uint b = grid[iy][ix];
+			uint c = grid[iy + 1][ix];
+			uint d = grid[iy + 1][ix + 1];
+
+			if ( iy != 0 || thetaStart > 0 ) {
+				geometry.addFace(a, b, d);
+			}
+
+			if ( iy != heightSegments - 1 || thetaEnd < glm::pi<float>() ) {
+				geometry.addFace(b, c, d);
+			}
+		}
+	}
+
+	return geometry;
+}
+
+Geometry Geometry::Circle(float radius,	uint segments, float thetaStart, float thetaLength)
+{
+	Geometry geometry;
+
+	uint minSegments = 3;
+	segments = glm::max(minSegments, segments);
+
+	/*thetaStart = thetaStart !== undefined ? thetaStart : 0;
+	thetaLength = thetaLength !== undefined ? thetaLength : Math.PI * 2;*/
+
+	Vertex centerVertex;
+	centerVertex.Position = vec3(0.0f, 0.0f, 0.0f);
+	centerVertex.Normal = vec3(0.0f, 0.0f, 1.0f);
+
+	geometry.addVertex(centerVertex);
+
+	for (uint s = 0, i = 3; s <= segments; s++, i+= 3) {
+		float segment = thetaStart + (float)s / (float)segments * thetaLength;
+
+		Vertex vertex;
+		vertex.Position = vec3(
+			radius * glm::cos(segment),
+			radius * glm::sin(segment),
+			0.0f
+		);
+		vertex.Normal = vec3(
+			0.0f,
+			0.0f,
+			1.0f
+		);
+
+		geometry.addVertex(vertex);
+	}
+
+	for (uint i = 1; i <= segments; i ++ ) {
+		geometry.addFace(i, i + 1, 0);
+	}
+
+	return geometry;
+}
+
+void Geometry::CylinderTorso(GeometryCone& params, Geometry& geometry)
+{
+	std::vector<std::vector<uint>> indexArray;
+	float halfHeight = params.height / 2.0f;
+	float slope = (params.radiusBottom - params.radiusTop) / params.height;
+
+	uint index = geometry.vertices_->size();
+
+	for (uint y = 0; y <= params.heightSegments; y ++ ) {
+		std::vector<uint> indexRow;
+
+		float v = (float)y / (float)params.heightSegments;
+		float radius = v * (params.radiusBottom - params.radiusTop) + params.radiusTop;
+
+		for (uint x = 0; x <= params.radialSegments; x ++ ) {
+			float u = (float)x / (float)params.radialSegments;
+			float theta = u * params.thetaLength + params.thetaStart;
+
+			float sinTheta = glm::sin(theta);
+			float cosTheta = glm::cos(theta);
+
+			// vertex
+			Vertex vertex;
+			vertex.Position = vec3(
+				radius * sinTheta,
+				-v * params.height + halfHeight,
+				radius * cosTheta
+			);
+			vertex.Normal = glm::normalize(vec3(
+				sinTheta,
+				slope,
+				cosTheta
+			));
+
+			geometry.addVertex(vertex);
+			indexRow.push_back(index++);
+		}
+
+		indexArray.push_back(indexRow);
+	}
+
+	for (uint x = 0; x < params.radialSegments; x++) {
+		for (uint y = 0; y < params.heightSegments; y++) {
+			uint a = indexArray[y][x];
+			uint b = indexArray[y + 1][x];
+			uint c = indexArray[y + 1][x + 1];
+			uint d = indexArray[y][x + 1];
+
+			geometry.addFace(a, b, d);
+			geometry.addFace(b, c, d);
+		}
+	}
+}
+
+void Geometry::CylinderCap(GeometryCone& params, Geometry& geometry, bool top)
+{
+	uint centerIndexStart, centerIndexEnd;
+
+	float halfHeight = params.height / 2.0f;
+	float radius = ( top == true ) ? params.radiusTop : params.radiusBottom;
+	float sign = ( top == true ) ? 1.0 : -1.0;
+	
+	uint index = geometry.vertices_->size();
+
+	centerIndexStart = index;
+
+	for (uint x = 1; x <= params.radialSegments; x++) {
+		Vertex vertex;
+		vertex.Position = vec3(0.0f, halfHeight * sign, 0.0f);
+		vertex.Normal = vec3(0.0f, sign, 0.0f);
+
+		geometry.addVertex(vertex);
+
+		index++;
+	}
+
+	centerIndexEnd = index;
+
+	for (uint x = 0; x <= params.radialSegments; x ++ ) {
+		float u = (float)x / (float)params.radialSegments;
+		float theta = u * params.thetaLength + params.thetaStart;
+
+		float cosTheta = glm::cos(theta);
+		float sinTheta = glm::sin(theta);
+
+		Vertex vertex;
+		vertex.Position = vec3(radius * sinTheta, halfHeight * sign, radius * cosTheta);
+		vertex.Normal = vec3(0.0f, sign, 0.0f);
+
+		geometry.addVertex(vertex);
+
+		index++;
+	}
+
+	for (uint x = 0; x < params.radialSegments; x ++ ) {
+		uint c = centerIndexStart + x;
+		uint i = centerIndexEnd + x;
+
+		if ( top == true ) {
+			geometry.addFace(i, i + 1, c);
+		} else {
+			geometry.addFace(i + 1, i, c);
+		}
+	}
+}
+
+Geometry Geometry::Cylinder(float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments, bool openEnded, float thetaStart, float thetaLength)
+{
+	Geometry geometry;
+	GeometryCone params = {
+		.radiusTop = radiusTop,
+		.radiusBottom = radiusBottom,
+		.height = height,
+		.radialSegments = radialSegments,
+		.heightSegments = heightSegments,
+		.openEnded = openEnded,
+		.thetaStart = thetaStart,
+		.thetaLength = thetaLength
+	};
+
+	CylinderTorso(params, geometry);
+
+	if ( openEnded == false ) {
+		if ( radiusTop > 0 ) CylinderCap(params, geometry, true);
+		if ( radiusBottom > 0 ) CylinderCap(params, geometry, false);
+	}
+
+	return geometry;
+}
+
+Geometry Geometry::Cone(float radius, float height, uint radialSegments, uint heightSegments, bool openEnded, float thetaStart, float thetaLength)
+{
+	return Geometry::Cylinder(0.0f, radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength);
+}
+
+Geometry Geometry::Ring(float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments, float thetaStart, float thetaLength)
+{
+	Geometry geometry;
+
+	float radius = innerRadius;
+	float radiusStep = ((outerRadius - innerRadius) / (float)phiSegments);
+
+	for (uint j = 0; j <= phiSegments; j ++ ) {
+		for (uint i = 0; i <= thetaSegments; i ++ ) {
+			float segment = thetaStart + (float)i / (float)thetaSegments * thetaLength;
+
+			Vertex vertex;
+			vertex.Position = vec3(
+				radius * glm::cos(segment),
+				radius * glm::sin(segment),
+				0.0f
+			);
+			vertex.Normal = vec3(
+				0.0f,
+				0.0f,
+				1.0f
+			);
+			
+			geometry.addVertex(vertex);
+		}
+
+		radius += radiusStep;
+	}
+
+	for (uint j = 0; j < phiSegments; j ++ ) {
+		uint thetaSegmentLevel = j * (thetaSegments + 1);
+		for (uint i = 0; i < thetaSegments; i ++ ) {
+			uint segment = i + thetaSegmentLevel;
+
+			uint a = segment;
+			uint b = segment + thetaSegments + 1;
+			uint c = segment + thetaSegments + 2;
+			uint d = segment + 1;
+
+			geometry.addFace(a, b, d);
+			geometry.addFace(b, c, d);
+		}
+	}
+
+	return geometry;
+}
+
+Geometry Geometry::Torus(float radius, float tube, uint radialSegments, uint tubularSegments, float arc)
+{
+	Geometry geometry;
+
+	// generate vertices, normals and uvs
+	for (uint j = 0; j <= radialSegments; j ++ ) {
+		for (uint i = 0; i <= tubularSegments; i ++ ) {
+
+			float u = (float)i / (float)tubularSegments * arc;
+			float v = (float)j / (float)radialSegments * glm::two_pi<float>();
+
+			Vertex vertex;
+			vertex.Position = vec3(
+				(radius + tube * glm::cos(v)) * glm::cos(u),
+				(radius + tube * glm::cos(v)) * glm::sin(u),
+				tube * glm::sin( v )
+			);
+
+			vec3 center(
+				radius * glm::cos(u),
+				radius * glm::sin(u),
+				0.0f
+			);
+
+			vertex.Normal = glm::normalize(center - vertex.Position);
+
+			geometry.addVertex(vertex);
+		}
+	}
+
+	for (uint j = 1; j <= radialSegments; j ++ ) {
+		for (uint i = 1; i <= tubularSegments; i ++ ) {
+			uint a = (tubularSegments + 1) * j + i - 1;
+			uint b = (tubularSegments + 1) * (j - 1) + i - 1;
+			uint c = (tubularSegments + 1) * (j - 1) + i;
+			uint d = (tubularSegments + 1) * j + i;
+
+			geometry.addFace(a, b, d);
+			geometry.addFace(b, c, d);
+		}
+	}
+
+	return geometry;
+}
+
+Geometry Geometry::Octahedron(float radius)
+{
+	Geometry geometry;
+
+	float vertices[] = {
+		1.0f, 0.0f, 0.0f,
+		-1.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, -1.0f
+	};
+
+	uint indices[] = {
+		0, 2, 4,
+		0, 4, 3,
+		0, 3, 5,
+		0, 5, 2,
+		1, 2, 5,
+		1, 5, 3,
+		1, 3, 4,
+		1, 4, 2
+	};
+
+	uint countVertices = 18;
+	uint countIndices = 24;
+
+	for (uint i = 0; i < countVertices; i+= 3) {
+		Vertex vertex;
+		vertex.Position = vec3(vertices[i] * radius, vertices[i+1] * radius, vertices[i+2] * radius);
+		vertex.Normal = glm::normalize(vec3(vertex.Position.x, vertex.Position.y, vertex.Position.z));
+
+		geometry.addVertex(vertex);
+	}
+
+	for (uint i = 0; i < countIndices; i+= 3) {
+		geometry.addFace(indices[i], indices[i+1], indices[i+2]);
+	}
 
 	return geometry;
 }

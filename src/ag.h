@@ -37,6 +37,15 @@ namespace AG
 		// Model * create(Resource::File);
 		Model * create(ModelConfig& modelConfig);
 		Model * skybox(std::vector<Resource::File> faces);
+		Model * box();
+		Model * plane(uint width, uint height, uint widthSegments, uint heightSegments);
+		Model * sphere(float radius, uint widthSegments, uint heightSegments);
+		Model * circle(float radius, uint segments);
+		Model * cylinder(float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments);
+		Model * cone(float radius, float height, uint radialSegments, uint heightSegments);
+		Model * ring(float innerRadius, float outerRadius, uint thetaSegments);
+		Model * torus(float radius, float tube, uint radialSegments, uint tubularSegments);
+		Model * octahedron(float radius);
 	}
 
 	namespace Helper {

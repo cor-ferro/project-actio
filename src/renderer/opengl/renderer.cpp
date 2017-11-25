@@ -185,7 +185,7 @@ void OpenglRenderer::forwardRender()
 		forwardProgram.setVec("spotLights["+ sIndex +"].direction", (*spotLight)->direction);
 		forwardProgram.setFloat("spotLights["+ sIndex +"].constant", (*spotLight)->constant);
 		forwardProgram.setFloat("spotLights["+ sIndex +"].linear", (*spotLight)->linear);
-		forwardProgram.setFloat("spotLights["+ sIndex +"0].quadratic", (*spotLight)->quadratic);
+		forwardProgram.setFloat("spotLights["+ sIndex +"].quadratic", (*spotLight)->quadratic);
 		forwardProgram.setFloat("spotLights["+ sIndex +"].cutOff", (*spotLight)->cutOff);
 		forwardProgram.setFloat("spotLights["+ sIndex +"].outerCutOff", (*spotLight)->outerCutOff);
 		spotLightIndex++;
@@ -322,7 +322,8 @@ void OpenglRenderer::draw()
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_CULL_FACE);
+	// glEnable(GL_CULL_FACE);
+	// glCullFace(GL_FRONT);
 
 	forwardRender();
 

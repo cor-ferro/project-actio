@@ -21,16 +21,7 @@
 
 using namespace std;
 
-void posix_death_signal(int signum)
-{
-	console::warn("app fall");
-	signal(signum, SIG_DFL);
-	exit(3);
-}
-
 int main(int argc, char **argv) {
-	// signal(SIGSEGV, posix_death_signal);
-
 	App& app = App::instance();
 	app.setName("project actio");
 	app.init(argc, argv);
@@ -43,7 +34,6 @@ int main(int argc, char **argv) {
 	rendererParams.calcAspectRatio();
 
 	// init renderer before scene loading
-
 	std::shared_ptr<Renderer::OpenglRenderer>
 	renderer(new Renderer::OpenglRenderer(rendererParams));
 	renderer->init(argc, argv);
@@ -71,7 +61,6 @@ int main(int argc, char **argv) {
 	scene->initFromFile(testScene);
 	scene->add(arrowHelper.get());
 	scene->add(cameraOrientationHelper.get());
-	// scene->add(light.get());
 
 	Camera * sceneActiveCamera = scene->getActiveCamera();
 	CameraControl cameraControl(sceneActiveCamera);
@@ -81,13 +70,29 @@ int main(int argc, char **argv) {
 	renderer->addPreRenderHandler(boost::bind(&CameraControl::update, &cameraControl));
 	renderer->start();
 
+	Model * boxModel = AG::Models::box();
+	Model * planeModel = AG::Models::plane(1, 1, 5, 5);
+	Model * sphereModel = AG::Models::sphere(5.0f, 32, 32);
+	Model * circleModel = AG::Models::circle(5.0f, 12);
+	Model * cylinderModel = AG::Models::cylinder(5.0f, 5.0f, 10.0f, 16, 16);
+	Model * coneModel = AG::Models::cone(3.0f, 5.0f, 5, 16);
+	Model * ringModel = AG::Models::ring(2.0f, 5.0f, 16);
+	Model * torusModel = AG::Models::torus(5.0f, 1.0f, 16, 100);
+	Model * octahedronModel = AG::Models::octahedron(1.0f);
+
+	// scene->add(planeModel);
+	// scene->add(boxModel);
+	// scene->add(sphereModel);
+	// scene->add(circleModel);
+	// scene->add(cylinderModel);
+	// scene->add(coneModel);
+	// scene->add(ringModel);
+	// scene->add(torusModel);
+	scene->add(octahedronModel);
+
 	cameraOrientationHelper->setLength(1.0);
 
 	renderCycle.addTickHandler([&renderer, &inputHandler, &cameraOrientationHelper, &sceneActiveCamera, &light](float time) {
-		// vec3 lightDirection = light->getDirection();
-		// lightDirection.y = glm::sin(time * 0.1f) * 0.1f;
-
-		// light->setDirection(lightDirection);
 		renderer->draw();
 		inputHandler.onFrame();
 	});

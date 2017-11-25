@@ -62,7 +62,7 @@ Mesh::Mesh(PhongMaterial material, Geometry geometry)
 	, geometry(geometry)
 {
 	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
-	setDrawItem(MESH_DRAW_ITEM_ARRAY);
+	setDrawItem(MESH_DRAW_ITEM_ELEMENTS);
 }
 
 Mesh::Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource)
@@ -281,15 +281,15 @@ void Mesh::draw(Opengl::Program &program)
 	program.setVec("material.specular", material.specular);
 	program.setFloat("material.shininess", material.shininess);
 
-	switch (drawItemGl)
-	{
-	case MESH_DRAW_ITEM_ARRAY:
-		glDrawArrays(drawModeGl, 0, vertices->size());
-		break;
-	case MESH_DRAW_ITEM_ELEMENTS:
+	// switch (drawItemGl)
+	// {
+	// case MESH_DRAW_ITEM_ARRAY:
+	// 	glDrawArrays(drawModeGl, 0, vertices->size());
+	// 	break;
+	// case MESH_DRAW_ITEM_ELEMENTS:
 		glDrawElements(drawModeGl, indices->size(), GL_UNSIGNED_INT, 0);
-		break;
-	}
+	// 	break;
+	// }
 
 	if (material.wireframe == true)
 	{
