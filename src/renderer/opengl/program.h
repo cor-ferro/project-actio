@@ -5,7 +5,9 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "program.h"
+#include <map>
+#include <functional>
+#include "uniforms.h"
 #include "shader.h"
 #include <glm/gtc/type_ptr.hpp>
 #include "../../lib/console.h"
@@ -22,8 +24,9 @@ struct Program {
 	void use();
 	void nouse();
 
-	unsigned int getUniformLoc(const char *) const;
-	unsigned int getUniformCacheLoc(std::string locationName) const;
+	GLint getUniformLoc(const char *) const;
+	GLint getUniformCacheLoc(std::string locationName) const;
+	GLint getUniformCacheLoc(Opengl::Uniform::Common& uniform) const;
 
 	unsigned int getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName);
 	unsigned int getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName);
@@ -40,6 +43,13 @@ struct Program {
 	void setVec(const std::string&, const vec3 &) const;
 	void setVec(const std::string&, const vec4 &) const;
 
+	void setMat(Opengl::Uniform::Common, const mat4&) const;
+	void setMat(Opengl::Uniform::Common, const std::vector<mat4>*) const;
+	void setFloat(Opengl::Uniform::Common, const float&) const;
+	void setVec(Opengl::Uniform::Common, const glm::vec2&) const;
+	void setVec(Opengl::Uniform::Common, const glm::vec3&) const;
+	void setVec(Opengl::Uniform::Common, const glm::vec4&) const;
+
 	void enableSubroutine(unsigned int shaderType, std::string& subroutinName);
 	void enableVertexSubroutine(std::string& subroutinName);
 	void enableFragmentSubroutine(std::string& subroutinName);
@@ -47,19 +57,23 @@ struct Program {
 	void bindBlock(const char *blockName, int point);
 
 	void initUniformCache(std::vector<std::string> locations);
+	void initUniformCache(std::map <Opengl::Uniform::Common, std::string> locations);
+
+	const GLuint getHandle() const;
 
 	GLuint handle;
-	std::vector<Shader*> shaders;
 
 	Shader * vertexShader;
 	Shader * fragmentShader;
+	Shader * geometryShader;
 
 	std::string name;
 private:
 	bool isUsed;
 	bool success;
 	std::string getShaderPath(std::string);
-	std::unordered_map<std::string, unsigned int> uniformIndexCache;
+	std::unordered_map<std::string, GLint> uniformIndexCache;
+	std::map<short int, GLint> uniformIndexCache2;
 	std::unordered_map<std::string, unsigned int> subroutineVertexIndexCache;
 	std::unordered_map<std::string, unsigned int> subroutineFragmentIndexCache;
 };

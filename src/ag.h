@@ -23,8 +23,8 @@
 
 namespace AG
 {
-	typedef RenderHelpers::Arrow HelperArrow;
-	typedef RenderHelpers::CameraOrientation HelperCameraOrientation;
+	typedef Helpers::Arrow HelperArrow;
+	typedef Helpers::CameraOrientation HelperCameraOrientation;
 
 	PerspectiveCamera * createPerspectiveCamera(float, float, float, float);
 	OrthographicCamera * createOrthographicCamera(float, float, float, float, float, float);

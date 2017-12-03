@@ -11,19 +11,19 @@
 #include "../core/model.h"
 #include "../core/mesh.h"
 #include "../core/vertex.h"
+#include "../materials/material.h"
 
-namespace RenderHelpers
+namespace Helpers
 {
+	struct BoundingBox : Model {
+		BoundingBox(Model * model);
+		~BoundingBox();
 
-struct BoundingBox : Model {
-	BoundingBox(Model * model);
-	~BoundingBox();
-
-private:
-	void determinateBounding();
-	Model * model_;
-};
-
+	private:
+		void determinateBounding();
+		Mesh * createBoxMesh(const Math::Box3& boundingBox);
+		Model * model_;
+	};
 }
 
 

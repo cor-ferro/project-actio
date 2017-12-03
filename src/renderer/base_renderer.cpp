@@ -7,13 +7,11 @@ BaseRenderer::BaseRenderer()
 	renderParams.height = 500;
 
 	params_ = renderParams;
-	scene_ = 0;
 }
 
 BaseRenderer::BaseRenderer(RendererParams params)
-: params_(params)
+	: params_(params)
 {
-	scene_ = 0;
 }
 
 const RendererParams& BaseRenderer::getParams()
@@ -26,24 +24,6 @@ void BaseRenderer::setViewSize(Renderer::ScreenSize width, Renderer::ScreenSize 
 	params_.width = width;
 	params_.height = height;
 	params_.calcAspectRatio();
-}
-
-Scene * BaseRenderer::getScene()
-{
-	return scene_;
-}
-
-void BaseRenderer::setScene(Scene * scene)
-{
-	scene_ = scene;
-}
-
-void BaseRenderer::setupScene()
-{
-	if (!scene_) {
-		console::warn("Cannot setup scene. Pointer is null");
-		return;
-	}
 }
 
 void BaseRenderer::addFrameHandler(callback cb)

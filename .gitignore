@@ -5,3 +5,4 @@ vendor/boost*
 resources/*
 actio
 cmake-build-debug
+.settings/*

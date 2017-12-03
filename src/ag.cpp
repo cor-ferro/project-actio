@@ -142,7 +142,6 @@ namespace AG
 		Model * torus(float radius, float tube, uint radialSegments, uint tubularSegments)
 		{
 			PhongMaterial material;
-			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Torus(radius, tube, radialSegments, tubularSegments, glm::two_pi<float>());
@@ -169,12 +168,12 @@ namespace AG
 	namespace Helper {
 		HelperArrow * arrow(vec3 origin, vec3 direction, float scale)
 		{
-			return new RenderHelpers::Arrow(origin, direction, scale);
+			return new Helpers::Arrow(origin, direction, scale);
 		}
 
 		HelperCameraOrientation * cameraOrientation(vec3 origin, vec3 direction, float length)
 		{
-			return new RenderHelpers::CameraOrientation(origin, direction, length);
+			return new Helpers::CameraOrientation(origin, direction, length);
 		}
 	}
 

@@ -14,7 +14,7 @@
 #include "../lights/point_light.h"
 #include "../renderer/renderable.h"
 
-namespace RenderHelpers
+namespace Helpers
 {
 	struct PointLight : Model {
 		PointLight(Light::Point * light);

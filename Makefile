@@ -11,7 +11,7 @@ OBJS			:=$(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 OBJ_TREE 		:=$(shell find $(SRCDIR) -type d)
 OBJ_TREE 		:=$(patsubst src%,obj%,$(OBJ_TREE))
 OBJS			:=$(patsubst %/%,%_%,$(OBJS))
-CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -std=c++11 -pipe -pthread -O0 
+CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -std=c++11 -pipe -pthread -O0
 LDFLAGS_COMPILE	=-Ivendor/ -Ivendor/assimp/include -Ivendor/soil/src -Ivendor/DevIL/DevIL/include/
 LDFLAGS_BUILD  	=\
 				-Lvendor/boost_1_65_0/ \
@@ -31,7 +31,7 @@ BUILD_TYPE=debug
 .PHONY: all clean tree
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-	$(CXX) $(CPPFLAGS)$(CXXFLAGS)$(LDFLAGS_COMPILE) -MMD -MF $(patsubst %.o,%.d,$@) -o $@ -c $<
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS)$(LDFLAGS_COMPILE) -MMD -MF $(patsubst %.o,%.d,$@) -o $@ -c $<
 
 #fix, release skipping
 all: debug release

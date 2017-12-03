@@ -19,30 +19,28 @@
 #include "../core/model.h"
 #include "../core/mesh.h"
 
-namespace RenderHelpers
+namespace Helpers
 {
+	struct Arrow : Model {
+		Arrow(vec3 origin, vec3 direction, float length);
+		~Arrow();
 
-struct Arrow : Model {
-	Arrow(vec3 origin, vec3 direction, float length);
-	~Arrow();
+		void setLength(float length);
+		void setOrigin(vec3 origin);
+		void setDirection(vec3 direction);
 
-	void setLength(float length);
-	void setOrigin(vec3 origin);
-	void setDirection(vec3 direction);
+	protected:
+		Mesh * line;
+		Mesh * cone;
 
-protected:
-	Mesh * line;
-	Mesh * cone;
+		void freeMesh();
 
-	void freeMesh();
-
-private:
-	vec3 origin_;
-	vec3 direction_;
-	float length_;
-};
-
-} // RenderHelpers
+	private:
+		vec3 origin_;
+		vec3 direction_;
+		float length_;
+	};
+} // Helpers
 
 
 #endif /* ARROW_HELPER_H_ */

@@ -13,9 +13,11 @@
 #include "../lib/assimp.h"
 #include "../resources/resources.h"
 #include "../animation/animation.h"
+#include "../math/Box3.h"
 #include "./mesh.h"
 
 typedef int ModelId;
+typedef std::string ModelName;
 typedef std::vector<std::shared_ptr<Mesh>> ModelMeshes;
 
 static size_t idCounter = 0;
@@ -59,15 +61,18 @@ struct Model {
 	Model(const Model& model);
 	~Model();
 
-	ModelId getId();
+	const ModelId& getId();
+	const ModelName& getName();
+
+	void setName(std::string newName);
 
 	void initFromAi(const Resource::Assimp * assimpResource);
 	void addMesh(Mesh * mesh);
 	void addNode(ModelNode * node);
 	
-	void scale(vec3 scale);
+	void setScale(vec3 scale);
 	void rotate(vec3 rotate, float angle);
-	void position(vec3 position);
+	void setPosition(vec3 position);
 
 	void setCurrentAnimation(std::string animationName);
 	void addAnimation(const Animation *);
@@ -87,7 +92,6 @@ struct Model {
 private:
 	void processNode(aiNode * node, ModelNode * modelNode, const Resource::Assimp * assimpResource);
 
-	void createId();
 	void allocMeshes(unsigned int);
 	void freeMeshes();
 	void freeNodes();
@@ -96,6 +100,7 @@ private:
 	void collectAiNode(aiNode*, std::vector<aiNode*>& nodes);
 
 	ModelId id_;
+	ModelName name_;
 	ModelMeshes meshes_;
 	ModelNode * rootNode_;
 	bool animInterpolation_;

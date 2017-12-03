@@ -21,32 +21,30 @@
 #include "../core/mesh.h"
 #include "../core/vertex.h"
 
-namespace RenderHelpers
+namespace Helpers
 {
+	struct CameraOrientation : Model {
+		CameraOrientation(vec3 origin, vec3 direction, float length);
+		~CameraOrientation();
 
-struct CameraOrientation : Model {
-	CameraOrientation(vec3 origin, vec3 direction, float length);
-	~CameraOrientation();
+		void setLength(float length);
+		void setPosition(vec3 origin);
+		void setDirection(vec3 direction);
+		void setCamera(Camera * camera);
 
-	void setLength(float length);
-	void setPosition(vec3 origin);
-	void setDirection(vec3 direction);
-	void setCamera(Camera * camera);
+	protected:
+		Mesh * lineUp;
+		Mesh * lineLeft;
+		Mesh * lineForward;
 
-protected:
-	Mesh * lineUp;
-	Mesh * lineLeft;
-	Mesh * lineForward;
+		void freeMesh();
 
-	void freeMesh();
-
-private:
-	vec3 origin_;
-	vec3 direction_;
-	float length_;
-	Camera * camera_;
-};
-
-} // RenderHelpers
+	private:
+		vec3 origin_;
+		vec3 direction_;
+		float length_;
+		Camera * camera_;
+	};
+} // Helpers
 
 #endif /* CAMERA_ORIENTATION_HELPER_H_ */

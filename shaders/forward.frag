@@ -15,13 +15,13 @@ struct DirLight {
 };
 
 struct PointLight {
+	float constant;
+	float linear;
+	float quadratic;
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
 	vec3 position;
-	float constant;
-	float linear;
-	float quadratic;
 };
 
 struct SpotLight {
@@ -33,7 +33,6 @@ struct SpotLight {
 	float constant;
 	float linear;
 	float quadratic;
-
 	float cutOff;
 	float outerCutOff;
 };
@@ -45,6 +44,11 @@ uniform SpotLight spotLights[NUM_SPOT_LIGHTS];
 uniform int countDirLights;
 uniform int countPointLights;
 uniform int countSpotLights;
+
+// layout (std140, binding = 1)
+// uniform Lights {
+// 	PointLight pointLights[1];
+// };
 
 uniform vec2 resolution;
 uniform mat4 model;
@@ -67,17 +71,8 @@ struct Material {
 	float shininess;
 };
 
-struct Light {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	float shininess;
-	vec3 position;
-};
-
 uniform vec3 viewPos;
 uniform Material material;
-uniform Light light;
 
 uniform sampler2D diffuseTexture;
 uniform sampler2D specularTexture;
@@ -158,24 +153,26 @@ void main()
 	vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
 	vec3 result = vec3(0.0);
 
-	for(int i = 0; i < countDirLights; i++)
-		result += CalcDirLight(dirLights[i], norm, viewDir);
+	// for(int i = 0; i < countDirLights; i++)
+	// 	result += CalcDirLight(dirLights[i], norm, viewDir);
 
-	for(int i = 0; i < countPointLights; i++)
+	for(int i = 0; i < 1; i++)
 		result += CalcPointLight(pointLights[i], norm, fragmentPosition, viewDir);
-		
+	
+	// result = CalcPointLight(pointLights[0], norm, fragmentPosition, viewDir);
+
 	// for(int i = 0; i < countSpotLights; i++)
 	// 	result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
 
-	// result+= material.ambient + material.diffuse + material.specular;
+	result+= material.ambient + material.diffuse + material.specular;
 
 	vec3 skyboxReflect = reflect(viewDir, normalize(normal));
 
-	result = mix(
-		result,
-		texture(cubeTexture, -skyboxReflect).rgb * 0.5,
-		min(1.0, (max(material.shininess, 0.0) / 1000.0))
-	);
+	// result = mix(
+	// 	result,
+	// 	texture(cubeTexture, -skyboxReflect).rgb * 0.5,
+	// 	min(1.0, (max(material.shininess, 0.0) / 1000.0))
+	// );
 
 	FragColor = vec4(result, 1.0);
 }

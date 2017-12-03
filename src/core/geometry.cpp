@@ -19,8 +19,9 @@ Geometry::Geometry(const Geometry& other)
 {
 	vertices_ = other.vertices_;
 	indices_ = other.indices_;
-
-	console::info("geometry copy vertices_", vertices_->size());
+	VAO = other.VAO;
+	VBO = other.VBO;
+	EBO = other.EBO;
 }
 
 Geometry::~Geometry()
@@ -41,29 +42,18 @@ void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource
 	{
 		Vertex vertex;
 
-		vertex.Position = vec3(
-				mesh->mVertices[i].x,
-				mesh->mVertices[i].y,
-				mesh->mVertices[i].z
-		);
-		vertex.Normal = vec3(
-				mesh->mNormals[i].x,
-				mesh->mNormals[i].y,
-				mesh->mNormals[i].z
-		);
+		vertex.Position = libAi::toNativeType(mesh->mVertices[i]);
+		vertex.Normal = libAi::toNativeType(mesh->mNormals[i]);
 
-		if (mesh->mTextureCoords[0])
-		{
+		if (mesh->mTextureCoords[0]) {
 			vertex.TexCoords = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-		}
-		else
-		{			
+		} else {			
 			vertex.TexCoords = vec2(0.0f, 0.0f);
 		}
 
 		if (mesh->mTangents != nullptr) {
-			vertex.Tangent = vec3(mesh->mTangents[i].x,	mesh->mTangents[i].y, mesh->mTangents[i].z);
-			vertex.Bitangent = vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+			vertex.Tangent = libAi::toNativeType(mesh->mTangents[i]);
+			vertex.Bitangent = libAi::toNativeType(mesh->mBitangents[i]);
 		} else {
 			vertex.Tangent = vec3(1.0f);
 			vertex.Bitangent = vec3(1.0f);
@@ -78,12 +68,58 @@ void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource
 
 	for (unsigned int i = 0; i < numFaces; i++)
 	{
-		aiFace face = mesh->mFaces[i];
+		aiFace& face = mesh->mFaces[i];
 		for(unsigned int j = 0; j < face.mNumIndices; j++)
 		{
 			indices_->push_back(face.mIndices[j]);
 		}
 	}
+}
+
+void Geometry::setup()
+{
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+
+	glBindVertexArray(VAO);
+
+	GeometryVertices * vertices = getVertices();
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &EBO);
+	GeometryIndices * indices = getIndices();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), GL_STATIC_DRAW);
+
+	setupVertex(vertices->front());
+
+	glBindVertexArray(0);
+}
+
+void Geometry::setupVertex(Vertex& v)
+{
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+
+	glEnableVertexAttribArray(5);
+	glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
+
+	glEnableVertexAttribArray(6);
+	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Weights));
 }
 
 GeometryVertices * Geometry::getVertices()
@@ -659,4 +695,56 @@ Geometry Geometry::Octahedron(float radius)
 	}
 
 	return geometry;
+}
+
+void Geometry::computeBoundingBox()
+{
+	vec3 min;
+	vec3 max;
+
+	const Vertex& frontVertex = vertices_->front();
+
+	min.x = max.x = frontVertex.Position.x;
+	min.y = max.y = frontVertex.Position.y;
+	min.z = max.z = frontVertex.Position.z;
+	
+	for (auto verticesIt = vertices_->begin(); verticesIt != vertices_->end(); verticesIt++)
+	{
+		Vertex& vertex = *verticesIt;
+		
+		if (vertex.Position.x < min.x) min.x = vertex.Position.x;
+		if (vertex.Position.x > max.x) max.x = vertex.Position.x;
+		if (vertex.Position.y < min.y) min.y = vertex.Position.y;
+		if (vertex.Position.y > max.y) max.y = vertex.Position.y;
+		if (vertex.Position.z < min.z) min.z = vertex.Position.z;
+		if (vertex.Position.z > max.z) max.z = vertex.Position.z;
+	}
+
+	boundingBox.center.x = (min.x + max.x) / 2.0f;
+	boundingBox.center.y = (min.y + max.y) / 2.0f;
+	boundingBox.center.z = (min.z + max.z) / 2.0f;
+
+	boundingBox.radius.x = (max.x - min.x) / 2.0f;
+	boundingBox.radius.y = (max.y - min.y) / 2.0f;
+	boundingBox.radius.z = (max.z - min.z) / 2.0f;
+
+	vec3 size = vec3(max.x - min.x, max.y - min.y, max.z - min.z);
+	vec3 center = vec3((min.x + max.x) / 2.0f, (min.y + max.y) / 2.0f, (min.z + max.z) / 2.0f);
+	//mat4 transform = glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), size);
+
+	console::info("");
+	console::info("bounding box");
+	console::info("size: ", size.x, ", ", size.y, ", ", size.z);
+	console::info("center: ", center.x, ", ", center.y, ", ", center.z);
+	console::info("");
+}
+
+void Geometry::computeBoundingSphere()
+{
+	
+}
+
+const Math::Box3& Geometry::getBoundingBox()
+{
+	return boundingBox;
 }

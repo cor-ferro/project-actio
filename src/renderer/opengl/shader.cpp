@@ -1,6 +1,6 @@
 #include "shader.h"
 
-Shader::Shader(Shader_Type type)
+Shader::Shader(ShaderType type)
 {
 	success = false;
 	switch (type) {
@@ -9,6 +9,9 @@ Shader::Shader(Shader_Type type)
 			break;
 		case FRAGMENT:
 			handle = glCreateShader(GL_FRAGMENT_SHADER);
+			break;
+		case GEOMETRY:
+			handle = glCreateShader(GL_GEOMETRY_SHADER);
 			break;
 	}
 }
@@ -47,4 +50,10 @@ void Shader::compile()
 void Shader::freeSources()
 {
 	glDeleteShader(handle);
+}
+
+bool Shader::Exists(std::string filePath)
+{
+	std::ifstream f(filePath.c_str());
+    return f.good();
 }

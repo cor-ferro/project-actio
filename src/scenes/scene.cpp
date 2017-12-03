@@ -313,33 +313,35 @@ bool Scene::init()
 	return true;
 }
 
-std::vector<Model*> * Scene::getModels()
+const std::vector<Model*>& Scene::getModels()
 {
 	return models_;
 }
 
+Model * Scene::getModelByName(std::string name)
+{
+	for (auto model : models_) {
+		if (model->getName() == name) return model;
+	}
+
+	return nullptr;
+}
+
 void Scene::allocModels(unsigned int count)
 {
-	models_ = new std::vector<Model*>();
-	models_->reserve(count);
+	models_.reserve(count);
 }
 
 void Scene::allocCameras(unsigned int count)
 {
-	cameras_ = new std::vector<Camera*>();
-	cameras_->reserve(count);
+	cameras_.reserve(count);
 }
 
 void Scene::allocLights(unsigned int count)
 {
-	directionalLights_ = new std::vector<Light::Directional*>();
-	directionalLights_->reserve(count);
-
-	pointLights_ = new std::vector<Light::Point*>();
-	pointLights_->reserve(count);
-
-	spotLights_ = new std::vector<Light::Spot*>();
-	spotLights_->reserve(count);
+	directionalLights_.reserve(count);
+	pointLights_.reserve(count);
+	spotLights_.reserve(count);
 }
 
 Model * Scene::getSkybox()
@@ -367,57 +369,58 @@ void Scene::setActiveCamera(Camera * activeCamera)
 	camera_ = activeCamera;
 }
 
-void Scene::add(Model * model) { models_->push_back(model); }
-void Scene::add(Camera * camera) { cameras_->push_back(camera); }
+void Scene::add(Model * model) { models_.push_back(model); }
+void Scene::add(std::shared_ptr<Model> model) { models_.push_back(model.get()); }
+void Scene::add(Camera * camera) { cameras_.push_back(camera); }
 
 void Scene::remove(Model * model)
 {
-	models_->erase(std::remove(models_->begin(), models_->end(), model), models_->end()); 
+	models_.erase(std::remove(models_.begin(), models_.end(), model), models_.end()); 
 }
 
 void Scene::remove(Camera * camera)
 {
-	cameras_->erase(std::remove(cameras_->begin(), cameras_->end(), camera), cameras_->end()); 
+	cameras_.erase(std::remove(cameras_.begin(), cameras_.end(), camera), cameras_.end()); 
 }
 
 /* ---------- Lights ---------- */
 
-std::vector<Light::Directional*> * Scene::getDirectionalLights()
+const std::vector<Light::Directional*>& Scene::getDirectionalLights()
 {
 	return directionalLights_;
 }
 
-std::vector<Light::Point*> * Scene::getPointLights()
+const std::vector<Light::Point*>& Scene::getPointLights()
 {
 	return pointLights_;
 }
 
-std::vector<Light::Spot*> * Scene::getSpotLights()
+const std::vector<Light::Spot*>& Scene::getSpotLights()
 {
 	return spotLights_;
 }
 
-void Scene::add(Light::Directional *light) { directionalLights_->push_back(light); }
-void Scene::add(Light::Point *light) { pointLights_->push_back(light); }
-void Scene::add(Light::Spot *light) { spotLights_->push_back(light); }
+void Scene::add(Light::Directional * light) { directionalLights_.push_back(light); }
+void Scene::add(Light::Point * light) { pointLights_.push_back(light); }
+void Scene::add(Light::Spot * light) { spotLights_.push_back(light); }
 
 void Scene::remove(Light::Directional * light)
 {
-	directionalLights_->erase(
-		std::remove(directionalLights_->begin(), directionalLights_->end(), light), directionalLights_->end()
+	directionalLights_.erase(
+		std::remove(directionalLights_.begin(), directionalLights_.end(), light), directionalLights_.end()
 	);
 }
 
 void Scene::remove(Light::Point *light)
 {
-	pointLights_->erase(
-		std::remove(pointLights_->begin(), pointLights_->end(), light), pointLights_->end()
+	pointLights_.erase(
+		std::remove(pointLights_.begin(), pointLights_.end(), light), pointLights_.end()
 	);
 }
 
 void Scene::remove(Light::Spot *light)
 {
-	spotLights_->erase(
-		std::remove(spotLights_->begin(), spotLights_->end(), light), spotLights_->end()
+	spotLights_.erase(
+		std::remove(spotLights_.begin(), spotLights_.end(), light), spotLights_.end()
 	);
 }

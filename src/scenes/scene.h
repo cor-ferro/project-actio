@@ -1,6 +1,7 @@
 #ifndef SCENE_H_
 #define SCENE_H_
 
+#include <memory>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -28,7 +29,9 @@ struct Scene {
 
 	bool initFromFile(Resource::File& file);
 	bool init();
-	std::vector<Model*>* getModels();
+	const std::vector<Model*>& getModels();
+	Model * getModelByName(ModelName name);
+	Model * getModelById(ModelId id);
 	
 	void allocModels(unsigned int count);
 	void allocCameras(unsigned int count);
@@ -38,6 +41,7 @@ struct Scene {
 	void setActiveCamera(Camera *);
 
 	void add(Model *);
+	void add(std::shared_ptr<Model>);
 	void add(Camera *);
 	void remove(Model *);
 	void remove(Camera *);
@@ -46,9 +50,9 @@ struct Scene {
 	void setSkybox(Model *);
 	bool hasSkybox();
 
-	std::vector<Light::Directional*> * getDirectionalLights();
-	std::vector<Light::Point*> * getPointLights();
-	std::vector<Light::Spot*> * getSpotLights();
+	const std::vector<Light::Directional*>& getDirectionalLights();
+	const std::vector<Light::Point*>& getPointLights();
+	const std::vector<Light::Spot*>& getSpotLights();
 
 	void add(Light::Directional *);
 	void add(Light::Point *);
@@ -59,12 +63,12 @@ struct Scene {
 
 private:
 	Model * skybox_ = nullptr;
-	std::vector<Model*> * models_;
-	std::vector<Camera*> * cameras_;
+	std::vector<Model*> models_;
+	std::vector<Camera*> cameras_;
 
-	std::vector<Light::Directional*> * directionalLights_;
-	std::vector<Light::Point*> * pointLights_;
-	std::vector<Light::Spot*> * spotLights_;
+	std::vector<Light::Directional*> directionalLights_;
+	std::vector<Light::Point*> pointLights_;
+	std::vector<Light::Spot*> spotLights_;
 
 	Camera * camera_;
 };

@@ -1,6 +1,6 @@
 #include "point_light_helper.h"
 
-namespace RenderHelpers
+namespace Helpers
 {
     PointLight::PointLight(Light::Point * light)
         : Model()

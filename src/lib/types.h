@@ -1,6 +1,7 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+#include <stdalign.h>
 #include "glm/glm.hpp"
 #include <glm/gtc/quaternion.hpp>
 
@@ -14,5 +15,6 @@ typedef glm::mat4 mat4;
 typedef glm::quat quat;
 typedef glm::vec2 color2;
 typedef glm::vec3 color3;
+struct alignas(16) vec3_16 {};
 
 #endif /* TYPES_H_ */

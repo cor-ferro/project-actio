@@ -14,6 +14,7 @@ static int countObjects = 0;
 
 struct Object3D {
 	Object3D();
+	Object3D(const Object3D& other);
 	~Object3D();
 
 	vec3 getPosition();

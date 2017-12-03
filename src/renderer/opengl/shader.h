@@ -11,17 +11,20 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "../../lib/console.h"
 
-enum Shader_Type {
-	VERTEX = 1,
-	FRAGMENT = 2
-};
-
 struct Shader {
-	Shader(Shader_Type type);
-	void loadFromFile(std::string file_path);
+	enum ShaderType {
+		VERTEX = 1,
+		FRAGMENT = 2,
+		GEOMETRY = 3
+	};
+
+	Shader(ShaderType type);
+	void loadFromFile(std::string filePath);
 	void setSource(const char * source);
 	void compile();
 	void freeSources();
+
+	static bool Exists(std::string filePath);
 
 	GLuint handle;
 	bool success;

@@ -5,6 +5,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "./types.h"
 
-mat4 aiMatToMat(aiMatrix4x4& aiMat);
+namespace libAi {
+    mat4 toNativeType(aiMatrix4x4& aiMat);
+    vec3 toNativeType(aiVector3D& aiVec);
+}
 
 #endif /* LIB_ASSIMP_H_ */

@@ -11,7 +11,6 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
-#include "../scenes/scene.h"
 #include "../core/model.h"
 #include "../core/mesh.h"
 #include "renderer_types.h"
@@ -32,10 +31,6 @@ struct BaseRenderer {
 
 	const RendererParams& getParams();
 
-	Scene * getScene();
-	void setScene(Scene *);
-	void setupScene();
-
 	void setViewSize(Renderer::ScreenSize, Renderer::ScreenSize);
 
 	void addFrameHandler(callback cb);
@@ -43,7 +38,6 @@ struct BaseRenderer {
 
 private:
 	RendererParams params_;
-	Scene * scene_;
 	std::vector<callback> frameHandlers_;
 };
 

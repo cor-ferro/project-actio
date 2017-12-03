@@ -49,20 +49,14 @@ OpenglRenderer::~OpenglRenderer()
 void OpenglRenderer::start()
 {
 	currentRenderer = this;
-	console::info("renderer main loop");
-	Scene * scene = getScene();
-	if (!scene) {
-		console::warn("Scene pointer is empty. Cannot start render.");
-		return;
-	}
-
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
 	console::info("GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ", maxTextureUnits);
 
 	forwardProgram.init("forward");
 	forwardProgram.initUniformCache({ "model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]" });
+	forwardProgram.initUniformCache(Opengl::Uniform::Map);
 	forwardProgram.bindBlock("Matrices", 0);
-//	forwardProgram.bindBlock("Lights", 1);
+	forwardProgram.bindBlock("Lights", 1);
 
 	geometryPassProgram.init("geometry_pass");
 	geometryPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
@@ -70,7 +64,7 @@ void OpenglRenderer::start()
 	skyboxProgram.init("skybox");
 
 	initMatricesBuffer();
-//	initLightsBuffer();
+	initLightsBuffer();
 }
 
 void OpenglRenderer::setTitle(const char * text)
@@ -80,25 +74,72 @@ void OpenglRenderer::setTitle(const char * text)
 
 void OpenglRenderer::initMatricesBuffer()
 {
-	// projection, view
-	matricesBuffer.init({ sizeof(mat4), sizeof(mat4) }, UBO_MATRICES_POINT_INDEX);
+	std::vector<size_t> sizes = {
+		sizeof(mat4), // projection
+		sizeof(mat4)  // view
+	};
+
+	UBufferData matricesData(1, sizes);
+
+	std::unordered_map<std::string, UBufferData> map;
+	map["main"] = matricesData;
+
+	matricesBuffer.init(map, UBO_MATRICES_POINT_INDEX);
 }
 
 void OpenglRenderer::initLightsBuffer()
 {
-	auto dataSize = sizeof(float);
+	const uint dirLightCount = 8;
+	const uint pointLightCount = 8;
+	const uint spotLightCount = 8;
 
-	glGenBuffers(1, &uboLights);
-	glBindBuffer(GL_UNIFORM_BUFFER, uboLights);
-	glBufferData(GL_UNIFORM_BUFFER, dataSize, NULL, GL_STATIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	std::vector<size_t> dirLightMap = {
+		sizeof(vec3), // ambient
+		sizeof(vec3), // diffuse
+		sizeof(vec3), // specular
+		sizeof(vec3)  // direction
+	};
 
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_LIGHTS_POINT_INDEX, uboLights, 0, dataSize);
+	std::vector<size_t> pointLightMap = {
+		sizeof(vec3),  // ambient
+		sizeof(vec3),  // diffuse
+		sizeof(vec3),  // specular
+		sizeof(vec3),  // position
+		sizeof(float), // constant
+		sizeof(float), // linear
+		sizeof(float), // quadratic
+		sizeof(float)  // padding
+	};
+
+	std::vector<size_t> spotLightMap = {
+		sizeof(vec3),  // ambient
+		sizeof(vec3),  // diffuse
+		sizeof(vec3),  // specular
+		sizeof(vec3),  // position
+		sizeof(vec3),  // direction
+		sizeof(float), // constant
+		sizeof(float), // linear
+		sizeof(float), // quadratic
+		sizeof(float), // cutOff
+		sizeof(float)  // outerCutOff
+	};
+
+	UBufferData dirLightData(dirLightCount, dirLightMap);
+	UBufferData pointLightData(1, pointLightMap);
+	UBufferData spotLightData(spotLightCount, spotLightMap);
+
+	std::unordered_map<std::string, UBufferData> map;
+
+	// не менять местами
+	// map["spot"] = spotLightData;
+	map["point"] = pointLightData;
+	// map["directional"] = dirLightData;
+
+	lightBuffer.init(map, UBO_LIGHTS_POINT_INDEX);
 }
 
-void OpenglRenderer::forwardRender()
+void OpenglRenderer::forwardRender(Scene * scene)
 {
-	Scene * scene = getScene();
 	Camera * camera = scene->getActiveCamera();
 
 	const RendererParams& renderParams = getParams();
@@ -108,7 +149,6 @@ void OpenglRenderer::forwardRender()
 	this->time = newTime;
 
 	glEnable(GL_DEPTH_TEST);
-	// glDepthMask(GL_TRUE);
 	glEnable(GL_MULTISAMPLE);
 	glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
 	glOrtho(-renderParams.aspectRatio, renderParams.aspectRatio, -1, 1, -1, 1);
@@ -127,7 +167,15 @@ void OpenglRenderer::forwardRender()
 	matricesBuffer.use();
 	matricesBuffer.set(0, glm::value_ptr(projection));
 	matricesBuffer.set(1, glm::value_ptr(view));
-	matricesBuffer.nouse();
+	// matricesBuffer.nouse();
+
+	vec3 ambient = vec3(0.0f, 0.3f, 0.0f);
+	vec3 diffuse = vec3(0.3f, 0.0f, 0.0f);
+	vec3 specular = vec3(0.3f, 0.3f, 0.0f);
+	vec3 position = vec3(0.0f, 0.0f, 0.3f);
+	float constant = 1.0f;
+	float linear = 0.01f;
+	float quadratic = 0.012f;
 
 	forwardProgram.use();
 	forwardProgram.setFloat("time", time / 1000.0f);
@@ -145,23 +193,24 @@ void OpenglRenderer::forwardRender()
 		forwardProgram.setInt("cubeTexture", maxTextureUnits - 1);
 	}
 
-	std::vector<Light::Directional*> * dirLights = scene->getDirectionalLights();
-	std::vector<Light::Point*> * pointLights = scene->getPointLights();
-	std::vector<Light::Spot*> * spotLights = scene->getSpotLights();
+	const std::vector<Light::Directional*>& dirLights = scene->getDirectionalLights();
+	const std::vector<Light::Point*>& pointLights = scene->getPointLights();
+	const std::vector<Light::Spot*>& spotLights = scene->getSpotLights();
 
 	int dirLightIndex = 0;
-	for (auto dirLight = dirLights->begin(); dirLight != dirLights->end(); ++dirLight)
+	for (auto dirLight = dirLights.begin(); dirLight != dirLights.end(); ++dirLight)
 	{
 		std::string sIndex = std::to_string(dirLightIndex);
 		forwardProgram.setVec("dirLights["+ sIndex +"].ambient", (*dirLight)->ambient);
 		forwardProgram.setVec("dirLights["+ sIndex +"].diffuse", (*dirLight)->diffuse);
 		forwardProgram.setVec("dirLights["+ sIndex +"].specular", (*dirLight)->specular);
 		forwardProgram.setVec("dirLights["+ sIndex +"].direction", (*dirLight)->direction);
+
 		dirLightIndex++;
 	}
 
 	int pointLightIndex = 0;
-	for (auto pointLight = pointLights->begin(); pointLight != pointLights->end(); ++pointLight)
+	for (auto pointLight = pointLights.begin(); pointLight != pointLights.end(); ++pointLight)
 	{
 		std::string sIndex = std::to_string(pointLightIndex);
 		forwardProgram.setVec("pointLights["+ sIndex +"].ambient", (*pointLight)->ambient);
@@ -171,11 +220,12 @@ void OpenglRenderer::forwardRender()
 		forwardProgram.setFloat("pointLights["+ sIndex +"].constant", (*pointLight)->constant);
 		forwardProgram.setFloat("pointLights["+ sIndex +"].linear", (*pointLight)->linear);
 		forwardProgram.setFloat("pointLights["+ sIndex +"].quadratic", (*pointLight)->quadratic);
+
 		pointLightIndex++;
 	}
 
 	int spotLightIndex = 0;
-	for (auto spotLight = spotLights->begin(); spotLight != spotLights->end(); ++spotLight)
+	for (auto spotLight = spotLights.begin(); spotLight != spotLights.end(); ++spotLight)
 	{
 		std::string sIndex = std::to_string(spotLightIndex);
 		forwardProgram.setVec("spotLights["+ sIndex +"].ambient", (*spotLight)->ambient);
@@ -191,12 +241,13 @@ void OpenglRenderer::forwardRender()
 		spotLightIndex++;
 	}
 
-	forwardProgram.setInt("countDirLights", dirLights->size());
-	forwardProgram.setInt("countPointLights", pointLights->size());
-	forwardProgram.setInt("countSpotLights", spotLights->size());
+	forwardProgram.setInt("countDirLights", dirLights.size());
+	forwardProgram.setInt("countPointLights", pointLights.size());
+	forwardProgram.setInt("countSpotLights", spotLights.size());
 
-	std::vector<Model*> * models = scene->getModels();
-	for (auto modelIt = models->begin(); modelIt != models->end(); modelIt++)
+	const std::vector<Model*>& models = scene->getModels();
+
+	for (auto modelIt = models.begin(); modelIt != models.end(); modelIt++)
 	{
 		Model * model = *modelIt;
 
@@ -218,8 +269,6 @@ void OpenglRenderer::forwardRender()
 	{
 		glDepthFunc(GL_LEQUAL);
 		skyboxProgram.use();
-		skyboxProgram.setMat("projection", projection);
-		skyboxProgram.setMat("view", glm::mat4(glm::mat3(view)));
 
 		Model * skyboxModel = scene->getSkybox();
 		const ModelMeshes& meshes = skyboxModel->getMeshes();
@@ -233,7 +282,7 @@ void OpenglRenderer::forwardRender()
 	}
 }
 
-void OpenglRenderer::defferedRender()
+void OpenglRenderer::defferedRender(Scene * scene)
 {
 	const RendererParams& renderParams = getParams();
 	geometryPassProgram.use();
@@ -308,7 +357,7 @@ void OpenglRenderer::addPostRenderHandler(callback handler)
 	postFrameSignal_.connect(handler);
 }
 
-void OpenglRenderer::draw()
+void OpenglRenderer::draw(Scene * scene)
 {
 	if (InputHandler::instance().isPress(KEY_ESC))
 	{
@@ -325,9 +374,9 @@ void OpenglRenderer::draw()
 	// glEnable(GL_CULL_FACE);
 	// glCullFace(GL_FRONT);
 
-	forwardRender();
+	forwardRender(scene);
 
-	glEnd();
+	// glEnd();
 	glFlush();
 	glutSwapBuffers();
 
@@ -335,7 +384,7 @@ void OpenglRenderer::draw()
 }
 
 void resizeFunction(int width, int height) {
-	console::info("resize function", width, height);
+	console::info("resize window: ", width, "x", height);
 
 	OpenglRenderer * renderer = currentRenderer;
 

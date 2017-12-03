@@ -1,58 +1,10 @@
 #include "mesh.h"
 
-MeshBone::MeshBone()
-	: offset(mat4(1.0))
-	, transform(mat4(1.0))
-	, index(0)
-{
-
-}
-
-MeshBone::MeshBone(aiBone * bone) 
-	: offset(aiMatToMat(bone->mOffsetMatrix))
-	, transform(mat4(1.0))
-	, index(0)
-{
-
-}
-
-unsigned int MeshBone::getIndex() const
-{
-	return index;
-}
-
-mat4 MeshBone::getTransform() const
-{
-	return transform;
-}
-
-mat4 MeshBone::getOffset() const
-{
-	return offset;
-}
-
-void MeshBone::setOffset(mat4& newOffset)
-{
-	offset = newOffset;
-}
-
-void MeshBone::setTransform(mat4& newTransform)
-{
-	transform = newTransform;
-}
-
-void MeshBone::setIndex(unsigned int& newIndex)
-{
-	index = newIndex;
-}
-
-
 Mesh::Mesh()
 	: name("")
 	, isSetupReady(false)
+	, drawType(Mesh_Draw_Triangle)
 {
-	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
-	setDrawItem(MESH_DRAW_ITEM_ARRAY);
 }
 
 Mesh::Mesh(PhongMaterial material, Geometry geometry) 
@@ -60,17 +12,15 @@ Mesh::Mesh(PhongMaterial material, Geometry geometry)
 	, isSetupReady(false)
 	, material(material)
 	, geometry(geometry)
+	, drawType(Mesh_Draw_Triangle)
 {
-	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
-	setDrawItem(MESH_DRAW_ITEM_ELEMENTS);
 }
 
 Mesh::Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource)
 	: name("")
 	, isSetupReady(false)
+	, drawType(Mesh_Draw_Triangle)
 {
-	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
-	setDrawItem(MESH_DRAW_ITEM_ELEMENTS);
 	initFromAi(mesh, assimpResource);
 }
 
@@ -83,19 +33,14 @@ Mesh::Mesh(const Mesh& other)
 
 	console::info("copy mesh");
 	#ifdef GRAPHIC_API_OPENGL
-	VAO = other.VAO;
-	VBO = other.VBO;
-	EBO = other.EBO;
-	drawModeGl = other.drawModeGl;
-	drawItemGl = other.drawItemGl;
 	#endif
 	name = other.name;
-	drawMode = other.drawMode;
 	material = other.material;
 	geometry = other.geometry;
 	isSetupReady = other.isSetupReady;
 	bones = other.bones;
 	transforms = other.transforms;
+	drawType = other.drawType;
 }
 
 Mesh::~Mesh()
@@ -107,9 +52,6 @@ Mesh::~Mesh()
 
 void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 {
-	setDrawMode(MESH_DRAW_MODE_TRIANGLE);
-	setDrawItem(MESH_DRAW_ITEM_ELEMENTS);
-
 	freeGeometry();
 	freeMaterial();
 
@@ -141,7 +83,7 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 			MeshBone meshBone(bone);
 
 			std::string boneName(bone->mName.data);
-			mat4 offsetBone = aiMatToMat(bone->mOffsetMatrix);
+			mat4 offsetBone = libAi::toNativeType(bone->mOffsetMatrix);
 
 			meshBone.setIndex(boneId);
 
@@ -207,26 +149,14 @@ void Mesh::setName(const char * newName)
 	name = std::string(newName);
 }
 
-void Mesh::setDrawMode(MeshDrawMode mode)
+void Mesh::setDrawType(MeshDrawType type)
 {
-	drawMode = mode;
-	#ifdef GRAPHIC_API_OPENGL
-	switch (drawMode) {
-	case MESH_DRAW_MODE_TRIANGLE:
-		drawModeGl = GL_TRIANGLES;
-		break;
-	case MESH_DRAW_MODE_LINE:
-		drawModeGl = GL_LINE_LOOP;
-		break;
-	}
-	#endif
+	drawType = type;
 }
 
-void Mesh::setDrawItem(MeshDrawItem item)
+MeshDrawType Mesh::getDrawType()
 {
-	#ifdef GRAPHIC_API_OPENGL
-	drawItemGl = item;
-	#endif
+	return drawType;
 }
 
 void Mesh::draw()
@@ -236,11 +166,8 @@ void Mesh::draw()
 
 #ifdef GRAPHIC_API_OPENGL
 
-void Mesh::draw(Opengl::Program &program)
+void Mesh::draw(Opengl::Program& program)
 {
-	GeometryVertices * vertices = geometry.getVertices();
-	GeometryIndices * indices = geometry.getIndices();
-
 	unsigned int textureIndex = 0;
 	const MaterialTextures& textures = material.getTextures();
 	for (const Texture& texture : textures)
@@ -251,12 +178,11 @@ void Mesh::draw(Opengl::Program &program)
 		textureIndex++;
 	}
 
-	glBindVertexArray(VAO);
+	glBindVertexArray(geometry.VAO);
 
 	if (material.wireframe == true)
 	{
-		glPolygonMode(GL_FRONT, GL_LINE);
-		glPolygonMode(GL_BACK, GL_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
 	updateModelMatrix(false);
@@ -267,34 +193,57 @@ void Mesh::draw(Opengl::Program &program)
 		boneTransformType = "BoneTransformEnabled";
 		std::vector<mat4> * boneTransforms = &transforms;
 
-		program.setMat("bones[]", boneTransforms);
+		program.setMat(Opengl::Uniform::Bones, boneTransforms);
 	} else {
 		boneTransformType = "BoneTransformDisabled";
 	}
 
 	program.enableVertexSubroutine(boneTransformType);
+	program.setMat(Opengl::Uniform::Model, modelMatrix);
 
-	program.setMat("model", modelMatrix);
+	program.setVec(Opengl::Uniform::MaterialAmbient, material.ambient);
+	program.setVec(Opengl::Uniform::MaterialDiffuse, material.diffuse);
+	program.setVec(Opengl::Uniform::MaterialSpecular, material.specular);
+	program.setFloat(Opengl::Uniform::MaterialShininess, material.shininess);
 
-	program.setVec("material.ambient", material.ambient);
-	program.setVec("material.diffuse", material.diffuse);
-	program.setVec("material.specular", material.specular);
-	program.setFloat("material.shininess", material.shininess);
+	GeometryVertices * vertices = geometry.getVertices();
+	GeometryIndices * indices = geometry.getIndices();
 
-	// switch (drawItemGl)
-	// {
-	// case MESH_DRAW_ITEM_ARRAY:
-	// 	glDrawArrays(drawModeGl, 0, vertices->size());
-	// 	break;
-	// case MESH_DRAW_ITEM_ELEMENTS:
-		glDrawElements(drawModeGl, indices->size(), GL_UNSIGNED_INT, 0);
-	// 	break;
-	// }
+	GLenum primitiveType;
+	switch (drawType) {
+		case Mesh_Draw_Line:
+			primitiveType = GL_LINES; break;
+		case Mesh_Draw_Line_Loop:
+			primitiveType = GL_LINE_LOOP; break;
+		case Mesh_Draw_Triangle:
+			primitiveType = GL_TRIANGLES; break;
+		default:
+			primitiveType = GL_TRIANGLES;
+	}
+
+	MeshDrawMode drawMode;
+
+	if (indices->size() != 0) {
+		drawMode = Mesh_Draw_Elements;
+	} else {
+		drawMode = Mesh_Draw_Arrays;
+	}
+
+	switch (drawMode) {
+		case Mesh_Draw_Arrays:
+			glDrawArrays(primitiveType, 0, vertices->size());
+			break;
+		case Mesh_Draw_Elements:
+			glDrawElements(primitiveType, indices->size(), GL_UNSIGNED_INT, 0);
+			break;
+		default:
+			console::warn("unknown draw mode: ", drawMode);
+	}
+	
 
 	if (material.wireframe == true)
 	{
-		glPolygonMode(GL_FRONT, GL_FILL);
-		glPolygonMode(GL_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
 	glBindVertexArray(0);
@@ -309,78 +258,16 @@ void Mesh::setup()
 		return;
 	}
 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO);
-
-	GeometryVertices * vertices = geometry.getVertices();
-
-	// console::info("vertices size", vertices->size());
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
-
-	if (drawItemGl == MESH_DRAW_ITEM_ELEMENTS)
-	{
-		glGenBuffers(1, &EBO);
-		GeometryIndices * indices = geometry.getIndices();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), GL_STATIC_DRAW);
-	}
-
-	setupVertex(vertices->front());
-
-	glBindVertexArray(0);
+	geometry.setup();
 
 	isSetupReady = true;
 }
 
-void Mesh::setupVertex(Vertex& v)
-{
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
-
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
-
-	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
-
-	glEnableVertexAttribArray(5);
-	glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
-	// glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
-
-	glEnableVertexAttribArray(6);
-	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Weights));
-}
-
-void Mesh::setupVertex(Vertex1& v)
-{
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-}
-
-void Mesh::setupVertex(Vertex2& v)
-{
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
-}
-
 void Mesh::freeBuffers()
 {
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteVertexArrays(1, &VAO);
+	// glDeleteBuffers(1, &VBO);
+	// glDeleteBuffers(1, &EBO);
+	// glDeleteVertexArrays(1, &VAO);
 }
 
 

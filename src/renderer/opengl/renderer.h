@@ -27,9 +27,10 @@
 #include "g-buffer.h"
 #include "u-buffer.h"
 #include "../stats.h"
+#include "uniforms.h"
 
 #define UBO_MATRICES_POINT_INDEX 0
-#define UBO_LIGHTS_POINT_INDEX 0
+#define UBO_LIGHTS_POINT_INDEX 1
 
 namespace Renderer {
 
@@ -44,12 +45,12 @@ struct OpenglRenderer : BaseRenderer {
 	~OpenglRenderer();
 	bool init(int, char **);
 	void start();
-	void draw();
+	void draw(Scene * scene);
 	void updateTime(int);
 	void setTitle(const char * text);
 
-	void forwardRender();
-	void defferedRender();
+	void forwardRender(Scene * scene);
+	void defferedRender(Scene * scene);
 
 	void preRender();
 	void postRender();
@@ -60,11 +61,9 @@ struct OpenglRenderer : BaseRenderer {
 	size_t elaspsedTime = 0;
 	size_t time = 1000;
 
-	GLuint uboLights = 0;
-	GLuint uboMatrices = 0;
-
 	GBuffer gbuffer;
 	UBuffer matricesBuffer;
+	UBuffer lightBuffer;
 
 	Renderer::Stats stats;
 

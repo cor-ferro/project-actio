@@ -10,13 +10,22 @@
 #include "../lib/types.h"
 #include "../lib/console.h"
 #include "../lib/mem.h"
+#include "../lib/assimp.h"
 #include "../resources/resources.h"
+#include "../math/Box3.h"
+#include "../math/Sphere.h"
 #include "vertex.h"
+
+#ifdef GRAPHIC_API_OPENGL
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include "../renderer/opengl/program.h"
+#include "../renderer/opengl/uniforms.h"
+#endif
 
 typedef unsigned int MeshIndex;
 typedef std::vector<Vertex> GeometryVertices;
 typedef std::vector<MeshIndex> GeometryIndices;
-
 
 static size_t TotalCountVertices = 0;
 
@@ -67,12 +76,24 @@ struct Geometry {
 	void addIndex(unsigned int i);
 	void addFace(unsigned int i1, unsigned int i2, unsigned int i3);
 
+	void setup();
+	void setupVertex(Vertex& v);
+
+	void computeBoundingBox();
+	void computeBoundingSphere();
+	const Math::Box3& getBoundingBox();
+
+	GLuint VAO;
+	GLuint VBO;
+	GLuint EBO;
+
 protected:
 	void allocVertices(unsigned int count);
 	void allocIndices(unsigned int count);
 	void freeVerties();
 	void freeIndices();
 
+	Math::Box3 boundingBox;
 	std::shared_ptr<GeometryVertices> vertices_;
 	std::shared_ptr<GeometryIndices> indices_;
 };

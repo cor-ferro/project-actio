@@ -13,6 +13,16 @@ Object3D::Object3D()
 	needUpdateMatrix = true;
 }
 
+Object3D::Object3D(const Object3D& other)
+{
+	position = other.position;
+	scale = other.scale;
+	rotation = other.rotation;
+	quaternion = other.quaternion;
+	modelMatrix = other.modelMatrix;
+	needUpdateMatrix = other.needUpdateMatrix;
+}
+
 Object3D::~Object3D()
 {
 	countObjects--;
@@ -117,7 +127,7 @@ void Object3D::updateModelMatrix(bool force = false)
 {
 	if (force == true || needUpdateMatrix == true)
 	{
-//		console::info("update matrix");
+		// console::info("update matrix");
 		modelMatrix = mat4(1.0);
 
 		mat4 translateMatrix = glm::translate(modelMatrix, position);

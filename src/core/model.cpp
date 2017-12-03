@@ -34,7 +34,7 @@ ModelNode::ModelNode(aiNode * node)
 	meshes.reserve(node->mNumMeshes);
 	children.reserve(node->mNumChildren);
 
-	transformation = aiMatToMat(node->mTransformation);
+	transformation = libAi::toNativeType(node->mTransformation);
 }
 
 void ModelNode::addMesh(Mesh * mesh)
@@ -48,9 +48,10 @@ void ModelNode::addNode(ModelNode * node)
 }
 
 Model::Model()
-	: animInterpolation_(true)
+	: id_(newId())
+	, name_()
+	, animInterpolation_(true)
 {
-	createId();
 	allocMeshes(1);
 }
 
@@ -59,10 +60,14 @@ Model::Model(const Model& other)
 	console::info("copy model");
 	freeMeshes();
 	id_ = other.id_;
+	name_ = other.name_;
 	meshes_ = other.meshes_;
 	nodes_ = other.nodes_;
 	animations_ = other.animations_;
 	animInterpolation_ = other.animInterpolation_;
+	currentAnimation = other.currentAnimation;
+	GlobalInverseTransform = other.GlobalInverseTransform;
+	rootNode_ = other.rootNode_;
 }
 
 Model::Model(Mesh * mesh)
@@ -75,7 +80,8 @@ Model::Model(Mesh * mesh)
 }
 
 Model::Model(ModelConfig& config)
-	: animInterpolation_(true)
+	: id_(newId())
+	, animInterpolation_(true)
 {
 	Assimp::Importer importer;
 
@@ -95,7 +101,7 @@ Model::Model(ModelConfig& config)
 		return;
 	}
 
-	this->GlobalInverseTransform = aiMatToMat(scene->mRootNode->mTransformation);
+	this->GlobalInverseTransform = libAi::toNativeType(scene->mRootNode->mTransformation);
 	this->GlobalInverseTransform = glm::inverse(GlobalInverseTransform);
 
 	if (scene->mNumAnimations > 0) {
@@ -112,13 +118,13 @@ Model::Model(ModelConfig& config)
 	console::info("materials", scene->mNumMaterials);
 	console::info("meshes", scene->mNumMeshes);
 
-	createId();
 	allocMeshes(0);
 	initFromAi(assimpResource);
 
-	position(config.position);
+	setName(config.name);
+	setPosition(config.position);
 	rotate(config.rotation, config.rotationAngle);
-	scale(config.scale);
+	setScale(config.scale);
 
 	if (config.animation != "") {
 		setCurrentAnimation(config.animation);
@@ -134,14 +140,19 @@ Model::~Model()
 	freeMeshes();
 }
 
-ModelId Model::getId()
+const ModelId& Model::getId()
 {
 	return id_;
 }
 
-void Model::createId()
+const ModelName& Model::getName()
 {
-	id_ = newId();
+	return name_;
+}
+
+void Model::setName(std::string newName)
+{
+	name_ = newName;
 }
 
 void Model::allocMeshes(unsigned int count)
@@ -211,8 +222,6 @@ void Model::processNode(aiNode * node, ModelNode * modelNode, const Resource::As
 {
 	addNode(modelNode);
 
-	// console::info("======= node", modelNode->name, node->mNumMeshes);
-
 	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
 		unsigned int meshIndex = node->mMeshes[i];
 		aiMesh * mesh = assimpResource->scene->mMeshes[meshIndex];
@@ -239,25 +248,25 @@ Mesh * Model::getFirstMesh()
 	return meshes_.at(0).get();
 }
 
-void Model::scale(vec3 scale)
+void Model::setScale(vec3 scale)
 {
-	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
-	{
-		(*mesh)->setScale(scale);
+	for (const auto& mesh : meshes_) {
+		mesh->setScale(scale);
 	}
 }
 
 void Model::rotate(vec3 rotate, float angle)
 {
-	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
-	{
-		(*mesh)->rotate(rotate, angle);
+	for (const auto& mesh : meshes_) {
+		mesh->rotate(rotate, angle);
 	}
 }
 
-void Model::position(vec3 position)
+void Model::setPosition(vec3 position)
 {
-	// @todo
+	for (const auto& mesh : meshes_) {
+		mesh->setPosition(position);
+	}
 }
 
 void Model::enableAnimIterpolation()
