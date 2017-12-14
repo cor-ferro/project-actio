@@ -113,10 +113,7 @@ int main(int argc, char **argv) {
 	scene->add(pointLightHelper);
 
 	cameraOrientationHelper->setLength(1.0);
-	
-	// renderCycle.addTickHandler([&scene, &renderer, &inputHandler, &cameraControl, &pointLightHelper, &light](float time) {
 
-	// });
 	GLFWwindow * window = glfwGetCurrentContext();
 
 	while(!glfwWindowShouldClose(window))
@@ -137,11 +134,14 @@ int main(int argc, char **argv) {
 		inputHandler.onFrame();
 
 		glfwSwapBuffers(window);
-		glfwPollEvents();    
-	}
+		glfwPollEvents();
 
-	// Cycle::mailLoop();
-	// don't put code below. trust me.
+		if (inputHandler.isPress(InputHandler::KEY_ESC))
+		{
+			glfwDestroyWindow(window);
+			break;
+		}
+	}
 
 	console::info("stop application");
 

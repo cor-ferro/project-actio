@@ -32,8 +32,7 @@ Mesh::Mesh(const Mesh& other)
 	freeBuffers();
 
 	console::info("copy mesh");
-	#ifdef GRAPHIC_API_OPENGL
-	#endif
+
 	name = other.name;
 	material = other.material;
 	geometry = other.geometry;
@@ -45,9 +44,9 @@ Mesh::Mesh(const Mesh& other)
 
 Mesh::~Mesh()
 {
-	freeGeometry();
-	freeMaterial();
-	freeBuffers();
+	// freeGeometry();
+	// freeMaterial();
+	// freeBuffers();
 }
 
 void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
@@ -180,11 +179,6 @@ void Mesh::draw(Opengl::Program& program)
 
 	glBindVertexArray(geometry.VAO);
 
-	if (material.wireframe == true)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
-
 	updateModelMatrix(false);
 
 	std::string boneTransformType;
@@ -227,6 +221,11 @@ void Mesh::draw(Opengl::Program& program)
 		drawMode = Mesh_Draw_Elements;
 	} else {
 		drawMode = Mesh_Draw_Arrays;
+	}
+
+	if (material.wireframe == true)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
 	switch (drawMode) {

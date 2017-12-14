@@ -9,15 +9,6 @@
 #include <GLFW/glfw3.h>
 #include "console.h"
 
-#define KEY_SPACE 32
-#define KEY_ENTER 257
-#define KEY_W 87
-#define KEY_A 65
-#define KEY_S 83
-#define KEY_D 68
-#define KEY_C 67
-#define KEY_ESC 256
-
 #define MARGIN 30
 
 enum KeyboardModifier {
@@ -40,20 +31,33 @@ struct MousePosition {
 
 static int timerId;
 
+typedef short int KeyCode;
+
 struct InputHandler {
+	enum KeyType {
+		KEY_SPACE = GLFW_KEY_SPACE,
+		KEY_ENTER = GLFW_KEY_ENTER,
+		KEY_W = GLFW_KEY_W,
+		KEY_A = GLFW_KEY_A,
+		KEY_S = GLFW_KEY_S,
+		KEY_D = GLFW_KEY_D,
+		KEY_C = GLFW_KEY_C,
+		KEY_ESC = GLFW_KEY_ESCAPE
+	};
+
 	static InputHandler& instance() {
 		static InputHandler inputHandler;
 
 		return inputHandler;
 	}
 
-	bool isPress(short);
-	bool isPress(short, short);
-	bool isPress(KeyboardModifier, short);
+	bool isPress(KeyCode);
+	bool isPress(KeyCode, KeyCode);
+	bool isPress(KeyboardModifier, KeyCode);
 	bool isPress(MouseModifier);
 
-	void setKeyDown(short key);
-	void setKeyUp(short key);
+	void setKeyDown(KeyCode key);
+	void setKeyUp(KeyCode key);
 	void setModifierDown(KeyboardModifier modifier);
 	void setModifierUp(KeyboardModifier modifier);
 
@@ -84,14 +88,13 @@ private:
 
 	InputHandler(InputHandler const &);
 	InputHandler& operator= (InputHandler const &);
-	bool isKeyPress(short);
+	bool isKeyPress(KeyCode);
 	bool isModifierPress(KeyboardModifier);
 	bool isModifierPress(MouseModifier);
 
-	// char modifiers_;
 	std::bitset<8> keyboardModifiers_;
 	std::bitset<8> mouseModifiers_;
-	std::unordered_map<short, bool> map_;
+	std::unordered_map<KeyCode, bool> map_;
 };
 
 static void onKeyPress(GLFWwindow* window, int key, int scancode, int action, int mods);

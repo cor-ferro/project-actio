@@ -26,17 +26,17 @@ InputHandler::InputHandler()
 	// glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 }
 
-bool InputHandler::isPress(short key)
+bool InputHandler::isPress(KeyCode key)
 {
 	return isKeyPress(key);
 }
 
-bool InputHandler::isPress(short key1, short key2)
+bool InputHandler::isPress(KeyCode key1, KeyCode key2)
 {
 	return isKeyPress(key1) && isKeyPress(key2);
 }
 
-bool InputHandler::isPress(KeyboardModifier modifier, short key)
+bool InputHandler::isPress(KeyboardModifier modifier, KeyCode key)
 {
 	return isModifierPress(modifier) && isKeyPress(key);
 }
@@ -46,9 +46,9 @@ bool InputHandler::isPress(MouseModifier modifier)
 	return isModifierPress(modifier); 
 }
 
-bool InputHandler::isKeyPress(short key)
+bool InputHandler::isKeyPress(KeyCode key)
 {
-	std::unordered_map<short, bool>::const_iterator it = map_.find(key);
+	std::unordered_map<KeyCode, bool>::const_iterator it = map_.find(key);
 
 	return it != map_.end() && it->second == true;
 }
@@ -64,9 +64,9 @@ bool InputHandler::isModifierPress(MouseModifier modifier)
 	return mouseModifiers_.test(modifier);
 }
 
-void InputHandler::setKeyDown(short key)
+void InputHandler::setKeyDown(KeyCode key)
 {
-	std::unordered_map<short, bool>::iterator it = map_.find(key);
+	std::unordered_map<KeyCode, bool>::iterator it = map_.find(key);
 
 	if (it != map_.end())
 	{
@@ -74,14 +74,14 @@ void InputHandler::setKeyDown(short key)
 	}
 	else
 	{
-		std::pair<short,bool> keyInfo (key, true);
+		std::pair<KeyCode, bool> keyInfo (key, true);
 		map_.insert(keyInfo);
 	}
 }
 
-void InputHandler::setKeyUp(short key)
+void InputHandler::setKeyUp(KeyCode key)
 {
-	std::unordered_map<short, bool>::iterator it = map_.find(key);
+	std::unordered_map<KeyCode, bool>::iterator it = map_.find(key);
 	if (it != map_.end())
 	{
 		it->second = false;

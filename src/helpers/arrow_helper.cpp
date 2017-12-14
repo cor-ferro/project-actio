@@ -4,10 +4,10 @@ namespace Helpers
 {
 
 	Arrow::Arrow(vec3 origin, vec3 direction, float length)
-	: Model(),
-	origin_(origin),
-	direction_(direction),
-	length_(length)
+		: Model()
+		, origin_(origin)
+		, direction_(direction)
+		, length_(length)
 	{
 		line = new Mesh();
 		cone = new Mesh();
@@ -48,10 +48,6 @@ namespace Helpers
 		setLength(length_);
 		setOrigin(origin_);
 		setDirection(direction_);
-
-		// already setup?
-	//	line->setup();
-	//	cone->setup();
 	}
 
 	void Arrow::setOrigin(vec3 origin)
@@ -78,18 +74,6 @@ namespace Helpers
 		cone->setPosition(origin_ + vec3(0.0, length_, 0.0));
 	}
 
-	void Arrow::freeMesh()
-	{
-		delete line;
-		delete cone;
-
-		line = nullptr;
-		cone = nullptr;
-	}
-
-	Arrow::~Arrow()
-	{
-		freeMesh();
-	}
+	Arrow::~Arrow() {}
 
 } // Helpers

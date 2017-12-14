@@ -68,20 +68,6 @@ namespace Helpers
 		lineForward->setScale(vec3(length_));
 	}
 
-	void CameraOrientation::freeMesh()
-	{
-		delete lineUp;
-		delete lineLeft;
-		delete lineForward;
-
-		lineUp = nullptr;
-		lineLeft = nullptr;
-		lineForward = nullptr;
-	}
-
-	CameraOrientation::~CameraOrientation()
-	{
-		freeMesh();
-	}
+	CameraOrientation::~CameraOrientation() {}
 
 } // Helpers

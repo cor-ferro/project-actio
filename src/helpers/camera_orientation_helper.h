@@ -37,8 +37,6 @@ namespace Helpers
 		Mesh * lineLeft;
 		Mesh * lineForward;
 
-		void freeMesh();
-
 	private:
 		vec3 origin_;
 		vec3 direction_;

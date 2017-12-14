@@ -12,7 +12,7 @@ GLint maxTextureUnits;
 
 OpenglRenderer::OpenglRenderer(RendererParams params) : BaseRenderer(params)
 {
-	timerId = ++globalTimerId;
+
 }
 
 bool OpenglRenderer::init(int argc, char **argv)
@@ -25,7 +25,7 @@ bool OpenglRenderer::init(int argc, char **argv)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	GLFWwindow* window = glfwCreateWindow(renderParams.width, renderParams.height, "Window", NULL, NULL);
+	window = glfwCreateWindow(renderParams.width, renderParams.height, "Window", NULL, NULL);
 
 	if (window == NULL)
 	{
@@ -49,7 +49,6 @@ OpenglRenderer::~OpenglRenderer()
 
 void OpenglRenderer::start()
 {
-	currentRenderer = this;
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
 	console::info("GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ", maxTextureUnits);
 
@@ -70,7 +69,6 @@ void OpenglRenderer::start()
 
 void OpenglRenderer::setTitle(const char * text)
 {
-	GLFWwindow * window = glfwGetCurrentContext();
 	glfwSetWindowTitle(window, text);
 }
 
@@ -374,19 +372,9 @@ void OpenglRenderer::drawStatsGui()
 
 void OpenglRenderer::draw(Scene * scene)
 {
-	GLFWwindow * window = glfwGetCurrentContext();
-
-	if (InputHandler::instance().isPress(KEY_ESC))
-	{
-		glfwDestroyWindow(window);
-		return;
-	}
-
-	OpenglRenderer * renderer = currentRenderer;
-
 	preRender();
 
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// glEnable(GL_CULL_FACE);
 	// glCullFace(GL_FRONT);
@@ -400,17 +388,5 @@ void OpenglRenderer::draw(Scene * scene)
 
 	postRender();
 }
-
-void resizeFunction(int width, int height) {
-	console::info("resize window: ", width, "x", height);
-
-	OpenglRenderer * renderer = currentRenderer;
-
-	renderer->setViewSize(width, height);
-	glViewport(0,0,width,height);
-	InputHandler::instance().setWinSize(width, height);
-}
-
-void drawFunction() {};
 
 }

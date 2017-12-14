@@ -31,56 +31,46 @@
 #define UBO_LIGHTS_POINT_INDEX 1
 
 namespace Renderer {
+	typedef std::function<void()> callback;
 
-static int globalTimerId = 1;
-static int winId;
+	struct OpenglRenderer : BaseRenderer {
+		OpenglRenderer(RendererParams);
+		~OpenglRenderer();
+		bool init(int, char **);
+		void start();
+		void draw(Scene * scene);
+		void updateTime(int);
+		void setTitle(const char * text);
 
-typedef boost::chrono::system_clock Chrono;
-typedef std::function<void()> callback;
+		void forwardRender(Scene * scene);
+		void defferedRender(Scene * scene);
 
-struct OpenglRenderer : BaseRenderer {
-	OpenglRenderer(RendererParams);
-	~OpenglRenderer();
-	bool init(int, char **);
-	void start();
-	void draw(Scene * scene);
-	void updateTime(int);
-	void setTitle(const char * text);
+		void preRender();
+		void postRender();
 
-	void forwardRender(Scene * scene);
-	void defferedRender(Scene * scene);
+		void addPreRenderHandler(callback handler);
+		void addPostRenderHandler(callback handler);
 
-	void preRender();
-	void postRender();
+		void drawStatsGui();
 
-	void addPreRenderHandler(callback handler);
-	void addPostRenderHandler(callback handler);
+		double elaspsedTime = 0.0;
+		double time = 1.0;
 
-	void drawStatsGui();
+		GBuffer gbuffer;
+		UBuffer matricesBuffer;
+		UBuffer lightBuffer;
 
-	double elaspsedTime = 0.0;
-	double time = 1.0;
+		Renderer::Stats stats;
 
-	GBuffer gbuffer;
-	UBuffer matricesBuffer;
-	UBuffer lightBuffer;
+	private:
+		void initLightsBuffer();
+		void initMatricesBuffer();
 
-	Renderer::Stats stats;
-
-private:
-	void initLightsBuffer();
-	void initMatricesBuffer();
-
-	int timerId;
-	boost::signals2::signal<void ()> preFrameSignal_;
-	boost::signals2::signal<void ()> postFrameSignal_;
-};
-
-static OpenglRenderer * currentRenderer;
-
-static void drawFunction();
-//static void timerFunction(int);
-static void resizeFunction(int width, int height);
+		GLFWwindow * window;
+		int timerId;
+		boost::signals2::signal<void ()> preFrameSignal_;
+		boost::signals2::signal<void ()> postFrameSignal_;
+	};
 
 }
 
