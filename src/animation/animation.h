@@ -1,5 +1,5 @@
-#ifndef NODE_ANIMATION_H_
-#define NODE_ANIMATION_H_
+#ifndef ANIMATION_H_
+#define ANIMATION_H_
 
 #include <map>
 #include <unordered_map>
@@ -14,27 +14,7 @@
 #include "../resources/resources.h"
 #include "../lib/console.h"
 #include "../lib/types.h"
-
-struct AnimKey {
-    double time;
-    mat4 value;
-};
-
-struct NodeAnimation {
-    NodeAnimation(const NodeAnimation& other);
-    NodeAnimation(const aiNodeAnim *);
-    const AnimKey findPosition(double time, bool interpolate) const;
-    const AnimKey findRotation(double time, bool interpolate) const;
-    const AnimKey findScale(double time, bool interpolate) const;
-    void setName(std::string name);
-    void setName(const char * name);
-    std::string getName() const;
-private:
-    std::string name;
-    std::map<double, AnimKey> positions;
-    std::map<double, AnimKey> rotations;
-    std::map<double, AnimKey> scalings;
-};
+#include "node_animation.h"
 
 struct Animation {
     Animation(const Animation& other);

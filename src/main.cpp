@@ -1,3 +1,6 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 // #include <memory>
 #include <signal.h>
 #include "./app/app.h"
@@ -37,8 +40,7 @@ int main(int argc, char **argv) {
 	rendererParams.calcAspectRatio();
 
 	// init renderer before scene loading
-	std::shared_ptr<Renderer::OpenglRenderer>
-	renderer(new Renderer::OpenglRenderer(rendererParams));
+	std::shared_ptr<Renderer::OpenglRenderer> renderer(new Renderer::OpenglRenderer(rendererParams));
 	renderer->init(argc, argv);
 	renderer->setTitle(app.getName().c_str());
 	renderer->start();
@@ -85,12 +87,12 @@ int main(int argc, char **argv) {
 	material.setDiffuse(0.0f, 1.0f, 0.0f);
 	Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
 
-	for (int i = 0; i < 0; i++) {
+	for (int i = 0; i < 1; i++) {
 		Mesh * mesh = new Mesh(material, geometry);
 		mesh->setPosition(vec3(
-			glm::gaussRand(0.0f, 3.0f),
-			glm::gaussRand(0.0f, 3.0f),
-			glm::gaussRand(0.0f, 3.0f)
+			glm::gaussRand(0.0f, 7.0f),
+			glm::gaussRand(0.0f, 7.0f),
+			glm::gaussRand(0.0f, 7.0f)
 		));
 		Model * model = new Model(mesh);
 
@@ -112,10 +114,16 @@ int main(int argc, char **argv) {
 
 	cameraOrientationHelper->setLength(1.0);
 	
-	renderCycle.addTickHandler([&scene, &renderer, &inputHandler, &cameraControl, &pointLightHelper, &light](float time) {
+	// renderCycle.addTickHandler([&scene, &renderer, &inputHandler, &cameraControl, &pointLightHelper, &light](float time) {
+
+	// });
+	GLFWwindow * window = glfwGetCurrentContext();
+
+	while(!glfwWindowShouldClose(window))
+	{
+		float time = (float)glfwGetTime();
 		cameraControl.update();
 		vec3 centerPoint(0.0, 10.0f, 0.0f);
-
 		float rad = (glm::sin(time * 0.1f)) * glm::two_pi<float>();
 		quat newQuat = glm::angleAxis(rad, vec3(0.0f, 1.0f, 1.0f));
 		vec3 newLightPos = centerPoint * newQuat;
@@ -123,11 +131,16 @@ int main(int argc, char **argv) {
 		light->setPosition(newLightPos);
 
 		pointLightHelper->beforeRender();
-		renderer->draw(scene.get());
-		inputHandler.onFrame();
-	});
 
-	Cycle::mailLoop();
+		renderer->draw(scene.get());
+
+		inputHandler.onFrame();
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();    
+	}
+
+	// Cycle::mailLoop();
 	// don't put code below. trust me.
 
 	console::info("stop application");

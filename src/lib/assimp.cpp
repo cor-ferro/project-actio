@@ -17,4 +17,9 @@ namespace libAi {
 	{
 		return vec3(aiVec.x, aiVec.y, aiVec.z);
 	}
+
+	quat toNativeType(aiQuaternion& aiQuat)
+	{
+		return quat(aiQuat.w, aiQuat.x, aiQuat.y, aiQuat.z);
+	}
 }

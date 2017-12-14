@@ -30,6 +30,7 @@ private:
 	SystemClock::time_point timeTick1_;
 	SystemClock::time_point timeTick2_;
 	SystemClock::time_point timeFrame_;
+	double fpsCounter;
 };
 
 }

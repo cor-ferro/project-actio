@@ -1,17 +1,15 @@
 #ifndef RENDERER_OPENGL_H_
 #define RENDERER_OPENGL_H_
 
-#define GLEW_STATIC
-
 #define SECOND 1000.0
 #define FPS 60.0
 
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glut.h>
 #include <vector>
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <imgui/imgui.h>
+#include "../../imgui/imgui_impl_glfw_gl3.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -58,8 +56,10 @@ struct OpenglRenderer : BaseRenderer {
 	void addPreRenderHandler(callback handler);
 	void addPostRenderHandler(callback handler);
 
-	size_t elaspsedTime = 0;
-	size_t time = 1000;
+	void drawStatsGui();
+
+	double elaspsedTime = 0.0;
+	double time = 1.0;
 
 	GBuffer gbuffer;
 	UBuffer matricesBuffer;

@@ -153,26 +153,24 @@ void main()
 	vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
 	vec3 result = vec3(0.0);
 
-	// for(int i = 0; i < countDirLights; i++)
-	// 	result += CalcDirLight(dirLights[i], norm, viewDir);
+	for(int i = 0; i < countDirLights; i++)
+		result += CalcDirLight(dirLights[i], norm, viewDir);
 
-	for(int i = 0; i < 1; i++)
+	for(int i = 0; i < countPointLights; i++)
 		result += CalcPointLight(pointLights[i], norm, fragmentPosition, viewDir);
-	
-	// result = CalcPointLight(pointLights[0], norm, fragmentPosition, viewDir);
 
-	// for(int i = 0; i < countSpotLights; i++)
-	// 	result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
+	for(int i = 0; i < countSpotLights; i++)
+		result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
 
 	result+= material.ambient + material.diffuse + material.specular;
 
 	vec3 skyboxReflect = reflect(viewDir, normalize(normal));
 
-	// result = mix(
-	// 	result,
-	// 	texture(cubeTexture, -skyboxReflect).rgb * 0.5,
-	// 	min(1.0, (max(material.shininess, 0.0) / 1000.0))
-	// );
+	result = mix(
+		result,
+		texture(cubeTexture, -skyboxReflect).rgb * 0.5,
+		min(1.0, (max(material.shininess, 0.0) / 1000.0))
+	);
 
 	FragColor = vec4(result, 1.0);
 }

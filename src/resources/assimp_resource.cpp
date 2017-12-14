@@ -22,6 +22,6 @@ namespace Resource {
 	}
 
 	std::string Assimp::getDefaultTexturePath() const {
-		return App::instance().resourcePath("ilzq98O.png");
+		return App::instance().resourcePath("default2.png");
 	}
 }

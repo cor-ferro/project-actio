@@ -1,6 +1,8 @@
 #ifndef GEOMETRY_H_
 #define GEOMETRY_H_
 
+#include <glad/glad.h>
+
 #include <vector>
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
@@ -17,8 +19,6 @@
 #include "vertex.h"
 
 #ifdef GRAPHIC_API_OPENGL
-#include <GL/glew.h>
-#include <GL/gl.h>
 #include "../renderer/opengl/program.h"
 #include "../renderer/opengl/uniforms.h"
 #endif

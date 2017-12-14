@@ -47,11 +47,11 @@ void CameraControl::update()
 
 	vec3 left = glm::normalize(glm::cross(front, cameraUp));
 
-	if (ih.isPress('w')) cameraPosition-= cameraSpeed * front;
-	if (ih.isPress('s')) cameraPosition+= cameraSpeed * front;
-	if (ih.isPress('a')) cameraPosition+= left * cameraSpeed;
-	if (ih.isPress('d')) cameraPosition-= left * cameraSpeed;
-	if (ih.isPress('c')) cameraPosition-= vec3(0.0f, 0.1f, 0.0f);
+	if (ih.isPress(KEY_W)) cameraPosition-= cameraSpeed * front;
+	if (ih.isPress(KEY_S)) cameraPosition+= cameraSpeed * front;
+	if (ih.isPress(KEY_A)) cameraPosition+= left * cameraSpeed;
+	if (ih.isPress(KEY_D)) cameraPosition-= left * cameraSpeed;
+	if (ih.isPress(KEY_C)) cameraPosition-= vec3(0.0f, 0.1f, 0.0f);
 	if (ih.isPress(32)) cameraPosition+= vec3(0.0f, 0.1f, 0.0f);
 
 	camera_->setRotation(cameraRotation);

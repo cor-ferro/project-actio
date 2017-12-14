@@ -19,24 +19,25 @@ bool OpenglRenderer::init(int argc, char **argv)
 {
 	const RendererParams& renderParams = getParams();
 
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_MULTISAMPLE);
-	glutInitWindowPosition(50, 25);
-	glutInitWindowSize(renderParams.width, renderParams.height);
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	winId = glutCreateWindow("");
+	GLFWwindow* window = glfwCreateWindow(renderParams.width, renderParams.height, "Window", NULL, NULL);
 
-	if (glewInit() != GLEW_OK)
+	if (window == NULL)
 	{
-		console::err("failed init glew");
+		console::info("Failed to create GLFW window");
+		glfwTerminate();
 		return false;
 	}
 
-	glViewport(0, 0, renderParams.width, renderParams.height);
+	glfwMakeContextCurrent(window);
+	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
-	glutDisplayFunc(drawFunction);
-//	glutTimerFunc(SECOND / FPS, timerFunction, timerId);
-	glutReshapeFunc(resizeFunction);
+	ImGui_ImplGlfwGL3_Init(window, true);
 
 	return true;
 }
@@ -69,7 +70,8 @@ void OpenglRenderer::start()
 
 void OpenglRenderer::setTitle(const char * text)
 {
-	glutSetWindowTitle(text);
+	GLFWwindow * window = glfwGetCurrentContext();
+	glfwSetWindowTitle(window, text);
 }
 
 void OpenglRenderer::initMatricesBuffer()
@@ -144,15 +146,13 @@ void OpenglRenderer::forwardRender(Scene * scene)
 
 	const RendererParams& renderParams = getParams();
 
-	size_t newTime = glutGet(GLUT_ELAPSED_TIME);
+	double newTime = glfwGetTime();
+
 	this->elaspsedTime = newTime - this->time;
 	this->time = newTime;
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
-	glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
-	glOrtho(-renderParams.aspectRatio, renderParams.aspectRatio, -1, 1, -1, 1);
-
 	mat4 view = glm::translate(view, vec3(0.0f, 0.0f, -5.0f));
 	mat4 projection = glm::perspective(glm::radians(45.0f), (float)renderParams.height / (float)renderParams.width, 0.1f, 100.0f);
 
@@ -253,7 +253,7 @@ void OpenglRenderer::forwardRender(Scene * scene)
 
 		if (model->currentAnimation.isSet())
 		{
-			model->currentAnimation.tick(this->elaspsedTime);
+			model->currentAnimation.tick(this->elaspsedTime * 1000.0);
 			model->processCurrentAnimation();
 		}
 
@@ -357,11 +357,28 @@ void OpenglRenderer::addPostRenderHandler(callback handler)
 	postFrameSignal_.connect(handler);
 }
 
+void OpenglRenderer::drawStatsGui()
+{
+	ImGui_ImplGlfwGL3_NewFrame();
+	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
+	
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+	ImGui::Begin("Metrics", NULL, flags);
+	ImGui::Text("%.3f ms, %.1f fps", stats.msFrame, stats.fps);
+	ImGui::SetWindowSize(ImVec2(200.0f, 30.0f));
+	ImGui::End();
+	ImGui::Render();
+	// 1000.0f / ImGui::GetIO().Framerate
+}
+
 void OpenglRenderer::draw(Scene * scene)
 {
+	GLFWwindow * window = glfwGetCurrentContext();
+
 	if (InputHandler::instance().isPress(KEY_ESC))
 	{
-		glutDestroyWindow(winId);
+		glfwDestroyWindow(window);
 		return;
 	}
 
@@ -375,10 +392,11 @@ void OpenglRenderer::draw(Scene * scene)
 	// glCullFace(GL_FRONT);
 
 	forwardRender(scene);
+	drawStatsGui();
 
 	// glEnd();
-	glFlush();
-	glutSwapBuffers();
+	// glFlush();
+	// glfwSwapBuffers(window);
 
 	postRender();
 }

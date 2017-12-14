@@ -1,7 +1,7 @@
 #ifndef PROGRAM_H_
 #define PROGRAM_H_
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -28,8 +28,8 @@ struct Program {
 	GLint getUniformCacheLoc(std::string locationName) const;
 	GLint getUniformCacheLoc(Opengl::Uniform::Common& uniform) const;
 
-	unsigned int getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName);
-	unsigned int getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName);
+	GLint getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName);
+	GLint getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName);
 
 	void setFloat(const std::string&, const float&) const;
 	void setInt(const std::string&, const int&) const;

@@ -22,7 +22,7 @@ struct Material {
 
 	void addTexture(Texture texture);
 	const MaterialTextures& getTextures();
-	bool wireframe;
+	bool wireframe = false;
 
 protected:
 	MaterialTextures textures_;

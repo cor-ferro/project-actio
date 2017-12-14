@@ -191,12 +191,12 @@ namespace Opengl {
 		return uniformIndexCache2.find(uniform)->second;
 	}
 
-	unsigned int Program::getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName)
+	GLint Program::getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName)
 	{
 		return glGetSubroutineIndex(handle, shaderType, soubroutineName.c_str());
 	}
 
-	unsigned int Program::getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName)
+	GLint Program::getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName)
 	{
 		std::unordered_map<std::string, unsigned int> * subroutineIndexCache = nullptr;
 

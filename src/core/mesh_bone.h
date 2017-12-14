@@ -1,6 +1,8 @@
 #ifndef CORE_MESH_BONE_H_
 #define CORE_MESH_BONE_H_
 
+#include <glad/glad.h>
+
 #include <map>
 #include <vector>
 #include <assimp/scene.h>

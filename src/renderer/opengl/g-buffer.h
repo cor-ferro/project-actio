@@ -1,7 +1,7 @@
 #ifndef G_BUFFER_H_
 #define G_BUFFER_H_
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include "../renderer_types.h"
 #include "../../lib/console.h"
 #include "../../lib/utils.h"

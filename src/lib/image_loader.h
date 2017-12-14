@@ -1,12 +1,12 @@
 #ifndef IMAGE_LOADER_H_
 #define IMAGE_LOADER_H_
 
+#include <glad/glad.h>
 #include <memory>
 #include <unordered_map>
 #include <boost/thread.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/regex.hpp>
-#include <GL/glew.h>
 #include "SOIL.h"
 #include <IL/il.h>
 #include <IL/ilu.h>

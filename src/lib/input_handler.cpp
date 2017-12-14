@@ -2,7 +2,7 @@
 
 InputHandler::InputHandler()
 {
-	map_ = std::unordered_map<char, bool>();
+	map_ = std::unordered_map<short, bool>();
 	keyboardModifiers_ = 0;
 	mouseModifiers_ = 0;
 
@@ -18,26 +18,25 @@ InputHandler::InputHandler()
 	winHeight = 0;
 	winWidth = 0;
 
-	glutKeyboardFunc(onKeyPress);
-	glutKeyboardUpFunc(onKeyUp);
-	glutMouseFunc(onMouseClick);
-	glutMotionFunc(onMouseMove);
-	glutPassiveMotionFunc(onMouseMove);
+	GLFWwindow * window = glfwGetCurrentContext();
+	glfwSetKeyCallback(window, onKeyPress);
+	glfwSetCursorPosCallback(window, onMouseMove);
 
-	glutSetCursor(GLUT_CURSOR_NONE);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 }
 
-bool InputHandler::isPress(char key)
+bool InputHandler::isPress(short key)
 {
 	return isKeyPress(key);
 }
 
-bool InputHandler::isPress(char key1, char key2)
+bool InputHandler::isPress(short key1, short key2)
 {
 	return isKeyPress(key1) && isKeyPress(key2);
 }
 
-bool InputHandler::isPress(KeyboardModifier modifier, char key)
+bool InputHandler::isPress(KeyboardModifier modifier, short key)
 {
 	return isModifierPress(modifier) && isKeyPress(key);
 }
@@ -47,9 +46,9 @@ bool InputHandler::isPress(MouseModifier modifier)
 	return isModifierPress(modifier); 
 }
 
-bool InputHandler::isKeyPress(char key)
+bool InputHandler::isKeyPress(short key)
 {
-	std::unordered_map<char, bool>::const_iterator it = map_.find(key);
+	std::unordered_map<short, bool>::const_iterator it = map_.find(key);
 
 	return it != map_.end() && it->second == true;
 }
@@ -65,9 +64,9 @@ bool InputHandler::isModifierPress(MouseModifier modifier)
 	return mouseModifiers_.test(modifier);
 }
 
-void InputHandler::setKeyDown(char key)
+void InputHandler::setKeyDown(short key)
 {
-	std::unordered_map<char, bool>::iterator it = map_.find(key);
+	std::unordered_map<short, bool>::iterator it = map_.find(key);
 
 	if (it != map_.end())
 	{
@@ -75,14 +74,14 @@ void InputHandler::setKeyDown(char key)
 	}
 	else
 	{
-		std::pair<char,bool> keyInfo (key, true);
+		std::pair<short,bool> keyInfo (key, true);
 		map_.insert(keyInfo);
 	}
 }
 
-void InputHandler::setKeyUp(char key)
+void InputHandler::setKeyUp(short key)
 {
-	std::unordered_map<char, bool>::iterator it = map_.find(key);
+	std::unordered_map<short, bool>::iterator it = map_.find(key);
 	if (it != map_.end())
 	{
 		it->second = false;
@@ -145,7 +144,8 @@ void InputHandler::pointerToCenter() {
 	int x = winWidth / 2;
 	int y = winHeight / 2;
 
-	glutWarpPointer(x, y);
+	GLFWwindow * window = glfwGetCurrentContext();
+	glfwSetCursorPos(window, x, y);
 	setMousePosition(x, y);
 	setMouseStartPosition(x, y);
 	setMouseMovedPosition(x, y);
@@ -167,3 +167,49 @@ void InputHandler::onFrame()
 	setMouseMovedPosition(mouseStart.x, mouseStart.y); // reset moved
 }
 
+
+static void onKeyPress(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (action == GLFW_PRESS) {
+		InputHandler::instance().setKeyDown(key);
+	} else if (action == GLFW_RELEASE) {
+		InputHandler::instance().setKeyUp(key);
+	}
+}
+
+static void onMouseClick(int button, int state, int x, int y)
+{
+	MouseModifier mouseModifier;
+
+	switch (button) {
+	case GLFW_MOUSE_BUTTON_LEFT:
+		mouseModifier = MouseLeft;
+		break;
+	case GLFW_MOUSE_BUTTON_MIDDLE:
+		mouseModifier = MouseMiddle;
+		break;
+	case GLFW_MOUSE_BUTTON_RIGHT:
+		mouseModifier = MouseRight;
+		break;
+	}
+
+	InputHandler& ih = InputHandler::instance();
+
+	switch (state) {
+	case GLFW_PRESS:
+		ih.setModifierDown(mouseModifier);
+		break;
+	case GLFW_RELEASE:
+		ih.setModifierUp(mouseModifier);
+		break;
+	}
+}
+
+static void onMouseMove(GLFWwindow* window, double x, double y)
+{
+	InputHandler& ih = InputHandler::instance();
+
+	ih.setMousePosition(x, y);
+	ih.setMouseMovedPosition(x, y);
+	// ih.checkBoundings();
+}

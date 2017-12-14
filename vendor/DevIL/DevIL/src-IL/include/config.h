@@ -163,9 +163,9 @@ SSE3
 /* #undef IL_NO_JPG */
 
 /* lcms support () */
-/* #undef IL_NO_LCMS */
+#define IL_NO_LCMS 1
 /* LCMS: include lcms.h instead of lcms/lcms.h (implicit on windows) */
-#define LCMS_NODIRINCLUDE ON
+/* #undef LCMS_NODIRINCLUDE */
 
 /* lif support (LIF is the image format of the game Homeworld.) */
 #undef IL_NO_LIF
@@ -235,7 +235,7 @@ SSE3
 
 /* tiff support (TIFF is a lossless format supporting greater color depths.
    libtiff powered) */
-/* #undef IL_NO_TIF */
+#define IL_NO_TIF 1
 
 /* tpl support (TPL is the format used by many GameCube and Wii games.) */
 #undef IL_NO_TPL

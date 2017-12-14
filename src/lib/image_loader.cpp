@@ -79,7 +79,7 @@ namespace ImageLoader {
 			
 			case GL_RGBA:
 			case GL_BGRA:
-			case GL_LUMINANCE:
+			case 6409: // GL_LUMINANCE
 				return 4;
 
 			case GL_RG_INTEGER:

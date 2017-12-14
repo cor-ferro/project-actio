@@ -329,7 +329,18 @@ void Model::processAnimation(AnimationProcess& animationProcess)
 
 	double tick = animationProcess.getCurrentTick();
 	mat4 rootTransform(1.0);
+	
+	// boost::thread_group producer_threads
+
+	// producer_threads.add_thread(
+	// 	new boost::thread(
+	// 		&Model::processMesh, this, assimpResource->scene->mMeshes[i], assimpResource
+	// 	)
+	// );
+
 	processNodeAnimation(rootNode_, animation, rootTransform, tick);
+
+	// producer_threads.join_all();
 }
 
 // @todo: оптимизировать обход по иерархии нод
@@ -338,11 +349,15 @@ void Model::processNodeAnimation(ModelNode * node, const Animation * animation, 
 	const NodeAnimation * nodeAnim = animation->findNode(node->name);
 
 	if (nodeAnim != nullptr) {
-		const AnimKey positionKey = nodeAnim->findPosition(tick, animInterpolation_);
-		const AnimKey rotateKey = nodeAnim->findRotation(tick, animInterpolation_);
-		const AnimKey scaleKey = nodeAnim->findScale(tick, animInterpolation_);
+// 		// const AnimKey positionKey = nodeAnim->findPosition(tick, animInterpolation_);
+// 		// const AnimKey rotateKey = nodeAnim->findRotation(tick, animInterpolation_);
+// 		// const AnimKey scaleKey = nodeAnim->findScale(tick, animInterpolation_);
 
-		mat4 newRootTransform(rootTransform * positionKey.value * rotateKey.value * scaleKey.value);
+		const AnimKey key = nodeAnim->findKey(tick, true);
+
+// 		// mat4 newRootTransform(rootTransform * key.position * key.rotation * key.scale);
+		mat4 newRootTransform = rootTransform * glm::translate(mat4(1.0f), key.position) * glm::toMat4(key.rotation);
+		// mat4 newRootTransform(1.0f);
 
 		// // @todo: мы проходимся по всем мешам в поиске нужных костей - оптимизировать обход
 		for (auto it = meshes_.begin(); it != meshes_.end(); it++) {

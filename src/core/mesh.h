@@ -1,6 +1,7 @@
 #ifndef MESH_H_
 #define MESH_H_
 
+#include <glad/glad.h>
 #include "glm/ext.hpp"
 
 #include <vector>
@@ -17,8 +18,6 @@
 #include "mesh_bone.h"
 
 #ifdef GRAPHIC_API_OPENGL
-#include <GL/glew.h>
-#include <GL/gl.h>
 #include "../renderer/opengl/program.h"
 #include "../renderer/opengl/uniforms.h"
 #endif

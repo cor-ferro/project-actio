@@ -8,8 +8,7 @@
 #ifndef CYCLE_H_
 #define CYCLE_H_
 
-#include <GL/glew.h>
-#include <GL/glut.h>
+#include <GLFW/glfw3.h>
 #include <boost/signals2.hpp>
 #include "./console.h"
 
@@ -23,12 +22,17 @@ struct Cycle {
 	Cycle(int id) : id_(id) {}
 
 	void static mailLoop() {
-		glutTimerFunc(CYCLE_DELAY, timerFunction, CYCLE_TIMER_ID);
-		glutMainLoop();
+		// GLFWwindow * window = glfwGetCurrentContext();
+		// while(!glfwWindowShouldClose(window))
+		// {
+
+		// 	glfwSwapBuffers(window);
+		// 	glfwPollEvents();    
+		// }
 	}
 
 	void onFrame() {
-		frameSignals_(glutGet(GLUT_ELAPSED_TIME) * 0.008f);
+		
 	}
 
 	void addTickHandler(CycleCallback handler) {
@@ -40,14 +44,5 @@ private:
 	int id_;
 	boost::signals2::signal<void (float time)> frameSignals_;
 };
-
-Cycle renderCycle(1);
-Cycle inputCycle(2);
-
-void timerFunction(int timerId) {
-	renderCycle.onFrame();
-	inputCycle.onFrame();
-	glutTimerFunc(CYCLE_DELAY, timerFunction, CYCLE_TIMER_ID);
-}
 
 #endif /* CYCLE_H_ */

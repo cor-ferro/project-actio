@@ -6,6 +6,7 @@ Material::Material()
 }
 
 Material::Material(Texture texture)
+	: wireframe(false)
 {
 	addTexture(texture);
 }

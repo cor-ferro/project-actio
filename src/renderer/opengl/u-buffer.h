@@ -1,7 +1,7 @@
 #ifndef U_BUFFER_H_
 #define U_BUFFER_H_
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <cstddef>
 #include <vector>
 #include <unordered_map>

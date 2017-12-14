@@ -1,6 +1,8 @@
 #ifndef TEXTURE_H_
 #define TEXTURE_H_
 
+#include <glad/glad.h>
+
 #include <memory>
 #include <iostream>
 #include <vector>
@@ -13,8 +15,7 @@
 #include "../lib/console.h"
 #include "../resources/resources.h"
 #ifdef GRAPHIC_API_OPENGL
-    #include <GL/glew.h>
-    #include <GL/gl.h>
+
 #endif
 
 #ifdef GRAPHIC_API_OPENGL

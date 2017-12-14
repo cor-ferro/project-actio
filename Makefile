@@ -11,17 +11,18 @@ OBJS			:=$(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 OBJ_TREE 		:=$(shell find $(SRCDIR) -type d)
 OBJ_TREE 		:=$(patsubst src%,obj%,$(OBJ_TREE))
 OBJS			:=$(patsubst %/%,%_%,$(OBJS))
-CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -std=c++11 -pipe -pthread -O0
-LDFLAGS_COMPILE	=-Ivendor/ -Ivendor/assimp/include -Ivendor/soil/src -Ivendor/DevIL/DevIL/include/
+CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -std=c++11 -pipe -O0
+LDFLAGS_COMPILE	=-Ivendor/ -Ivendor/assimp/include -Ivendor/soil/src -Ivendor/DevIL/DevIL/include/ -Ivendor/glfw/include -Ivendor/glad/include
 LDFLAGS_BUILD  	=\
 				-Lvendor/boost_1_65_0/ \
-				-Lvendor/assimp/lib \
+				-Lvendor/glfw/lib/ \
 				-Lvendor/entityx/ \
 				-Lvendor/DevIL/DevIL/build/lib/x64 \
+				-Lvendor/assimp/lib/ \
 				vendor/soil/lib/libSOIL.a \
 				vendor/iniparser/libiniparser.a \
-				-Wl,-Bstatic -lassimp -lentityx -lSOIL -lboost_thread -lboost_system -lboost_timer -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_regex -pthread \
-				-Wl,-Bdynamic -lglut -lGL -lGLU -lGLEW -lz -lIL -lILU -lILUT
+				-Wl,-Bstatic -lentityx -lboost_thread -lboost_system -lboost_timer -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_regex -pthread \
+				-Wl,-Bdynamic -lglfw -lX11 -ldl -lGL -lz -lIL -lILU -lILUT -lassimp
 
 DEPS = $(OBJS:.o=.d)
 -include $(DEPS)
