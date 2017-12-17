@@ -3,11 +3,14 @@
 
 // #include <memory>
 #include <signal.h>
+#include <boost/bind.hpp>
 #include "./app/app.h"
 #include "glm/gtc/random.hpp"
 
+#include "mem/vmem.h"
 #include "ag.h"
 
+#include "./renderer/window_context.h"
 #include "./lib/types.h"
 #include "./lib/cycle.h"
 #include "./lib/input_handler.h"
@@ -34,27 +37,32 @@ int main(int argc, char **argv) {
 
 	console::info("start ", app.getName());
 
+	unsigned int windowWidth = 1280;
+	unsigned int windowHeight = 720;
+
+	WindowContext mainContext;
+	mainContext.init(windowWidth, windowHeight);
+	mainContext.setTitle(app.getName().c_str());
+
 	RendererParams rendererParams;
-	rendererParams.width = 1280;
-	rendererParams.height = 720;
+	rendererParams.width = windowWidth;
+	rendererParams.height = windowHeight;
 	rendererParams.calcAspectRatio();
 
 	// init renderer before scene loading
 	std::shared_ptr<Renderer::OpenglRenderer> renderer(new Renderer::OpenglRenderer(rendererParams));
 	renderer->init(argc, argv);
-	renderer->setTitle(app.getName().c_str());
 	renderer->start();
 
-	InputHandler &inputHandler = InputHandler::instance();
+	VMem videoMemory;
+	videoMemory.allocGeometry();
+
+	InputHandler inputHandler(mainContext);
 
 	std::shared_ptr<Scene> scene(new Scene());
 	std::shared_ptr<AG::HelperArrow> arrowHelper(AG::Helper::arrow(vec3(0.0f), vec3(1.0f, 0.0f, 0.0f), 1.0f));
 	std::shared_ptr<AG::HelperCameraOrientation> cameraOrientationHelper(AG::Helper::cameraOrientation(vec3(0.0f), vec3(1.0f, 0.0f, 0.0f), 1.0f));
-
 	std::shared_ptr<Light::Point> light(AG::Light::point(vec3(1.0f), vec3(1.0f), vec3(1.0f), vec3(1.0f)));
-
-	inputHandler.setWinSize(rendererParams.width, rendererParams.height);
-	inputHandler.pointerToCenter();
 
 	light->setAmbient(0.5f, 0.5f, 0.5f);
 	light->setDiffuse(1.1f, 1.05f, 1.01f);
@@ -70,7 +78,7 @@ int main(int argc, char **argv) {
 	// scene->add(cameraOrientationHelper.get());
 
 	Camera * sceneActiveCamera = scene->getActiveCamera();
-	CameraControl cameraControl(sceneActiveCamera);
+	CameraControl cameraControl(sceneActiveCamera, &inputHandler);
 	sceneActiveCamera->setParam(CameraParam::ASPECT, rendererParams.aspectRatio);
 
 	// Model * boxModel = AG::Models::box();
@@ -114,7 +122,9 @@ int main(int argc, char **argv) {
 
 	cameraOrientationHelper->setLength(1.0);
 
-	GLFWwindow * window = glfwGetCurrentContext();
+	renderer->onPreRender.connect(boost::bind(&Helpers::PointLight::beforeRender, pointLightHelper));
+
+	GLFWwindow * const window = mainContext.getWindow();
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -127,18 +137,27 @@ int main(int argc, char **argv) {
 
 		light->setPosition(newLightPos);
 
-		pointLightHelper->beforeRender();
+		inputHandler.onFrame();
 
 		renderer->draw(scene.get());
 
-		inputHandler.onFrame();
+		ImGui_ImplGlfwGL3_NewFrame();
+		ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
+		
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+		ImGui::Begin("Metrics", NULL, flags);
+		ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
+		ImGui::SetWindowSize(ImVec2(200.0f, 30.0f));
+		ImGui::End();
+		ImGui::Render();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
 		if (inputHandler.isPress(InputHandler::KEY_ESC))
 		{
-			glfwDestroyWindow(window);
+			mainContext.destroy();
 			break;
 		}
 	}

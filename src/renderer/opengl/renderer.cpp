@@ -19,25 +19,7 @@ bool OpenglRenderer::init(int argc, char **argv)
 {
 	const RendererParams& renderParams = getParams();
 
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	window = glfwCreateWindow(renderParams.width, renderParams.height, "Window", NULL, NULL);
-
-	if (window == NULL)
-	{
-		console::info("Failed to create GLFW window");
-		glfwTerminate();
-		return false;
-	}
-
-	glfwMakeContextCurrent(window);
-	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-
-	ImGui_ImplGlfwGL3_Init(window, true);
 
 	return true;
 }
@@ -65,11 +47,6 @@ void OpenglRenderer::start()
 
 	initMatricesBuffer();
 	initLightsBuffer();
-}
-
-void OpenglRenderer::setTitle(const char * text)
-{
-	glfwSetWindowTitle(window, text);
 }
 
 void OpenglRenderer::initMatricesBuffer()
@@ -166,14 +143,6 @@ void OpenglRenderer::forwardRender(Scene * scene)
 	matricesBuffer.set(0, glm::value_ptr(projection));
 	matricesBuffer.set(1, glm::value_ptr(view));
 	// matricesBuffer.nouse();
-
-	vec3 ambient = vec3(0.0f, 0.3f, 0.0f);
-	vec3 diffuse = vec3(0.3f, 0.0f, 0.0f);
-	vec3 specular = vec3(0.3f, 0.3f, 0.0f);
-	vec3 position = vec3(0.0f, 0.0f, 0.3f);
-	float constant = 1.0f;
-	float linear = 0.01f;
-	float quadratic = 0.012f;
 
 	forwardProgram.use();
 	forwardProgram.setFloat("time", time / 1000.0f);
@@ -336,38 +305,23 @@ void OpenglRenderer::defferedRender(Scene * scene)
 void OpenglRenderer::preRender()
 {
 	stats.startTime();
-	preFrameSignal_();
+	onPreRender();
 }
 
 void OpenglRenderer::postRender()
 {
-	postFrameSignal_();
+	onPostRender();
 	stats.updateTime();
 }
 
 void OpenglRenderer::addPreRenderHandler(callback handler)
 {
-	preFrameSignal_.connect(handler);
+	onPreRender.connect(handler);
 }
 
 void OpenglRenderer::addPostRenderHandler(callback handler)
 {
-	postFrameSignal_.connect(handler);
-}
-
-void OpenglRenderer::drawStatsGui()
-{
-	ImGui_ImplGlfwGL3_NewFrame();
-	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
-	
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-	ImGui::Begin("Metrics", NULL, flags);
-	ImGui::Text("%.3f ms, %.1f fps", stats.msFrame, stats.fps);
-	ImGui::SetWindowSize(ImVec2(200.0f, 30.0f));
-	ImGui::End();
-	ImGui::Render();
-	// 1000.0f / ImGui::GetIO().Framerate
+	onPostRender.connect(handler);
 }
 
 void OpenglRenderer::draw(Scene * scene)
@@ -380,11 +334,6 @@ void OpenglRenderer::draw(Scene * scene)
 	// glCullFace(GL_FRONT);
 
 	forwardRender(scene);
-	drawStatsGui();
-
-	// glEnd();
-	// glFlush();
-	// glfwSwapBuffers(window);
 
 	postRender();
 }

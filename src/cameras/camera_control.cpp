@@ -1,32 +1,32 @@
 #include "camera_control.h"
 
-CameraControl::CameraControl(Camera * camera) : camera_(camera)
+CameraControl::CameraControl(Camera * camera, InputHandler * ih)
+	: camera_(camera)
+	, ih_(ih)
 {
 
 }
 
 void CameraControl::update()
 {
-	InputHandler &ih = InputHandler::instance();
-
 	float cameraSpeed = 0.25f;
 	float speedFactor = 10.0f;
 	float sensetivity = 1.2f;
 
-	float speedX = glm::abs(ih.mouseMoved.x / speedFactor);
-	float speedY = glm::abs(ih.mouseMoved.y / speedFactor);
+	float speedX = glm::abs(ih_->mouseMoved.x / speedFactor);
+	float speedY = glm::abs(ih_->mouseMoved.y / speedFactor);
 
-	float angleX = ih.mouseMoved.y * -glm::pow(speedY, sensetivity);
-	float angleY = ih.mouseMoved.x * -glm::pow(speedX, sensetivity);
+	float angleX = ih_->mouseMoved.y * -glm::pow(speedY, sensetivity);
+	float angleY = ih_->mouseMoved.x * -glm::pow(speedX, sensetivity);
 
 	if (angleY > 100.0f) {
-		console::info("over angle y", angleY, ih.mouseMoved.x);
-		console::info("details", ih.mouseMoved.x, ih.mouseStart.x, ih.mouse.x);
+		console::info("over angle y", angleY, ih_->mouseMoved.x);
+		console::info("details", ih_->mouseMoved.x, ih_->mouseStart.x, ih_->mouse.x);
 	}
 
 	if (angleX > 100.0f) {
 		console::info("over angle x", angleX);
-		console::info("details", ih.mouseMoved.y, ih.mouseStart.y, ih.mouse.y);
+		console::info("details", ih_->mouseMoved.y, ih_->mouseStart.y, ih_->mouse.y);
 	}
 
 	vec3 cameraPosition = camera_->getPosition();
@@ -47,12 +47,12 @@ void CameraControl::update()
 
 	vec3 left = glm::normalize(glm::cross(front, cameraUp));
 
-	if (ih.isPress(InputHandler::KEY_W)) cameraPosition-= cameraSpeed * front;
-	if (ih.isPress(InputHandler::KEY_S)) cameraPosition+= cameraSpeed * front;
-	if (ih.isPress(InputHandler::KEY_A)) cameraPosition+= left * cameraSpeed;
-	if (ih.isPress(InputHandler::KEY_D)) cameraPosition-= left * cameraSpeed;
-	if (ih.isPress(InputHandler::KEY_C)) cameraPosition-= vec3(0.0f, 0.1f, 0.0f);
-	if (ih.isPress(InputHandler::KEY_SPACE)) cameraPosition+= vec3(0.0f, 0.1f, 0.0f);
+	if (ih_->isPress(InputHandler::KEY_W)) cameraPosition-= cameraSpeed * front;
+	if (ih_->isPress(InputHandler::KEY_S)) cameraPosition+= cameraSpeed * front;
+	if (ih_->isPress(InputHandler::KEY_A)) cameraPosition+= left * cameraSpeed;
+	if (ih_->isPress(InputHandler::KEY_D)) cameraPosition-= left * cameraSpeed;
+	if (ih_->isPress(InputHandler::KEY_C)) cameraPosition-= vec3(0.0f, 0.1f, 0.0f);
+	if (ih_->isPress(InputHandler::KEY_SPACE)) cameraPosition+= vec3(0.0f, 0.1f, 0.0f);
 
 	camera_->setRotation(cameraRotation);
 	camera_->setPosition(cameraPosition);

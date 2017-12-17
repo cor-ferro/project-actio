@@ -4,12 +4,11 @@
 #include <bitset>
 #include <iostream>
 #include <algorithm>
-#include <unordered_map>
+#include <map>
 #include <utility>
-#include <GLFW/glfw3.h>
+#include <boost/bind.hpp>
 #include "console.h"
-
-#define MARGIN 30
+#include "../renderer/window_context.h"
 
 enum KeyboardModifier {
 	KeyboardShift = 1,
@@ -25,11 +24,10 @@ enum MouseModifier {
 };
 
 struct MousePosition {
+	MousePosition() : x(0), y(0) {}
 	int x;
 	int y;
 };
-
-static int timerId;
 
 typedef short int KeyCode;
 
@@ -45,11 +43,19 @@ struct InputHandler {
 		KEY_ESC = GLFW_KEY_ESCAPE
 	};
 
-	static InputHandler& instance() {
-		static InputHandler inputHandler;
+	enum KeyAction {
+		KEY_PRESS = GLFW_PRESS,
+		KEY_RELEASE = GLFW_RELEASE,
+		KEY_REPEAT = GLFW_REPEAT
+	};
 
-		return inputHandler;
-	}
+	enum MouseButton {
+		MOUSE_BUTTON_LEFT = GLFW_MOUSE_BUTTON_LEFT,
+		MOUSE_BUTTON_MIDDLE = GLFW_MOUSE_BUTTON_MIDDLE,
+		MOUSE_BUTTON_RIGHT = GLFW_MOUSE_BUTTON_RIGHT
+	};
+
+	InputHandler(WindowContext& windowContext);
 
 	bool isPress(KeyCode);
 	bool isPress(KeyCode, KeyCode);
@@ -69,10 +75,10 @@ struct InputHandler {
 	void setModifierDown(MouseModifier modifier);
 	void setModifierUp(MouseModifier modifier);
 
-	void setWinSize(int width, int height);
-	void pointerToCenter();
+	void onKeyPress(int key, int scancode, int action, int mods);
+	void onMouseMove(double x, double y);
+	void onMouseClick(int button, int state, int x, int y);
 
-	void checkBoundings();
 	void onFrame();
 
 	MousePosition mouse;
@@ -80,25 +86,13 @@ struct InputHandler {
 	MousePosition mouseMoved;
 
 private:
-	InputHandler();
-//	~InputHandler();
-
-	int winWidth;
-	int winHeight;
-
-	InputHandler(InputHandler const &);
-	InputHandler& operator= (InputHandler const &);
 	bool isKeyPress(KeyCode);
 	bool isModifierPress(KeyboardModifier);
 	bool isModifierPress(MouseModifier);
 
 	std::bitset<8> keyboardModifiers_;
 	std::bitset<8> mouseModifiers_;
-	std::unordered_map<KeyCode, bool> map_;
+	std::map<KeyCode, bool> map_;
 };
-
-static void onKeyPress(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void onMouseClick(int button, int state, int x, int y);
-static void onMouseMove(GLFWwindow* window, double x, double y);
 
 #endif

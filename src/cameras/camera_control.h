@@ -8,13 +8,15 @@
 #include "camera.h"
 #include "../lib/input_handler.h"
 #include "../lib/types.h"
+#include "../lib/input_handler.h"
 
 struct CameraControl {
-	CameraControl(Camera * camera);
+	CameraControl(Camera * camera, InputHandler * ih);
 
 	void update();
 private:
 	Camera * camera_;
+	InputHandler * ih_;
 };
 
 #endif

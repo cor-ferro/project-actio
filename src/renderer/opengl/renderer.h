@@ -8,8 +8,6 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <imgui/imgui.h>
-#include "../../imgui/imgui_impl_glfw_gl3.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -40,7 +38,6 @@ namespace Renderer {
 		void start();
 		void draw(Scene * scene);
 		void updateTime(int);
-		void setTitle(const char * text);
 
 		void forwardRender(Scene * scene);
 		void defferedRender(Scene * scene);
@@ -51,8 +48,6 @@ namespace Renderer {
 		void addPreRenderHandler(callback handler);
 		void addPostRenderHandler(callback handler);
 
-		void drawStatsGui();
-
 		double elaspsedTime = 0.0;
 		double time = 1.0;
 
@@ -62,14 +57,13 @@ namespace Renderer {
 
 		Renderer::Stats stats;
 
+		boost::signals2::signal<void ()> onPreRender;
+		boost::signals2::signal<void ()> onPostRender;
 	private:
 		void initLightsBuffer();
 		void initMatricesBuffer();
 
-		GLFWwindow * window;
 		int timerId;
-		boost::signals2::signal<void ()> preFrameSignal_;
-		boost::signals2::signal<void ()> postFrameSignal_;
 	};
 
 }
