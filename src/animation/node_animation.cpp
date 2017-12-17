@@ -2,6 +2,14 @@
 
 double inf = std::numeric_limits<double>::infinity();
 
+inline vec3 mixKeys(const vec3& v1, const vec3& v2, float& delta) {
+    return glm::mix(v1, v2, delta);
+}
+
+inline quat mixKeys(const quat& q1, const quat& q2, float& delta) {
+    return glm::slerp(q1, q2, delta);
+}
+
 template <class T1, typename T2>
 T2 interpolateKeys(const T1& key1, const T1& key2, double time) {
     if (key1.time == key2.time) {
@@ -15,9 +23,8 @@ T2 interpolateKeys(const T1& key1, const T1& key2, double time) {
     if (diff > 0.0) {
         float delta = (float)(1.0 - (key2.time - time) / (key2.time - key1.time));
 
-        value = glm::mix(key1.value, key2.value, delta);
+        value = mixKeys(key1.value, key2.value, delta);
     } else if (diff < 0.0) {
-        // console::warn("less zero: ", time, ", ", key1.time);
         value = key1.value;
     } else {
         value = key1.value;
@@ -89,15 +96,13 @@ const AnimKey NodeAnimation::findKey(double time, bool interpolate) const
         if (itNextRotation == rotations.end()) itNextRotation = itRotation;
         if (itNextScale == scalings.end()) itNextScale = itScale;
 
-        // console::info(name, ": ", itPosition->second.time, ", ", itNextPosition->second.time, ": ", time);
-
         key.position = interpolateKeys<AnimKeyPosition, vec3>(itPosition->second, itNextPosition->second, time);
         key.rotation = interpolateKeys<AnimKeyRotation, quat>(itRotation->second, itNextRotation->second, time);
         key.scale = interpolateKeys<AnimKeyScale, vec3>(itScale->second, itNextScale->second, time);
     } else {
         key.position = itPosition->second.value;
-        key.rotation = itPosition->second.value;
-        key.scale = itPosition->second.value;
+        key.rotation = itRotation->second.value;
+        key.scale = itScale->second.value;
     }
 
     return key;

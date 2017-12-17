@@ -6,3 +6,5 @@ resources/*
 actio
 cmake-build-debug
 .settings/*
+test
+test.cpp

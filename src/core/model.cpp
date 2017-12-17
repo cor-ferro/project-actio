@@ -349,15 +349,9 @@ void Model::processNodeAnimation(ModelNode * node, const Animation * animation, 
 	const NodeAnimation * nodeAnim = animation->findNode(node->name);
 
 	if (nodeAnim != nullptr) {
-// 		// const AnimKey positionKey = nodeAnim->findPosition(tick, animInterpolation_);
-// 		// const AnimKey rotateKey = nodeAnim->findRotation(tick, animInterpolation_);
-// 		// const AnimKey scaleKey = nodeAnim->findScale(tick, animInterpolation_);
-
 		const AnimKey key = nodeAnim->findKey(tick, true);
 
-// 		// mat4 newRootTransform(rootTransform * key.position * key.rotation * key.scale);
-		mat4 newRootTransform = rootTransform * glm::translate(mat4(1.0f), key.position) * glm::toMat4(key.rotation);
-		// mat4 newRootTransform(1.0f);
+		mat4 newRootTransform = rootTransform * glm::translate(mat4(1.0f), key.position) * glm::toMat4(key.rotation)/* * glm::scale(mat4(1.0f), key.scale)*/;
 
 		// // @todo: мы проходимся по всем мешам в поиске нужных костей - оптимизировать обход
 		for (auto it = meshes_.begin(); it != meshes_.end(); it++) {
