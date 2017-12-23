@@ -1,14 +1,22 @@
+#define NDEBUG
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 // #include <memory>
 #include <signal.h>
 #include <boost/bind.hpp>
-#include "./app/app.h"
+
+#include "PxPhysics.h"
+#include "PxScene.h"
+#include "PxRigidDynamic.h"
+#include "PxShape.h"
+#include "PxPhysicsAPI.h"
+
 #include "glm/gtc/random.hpp"
 
-#include "mem/vmem.h"
-#include "ag.h"
+#include "./app/app.h"
+#include "./ag.h"
 
 #include "./renderer/window_context.h"
 #include "./lib/types.h"
@@ -29,6 +37,22 @@
 #include "./resources/resources.h"
 
 using namespace std;
+using namespace physx;
+
+PxDefaultAllocator gAllocator;
+PxDefaultErrorCallback gErrorCallback;
+
+PxFoundation* gFoundation = NULL;
+PxPhysics*  gPhysics = NULL;
+PxDefaultCpuDispatcher* gDispatcher = NULL;
+PxScene* gScene = NULL;
+PxMaterial* gMaterial = NULL;
+
+void initPhysics();
+void stepPhysics();
+void cleanupPhysics();
+
+PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity=PxVec3(0));
 
 int main(int argc, char **argv) {
 	App& app = App::instance();
@@ -54,8 +78,7 @@ int main(int argc, char **argv) {
 	renderer->init(argc, argv);
 	renderer->start();
 
-	VMem videoMemory;
-	videoMemory.allocGeometry();
+	initPhysics();
 
 	InputHandler inputHandler(mainContext);
 
@@ -84,12 +107,14 @@ int main(int argc, char **argv) {
 	// Model * boxModel = AG::Models::box();
 	Model * planeModel = AG::Models::plane(10, 10, 10, 10);
 	planeModel->rotate(vec3(0.0f, 1.0f, 1.0f), glm::pi<float>());
-	// Model * sphereModel = AG::Models::sphere(5.0f, 32, 32);
+	
 	// Model * circleModel = AG::Models::circle(5.0f, 12);
 	// Model * cylinderModel = AG::Models::cylinder(5.0f, 5.0f, 10.0f, 16, 16);
 	// Model * coneModel = AG::Models::cone(3.0f, 5.0f, 5, 16);
 	// Model * torusModel = AG::Models::torus(5.0f, 1.0f, 16, 100);
 	// Model * octahedronModel = AG::Models::octahedron(1.0f);
+
+	
 
 	PhongMaterial material;
 	material.setDiffuse(0.0f, 1.0f, 0.0f);
@@ -122,6 +147,12 @@ int main(int argc, char **argv) {
 
 	cameraOrientationHelper->setLength(1.0);
 
+	Model * sphereModel = AG::Models::sphere(3.0f, 16, 16);
+	scene->add(sphereModel);
+
+	PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(0, 20, 0)), PxSphereGeometry(3), PxVec3(0, -25, -1));
+	PxRigidBodyExt::updateMassAndInertia(*ball, 1000.0f);
+
 	renderer->onPreRender.connect(boost::bind(&Helpers::PointLight::beforeRender, pointLightHelper));
 
 	GLFWwindow * const window = mainContext.getWindow();
@@ -135,9 +166,18 @@ int main(int argc, char **argv) {
 		quat newQuat = glm::angleAxis(rad, vec3(0.0f, 1.0f, 1.0f));
 		vec3 newLightPos = centerPoint * newQuat;
 
-		light->setPosition(newLightPos);
+		light->setPosition(vec3(0.0f, 10.0f, 3.0f));
 
 		inputHandler.onFrame();
+
+		stepPhysics();
+
+		if (!ball->isSleeping()) {
+			PxTransform ballTransform = ball->getGlobalPose();
+
+			sphereModel->setPosition(ballTransform.p.x, ballTransform.p.y, ballTransform.p.z);
+			sphereModel->setQuaternion(ballTransform.q.x, ballTransform.q.y, ballTransform.q.z, ballTransform.q.w);
+		}
 
 		renderer->draw(scene.get());
 
@@ -162,7 +202,74 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	cleanupPhysics();
+
 	console::info("stop application");
 
 	return 0;
+}
+
+void initPhysics() {
+	gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
+	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true);
+
+	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
+	sceneDesc.gravity = PxVec3(0.0f, -9.8f, 0.0f);
+	gDispatcher = PxDefaultCpuDispatcherCreate(4);
+	sceneDesc.cpuDispatcher = gDispatcher;
+	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+
+	sceneDesc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
+	sceneDesc.flags |= PxSceneFlag::eENABLE_PCM;
+	sceneDesc.flags |= PxSceneFlag::eENABLE_STABILIZATION;
+	sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
+	sceneDesc.gpuMaxNumPartitions = 8;
+
+	gScene = gPhysics->createScene(sceneDesc);
+
+	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+	PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
+	gScene->addActor(*groundPlane);
+
+	console::info("physics inited");
+}
+
+void stepPhysics() {
+	PX_UNUSED(false);
+	gScene->simulate(1.0f/60.0f);
+	gScene->fetchResults(true);
+}
+
+void cleanupPhysics() {
+	if (gScene) {
+		gScene->release();
+		gScene = NULL;
+	}
+
+	if (gDispatcher) {
+		gDispatcher->release();
+		gDispatcher = NULL;
+	}
+
+	if (gPhysics) {
+		gPhysics->release();
+		gPhysics = NULL;
+	}
+
+	if (gFoundation) {
+		gFoundation->release();
+		gFoundation = NULL;
+	}
+
+	console::info("physics released");
+}
+
+PxRigidDynamic * createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity)
+{
+	PxRigidDynamic* dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
+	dynamic->setAngularDamping(0.5f);
+	dynamic->setLinearVelocity(velocity);
+	gScene->addActor(*dynamic);
+
+	return dynamic;
 }

@@ -73,6 +73,8 @@ struct Model {
 	void setScale(vec3 scale);
 	void rotate(vec3 rotate, float angle);
 	void setPosition(vec3 position);
+	void setPosition(float x, float y, float z);
+	void setQuaternion(float x, float y, float z, float w);
 
 	void setCurrentAnimation(std::string animationName);
 	void addAnimation(const Animation *);

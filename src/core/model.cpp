@@ -269,6 +269,20 @@ void Model::setPosition(vec3 position)
 	}
 }
 
+void Model::setPosition(float x, float y, float z)
+{
+	for (const auto& mesh : meshes_) {
+		mesh->setPosition(x, y, z);
+	}
+}
+
+void Model::setQuaternion(float x, float y, float z, float w)
+{
+	for (const auto& mesh : meshes_) {
+		mesh->setQuaternion(x, y, z, w);
+	}
+}
+
 void Model::enableAnimIterpolation()
 {
 	animInterpolation_ = true;

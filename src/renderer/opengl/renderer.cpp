@@ -19,8 +19,6 @@ bool OpenglRenderer::init(int argc, char **argv)
 {
 	const RendererParams& renderParams = getParams();
 
-
-
 	return true;
 }
 
@@ -44,6 +42,32 @@ void OpenglRenderer::start()
 	geometryPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
 
 	skyboxProgram.init("skybox");
+
+	glGenFramebuffers(1, &depthMapFBO);
+	
+	const uint SHADOW_HEIGHT = 1024;
+	const uint SHADOW_WIDTH = 1024;
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);  
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+ 
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		console::warn("FB error, status: 0x", status);
+		// return false;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	initMatricesBuffer();
 	initLightsBuffer();
@@ -212,6 +236,38 @@ void OpenglRenderer::forwardRender(Scene * scene)
 	forwardProgram.setInt("countPointLights", pointLights.size());
 	forwardProgram.setInt("countSpotLights", spotLights.size());
 
+	glViewport(0, 0, 1024, 1024);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	
+	drawModels(scene);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glViewport(0, 0, renderParams.width, renderParams.height);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	drawModels(scene);
+
+
+	// @todo: скайбокс закинуть в юниформ
+	if (isHasSkybox)
+	{
+		glDepthFunc(GL_LEQUAL);
+		skyboxProgram.use();
+
+		Model * skyboxModel = scene->getSkybox();
+		const ModelMeshes& meshes = skyboxModel->getMeshes();
+
+		for(auto mesh = meshes.begin(); mesh != meshes.end(); mesh++)
+		{
+			(*mesh)->draw(skyboxProgram);
+		}
+
+		glDepthFunc(GL_LESS);
+	}
+}
+
+void OpenglRenderer::drawModels(Scene * scene)
+{
 	const std::vector<Model*>& models = scene->getModels();
 
 	for (auto modelIt = models.begin(); modelIt != models.end(); modelIt++)
@@ -229,23 +285,6 @@ void OpenglRenderer::forwardRender(Scene * scene)
 		{
 			(*mesh)->draw(forwardProgram);
 		}
-	}
-
-	// @todo: скайбокс закинуть в юниформ
-	if (isHasSkybox)
-	{
-		glDepthFunc(GL_LEQUAL);
-		skyboxProgram.use();
-
-		Model * skyboxModel = scene->getSkybox();
-		const ModelMeshes& meshes = skyboxModel->getMeshes();
-
-		for(auto mesh = meshes.begin(); mesh != meshes.end(); mesh++)
-		{
-			(*mesh)->draw(skyboxProgram);
-		}
-
-		glDepthFunc(GL_LESS);
 	}
 }
 

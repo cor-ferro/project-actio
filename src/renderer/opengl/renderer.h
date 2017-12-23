@@ -37,6 +37,7 @@ namespace Renderer {
 		bool init(int, char **);
 		void start();
 		void draw(Scene * scene);
+		void drawModels(Scene * scene);
 		void updateTime(int);
 
 		void forwardRender(Scene * scene);
@@ -50,6 +51,9 @@ namespace Renderer {
 
 		double elaspsedTime = 0.0;
 		double time = 1.0;
+
+		GLuint depthMapFBO;
+		GLuint depthMap;
 
 		GBuffer gbuffer;
 		UBuffer matricesBuffer;

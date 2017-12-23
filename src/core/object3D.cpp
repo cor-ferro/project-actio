@@ -81,6 +81,15 @@ void Object3D::setQuaternion(quat& newQuat)
 	needUpdateMatrix = true;
 }
 
+void Object3D::setQuaternion(float x, float y, float z, float w)
+{
+	quaternion.w = w;
+	quaternion.x = x;
+	quaternion.y = y;
+	quaternion.z = z;
+	needUpdateMatrix = true;
+}
+
 void Object3D::rotate(float x, float y, float z, float angle)
 {
 	quaternion = glm::rotate(quaternion, angle, vec3(x, y, z));

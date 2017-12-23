@@ -9,7 +9,9 @@
                 "${workspaceRoot}/vendor/DevIL/DevIL/include",
                 "${workspaceRoot}/vendor/glm",
                 "${workspaceRoot}/vendor/iniparser/src",
-                "${workspaceRoot}/vendor/soil/src"
+                "${workspaceRoot}/vendor/soil/src",
+                "${workspaceRoot}/../PhysX-3.4/PhysX_3.4/Include",
+                "${workspaceRoot}/../PhysX-3.4/PxShared/include"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -22,7 +24,9 @@
                     "${workspaceRoot}/vendor/DevIL/DevIL/include",
                     "${workspaceRoot}/vendor/glm",
                     "${workspaceRoot}/vendor/iniparser/src",
-                    "${workspaceRoot}/vendor/soil/src"
+                    "${workspaceRoot}/vendor/soil/src",
+                    "${workspaceRoot}/../PhysX-3.4/PhysX_3.4/Include",
+                    "${workspaceRoot}/../PhysX-3.4/PxShared/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
