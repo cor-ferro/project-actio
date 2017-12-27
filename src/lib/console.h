@@ -44,6 +44,36 @@ namespace console {
 		std::cout << CONSOLE_ESC CONSOLE_RESET;
 		log(arg...);
 	}
+
+	template <typename ...Arg>
+	static void logp(const char * format, Arg... arg) {
+		printf(format, arg...);
+		std::cout << std::endl;
+	}
+
+	template <typename ...Arg>
+	static void infop(const char * format, Arg... arg) {
+		std::cout << CONSOLE_ESC COLOR_CYAN;
+		std::cout << "[info] ";
+		std::cout << CONSOLE_ESC CONSOLE_RESET;
+		logp(format, arg...);
+	}
+
+	template <typename ...Arg>
+	static void warnp(const char * format, Arg... arg) {
+		std::cout << CONSOLE_ESC COLOR_YELLOW;
+		std::cout << "[warn] ";
+		std::cout << CONSOLE_ESC CONSOLE_RESET;
+		logp(format, arg...);
+	}
+
+	template <typename ...Arg>
+	static void errp(const char * format, Arg... arg) {
+		std::cout << CONSOLE_ESC COLOR_RED;
+		std::cout << "[err] ";
+		std::cout << CONSOLE_ESC CONSOLE_RESET;
+		logp(format, arg...);
+	}
 };
 
 #endif
