@@ -2,6 +2,9 @@ PROJECT = actio
 
 GRAPHIC_API=OPENGL
 MKDIR_P=mkdir -p
+PHYSX_LIB=CHECKED
+PHYSX_ARCH=x64
+BUILD_TYPE=debug
 
 SRCDIR :=src
 OBJDIR :=obj
@@ -12,25 +15,31 @@ OBJ_TREE 		:=$(shell find $(SRCDIR) -type d)
 OBJ_TREE 		:=$(patsubst src%,obj%,$(OBJ_TREE))
 OBJS			:=$(patsubst %/%,%_%,$(OBJS))
 CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -std=c++11 -pipe -O0
-LDFLAGS_COMPILE	=-Ivendor/ -Ivendor/assimp/include -Ivendor/soil/src -Ivendor/DevIL/DevIL/include/ -Ivendor/glfw/include -Ivendor/glad/include -I../PhysX-3.4/PhysX_3.4/Include -I../PhysX-3.4/PxShared/include
+LDFLAGS_COMPILE	=-Ivendor/ \
+				-Ivendor/assimp/include \
+				-Ivendor/soil/src \
+				-Ivendor/DevIL/DevIL/include/ \
+				-Ivendor/glfw/include \
+				-Ivendor/glad/include \
+				-I../PhysX-3.4/PhysX_3.4/Include \
+				-I../PhysX-3.4/PxShared/include
 LDFLAGS_BUILD  	=\
-				-Lvendor/boost_1_65_0/ \
-				-L../PhysX-3.4/PhysX_3.4/Bin/linux64/ \
-				-L../PhysX-3.4/PxShared/bin/linux64 \
-				-Lvendor/glfw/lib/ \
-				-Lvendor/entityx/ \
-				-Lvendor/DevIL/DevIL/build/lib/x64 \
-				-Lvendor/assimp/lib/ \
-				vendor/soil/lib/libSOIL.a \
-				vendor/iniparser/libiniparser.a \
-				../PhysX-3.4/PhysX_3.4/Lib/linux64/libPhysX3ExtensionsDEBUG.a \
-				-Wl,-Bstatic -lentityx -lboost_thread -lboost_system -lboost_timer -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_regex -pthread \
-				-Wl,-Bdynamic -lglfw -lX11 -ldl -lGL -lz -lIL -lILU -lILUT -lassimp -lPhysX3CommonDEBUG_x64 -lPhysX3DEBUG_x64 -lPhysX3CookingDEBUG_x64 -lPxFoundationDEBUG_x64
+				-L./libs/linux64 \
+				./vendor/soil/lib/libSOIL.a \
+				./vendor/iniparser/libiniparser.a \
+				../PhysX-3.4/PhysX_3.4/Lib/linux64/libPhysX3Extensions$(PHYSX_LIB).a \
+				-Wl,-rpath=./libs/linux64 \
+				-Wl,-rpath-link=./libs/linux64 \
+				-Wl,-Bstatic -pthread \
+				-Wl,-Bdynamic \
+					-lX11 -ldl -lGL -lz -lglfw \
+					-lIL -lILU -lILUT \
+					-lassimp -lentityx \
+					-lPhysX3Common$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3Gpu$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3Cooking$(PHYSX_LIB)_$(PHYSX_ARCH) -lPxFoundation$(PHYSX_LIB)_$(PHYSX_ARCH) -lPxPvdSDK$(PHYSX_LIB)_$(PHYSX_ARCH) \
+					-lboost_thread -lboost_system -lboost_timer -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_regex
 
 DEPS = $(OBJS:.o=.d)
 -include $(DEPS)
-
-BUILD_TYPE=debug
 
 .PHONY: all clean tree
 
@@ -59,6 +68,3 @@ clean: remove_objects tree
 
 remove_objects:
 	$(RM) -r $(OBJDIR)
-
-setup:
-	@export LD_LIBRARY_PATH=./vendor/assimp/lib:./vendor/entityx
