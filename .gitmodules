@@ -1,3 +1,6 @@
 [submodule "vendor/imgui"]
 	path = vendor/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "vendor/soil"]
+	path = vendor/soil
+	url = https://github.com/kbranigan/Simple-OpenGL-Image-Library
