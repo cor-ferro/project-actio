@@ -7,3 +7,6 @@
 [submodule "vendor/iniparser"]
 	path = vendor/iniparser
 	url = https://github.com/ndevilla/iniparser
+[submodule "vendor/DevIL"]
+	path = vendor/DevIL
+	url = https://github.com/DentonW/DevIL
