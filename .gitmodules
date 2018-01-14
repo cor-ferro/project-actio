@@ -4,3 +4,6 @@
 [submodule "vendor/soil"]
 	path = vendor/soil
 	url = https://github.com/kbranigan/Simple-OpenGL-Image-Library
+[submodule "vendor/iniparser"]
+	path = vendor/iniparser
+	url = https://github.com/ndevilla/iniparser
