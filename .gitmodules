@@ -25,3 +25,6 @@
 [submodule "vendor/PhysX-3.4"]
 	path = vendor/PhysX-3.4
 	url = git@github.com:NVIDIAGameWorks/PhysX-3.4.git
+[submodule "vendor/ozz-animation"]
+	path = vendor/ozz-animation
+	url = https://github.com/guillaumeblanc/ozz-animation
