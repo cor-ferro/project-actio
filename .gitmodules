@@ -16,3 +16,6 @@
 [submodule "vendor/entityx"]
 	path = vendor/entityx
 	url = https://github.com/alecthomas/entityx
+[submodule "vendor/glfw"]
+	path = vendor/glfw
+	url = https://github.com/glfw/glfw
