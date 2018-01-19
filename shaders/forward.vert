@@ -71,5 +71,5 @@ void main()
 	TangentViewPos = TBN * viewPos;
 	TangentFragPos = TBN * fragmentPosition;
 
-	gl_Position = vec4(fragmentPosition, 1.0);
+	gl_Position = projection * view * vec4(fragmentPosition, 1.0);
 }

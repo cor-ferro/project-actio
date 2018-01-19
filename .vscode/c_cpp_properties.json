@@ -3,33 +3,34 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceRoot}/src",
+                "/usr/include",
+                "/usr/local/include",
+                "/usr/include/linux",
+                "/usr/include/c++/4.8",
+                "/usr/include/c++/4.8/x86_64-suse-linux",
+                "/usr/lib64/gcc/x86_64-suse-linux/4.8/include",
+                "${workspaceRoot}/vendor",
                 "${workspaceRoot}/vendor/assimp/include",
+                "${workspaceRoot}/vendor/boost_1_65_1/boost",
                 "${workspaceRoot}/vendor/DevIL/DevIL/include",
+                "${workspaceRoot}/vendor/entityx/entityx",
+                "${workspaceRoot}/vendor/glad/include",
+                "${workspaceRoot}/vendor/glfw/include",
                 "${workspaceRoot}/vendor/glm",
+                "${workspaceRoot}/vendor/imgui",
                 "${workspaceRoot}/vendor/iniparser/src",
-                "${workspaceRoot}/vendor/soil/src",
-                "${workspaceRoot}/../PhysX-3.4/PhysX_3.4/Include",
-                "${workspaceRoot}/../PhysX-3.4/PxShared/include"
+                "${workspaceRoot}/vendor/ozz-animation/include",
+                "${workspaceRoot}/vendor/PhysX-3.4/PhysX_3.4/Include",
+                "${workspaceRoot}/vendor/PhysX-3.4/PxShared/include",
+                "${workspaceRoot}/vendor/soil/src"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
-                    "/usr/include",
-                    "/usr/include/linux",
-                    "/usr/include/c++",
-                    "${workspaceRoot}/src",
-                    "${workspaceRoot}/vendor/assimp/include",
-                    "${workspaceRoot}/vendor/DevIL/DevIL/include",
-                    "${workspaceRoot}/vendor/glm",
-                    "${workspaceRoot}/vendor/iniparser/src",
-                    "${workspaceRoot}/vendor/soil/src",
-                    "${workspaceRoot}/../PhysX-3.4/PhysX_3.4/Include",
-                    "${workspaceRoot}/../PhysX-3.4/PxShared/include"
+                    "${workspaceRoot}/src"
                 ],
-                "limitSymbolsToIncludedHeaders": false,
-                "databaseFilename": ""
+                "limitSymbolsToIncludedHeaders": false
             }
         }
     ],
