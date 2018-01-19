@@ -52,20 +52,25 @@ const MaterialTextures& Material::getTextures()
 	return textures_;
 }
 
-PhongMaterial::PhongMaterial(Texture texture) : Material(texture) {};
+PhongMaterial::PhongMaterial(Texture texture)
+	: shininess(1.0f)
+	, noLight(false)
+	, Material(texture)
+{}
 
 PhongMaterial::PhongMaterial()
-{
-	shininess = 30.0f;
-};
-
-PhongMaterial::~PhongMaterial() {};
+	: shininess(1.0f)
+	, noLight(false)
+{}
 
 PhongMaterial::PhongMaterial(aiMaterial * material, const Resource::Assimp * assimpResource)
+	: shininess(1.0f)
+	, noLight(false)
 {
-	shininess = 30.0f;
 	initFromAi(material, assimpResource);
 }
+
+PhongMaterial::~PhongMaterial() {};
 
 void PhongMaterial::initFromAi(aiMaterial * material, const Resource::Assimp * assimpResource)
 {
@@ -171,4 +176,14 @@ void PhongMaterial::setColor(float r, float g, float b)
 void PhongMaterial::setShininess(float shininess)
 {
 	this->shininess = shininess;
+}
+
+void PhongMaterial::setNoLight(bool isNoLight)
+{
+	noLight = isNoLight;
+}
+
+bool PhongMaterial::isNoLight()
+{
+	return noLight;
 }

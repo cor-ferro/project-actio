@@ -86,7 +86,7 @@ Model::Model(ModelConfig& config)
 	Assimp::Importer importer;
 
 	std::string pFile = config.file.getPath();
-	unsigned int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_Triangulate | aiProcess_CalcTangentSpace;
+	unsigned int flags = /*aiProcessPreset_TargetRealtime_Quality | */aiProcess_Triangulate | aiProcess_CalcTangentSpace;
 
 	if (config.flipUv) {
 		flags|= aiProcess_FlipUVs;

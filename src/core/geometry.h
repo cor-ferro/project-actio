@@ -62,6 +62,7 @@ struct Geometry {
 	static Geometry Ring(float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments, float thetaStart, float thetaLength);
 	static Geometry Torus(float radius, float tube, uint radialSegments, uint tubularSegments, float arc);
 	static Geometry Octahedron(float radius);
+	static Geometry Quad2d();
 
 	void initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource);
 	GeometryVertices * getVertices();

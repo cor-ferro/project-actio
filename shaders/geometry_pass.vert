@@ -1,12 +1,38 @@
 #version 430 core
+#define MAX_BONES 100
+
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
+layout (location = 3) in vec3 aTangent;
+layout (location = 4) in vec3 aBitangent;
+layout (location = 5) in ivec4 BoneIDs;
+layout (location = 6) in vec4 Weights;
 
-//layout (std140) uniform Matrices {
-//	mat4 projection;
-//	mat4 view;
-//};
+layout (std140, binding = 0)
+uniform Matrices {
+	mat4 projection;
+	mat4 view;
+};
+
+uniform mat4 bones[MAX_BONES];
+
+subroutine mat4 BoneTransform();
+
+subroutine (BoneTransform) mat4 BoneTransformEnabled() {
+	mat4 boneTransform = bones[BoneIDs[0]] * Weights[0];
+	boneTransform+= bones[BoneIDs[1]] * Weights[1];
+	boneTransform+= bones[BoneIDs[2]] * Weights[2];
+	boneTransform+= bones[BoneIDs[3]] * Weights[3];
+
+	return boneTransform;
+}
+
+subroutine (BoneTransform) mat4 BoneTransformDisabled() {
+	return mat4(1.0);
+}
+
+subroutine uniform BoneTransform getBoneTransform;
 
 out VertexData {
 	vec3 position;
@@ -15,20 +41,18 @@ out VertexData {
 	vec3 normal;
 } outData;
 
-uniform mat4 mvp;
-uniform mat4 projection;
-uniform mat4 view;
 uniform mat4 model;
 
 void main()
 {
-	vec3 pos = aPos;
-	vec4 fragmentPosition = model * vec4(pos, 1.0);
+	mat4 boneTransform = getBoneTransform();
+	vec4 worldPos = model * vec4(aPos, 1.0);
+	vec3 worldNormal = mat3(transpose(inverse(model))) * aNormal;
 
-	outData.position = vec3(pos);
-	outData.worldPosition = vec3(fragmentPosition.xyz);
-	outData.normal = aNormal;
+	outData.position = aPos;
+	outData.worldPosition = vec3(worldPos);
+	outData.normal = worldNormal;
 	outData.texCoord = aTexCoord;
 
-	gl_Position = projection * view * vec4(fragmentPosition);
+	gl_Position = projection * view * worldPos;
 }

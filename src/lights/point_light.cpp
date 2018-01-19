@@ -5,6 +5,9 @@ namespace Light {
 		: ambient(vec3(1.0))
 		, diffuse(vec3(1.0))
 		, specular(vec3(1.0))
+		, constant(1.0f)
+		, linear(0.001f)
+		, quadratic(0.012f)
 	{}
 
 	Point::Point(vec3 position, vec3 ambient, vec3 diffuse, vec3 specular)
@@ -12,6 +15,9 @@ namespace Light {
 		, ambient(ambient)
 		, diffuse(diffuse)
 		, specular(specular)
+		, constant(1.0f)
+		, linear(0.001f)
+		, quadratic(0.012f)
 	{}
 
 	void Point::setAmbient(vec3 ambient) { this->ambient = ambient; }

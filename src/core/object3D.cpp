@@ -8,8 +8,9 @@ Object3D::Object3D()
 	position = vec3(0.0f);
 	rotation = vec3(1.0f, 0.0f, 0.0f);
 	scale = vec3(1.0f);
+	quaternion = quat(1.0f, 0.0f, 0.0f, 0.0f);
 
-	modelMatrix = mat4();
+	modelMatrix = mat4(1.0f);
 	needUpdateMatrix = true;
 }
 
@@ -30,7 +31,7 @@ Object3D::~Object3D()
 
 void Object3D::rotate(quat rotateQuat)
 {
-	modelMatrix = modelMatrix * glm::toMat4(rotateQuat);
+	modelMatrix = modelMatrix * glm::mat4_cast(rotateQuat);
 }
 
 void Object3D::setPosition(vec3 vector)
@@ -137,10 +138,10 @@ void Object3D::updateModelMatrix(bool force = false)
 	if (force == true || needUpdateMatrix == true)
 	{
 		// console::info("update matrix");
-		modelMatrix = mat4(1.0);
+		modelMatrix = mat4(1.0f);
 
 		mat4 translateMatrix = glm::translate(modelMatrix, position);
-		mat4 rotateMatrix = glm::toMat4(quaternion);
+		mat4 rotateMatrix = glm::mat4_cast(quaternion);
 		mat4 scaleMatrix = glm::scale(modelMatrix, scale);
 
 		modelMatrix = translateMatrix * rotateMatrix * scaleMatrix;

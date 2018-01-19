@@ -18,6 +18,8 @@
 #include "../../scenes/scene.h"
 #include "../../cameras/camera.h"
 #include "../../lib/types.h"
+#include "../../core/geometry.h"
+#include "../../core/mesh.h"
 #include "shader.h"
 #include "program.h"
 #include "g-buffer.h"
@@ -28,6 +30,8 @@
 #define UBO_MATRICES_POINT_INDEX 0
 #define UBO_LIGHTS_POINT_INDEX 1
 
+#define DEFAULT_FRAME_BUFFER 0
+
 namespace Renderer {
 	typedef std::function<void()> callback;
 
@@ -37,17 +41,20 @@ namespace Renderer {
 		bool init(int, char **);
 		void start();
 		void draw(Scene * scene);
-		void drawModels(Scene * scene);
+		void drawModels(Scene * scene, Opengl::Program& program);
 		void updateTime(int);
 
 		void forwardRender(Scene * scene);
 		void defferedRender(Scene * scene);
+		void renderPointLights(Scene& scene);
+		void renderDirLights(Scene& scene);
 
 		void preRender();
 		void postRender();
 
 		void addPreRenderHandler(callback handler);
 		void addPostRenderHandler(callback handler);
+		void checkGlError(const char * file, int line, bool silent = false);
 
 		double elaspsedTime = 0.0;
 		double time = 1.0;
@@ -68,6 +75,15 @@ namespace Renderer {
 		void initMatricesBuffer();
 
 		int timerId;
+
+		Opengl::Program forwardProgram;
+		Opengl::Program skyboxProgram;
+		Opengl::Program geometryPassProgram;
+		Opengl::Program lightPassProgram;
+		Opengl::Program nullProgram;
+
+		Mesh * quad;
+		Mesh * lightSphere;
 	};
 
 }

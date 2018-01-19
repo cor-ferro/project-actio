@@ -33,8 +33,17 @@ enum MeshDrawMode {
 	Mesh_Draw_Elements
 };
 
+enum MeshDrawFlags {
+	Mesh_Draw_Base = 0x1,
+	Mesh_Draw_Textures = 0x2,
+	Mesh_Draw_Bones = 0x4,
+	Mesh_Draw_Material = 0x8,
+	Mesh_Draw_All = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Bones | Mesh_Draw_Material
+};
+
 struct Mesh : Object3D {
 	Mesh();
+	Mesh(Geometry geometry);
 	Mesh(PhongMaterial material, Geometry geometry);
 	Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource);
 	Mesh(const Mesh& mesh);
@@ -55,7 +64,7 @@ struct Mesh : Object3D {
 	MeshDrawType getDrawType();
 
 	#ifdef GRAPHIC_API_OPENGL
-	void draw(Opengl::Program &program);
+	void draw(Opengl::Program &program, uint flags = Mesh_Draw_All);
 	void setup();
 	void freeBuffers();
 	#endif

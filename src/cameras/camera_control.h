@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include "glm/glm.hpp"
-#include "glm/gtx/quaternion.hpp"
 #include "glm/gtx/rotate_vector.hpp"
 #include "camera.h"
 #include "../lib/input_handler.h"

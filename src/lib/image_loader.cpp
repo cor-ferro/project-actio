@@ -48,8 +48,30 @@ namespace ImageLoader {
 		if (!isImageLoad) {
 			ILenum Error;
 			while ((Error = ilGetError()) != IL_NO_ERROR) {
+				std::string err("unknown");
+				switch (Error) {
+					case IL_NO_ERROR: err = "IL_NO_ERROR"; break;
+					case IL_INVALID_ENUM: err = "IL_INVALID_ENUM"; break;
+					case IL_OUT_OF_MEMORY: err = "IL_OUT_OF_MEMORY"; break;
+					case IL_FORMAT_NOT_SUPPORTED: err = "IL_FORMAT_NOT_SUPPORTED"; break;
+					case IL_INTERNAL_ERROR: err = "IL_INTERNAL_ERROR"; break;
+					case IL_INVALID_VALUE: err = "IL_INVALID_VALUE"; break;
+					case IL_ILLEGAL_OPERATION: err = "IL_ILLEGAL_OPERATION"; break;
+					case IL_ILLEGAL_FILE_VALUE: err = "IL_ILLEGAL_FILE_VALUE"; break;
+					case IL_INVALID_FILE_HEADER: err = "IL_INVALID_FILE_HEADER"; break;
+					case IL_INVALID_PARAM: err = "IL_INVALID_PARAM"; break;
+					case IL_COULD_NOT_OPEN_FILE: err = "IL_COULD_NOT_OPEN_FILE"; break;
+					case IL_INVALID_EXTENSION: err = "IL_INVALID_EXTENSION"; break;
+					case IL_FILE_ALREADY_EXISTS: err = "IL_FILE_ALREADY_EXISTS"; break;
+					case IL_OUT_FORMAT_SAME: err = "IL_OUT_FORMAT_SAME"; break;
+					case IL_STACK_OVERFLOW: err = "IL_STACK_OVERFLOW"; break;
+					case IL_STACK_UNDERFLOW: err = "IL_STACK_UNDERFLOW"; break;
+					case IL_INVALID_CONVERSION: err = "IL_INVALID_CONVERSION"; break;
+					case IL_BAD_DIMENSIONS: err = "IL_BAD_DIMENSIONS"; break;
+					case IL_FILE_READ_ERROR: err = "IL_FILE_READ/WRITE_ERROR"; break;
+				}
 				// printf("%d: %s/n", Error, iluErrorString());
-				console::warn("error load image", path.c_str()); 
+				console::warnp("error load image %s, %s", path.c_str(), err.c_str());
 			} 
 
 			return imageData;

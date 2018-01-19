@@ -6,8 +6,13 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <imgui/imgui.h>
+// #include "../imgui_impl_glfw_gl3.h"
 #include "../lib/console.h"
-#include "../imgui/imgui_impl_glfw_gl3.h"
+
+static void w1ErrorCallback(int error, const char* description)
+{
+    console::err("GLFW error: ", description);
+}
 
 struct WindowContext {
     WindowContext()
@@ -22,6 +27,9 @@ struct WindowContext {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_SAMPLES, 4);
 
+        glfwSetErrorCallback(w1ErrorCallback);
+
+        // GLFWmonitor* primary = glfwGetPrimaryMonitor();
         window = glfwCreateWindow(width, height, "Window", NULL, NULL);
 
         if (window == NULL)
@@ -38,7 +46,7 @@ struct WindowContext {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         // glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 
-        ImGui_ImplGlfwGL3_Init(window, true);
+        // ImGui_ImplGlfwGL3_Init(window, true);
 
         // add callbacks
         glfwSetWindowSizeCallback(window, WindowContext::onResizeCallback);
@@ -63,6 +71,14 @@ struct WindowContext {
 
     void setMousePosition(unsigned int x, unsigned int y) {
         glfwSetCursorPos(window, x, y);
+    }
+
+    void enableVSync() {
+        glfwSwapInterval(1);
+    }
+
+    void disableVSync() {
+        glfwSwapInterval(0);
     }
 
     GLFWwindow * const getWindow() {

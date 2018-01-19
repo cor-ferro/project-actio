@@ -12,6 +12,7 @@
 #include "PxRigidDynamic.h"
 #include "PxShape.h"
 #include "PxPhysicsAPI.h"
+#include "pvd/PxPvd.h"
 
 #include "glm/gtc/random.hpp"
 
@@ -23,7 +24,6 @@
 #include "./lib/cycle.h"
 #include "./lib/input_handler.h"
 #include "./lib/console.h"
-#include "./lib/scoped_ptr.h"
 #include "./renderer/renderer.h"
 #include "./scenes/scene.h"
 #include "./cameras/camera.h"
@@ -44,6 +44,7 @@ PxDefaultErrorCallback gErrorCallback;
 
 PxFoundation* gFoundation = NULL;
 PxPhysics*  gPhysics = NULL;
+PxPvd* gPvd = NULL;
 PxDefaultCpuDispatcher* gDispatcher = NULL;
 PxScene* gScene = NULL;
 PxMaterial* gMaterial = NULL;
@@ -65,7 +66,11 @@ int main(int argc, char **argv) {
 	unsigned int windowHeight = 720;
 
 	WindowContext mainContext;
-	mainContext.init(windowWidth, windowHeight);
+	
+	if (!mainContext.init(windowWidth, windowHeight)) {
+		return -1;
+	}
+
 	mainContext.setTitle(app.getName().c_str());
 
 	RendererParams rendererParams;
@@ -85,13 +90,19 @@ int main(int argc, char **argv) {
 	std::shared_ptr<Scene> scene(new Scene());
 	std::shared_ptr<AG::HelperArrow> arrowHelper(AG::Helper::arrow(vec3(0.0f), vec3(1.0f, 0.0f, 0.0f), 1.0f));
 	std::shared_ptr<AG::HelperCameraOrientation> cameraOrientationHelper(AG::Helper::cameraOrientation(vec3(0.0f), vec3(1.0f, 0.0f, 0.0f), 1.0f));
-	std::shared_ptr<Light::Point> light(AG::Light::point(vec3(1.0f), vec3(1.0f), vec3(1.0f), vec3(1.0f)));
 
-	light->setAmbient(0.5f, 0.5f, 0.5f);
-	light->setDiffuse(1.1f, 1.05f, 1.01f);
-	light->setSpecular(vec3(0.15f));
-	light->setPosition(vec3(0.0f, 10.0f, 5.0f));
-	light->setAttenuation(1.0f, 0.001f, 0.012f);
+	std::shared_ptr<Light::Directional> dirLight(AG::Light::directional());
+	dirLight->setDirection(vec3(0.0f, -1.0f, 0.0f));
+	dirLight->setAmbient(vec3(0.01f));
+	dirLight->setDiffuse(vec3(0.05f));
+	dirLight->setSpecular(vec3(0.01f));
+
+	std::shared_ptr<Light::Point> pointLight(AG::Light::point());
+	pointLight->setAmbient(vec3(0.03f));
+	pointLight->setDiffuse(vec3(0.5f));
+	pointLight->setSpecular(vec3(0.15f));
+	pointLight->setPosition(vec3(0.0f, 10.0f, 5.0f));
+	pointLight->setAttenuation(1.0f, 0.001f, 0.012f);
 
 	console::info("init scene");
 
@@ -120,7 +131,7 @@ int main(int argc, char **argv) {
 	material.setDiffuse(0.0f, 1.0f, 0.0f);
 	Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
 
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 0; i++) {
 		Mesh * mesh = new Mesh(material, geometry);
 		mesh->setPosition(vec3(
 			glm::gaussRand(0.0f, 7.0f),
@@ -132,17 +143,20 @@ int main(int argc, char **argv) {
 		scene->add(model);
 	}
 
-	Helpers::PointLight * pointLightHelper = new Helpers::PointLight(light.get());
+	Helpers::PointLight * pointLightHelper = new Helpers::PointLight(pointLight.get());
 
-	Model * mainModel = scene->getModelByName("ironman");
+	Model * mainModel = scene->getModelByName("Megabeth");
 	if (mainModel != nullptr)
 	{
-		Helpers::BoundingBox * boundingBoxHelper = new Helpers::BoundingBox(mainModel);
-		scene->add(boundingBoxHelper);
+//		Helpers::BoundingBox * boundingBoxHelper = new Helpers::BoundingBox(mainModel);
+//		scene->add(boundingBoxHelper);
 	}
 
 	scene->add(planeModel);
-	scene->add(light.get());
+
+//	scene->add(dirLight.get());
+	scene->add(pointLight.get());
+
 	scene->add(pointLightHelper);
 
 	cameraOrientationHelper->setLength(1.0);
@@ -150,12 +164,14 @@ int main(int argc, char **argv) {
 	Model * sphereModel = AG::Models::sphere(3.0f, 16, 16);
 	scene->add(sphereModel);
 
-	PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(0, 20, 0)), PxSphereGeometry(3), PxVec3(0, -25, -1));
+	PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(0, 20, 0)), PxSphereGeometry(3), PxVec3(0, -25, -5));
 	PxRigidBodyExt::updateMassAndInertia(*ball, 1000.0f);
 
 	renderer->onPreRender.connect(boost::bind(&Helpers::PointLight::beforeRender, pointLightHelper));
 
 	GLFWwindow * const window = mainContext.getWindow();
+
+	mainContext.enableVSync();
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -163,10 +179,10 @@ int main(int argc, char **argv) {
 		cameraControl.update();
 		vec3 centerPoint(0.0, 10.0f, 0.0f);
 		float rad = (glm::sin(time * 0.1f)) * glm::two_pi<float>();
-		quat newQuat = glm::angleAxis(rad, vec3(0.0f, 1.0f, 1.0f));
+		quat newQuat = glm::angleAxis(rad, vec3(1.0f, 1.0f, 1.0f));
 		vec3 newLightPos = centerPoint * newQuat;
 
-		light->setPosition(vec3(0.0f, 10.0f, 3.0f));
+		pointLight->setPosition(newLightPos);
 
 		inputHandler.onFrame();
 
@@ -179,18 +195,22 @@ int main(int argc, char **argv) {
 			sphereModel->setQuaternion(ballTransform.q.x, ballTransform.q.y, ballTransform.q.z, ballTransform.q.w);
 		}
 
+		if (mainModel != nullptr) {
+			mainModel->rotate(vec3(0.0f, 0.0f, 1.0f), 0.03f);
+		}
+
 		renderer->draw(scene.get());
 
-		ImGui_ImplGlfwGL3_NewFrame();
-		ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
-		
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-		ImGui::Begin("Metrics", NULL, flags);
-		ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
-		ImGui::SetWindowSize(ImVec2(200.0f, 30.0f));
-		ImGui::End();
-		ImGui::Render();
+//		 ImGui_ImplGlfwGL3_NewFrame();
+//		 ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
+//
+//		 ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoBringToFrontOnFocus;
+//
+//		 ImGui::Begin("Metrics", NULL, flags);
+//		 ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
+//		 ImGui::SetWindowSize(ImVec2(200.0f, 30.0f));
+//		 ImGui::End();
+//		 ImGui::Render();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -211,7 +231,8 @@ int main(int argc, char **argv) {
 
 void initPhysics() {
 	gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
-	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true);
+	gPvd = PxCreatePvd(*gFoundation);
+	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true, gPvd);
 
 	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -9.8f, 0.0f);

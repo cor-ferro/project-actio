@@ -149,8 +149,8 @@ void main()
 	norm = normalize(norm * 2.0 - 1.0);
 	norm = normalize(TBN * norm);
 
-	// vec3 viewDir = normalize(viewPos - fragmentPosition);
-	vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
+	vec3 viewDir = normalize(viewPos - fragmentPosition);
+	// vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
 	vec3 result = vec3(0.0);
 
 	for(int i = 0; i < countDirLights; i++)

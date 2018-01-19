@@ -54,7 +54,7 @@ namespace Opengl {
 		if (!success) {
 			glGetProgramInfoLog(handle, 4096, NULL, infoLog);
 			std::cout
-				<< "ERROR::SHADER::PROGRAM::LINKING_FAILED" << std::endl
+				<< "ERROR::SHADER::PROGRAM::LINKING_FAILED " << name << std::endl
 				<< infoLog
 				<< std::endl;
 			success = false;
@@ -75,7 +75,7 @@ namespace Opengl {
 
 	Program::~Program()
 	{
-		console::info("destroy shader program");
+		console::infop("destroy shader program %s", name.c_str());
 	}
 
 	const GLuint Program::getHandle() const
@@ -138,7 +138,7 @@ namespace Opengl {
 
 	void Program::enableSubroutine(unsigned int shaderType, std::string& subroutineName)
 	{
-		unsigned int routineIndex = getSubroutineCacheIndex(shaderType, subroutineName);
+		GLuint routineIndex = getSubroutineCacheIndex(shaderType, subroutineName);
 		glUniformSubroutinesuiv(shaderType, 1, &routineIndex);
 	}
 
@@ -191,14 +191,14 @@ namespace Opengl {
 		return uniformIndexCache2.find(uniform)->second;
 	}
 
-	GLint Program::getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName)
+	GLuint Program::getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName)
 	{
 		return glGetSubroutineIndex(handle, shaderType, soubroutineName.c_str());
 	}
 
-	GLint Program::getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName)
+	GLuint Program::getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName)
 	{
-		std::unordered_map<std::string, unsigned int> * subroutineIndexCache = nullptr;
+		std::unordered_map<std::string, GLuint> * subroutineIndexCache = nullptr;
 
 		if (shaderType == GL_VERTEX_SHADER) {
 			subroutineIndexCache = &subroutineVertexIndexCache;
@@ -211,8 +211,13 @@ namespace Opengl {
 		auto it = subroutineIndexCache->find(soubroutineName);
 
 		if (it == subroutineIndexCache->end()) {
-			unsigned int index = getSubroutineIndex(shaderType, soubroutineName);
-			subroutineIndexCache->insert(std::pair<std::string, unsigned int>(soubroutineName, index));
+			GLuint index = getSubroutineIndex(shaderType, soubroutineName);
+
+			if (index == GL_INVALID_INDEX) {
+				console::warnp("GL_INVALID_INDEX: %s", soubroutineName.c_str());
+			}
+
+			subroutineIndexCache->insert({ soubroutineName, index });
 			return -1;
 		}
 

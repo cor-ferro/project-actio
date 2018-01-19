@@ -50,6 +50,9 @@ namespace AG
 	}
 
 	namespace Light {
+		::Light::Directional * directional();
+		::Light::Point * point();
+
 		::Light::Directional * directional(vec3, vec3, vec3);
 		::Light::Point * point(vec3, vec3, vec3, vec3);
 		::Light::Spot * spot(vec3, vec3, vec3);

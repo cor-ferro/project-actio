@@ -55,7 +55,7 @@ namespace AG
 		Model * plane(uint width, uint height, uint widthSegments, uint heightSegments)
 		{
 			PhongMaterial material;
-			material.setWireframe(true);
+//			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Plane(width, height, widthSegments, heightSegments);
@@ -68,7 +68,8 @@ namespace AG
 		Model * sphere(float radius, uint widthSegments, uint heightSegments)
 		{
 			PhongMaterial material;
-			material.setWireframe(true);
+//			material.setWireframe(true);
+			material.setNoLight(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Sphere(radius, widthSegments, heightSegments, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
@@ -178,6 +179,16 @@ namespace AG
 	}
 
 	namespace Light {
+		::Light::Directional * directional()
+		{
+			return new ::Light::Directional(vec3(1.0f), vec3(1.0f), vec3(1.0f));
+		}
+
+		::Light::Point * point()
+		{
+			return new ::Light::Point(vec3(1.0f), vec3(1.0f), vec3(1.0f), vec3(1.0f));
+		}
+
 		::Light::Directional * directional(vec3 ambient, vec3 diffuse, vec3 specular)
 		{
 			return new ::Light::Directional(ambient, diffuse, specular);

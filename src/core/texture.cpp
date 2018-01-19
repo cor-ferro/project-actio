@@ -49,7 +49,6 @@ Texture Texture::loadFromMaterial(aiMaterial * mat, aiTextureType type, const Re
 		ImageLoader::Data imageData = ImageLoader::load(path);
 
 		if (!imageData.isReady()) {
-			console::warn("failed load image", path.c_str());
 			imageData = ImageLoader::load(assimpResource->getDefaultTexturePath());
 		}
 

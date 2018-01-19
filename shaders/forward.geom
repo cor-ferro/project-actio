@@ -28,7 +28,7 @@ out vec4 o_color;
 
 void main()
 {
-    const mat3 scale = mat3(model) * 0.1f;
+    const mat3 scale = mat3(model) * 0.2f;
     mat4 viewProjection = projection * view;
 
     // positions of each vertex of the triangle

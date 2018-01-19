@@ -360,7 +360,7 @@ Geometry Geometry::Sphere(float radius,	uint widthSegments,	uint heightSegments,
 
 			geometry.addVertex(vertex);
 
-			verticesRow.push_back(index ++);
+			verticesRow.push_back(index++);
 		}
 
 		grid.push_back(verticesRow);
@@ -685,6 +685,40 @@ Geometry Geometry::Octahedron(float radius)
 	for (uint i = 0; i < countVertices; i+= 3) {
 		Vertex vertex;
 		vertex.Position = vec3(vertices[i] * radius, vertices[i+1] * radius, vertices[i+2] * radius);
+		vertex.Normal = glm::normalize(vec3(vertex.Position.x, vertex.Position.y, vertex.Position.z));
+
+		geometry.addVertex(vertex);
+	}
+
+	for (uint i = 0; i < countIndices; i+= 3) {
+		geometry.addFace(indices[i], indices[i+1], indices[i+2]);
+	}
+
+	return geometry;
+}
+
+Geometry Geometry::Quad2d()
+{
+	Geometry geometry;
+
+	float vertices[] = {
+		1.0f,  1.0f, 0.0f,
+     	1.0f, -1.0f, 0.0f,
+    	-1.0f, -1.0f, 0.0f,
+    	-1.0f,  1.0f, 0.0f
+	};
+
+	uint indices[] = {
+		0, 1, 3,
+    	1, 2, 3
+	};
+
+	uint countVertices = 12;
+	uint countIndices = 6;
+
+	for (uint i = 0; i < countVertices; i+= 3) {
+		Vertex vertex;
+		vertex.Position = vec3(vertices[i], vertices[i+1], vertices[i+2]);
 		vertex.Normal = glm::normalize(vec3(vertex.Position.x, vertex.Position.y, vertex.Position.z));
 
 		geometry.addVertex(vertex);

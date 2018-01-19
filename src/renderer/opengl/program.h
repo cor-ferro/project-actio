@@ -28,8 +28,8 @@ struct Program {
 	GLint getUniformCacheLoc(std::string locationName) const;
 	GLint getUniformCacheLoc(Opengl::Uniform::Common& uniform) const;
 
-	GLint getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName);
-	GLint getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName);
+	GLuint getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName);
+	GLuint getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName);
 
 	void setFloat(const std::string&, const float&) const;
 	void setInt(const std::string&, const int&) const;
@@ -74,8 +74,8 @@ private:
 	std::string getShaderPath(std::string);
 	std::unordered_map<std::string, GLint> uniformIndexCache;
 	std::map<short int, GLint> uniformIndexCache2;
-	std::unordered_map<std::string, unsigned int> subroutineVertexIndexCache;
-	std::unordered_map<std::string, unsigned int> subroutineFragmentIndexCache;
+	std::unordered_map<std::string, GLuint> subroutineVertexIndexCache;
+	std::unordered_map<std::string, GLuint> subroutineFragmentIndexCache;
 };
 
 }

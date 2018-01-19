@@ -4,8 +4,14 @@ Mesh::Mesh()
 	: name("")
 	, isSetupReady(false)
 	, drawType(Mesh_Draw_Triangle)
-{
-}
+{}
+
+Mesh::Mesh(Geometry geometry) 
+	: name("")
+	, isSetupReady(false)
+	, geometry(geometry)
+	, drawType(Mesh_Draw_Triangle)
+{}
 
 Mesh::Mesh(PhongMaterial material, Geometry geometry) 
 	: name("")
@@ -13,8 +19,7 @@ Mesh::Mesh(PhongMaterial material, Geometry geometry)
 	, material(material)
 	, geometry(geometry)
 	, drawType(Mesh_Draw_Triangle)
-{
-}
+{}
 
 Mesh::Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource)
 	: name("")
@@ -66,7 +71,9 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 		material.setSpecular(0.0f, 1.0f, 0.0f);
 	}
 
+	if (mesh->mNumVertices > 0) {
 	geometry.initFromAi(mesh, assimpResource);
+	}
 
 	if (mesh->mNumBones > 0) {
 		console::info("bones count: ", mesh->mNumBones);
@@ -102,9 +109,7 @@ void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 					vertexIt->second.push_back(BoneVertexWeight(boneId, vertexWeight.mWeight));
 				} else {
 					std::vector<BoneVertexWeight> mapping { BoneVertexWeight(boneId, vertexWeight.mWeight) };
-					verticesMap->insert(
-						std::pair<uint, std::vector<BoneVertexWeight>>(vertexWeight.mVertexId, mapping)
-					);
+					verticesMap->insert({ vertexWeight.mVertexId, mapping });
 				}
 			}
 		}
@@ -165,88 +170,76 @@ void Mesh::draw()
 
 #ifdef GRAPHIC_API_OPENGL
 
-void Mesh::draw(Opengl::Program& program)
+void Mesh::draw(Opengl::Program& program, uint flags)
 {
-	unsigned int textureIndex = 0;
-	const MaterialTextures& textures = material.getTextures();
-	for (const Texture& texture : textures)
-	{
-		glActiveTexture(GL_TEXTURE0 + textureIndex);
-		glBindTexture(texture.textureTarget, texture.textureID);
-		program.setInt(texture.name, textureIndex);
-		textureIndex++;
+	if ((flags & Mesh_Draw_Textures) != 0) {
+		unsigned int textureIndex = 0;
+		const MaterialTextures& textures = material.getTextures();
+		for (const Texture& texture : textures)
+		{
+			glActiveTexture(GL_TEXTURE0 + textureIndex);
+			glBindTexture(texture.textureTarget, texture.textureID);
+			program.setInt(texture.name, textureIndex);
+			textureIndex++;
+		}
 	}
 
-	glBindVertexArray(geometry.VAO);
-
-	updateModelMatrix(false);
-
-	std::string boneTransformType;
-
-	if (bones.size() > 0) {
-		boneTransformType = "BoneTransformEnabled";
-		std::vector<mat4> * boneTransforms = &transforms;
-
-		program.setMat(Opengl::Uniform::Bones, boneTransforms);
-	} else {
-		boneTransformType = "BoneTransformDisabled";
+	if ((flags & Mesh_Draw_Material) != 0) {
+		program.setVec(Opengl::Uniform::MaterialAmbient, material.ambient);
+		program.setVec(Opengl::Uniform::MaterialDiffuse, material.diffuse);
+		program.setVec(Opengl::Uniform::MaterialSpecular, material.specular);
+		program.setFloat(Opengl::Uniform::MaterialShininess, material.shininess);
 	}
 
-	program.enableVertexSubroutine(boneTransformType);
-	program.setMat(Opengl::Uniform::Model, modelMatrix);
+	if ((flags & Mesh_Draw_Bones) != 0) {
+		std::string boneTransformType;
+		if (bones.size() > 0) {
+			boneTransformType = "BoneTransformEnabled";
+			std::vector<mat4> * boneTransforms = &transforms;
 
-	program.setVec(Opengl::Uniform::MaterialAmbient, material.ambient);
-	program.setVec(Opengl::Uniform::MaterialDiffuse, material.diffuse);
-	program.setVec(Opengl::Uniform::MaterialSpecular, material.specular);
-	program.setFloat(Opengl::Uniform::MaterialShininess, material.shininess);
+			program.setMat(Opengl::Uniform::Bones, boneTransforms);
+		} else {
+			boneTransformType = "BoneTransformDisabled";
+		}
 
-	GeometryVertices * vertices = geometry.getVertices();
-	GeometryIndices * indices = geometry.getIndices();
-
-	GLenum primitiveType;
-	switch (drawType) {
-		case Mesh_Draw_Line:
-			primitiveType = GL_LINES; break;
-		case Mesh_Draw_Line_Loop:
-			primitiveType = GL_LINE_LOOP; break;
-		case Mesh_Draw_Triangle:
-			primitiveType = GL_TRIANGLES; break;
-		default:
-			primitiveType = GL_TRIANGLES;
+		program.enableVertexSubroutine(boneTransformType);
 	}
 
-	MeshDrawMode drawMode;
+	if ((flags & Mesh_Draw_Base) != 0) {
+		glBindVertexArray(geometry.VAO);
 
-	if (indices->size() != 0) {
-		drawMode = Mesh_Draw_Elements;
-	} else {
-		drawMode = Mesh_Draw_Arrays;
+		updateModelMatrix(false);
+		program.setMat("model", modelMatrix);
+
+		GeometryVertices * vertices = geometry.getVertices();
+		GeometryIndices * indices = geometry.getIndices();
+
+		GLenum primitiveType;
+		switch (drawType) {
+			case Mesh_Draw_Line:
+				primitiveType = GL_LINES; break;
+			case Mesh_Draw_Line_Loop:
+				primitiveType = GL_LINE_LOOP; break;
+			case Mesh_Draw_Triangle:
+				primitiveType = GL_TRIANGLES; break;
+			default:
+				primitiveType = GL_TRIANGLES;
+		}
+
+		MeshDrawMode drawMode = indices->size() != 0 ? Mesh_Draw_Elements : Mesh_Draw_Arrays;
+
+		if (material.wireframe == true) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+		switch (drawMode) {
+			case Mesh_Draw_Arrays: 		glDrawArrays(primitiveType, 0, vertices->size()); break;
+			case Mesh_Draw_Elements: 	glDrawElements(primitiveType, indices->size(), GL_UNSIGNED_INT, 0);	break;
+			default: console::warn("unknown draw mode: ", drawMode);
+		}
+
+		if (material.wireframe == true) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		glBindVertexArray(0);
 	}
-
-	if (material.wireframe == true)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
-
-	switch (drawMode) {
-		case Mesh_Draw_Arrays:
-			glDrawArrays(primitiveType, 0, vertices->size());
-			break;
-		case Mesh_Draw_Elements:
-			glDrawElements(primitiveType, indices->size(), GL_UNSIGNED_INT, 0);
-			break;
-		default:
-			console::warn("unknown draw mode: ", drawMode);
-	}
-	
-
-	if (material.wireframe == true)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-
-	glBindVertexArray(0);
-	glActiveTexture(GL_TEXTURE0);
 }
 
 void Mesh::setup()

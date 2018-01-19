@@ -51,10 +51,15 @@ struct PhongMaterial : Material {
 
 	void setShininess(float shininess);
 
+	void setNoLight(bool isNoLight);
+	bool isNoLight();
+
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
 	float shininess;
+
+	bool noLight;
 };
 
 struct ShaderMaterial : Material {
