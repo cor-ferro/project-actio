@@ -244,23 +244,21 @@ void OpenglRenderer::defferedRender(Scene * scene)
 
 	// Geometry pass
 		gbuffer.geometryPass();
-		skyboxProgram.use();
+//		skyboxProgram.use();
 		glDepthMask(GL_TRUE);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 		OpenglCheckErrors();
 
 
-		Model * skyboxModel = scene->getSkybox();
-		Mesh * mesh = skyboxModel->getFirstMesh();
-		Texture texture = mesh->material.getTextures().at(0);
-
-		OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, texture);
-		skyboxProgram.setInt("cubeTexture", maxTextureUnits - 1);
-		mesh->draw(skyboxProgram, Mesh_Draw_Base);
-		OpenglCheckErrorsSilent();
-
-		return;
+//		Model * skyboxModel = scene->getSkybox();
+//		Mesh * mesh = skyboxModel->getFirstMesh();
+//		Texture texture = mesh->material.getTextures().at(0);
+//
+//		OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, texture);
+//		skyboxProgram.setInt("cubeTexture", maxTextureUnits - 1);
+//		mesh->draw(skyboxProgram, Mesh_Draw_Base);
+//		OpenglCheckErrorsSilent();
 
 		geometryPassProgram.use();
 		drawModels(scene, geometryPassProgram);
