@@ -5,12 +5,22 @@ namespace Light {
 		: ambient(vec3(1.0))
 		, diffuse(vec3(1.0))
 		, specular(vec3(1.0))
+		, constant(1.0f)
+		, linear(0.09f)
+		, quadratic(0.032f)
+		, cutOff(glm::cos(glm::radians(12.5f)))
+		, outerCutOff(glm::cos(glm::radians(13.0f)))
 	{}
 
 	Spot::Spot(vec3 ambient, vec3 diffuse, vec3 specular)
 		: ambient(ambient)
 		, diffuse(diffuse)
 		, specular(specular)
+		, constant(1.0f)
+		, linear(0.09f)
+		, quadratic(0.032f)
+		, cutOff(glm::cos(glm::radians(13.0f)))
+		, outerCutOff(glm::cos(glm::radians(12.5f)))
 	{}
 
 	void Spot::setAmbient(vec3 ambient) { this->ambient = ambient; }

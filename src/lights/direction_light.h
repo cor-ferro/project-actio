@@ -39,13 +39,6 @@ namespace Light {
 		vec3 specular;
 		vec3 direction;
 	};
-
-	static int DirectionalMemoryLayout[4][2] = {
-		{sizeof(vec3), offsetof(Directional, ambient)},
-		{sizeof(vec3), offsetof(Directional, diffuse)},
-		{sizeof(vec3), offsetof(Directional, specular)},
-		{sizeof(vec3), offsetof(Directional, direction)},
-	};
 } // Light
 
 #endif /* DIRECTION_LIGHT_H_ */

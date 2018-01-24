@@ -42,16 +42,6 @@ namespace Light {
 		float linear;
 		float quadratic;
 	};
-
-	static int PointMemoryLayout[7][2] = {
-		{sizeof(vec3), offsetof(Point, ambient)},
-		{sizeof(vec3), offsetof(Point, diffuse)},
-		{sizeof(vec3), offsetof(Point, specular)},
-		{sizeof(vec3), offsetof(Point, position)},
-		{sizeof(float), offsetof(Point, constant)},
-		{sizeof(float), offsetof(Point, linear)},
-		{sizeof(float), offsetof(Point, quadratic)}
-	};
 } // Light
 
 

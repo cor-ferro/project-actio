@@ -95,7 +95,7 @@ namespace AG
 		Model * cylinder(float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments)
 		{
 			PhongMaterial material;
-			material.setWireframe(true);
+//			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Cylinder(
@@ -187,6 +187,11 @@ namespace AG
 		::Light::Point * point()
 		{
 			return new ::Light::Point(vec3(1.0f), vec3(1.0f), vec3(1.0f), vec3(1.0f));
+		}
+
+		::Light::Spot * spot()
+		{
+			return new ::Light::Spot();
 		}
 
 		::Light::Directional * directional(vec3 ambient, vec3 diffuse, vec3 specular)

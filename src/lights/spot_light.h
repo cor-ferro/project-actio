@@ -45,19 +45,6 @@ namespace Light {
 		float cutOff;
 		float outerCutOff;
 	};
-
-	static int SpotMemoryLayout[10][2] = {
-		{sizeof(vec3), offsetof(Spot, ambient)},
-		{sizeof(vec3), offsetof(Spot, diffuse)},
-		{sizeof(vec3), offsetof(Spot, specular)},
-		{sizeof(vec3), offsetof(Spot, position)},
-		{sizeof(vec3), offsetof(Spot, direction)},
-		{sizeof(float), offsetof(Spot, constant)},
-		{sizeof(float), offsetof(Spot, linear)},
-		{sizeof(float), offsetof(Spot, quadratic)},
-		{sizeof(float), offsetof(Spot, cutOff)},
-		{sizeof(float), offsetof(Spot, outerCutOff)}
-	};
 }
 
 

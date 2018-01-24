@@ -92,17 +92,26 @@ int main(int argc, char **argv) {
 	std::shared_ptr<AG::HelperCameraOrientation> cameraOrientationHelper(AG::Helper::cameraOrientation(vec3(0.0f), vec3(1.0f, 0.0f, 0.0f), 1.0f));
 
 	std::shared_ptr<Light::Directional> dirLight(AG::Light::directional());
-	dirLight->setDirection(vec3(0.0f, -1.0f, 0.0f));
+	dirLight->setDirection(vec3(0.0f, 1.0f, -1.0f));
 	dirLight->setAmbient(vec3(0.01f));
-	dirLight->setDiffuse(vec3(0.05f));
+	dirLight->setDiffuse(vec3(0.2f));
 	dirLight->setSpecular(vec3(0.01f));
 
 	std::shared_ptr<Light::Point> pointLight(AG::Light::point());
-	pointLight->setAmbient(vec3(0.03f));
-	pointLight->setDiffuse(vec3(0.5f));
-	pointLight->setSpecular(vec3(0.15f));
+	pointLight->setAmbient(vec3(0.1f));
+	pointLight->setDiffuse(vec3(0.3f));
+	pointLight->setSpecular(vec3(15.35f));
 	pointLight->setPosition(vec3(0.0f, 10.0f, 5.0f));
 	pointLight->setAttenuation(1.0f, 0.001f, 0.012f);
+
+	std::shared_ptr<Light::Spot> spotLight(AG::Light::spot());
+	spotLight->setAmbient(vec3(0.1f));
+	spotLight->setDiffuse(vec3(0.1f));
+	spotLight->setSpecular(vec3(15.15f));
+	spotLight->setPosition(vec3(5.0f, 0.0f, 5.0f));
+	spotLight->setDirection(vec3(0.0f, -1.0f, 0.0f));
+	spotLight->setAttenuation(1.0f, 0.1f, 0.012f);
+	spotLight->setCutoff(glm::cos(glm::radians(13.0f)), glm::cos(glm::radians(12.0f)));
 
 	console::info("init scene");
 
@@ -119,7 +128,14 @@ int main(int argc, char **argv) {
 	Model * planeModel = AG::Models::plane(10, 10, 10, 10);
 	planeModel->rotate(vec3(0.0f, 1.0f, 1.0f), glm::pi<float>());
 	
-	// Model * circleModel = AG::Models::circle(5.0f, 12);
+	 Model * cylinderModel = AG::Models::cylinder(
+		4.0f,
+		0.3f,
+		10.0f,
+		16,
+		16
+	 );
+	 cylinderModel->setPosition(vec3(0.0f, 0.0f + 5.0f, 0.0f));
 	// Model * cylinderModel = AG::Models::cylinder(5.0f, 5.0f, 10.0f, 16, 16);
 	// Model * coneModel = AG::Models::cone(3.0f, 5.0f, 5, 16);
 	// Model * torusModel = AG::Models::torus(5.0f, 1.0f, 16, 100);
@@ -153,9 +169,11 @@ int main(int argc, char **argv) {
 	}
 
 	scene->add(planeModel);
+//	scene->add(cylinderModel);
 
-//	scene->add(dirLight.get());
+	scene->add(dirLight.get());
 	scene->add(pointLight.get());
+//	scene->add(spotLight.get());
 
 	scene->add(pointLightHelper);
 

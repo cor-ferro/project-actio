@@ -9,3 +9,4 @@ cmake-build-debug
 test
 test.cpp
 libs/
+dna.txt

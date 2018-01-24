@@ -26,6 +26,7 @@
 #include "u-buffer.h"
 #include "../stats.h"
 #include "uniforms.h"
+#include "utils.h"
 
 #define UBO_MATRICES_POINT_INDEX 0
 #define UBO_LIGHTS_POINT_INDEX 1
@@ -46,15 +47,16 @@ namespace Renderer {
 
 		void forwardRender(Scene * scene);
 		void defferedRender(Scene * scene);
+
 		void renderPointLights(Scene& scene);
 		void renderDirLights(Scene& scene);
+		void renderSpotLights(Scene& scene);
 
 		void preRender();
 		void postRender();
 
 		void addPreRenderHandler(callback handler);
 		void addPostRenderHandler(callback handler);
-		void checkGlError(const char * file, int line, bool silent = false);
 
 		double elaspsedTime = 0.0;
 		double time = 1.0;
@@ -71,7 +73,6 @@ namespace Renderer {
 		boost::signals2::signal<void ()> onPreRender;
 		boost::signals2::signal<void ()> onPostRender;
 	private:
-		void initLightsBuffer();
 		void initMatricesBuffer();
 
 		int timerId;
@@ -82,8 +83,9 @@ namespace Renderer {
 		Opengl::Program lightPassProgram;
 		Opengl::Program nullProgram;
 
-		Mesh * quad;
+		Mesh * lightQuad;
 		Mesh * lightSphere;
+		Mesh * lightCylinder;
 	};
 
 }
