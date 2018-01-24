@@ -33,7 +33,7 @@ LDFLAGS_BUILD  	=\
 				./libs/linux64/libSOIL.a \
 				./libs/linux64/libiniparser.a \
 				./libs/linux64/libimgui.a \
-				./vendor/PhysX-3.4/PhysX_3.4/Lib/linux64/libPhysX3Extensions$(PHYSX_LIB).a \
+				./libs/linux64/libPhysX3Extensions$(PHYSX_LIB).a \
 				-Wl,-z,origin \
 				-Wl,-rpath='libs/linux64' \
 				-Wl,-rpath-link='libs/linux64' \
