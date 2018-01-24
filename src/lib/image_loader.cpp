@@ -3,20 +3,6 @@
 namespace ImageLoader {
 	Data load(std::string path) {
 		std::replace(path.begin(), path.end(), '\\', '/');
-		
-		// std::size_t fixPosE = path.find("e:");
-		// std::size_t fixPosD = path.find("D:");
-		// std::size_t fixPosWow = path.find("WoW");
-		// if (fixPosE != std::string::npos) {
-		// 	std::size_t endPos = path.find("shelves");
-		// 	path.erase(fixPosE, endPos + 8 - fixPosE);
-		// } else if (fixPosD != std::string::npos) {
-		// 	std::size_t endPos = path.find("shelves");
-		// 	path.erase(fixPosD, endPos + 8 - fixPosD);
-		// } else if (fixPosWow != std::string::npos) {
-		// 	std::size_t endPos = path.find(".fbm");
-		// 	path.erase(fixPosWow - 16, endPos - fixPosWow + 16 + 4);
-		// }
 
 		return loadByIl(path);
 	}
@@ -132,9 +118,12 @@ namespace ImageLoader {
 	}
 
 	Data::Data() : width(0), height(0), data_(0), size(0) {}
-	Data::Data(RawData * data, int width, int height) : width(width), height(height)
+	Data::Data(RawData * data, int width, int height, int format)
+		: width(width)
+		, height(height)
+		, format(format)
 	{
-		set(data, width * height);
+		set(data, width * height * componentSize(format));
 		calcSize();
 	}
 
@@ -143,7 +132,7 @@ namespace ImageLoader {
 		free();
 	}
 
-	RawData * Data::get()
+	RawData * Data::get() const
 	{
 		return data_.get();
 	}

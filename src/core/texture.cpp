@@ -1,14 +1,21 @@
 #include "texture.h"
 
-Texture::Texture() {}
+Texture::Texture(Texture_Type type)
+	: type(type)
+	, name("")
+{}
+
+Texture::Texture(aiTextureType type)
+	: type(getType(type))
+	, name("")
+{}
+
 Texture::Texture(const Texture& other)
-{
-	type = other.type;
-	name = other.name;
-	textureID = other.textureID;
-	textureTarget = other.textureTarget;
-	images_ = other.images_; // @todo: проверить удаление ресурсов. Потенциальная утечка памяти.
-}
+	: type(other.type)
+	, name(other.name)
+	, gTexture(other.gTexture)
+	, images_(other.images_) // @todo: проверить удаление ресурсов. Потенциальная утечка памяти.
+{}
 
 Texture::~Texture()
 {
@@ -16,23 +23,25 @@ Texture::~Texture()
 	// freeData();
 }
 
-Texture Texture::White()
+Texture Texture::Empty(Texture_Type type = Texture_Diffuse, unsigned char color = 0)
 {
-	ImageLoader::RawData * image = new ImageLoader::RawData[4]{255, 255, 255, 255};
-	ImageLoader::Data imageData(image, 2, 2);
-	imageData.format = GL_RGB;
+	ImageLoader::RawData * image = new ImageLoader::RawData[3]{color, color, color};
+	ImageLoader::Data imageData(image, 1, 1, GL_RGB);
 
-	Texture texture;
-	texture.setAsDiffuse();
+	Texture texture(type);
 	texture.setData(imageData);
 
 	return texture;
 }
 
+Texture Texture::White(Texture_Type type)
+{
+	return Texture::Empty(type, 255);
+}
+
 Texture Texture::Cube()
 {
-	Texture texture;
-	texture.setAsCube();
+	Texture texture(Texture_Cube);
 
 	return texture;
 }
@@ -41,7 +50,7 @@ Texture Texture::loadFromMaterial(aiMaterial * mat, aiTextureType type, const Re
 {
 	unsigned int countTextures = mat->GetTextureCount(type);
 
-	Texture texture;
+	Texture texture(type);
 
 	if (countTextures > 0) {
 		std::string path = assimpResource->getTexturePath(mat, type, 0);
@@ -54,26 +63,15 @@ Texture Texture::loadFromMaterial(aiMaterial * mat, aiTextureType type, const Re
 
 		texture.setData(imageData);
 	} else {
-		console::warn("texture ", type, " not exist, create empty");
-		texture = Texture::White();
-	}
+		console::warnp("texture %s not exist, create empty", Texture::charType(type));
 
-	switch (type) {
-	case aiTextureType_DIFFUSE:
-		texture.setAsDiffuse();
-		break;
-	case aiTextureType_SPECULAR:
-		texture.setAsSpecular();
-		break;
-	case aiTextureType_HEIGHT:
-		texture.setAsHeight();
-		break;
-	case aiTextureType_NORMALS:
-		texture.setAsNormal();
-		break;
-	default:
-		texture.setAsDiffuse();
-		console::err("unknown texture type");
+		Texture_Type textureType = Texture::getType(type);
+		switch (textureType) {
+		case Texture_Specular:
+			texture = Texture::Empty(textureType, 0); break;
+		default:
+			texture = Texture::White(textureType);
+		}
 	}
 
 	return texture;
@@ -95,10 +93,8 @@ void Texture::setData(ImageLoader::Data imageData, char index)
 	images_.insert(std::pair<char, ImageLoader::Data>(index, imageData));
 }
 
-void Texture::setup2d()
+void Texture::setup()
 {
-	boost::mutex::scoped_lock lock(textureLoaderMutex);
-
 	TextureImages::const_iterator got = images_.find(0);
 
 	if (got == images_.end()) {
@@ -106,103 +102,33 @@ void Texture::setup2d()
 		return;
 	}
 
-	ImageLoader::Data imageData = got->second;
-
-	// @todo проверять данные
-	// if (!imageData_) {
-	// 	console::warn("try bind empty data in texture");
-	// 	return;
-	// }
-
-	textureTarget = GL_TEXTURE_2D;
-
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageData.width, imageData.height, 0, imageData.format, GL_UNSIGNED_BYTE, imageData.get());
-	
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	switch (type) {
+	case Texture_Diffuse:
+	case Texture_Specular:
+	case Texture_Height:
+	case Texture_Normal:
+		gTexture.setup2d(got->second); break;
+	case Texture_Cube:
+		gTexture.setupCube(images_); break;
+	}
 }
 
-void Texture::setupCube()
+void Texture::destroy()
 {
-	boost::mutex::scoped_lock lock(textureLoaderMutex);
-	// if (!imageData_) {
-	// 	console::warn("try bind empty data in texture");
-	// 	return;
-	// }
+	gTexture.destroy();
+	console::info("destroy texture");
+	// imageData_->free();
+	// delete imageData_;// @todo: not safe data remove
 
-	textureTarget = GL_TEXTURE_CUBE_MAP;
+	TextureImages::iterator it;
 
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+	for (it = images_.begin(); it != images_.end(); it++) {
+		ImageLoader::Data& imageData = it->second;
 
-	for (int i = 0; i < 6; i++) {
-		TextureImages::const_iterator got = images_.find(i);
-
-		if (got == images_.end()) {
-			console::warn("cannot get image map", i);
-			continue;
-		}
-
-		ImageLoader::Data imageData = got->second;
-
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, imageData.width, imageData.height, 0, imageData.format, GL_UNSIGNED_BYTE, imageData.get());
+		imageData.free();
 	}
 
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  
+	images_.clear();
 }
-
-void Texture::unbindData()
-{
-	// glDeleteTextures(1, &textureID);
-}
-
-void Texture::freeData()
-{
-	console::info("free data");
-	// imageData_->free();
-	// delete imageData_;// @todo: not save data remove
-	// unbindData();
-}
-
-void Texture::setAsDiffuse()
-{
-	type = Texture_Diffuse;
-	name = "diffuseTexture";
-}
-
-void Texture::setAsSpecular()
-{
-	type = Texture_Specular;
-	name = "specularTexture";
-}
-
-void Texture::setAsHeight()
-{
-	type = Texture_Height;
-	name = "heightTexture";
-}
-
-void Texture::setAsNormal()
-{
-	type = Texture_Normal;
-	name = "normalTexture";
-}
-
-void Texture::setAsCube()
-{
-	type = Texture_Cube;
-	name = "cubeTexture";
-}
-
 
 #endif

@@ -20,6 +20,7 @@
 #ifdef GRAPHIC_API_OPENGL
 #include "../renderer/opengl/program.h"
 #include "../renderer/opengl/uniforms.h"
+#include "../renderer/opengl/utils.h"
 #endif
 
 enum MeshDrawType {

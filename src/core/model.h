@@ -43,6 +43,7 @@ struct ModelConfig {
 struct ModelNode {
 	ModelNode();
 	ModelNode(aiNode * node);
+	~ModelNode();
 
 	void addMesh(Mesh * mesh);
 	void addNode(ModelNode * node);

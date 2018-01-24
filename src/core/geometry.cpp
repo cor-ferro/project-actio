@@ -30,8 +30,6 @@ Geometry::~Geometry()
 
 void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
 {
-	console::info("geometry vertices: ", mesh->mNumVertices);
-
 	unsigned int numVertices = mesh->mNumVertices;
 	unsigned int numBones = mesh->mNumBones;
 	allocVertices(numVertices);
@@ -43,7 +41,12 @@ void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource
 		Vertex vertex;
 
 		vertex.Position = libAi::toNativeType(mesh->mVertices[i]);
-		vertex.Normal = libAi::toNativeType(mesh->mNormals[i]);
+
+		if (mesh->mNormals != nullptr) {
+			vertex.Normal = libAi::toNativeType(mesh->mNormals[i]);
+		} else {
+			vertex.Normal = vec3(0.0f, 1.0f, 0.0f);
+		}
 
 		if (mesh->mTextureCoords[0]) {
 			vertex.TexCoords = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);

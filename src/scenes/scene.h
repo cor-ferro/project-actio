@@ -26,6 +26,8 @@
 
 struct Scene {
 	Scene();
+	Scene(const Scene& other);
+	~Scene();
 
 	bool initFromFile(Resource::File& file);
 	bool init();

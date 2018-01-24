@@ -177,8 +177,7 @@ void Mesh::draw(Opengl::Program& program, uint flags)
 		const MaterialTextures& textures = material.getTextures();
 		for (const Texture& texture : textures)
 		{
-			glActiveTexture(GL_TEXTURE0 + textureIndex);
-			glBindTexture(texture.textureTarget, texture.textureID);
+			OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, texture);
 			program.setInt(texture.name, textureIndex);
 			textureIndex++;
 		}

@@ -41,6 +41,24 @@ Scene::Scene()
 	allocLights(5);
 }
 
+Scene::Scene(const Scene& other)
+{
+	console::info("copy scene");
+	skybox_ = other.skybox_;
+	models_ = other.models_;
+	cameras_ = other.cameras_;
+	camera_ = other.camera_;
+
+	directionalLights_ = other.directionalLights_;
+	pointLights_ = other.pointLights_;
+	spotLights_ = other.spotLights_;
+}
+
+Scene::~Scene()
+{
+	console::info("destroy scene");
+}
+
 bool Scene::initFromFile(Resource::File& file)
 {
 	dictionary * ini = iniparser_load(file.getPath().c_str());

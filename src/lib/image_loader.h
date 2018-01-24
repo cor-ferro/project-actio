@@ -19,14 +19,14 @@ namespace ImageLoader {
 	struct Data {
 		Data();
 		Data(const Data& other);
-		Data(RawData * data, int width, int height);
+		Data(RawData * data, int width, int height, int fomat);
 		~Data();
 
 		bool isReady();
 		void calcSize();
 		void set(RawData * data, size_t size);
 		void free();
-		RawData * get();
+		RawData * get() const;
 
 		int width;
 		int height;

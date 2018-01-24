@@ -25,20 +25,7 @@ void Material::setupTextures()
 {
 	for (Texture& texture : textures_)
 	{
-		switch(texture.type)
-		{
-			case Texture_Diffuse:
-			case Texture_Specular:
-			case Texture_Height:
-			case Texture_Normal:
-				texture.setup2d();
-				break;
-			case Texture_Cube:
-				texture.setupCube();
-				break;
-			default:
-				console::warn("setup unknown texture type", texture.type, texture.name);
-		}
+		texture.setup();
 	}
 }
 
@@ -117,15 +104,10 @@ void PhongMaterial::initFromAi(aiMaterial * material, const Resource::Assimp * a
 
 void PhongMaterial::initEmptyTextures()
 {
-	Texture diffuseMap  = Texture::White();
-	Texture specularMap = Texture::White();
-	Texture heightMap   = Texture::White();
-	Texture normalMap   = Texture::White();
-
-	diffuseMap.setAsDiffuse();
-	specularMap.setAsSpecular();
-	heightMap.setAsHeight();
-	normalMap.setAsNormal();
+	Texture diffuseMap  = Texture::White(Texture_Diffuse);
+	Texture specularMap = Texture::Empty(Texture_Specular, 1);
+	Texture heightMap   = Texture::White(Texture_Height);
+	Texture normalMap   = Texture::White(Texture_Normal);
 
 	textures_.clear();
 	textures_.reserve(4);
