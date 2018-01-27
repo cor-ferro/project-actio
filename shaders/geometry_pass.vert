@@ -51,7 +51,7 @@ void main()
 
 	outData.position = aPos;
 	outData.worldPosition = vec3(worldPos);
-	outData.normal = worldNormal;
+	outData.normal = normalize(worldNormal);
 	outData.texCoord = aTexCoord;
 
 	gl_Position = projection * view * worldPos;

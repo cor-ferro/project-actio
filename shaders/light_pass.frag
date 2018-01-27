@@ -53,10 +53,10 @@ subroutine (LightType) vec3 NoLightType(vec3 fragPos, vec3 normal, vec3 viewDir,
 
 subroutine (LightType) vec3 DirLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
 	vec3 lightDir = normalize(-dirLight.direction);
-	vec3 reflectDir = reflect(-lightDir, worldNormal);
+	vec3 reflectDir = normalize(reflect(-lightDir, worldNormal));
 	float diff = max(dot(worldNormal, lightDir), 0.0);
 
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 0.01);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 100.0);
 	
 	vec3 ambient = dirLight.ambient * albedo.xyz;
 	vec3 diffuse = dirLight.diffuse * diff * albedo.xyz;
@@ -70,7 +70,7 @@ subroutine (LightType) vec3 PointLightType(vec3 worldPos, vec3 worldNormal, vec3
 	vec3 reflectDir = normalize(reflect(-lightDir, worldNormal));
 	float diff = max(dot(worldNormal, lightDir), 0.0);
     
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 30.0);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 100.0);
 	float distance = length(pointLight.position - worldPos);
 	float attenuation = 1.0 / (pointLight.constant + pointLight.linear * distance + pointLight.quadratic * (distance * distance));
 
@@ -83,7 +83,7 @@ subroutine (LightType) vec3 PointLightType(vec3 worldPos, vec3 worldNormal, vec3
 
 subroutine (LightType) vec3 SpotLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
 	vec3 lightDir = normalize(spotLight.position - worldPos);
-	vec3 reflectDir = reflect(-lightDir, worldNormal);
+	vec3 reflectDir = normalize(reflect(-lightDir, worldNormal));
 	float diff = max(dot(worldNormal, lightDir), 0.0);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 0.01);
 	float distance = length(spotLight.position - worldPos);

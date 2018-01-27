@@ -93,21 +93,21 @@ int main(int argc, char **argv) {
 
 	std::shared_ptr<Light::Directional> dirLight(AG::Light::directional());
 	dirLight->setDirection(vec3(0.0f, -0.5f, -0.5f));
-	dirLight->setAmbient(vec3(0.01f));
-	dirLight->setDiffuse(vec3(0.2f));
-	dirLight->setSpecular(vec3(0.01f));
+	dirLight->setAmbient(vec3(0.1f));
+	dirLight->setDiffuse(vec3(0.8f));
+	dirLight->setSpecular(vec3(5.0f));
 
 	std::shared_ptr<Light::Point> pointLight(AG::Light::point());
 	pointLight->setAmbient(vec3(0.1f));
-	pointLight->setDiffuse(vec3(0.3f));
-	pointLight->setSpecular(vec3(15.35f));
+	pointLight->setDiffuse(vec3(0.8f));
+	pointLight->setSpecular(vec3(5.35f));
 	pointLight->setPosition(vec3(0.0f, 10.0f, 5.0f));
 	pointLight->setAttenuation(1.0f, 0.001f, 0.012f);
 
 	std::shared_ptr<Light::Spot> spotLight(AG::Light::spot());
 	spotLight->setAmbient(vec3(0.1f));
 	spotLight->setDiffuse(vec3(0.1f));
-	spotLight->setSpecular(vec3(15.15f));
+	spotLight->setSpecular(vec3(5.15f));
 	spotLight->setPosition(vec3(5.0f, 0.0f, 5.0f));
 	spotLight->setDirection(vec3(0.0f, -1.0f, 0.0f));
 	spotLight->setAttenuation(1.0f, 0.1f, 0.012f);
