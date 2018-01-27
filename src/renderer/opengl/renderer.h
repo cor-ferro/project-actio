@@ -79,6 +79,7 @@ namespace Renderer {
 
 		Opengl::Program forwardProgram;
 		Opengl::Program skyboxProgram;
+		Opengl::Program skyboxDeferredProgram;
 		Opengl::Program geometryPassProgram;
 		Opengl::Program lightPassProgram;
 		Opengl::Program nullProgram;

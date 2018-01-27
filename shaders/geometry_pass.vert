@@ -15,6 +15,8 @@ uniform Matrices {
 	mat4 view;
 };
 
+out mat3 TBN;
+
 uniform mat4 bones[MAX_BONES];
 
 subroutine mat4 BoneTransform();
@@ -45,6 +47,11 @@ uniform mat4 model;
 
 void main()
 {
+	vec3 T = normalize(vec3(model * vec4(aTangent, 0.0)));
+	vec3 B = normalize(vec3(model * vec4(aBitangent, 0.0)));
+	vec3 N = normalize(vec3(model * vec4(aNormal, 0.0)));
+	TBN = transpose(mat3(T, B, N));
+
 	mat4 boneTransform = getBoneTransform();
 	vec4 worldPos = model * vec4(aPos, 1.0);
 	vec3 worldNormal = mat3(transpose(inverse(model))) * aNormal;

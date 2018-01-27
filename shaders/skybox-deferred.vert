@@ -7,11 +7,19 @@ uniform Matrices {
 	mat4 view;
 };
 
-out vec3 texCoord;
+out VertexData {
+	vec4 worldPosition;
+	vec3 worldNormal;
+	vec3 texCoord;
+} outData;
 
 void main()
 {
-    texCoord = -aPos;
     vec4 position = projection * mat4(mat3(view)) * vec4(aPos, 1.0);
+    
+    outData.worldPosition = position;
+    outData.worldNormal = vec3(0.0, 1.0, 0.0);
+    outData.texCoord = -aPos;
+
     gl_Position = position.xyww;
 }

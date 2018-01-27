@@ -45,11 +45,6 @@ uniform int countDirLights;
 uniform int countPointLights;
 uniform int countSpotLights;
 
-// layout (std140, binding = 1)
-// uniform Lights {
-// 	PointLight pointLights[1];
-// };
-
 uniform vec2 resolution;
 uniform mat4 model;
 
@@ -162,7 +157,7 @@ void main()
 	for(int i = 0; i < countSpotLights; i++)
 		result += CalcSpotLight(spotLights[i], norm, fragmentPosition, viewDir);
 
-	result+= material.ambient + material.diffuse + material.specular;
+	// result*= material.ambient + material.diffuse + material.specular;
 
 	vec3 skyboxReflect = reflect(viewDir, normalize(normal));
 

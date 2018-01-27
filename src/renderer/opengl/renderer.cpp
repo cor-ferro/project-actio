@@ -55,6 +55,10 @@ void OpenglRenderer::start()
 	skyboxProgram.bindBlock("Matrices", 0);
 	OpenglCheckErrors();
 
+	skyboxDeferredProgram.init("skybox-deferred");
+	skyboxDeferredProgram.bindBlock("Matrices", 0);
+	OpenglCheckErrors();
+
 	lightQuad = new Mesh(Geometry::Quad2d());
 	lightSphere = new Mesh(
 		Geometry::Sphere(1.0f, 32, 32, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f)
@@ -197,19 +201,10 @@ void OpenglRenderer::forwardRender(Scene * scene)
 	forwardProgram.setInt("countPointLights", pointLights.size());
 	forwardProgram.setInt("countSpotLights", spotLights.size());
 
-	// glViewport(0, 0, 1024, 1024);
-	// glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	// glClear(GL_DEPTH_BUFFER_BIT);
-	
-	// drawModels(scene, forwardProgram);
-	// glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 	glViewport(0, 0, renderParams.width, renderParams.height);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	drawModels(scene, forwardProgram);
 
-
-	// @todo: скайбокс закинуть в юниформ
 	if (isHasSkybox)
 	{
 		glDepthFunc(GL_LEQUAL);
