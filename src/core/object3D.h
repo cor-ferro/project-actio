@@ -34,7 +34,8 @@ struct Object3D {
 	void rotateY(float angle);
 	void rotateZ(float angle);
 
-	mat4 getModelMatrix();
+	const mat4& getModelMatrix();
+	void setParentObject(Object3D * parent);
 	void updateModelMatrix(bool force);
 
 	vec3 position;
@@ -44,6 +45,8 @@ struct Object3D {
 
 protected:
 	mat4 modelMatrix;
+	mat4 finalMatrix;
+	Object3D * parentObject;
 	
 
 private:

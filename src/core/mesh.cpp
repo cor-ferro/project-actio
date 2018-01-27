@@ -125,7 +125,7 @@ void Mesh::draw(Opengl::Program& program, uint flags)
 		glBindVertexArray(geometry.VAO);
 
 		updateModelMatrix(false);
-		program.setMat("model", modelMatrix);
+		program.setMat("model", finalMatrix);
 
 		GeometryVertices * vertices = geometry.getVertices();
 		GeometryIndices * indices = geometry.getIndices();

@@ -128,6 +128,10 @@ Model::Model(ModelConfig& config)
 	rotate(config.rotation, config.rotationAngle);
 	setScale(config.scale);
 
+	console::info("");
+	console::infop("config.scale: %f %f %f", config.scale.x, config.scale.y, config.scale.z);
+	console::info("");
+
 	if (config.animation != "") {
 		setCurrentAnimation(config.animation);
 	}
@@ -274,14 +278,34 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 
 void Model::addMesh(Mesh * mesh)
 {
+	mesh->setParentObject(&object);
 	meshes_.push_back(std::shared_ptr<Mesh>(mesh));
 }
 
 void Model::addNode(ModelNode * node)
 {
-	nodes_.insert(
-		std::pair<std::string, std::shared_ptr<ModelNode>>(node->name, std::shared_ptr<ModelNode>(node))
-	);
+	nodes_.insert({ node->name, std::shared_ptr<ModelNode>(node) });
+}
+
+void Model::removeMesh(Mesh * mesh)
+{
+	ModelMeshes::iterator it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const ModelMesh& ptr) {
+		return ptr.get() == mesh;
+	});
+
+	if (it != meshes_.end()) {
+		(*it).get()->setParentObject(nullptr);
+		meshes_.erase(it);
+	}
+}
+
+void Model::removeNode(ModelNode * node)
+{
+	auto it = nodes_.find(node->name);
+
+	if (it != nodes_.end()) {
+		nodes_.erase(it);
+	}
 }
 
 const ModelMeshes& Model::getMeshes()
@@ -296,37 +320,27 @@ Mesh * Model::getFirstMesh()
 
 void Model::setScale(vec3 scale)
 {
-	for (const auto& mesh : meshes_) {
-		mesh->setScale(scale);
-	}
+	object.setScale(scale);
 }
 
 void Model::rotate(vec3 rotate, float angle)
 {
-	for (const auto& mesh : meshes_) {
-		mesh->rotate(rotate, angle);
-	}
+	object.rotate(rotate, angle);
 }
 
 void Model::setPosition(vec3 position)
 {
-	for (const auto& mesh : meshes_) {
-		mesh->setPosition(position);
-	}
+	object.setPosition(position);
 }
 
 void Model::setPosition(float x, float y, float z)
 {
-	for (const auto& mesh : meshes_) {
-		mesh->setPosition(x, y, z);
-	}
+	object.setPosition(x, y, z);
 }
 
 void Model::setQuaternion(float x, float y, float z, float w)
 {
-	for (const auto& mesh : meshes_) {
-		mesh->setQuaternion(x, y, z, w);
-	}
+	object.setQuaternion(x, y, z, w);
 }
 
 void Model::enableAnimIterpolation()

@@ -9,6 +9,7 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <algorithm>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -19,11 +20,13 @@
 #include "../resources/resources.h"
 #include "../animation/animation.h"
 #include "../math/Box3.h"
+#include "./object3D.h"
 #include "./mesh.h"
 
 typedef int ModelId;
 typedef std::string ModelName;
-typedef std::vector<std::shared_ptr<Mesh>> ModelMeshes;
+typedef std::shared_ptr<Mesh> ModelMesh;
+typedef std::vector<ModelMesh> ModelMeshes;
 
 static size_t idCounter = 0;
 static ModelId newId()
@@ -76,6 +79,9 @@ struct Model {
 	void addMesh(Mesh * mesh);
 	void addNode(ModelNode * node);
 	
+	void removeMesh(Mesh * mesh);
+	void removeNode(ModelNode * node);
+
 	void setScale(vec3 scale);
 	void rotate(vec3 rotate, float angle);
 	void setPosition(vec3 position);
@@ -106,6 +112,7 @@ private:
 	ModelName name_;
 	ModelMeshes meshes_;
 	ModelNode * rootNode_;
+	Object3D object;
 	bool animInterpolation_;
 	std::unordered_map<std::string, std::shared_ptr<const ModelNode>> nodes_;
 	std::unordered_map<std::string, std::shared_ptr<const Animation>> animations_;
