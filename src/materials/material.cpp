@@ -82,12 +82,6 @@ namespace Material {
 		material->Get(AI_MATKEY_SHININESS, shininessValue);
 		material->Get(AI_MATKEY_ENABLE_WIREFRAME, wireframe);
 
-		setDiffuse(diffuseColor[0], diffuseColor[1], diffuseColor[2]);
-		setSpecular(specularColor[0], specularColor[1], specularColor[2]);
-		setAmbient(ambientColor[0], ambientColor[1], ambientColor[2]);
-		setWireframe(isWireframe);
-		setShininess(shininessValue);
-
 		unsigned int countDiffuseTextures = material->GetTextureCount(aiTextureType_DIFFUSE);
 		unsigned int countSpecularTextures = material->GetTextureCount(aiTextureType_SPECULAR);
 		unsigned int countHeightTextures = material->GetTextureCount(aiTextureType_HEIGHT);
@@ -97,14 +91,21 @@ namespace Material {
 			std::string texturePath = assimpResource->getTexturePath(material, aiTextureType_DIFFUSE, 0);
 			std::unordered_map<std::string, ImageLoader::Data>::iterator it = images.find(texturePath);
 
-			if (it != images.end()) diffuseMap.setData(it->second);
+			if (it != images.end()) {
+				diffuseMap.setData(it->second);
+				diffuseColor = aiColor3D(0.f, 0.f, 0.f);
+				ambientColor = aiColor3D(0.f, 0.f, 0.f);
+			}
 		}
 
 		if (countSpecularTextures > 0) {
 			std::string texturePath = assimpResource->getTexturePath(material, aiTextureType_SPECULAR, 0);
 			std::unordered_map<std::string, ImageLoader::Data>::iterator it = images.find(texturePath);
 
-			if (it != images.end()) specularMap.setData(it->second);
+			if (it != images.end()) {
+				specularMap.setData(it->second);
+				specularColor = aiColor3D(0.f, 0.f, 0.f);
+			}
 		}
 
 		if (countHeightTextures > 0) {
@@ -120,6 +121,12 @@ namespace Material {
 
 			if (it != images.end()) normalMap.setData(it->second);
 		}
+
+		setDiffuse(diffuseColor[0], diffuseColor[1], diffuseColor[2]);
+		setSpecular(specularColor[0], specularColor[1], specularColor[2]);
+		setAmbient(ambientColor[0], ambientColor[1], ambientColor[2]);
+		setWireframe(isWireframe);
+		setShininess(shininessValue);
 
 		textures_.push_back(diffuseMap);
 		textures_.push_back(specularMap);
