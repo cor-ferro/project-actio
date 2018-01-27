@@ -389,18 +389,8 @@ void Model::processAnimation(AnimationProcess& animationProcess)
 
 	double tick = animationProcess.getCurrentTick();
 	mat4 rootTransform(1.0);
-	
-	// boost::thread_group producer_threads
-
-	// producer_threads.add_thread(
-	// 	new boost::thread(
-	// 		&Model::processMesh, this, assimpResource->scene->mMeshes[i], assimpResource
-	// 	)
-	// );
 
 	processNodeAnimation(rootNode_, animation, rootTransform, tick);
-
-	// producer_threads.join_all();
 }
 
 // @todo: оптимизировать обход по иерархии нод

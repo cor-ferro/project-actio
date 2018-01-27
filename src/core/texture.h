@@ -42,6 +42,7 @@ struct Texture {
 	Texture(aiTextureType type);
 	Texture(const Texture& texture);
 	~Texture();
+	void destroy();
 	static Texture Empty(Texture_Type type, unsigned char color);
 	static Texture White(Texture_Type type);
 	static Texture Cube();
@@ -80,7 +81,6 @@ struct Texture {
 	void unbindData();
 	void setData(ImageLoader::Data imageData);
 	void setData(ImageLoader::Data imageData, char);
-	void destroy();
 
 	Texture_Type type;
 	std::string name;

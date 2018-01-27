@@ -19,6 +19,24 @@ Texture::Texture(const Texture& other)
 
 Texture::~Texture() {}
 
+void Texture::destroy()
+{
+	gTexture.destroy();
+	console::info("destroy texture");
+	// imageData_->free();
+	// delete imageData_;// @todo: not safe data remove
+
+//	TextureImages::iterator it;
+//
+//	for (it = images_.begin(); it != images_.end(); it++) {
+//		ImageLoader::Data& imageData = it->second;
+//
+//		imageData.free();
+//	}
+//
+//	images_.clear();
+}
+
 Texture Texture::Empty(Texture_Type type = Texture_Diffuse, unsigned char color = 0)
 {
 	ImageLoader::RawData * image = new ImageLoader::RawData[3]{color, color, color};
@@ -117,24 +135,6 @@ void Texture::setup()
 	case Texture_Cube:
 		gTexture.setupCube(images_); break;
 	}
-}
-
-void Texture::destroy()
-{
-	gTexture.destroy();
-	console::info("destroy texture");
-	// imageData_->free();
-	// delete imageData_;// @todo: not safe data remove
-
-	TextureImages::iterator it;
-
-	for (it = images_.begin(); it != images_.end(); it++) {
-		ImageLoader::Data& imageData = it->second;
-
-		imageData.free();
-	}
-
-	images_.clear();
 }
 
 #endif

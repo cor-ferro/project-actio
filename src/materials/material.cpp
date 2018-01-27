@@ -13,6 +13,14 @@ namespace Material {
 
 	Base::~Base() {}
 
+	void Base::destroy()
+	{
+		for (Texture& texture : textures_)
+		{
+			texture.destroy();
+		}
+	}
+
 	void Base::addTexture(Texture texture)
 	{
 		textures_.push_back(texture);

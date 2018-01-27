@@ -19,6 +19,8 @@ namespace Material {
 		Base(Texture);
 		~Base();
 
+		void destroy();
+
 		void setWireframe(bool);
 		void setupTextures();
 

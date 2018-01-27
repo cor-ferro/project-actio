@@ -46,6 +46,12 @@ Mesh::~Mesh()
 	// freeBuffers();
 }
 
+void Mesh::destroy()
+{
+	geometry.destroy();
+	material.destroy();
+}
+
 void Mesh::freeGeometry() {}
 void Mesh::freeMaterial() {}
 

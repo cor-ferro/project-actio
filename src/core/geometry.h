@@ -46,6 +46,8 @@ struct Geometry {
 	Geometry(const Geometry& geometry);
 	~Geometry();
 
+	void destroy();
+
 	static int VertexSize() { return sizeof(Vertex); }
 	static void AddTotalCountVertices(size_t count) { TotalCountVertices+= count; }
 	static void SubTotalCountVertices(size_t count) { TotalCountVertices-= count; }

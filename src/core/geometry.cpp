@@ -28,6 +28,13 @@ Geometry::~Geometry()
 {
 }
 
+void Geometry::destroy()
+{
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+	glDeleteVertexArrays(1, &VAO);
+}
+
 void Geometry::initFromAi(const aiMesh * mesh, const Resource::Assimp * assimpResource)
 {
 	unsigned int numVertices = mesh->mNumVertices;

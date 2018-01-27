@@ -50,6 +50,8 @@ struct Mesh : Object3D {
 	Mesh(const Mesh& mesh);
 	~Mesh();
 
+	void destroy();
+
 	std::string getName();
 	void setName(std::string newName);
 	void setName(const char * newName);
