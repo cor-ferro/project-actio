@@ -242,7 +242,6 @@ bool Scene::initFromFile(Resource::File& file)
 		iniLightSection+= light;
 
 		int lightFound = iniparser_find_entry(ini, iniLightSection.c_str());
-		console::info("lightFound: ", lightFound);
 		if (lightFound) {
 			std::string lightTypeKey = iniLightSection + ":Type";
 			std::string lightAmbientKey = iniLightSection + ":Ambient";
@@ -259,11 +258,6 @@ bool Scene::initFromFile(Resource::File& file)
 				const char * iniLightDirection = iniparser_getstring(ini, lightDirectionKey.c_str(), "1.0");
 
 				Light::Directional * light = AG::Light::directional(vec3(1.0f), vec3(1.0f), vec3(1.0f)); // @todo: удалять
-
-				console::info("iniLightAmbient: ", iniLightAmbient);
-				console::info("iniLightDiffuse: ", iniLightDiffuse);
-				console::info("iniLightSpecular: ", iniLightSpecular);
-				console::info("iniLightDirection: ", iniLightDirection);
 
 				light->setAmbient(parseVec(iniLightAmbient));
 				light->setDiffuse(parseVec(iniLightDiffuse));
@@ -416,6 +410,27 @@ const std::vector<Light::Point*>& Scene::getPointLights()
 const std::vector<Light::Spot*>& Scene::getSpotLights()
 {
 	return spotLights_;
+}
+
+Light::Directional * Scene::getDirectionalLight(uint index)
+{
+	if (index >= directionalLights_.size()) return nullptr;
+
+	return directionalLights_.at(index);
+}
+
+Light::Point * Scene::getPointLight(uint index)
+{
+	if (index >= pointLights_.size()) return nullptr;
+
+	return pointLights_.at(index);
+}
+
+Light::Spot * Scene::getSpotLight(uint index)
+{
+	if (index >= spotLights_.size()) return nullptr;
+
+	return spotLights_.at(index);
 }
 
 void Scene::add(Light::Directional * light) { directionalLights_.push_back(light); }

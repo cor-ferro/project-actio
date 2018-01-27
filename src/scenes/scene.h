@@ -56,6 +56,10 @@ struct Scene {
 	const std::vector<Light::Point*>& getPointLights();
 	const std::vector<Light::Spot*>& getSpotLights();
 
+	Light::Directional * getDirectionalLight(uint index);
+	Light::Point * getPointLight(uint index);
+	Light::Spot * getSpotLight(uint index);
+
 	void add(Light::Directional *);
 	void add(Light::Point *);
 	void add(Light::Spot *);
