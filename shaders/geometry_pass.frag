@@ -11,8 +11,6 @@ in VertexData {
 	vec3 normal;
 } inData;
 
-in mat3 TBN;
-
 struct Material {
 	vec3 ambient;
 	vec3 diffuse;
@@ -27,13 +25,8 @@ uniform sampler2D heightTexture;
 
 void main()
 {
-	vec3 norm = normalize(inData.normal);
-	norm = texture(heightTexture, inData.texCoord).rgb;
-	norm = normalize(norm * 2.0 - 1.0);
-	norm = normalize(TBN * norm);
-
 	gWorldPosition = inData.worldPosition;
-	gNormal = norm;
+	gNormal = inData.normal;
 	gAlbedo = vec4(
 		texture(diffuseTexture, inData.texCoord).xyz,
 		texture(specularTexture, inData.texCoord).x

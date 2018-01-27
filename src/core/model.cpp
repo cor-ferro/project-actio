@@ -246,7 +246,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 		}
 	};
 
-	const uint countThreads = 4;
+	const uint countThreads = 1;
 	std::vector<std::thread> nodeThreads;
 	std::vector<std::thread> imageThreads;
 
@@ -264,13 +264,10 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 		nodeThreads[i].join();
 	console::info("end init meshes");
 
-	int i = 0;
 	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
 	{
-		console::infop("setup mesh %i", i);
 		(*mesh)->setup();
 		(*mesh)->material.setupTextures();
-		i++;
 	}
 
 }
