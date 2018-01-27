@@ -11,6 +11,7 @@
 #include "object3D.h"
 #include "vertex.h"
 #include "../lib/assimp.h"
+#include "../lib/colors.h"
 #include "../materials/material.h"
 #include "../resources/resources.h"
 #include "geometry.h"
@@ -45,8 +46,7 @@ enum MeshDrawFlags {
 struct Mesh : Object3D {
 	Mesh();
 	Mesh(Geometry geometry);
-	Mesh(PhongMaterial material, Geometry geometry);
-	Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource);
+	Mesh(Material::Phong material, Geometry geometry);
 	Mesh(const Mesh& mesh);
 	~Mesh();
 
@@ -73,7 +73,7 @@ struct Mesh : Object3D {
 	std::unordered_map<std::string, MeshBone> bones;
 	std::vector<mat4> transforms;
 
-	PhongMaterial material;
+	Material::Phong material;
 	Geometry geometry;
 private:
 	bool isSetupReady;

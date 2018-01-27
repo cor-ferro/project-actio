@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 	std::shared_ptr<AG::HelperCameraOrientation> cameraOrientationHelper(AG::Helper::cameraOrientation(vec3(0.0f), vec3(1.0f, 0.0f, 0.0f), 1.0f));
 
 	std::shared_ptr<Light::Directional> dirLight(AG::Light::directional());
-	dirLight->setDirection(vec3(0.0f, 1.0f, -1.0f));
+	dirLight->setDirection(vec3(0.0f, -0.5f, -0.5f));
 	dirLight->setAmbient(vec3(0.01f));
 	dirLight->setDiffuse(vec3(0.2f));
 	dirLight->setSpecular(vec3(0.01f));
@@ -114,9 +114,9 @@ int main(int argc, char **argv) {
 	spotLight->setCutoff(glm::cos(glm::radians(13.0f)), glm::cos(glm::radians(12.0f)));
 
 	console::info("init scene");
-
 	Resource::File testScene("testScene.ini");
 	scene->initFromFile(testScene);
+
 	// scene->add(arrowHelper.get());
 	// scene->add(cameraOrientationHelper.get());
 
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 
 	
 
-	PhongMaterial material;
+	Material::Phong material;
 	material.setDiffuse(0.0f, 1.0f, 0.0f);
 	Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
 
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 	scene->add(planeModel);
 //	scene->add(cylinderModel);
 
-	scene->add(dirLight.get());
+//	scene->add(dirLight.get());
 	scene->add(pointLight.get());
 //	scene->add(spotLight.get());
 

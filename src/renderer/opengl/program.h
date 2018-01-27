@@ -14,13 +14,27 @@
 #include "../../lib/types.h"
 #include "../../app/app.h"
 
+#include <sys/inotify.h>
+
 namespace Opengl {
 
 struct Program {
+	enum Program_Flags {
+		Watch_Changes = 0x1
+	};
+
+	struct WatchDescriptor {
+		int fd = -1;
+		int vertexFd = -1;
+		int fragmentFd = -1;
+		int geometryFd = -1;
+	};
+
 	Program();
 	explicit Program(std::string);
 	~Program();
-	void init(std::string);
+	void init(std::string, uint flags = 0x0);
+	void initShader();
 	void use();
 	void nouse();
 
@@ -59,6 +73,8 @@ struct Program {
 	void initUniformCache(std::vector<std::string> locations);
 	void initUniformCache(std::map <Opengl::Uniform::Common, std::string> locations);
 
+	void checkShadersUpdate();
+
 	const GLuint getHandle() const;
 
 	GLuint handle;
@@ -69,6 +85,12 @@ struct Program {
 
 	std::string name;
 private:
+	void setupWatch();
+	void removeWatch();
+
+	bool compile();
+
+	WatchDescriptor * watcher;
 	bool isUsed;
 	bool success;
 	std::string getShaderPath(std::string);

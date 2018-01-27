@@ -17,6 +17,7 @@ OBJ_TREE 		:=$(patsubst src%,obj%,$(OBJ_TREE))
 OBJS			:=$(patsubst %/%,%_%,$(OBJS))
 CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -DGLM_ENABLE_EXPERIMENTAL -std=c++11 -pipe -O$(OPTIMIZE_LEVEL)
 LDFLAGS_COMPILE	=\
+				-I/usr/include \
 				-Ivendor/ \
 				-Ivendor/glm \
 				-Ivendor/assimp/include \

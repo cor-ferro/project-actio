@@ -4,13 +4,18 @@
 #include <memory>
 #include <boost/thread.hpp>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <queue>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "../lib/console.h"
 #include "../lib/types.h"
 #include "../lib/assimp.h"
+#include "../lib/image_loader.h"
 #include "../resources/resources.h"
 #include "../animation/animation.h"
 #include "../math/Box3.h"
@@ -93,14 +98,9 @@ struct Model {
 	AnimationProcess currentAnimation;
 	mat4 GlobalInverseTransform;
 private:
-	void processNode(aiNode * node, ModelNode * modelNode, const Resource::Assimp * assimpResource);
-
 	void allocMeshes(unsigned int);
 	void freeMeshes();
 	void freeNodes();
-
-	std::vector<aiNode*> collectAiNodes(aiNode*);
-	void collectAiNode(aiNode*, std::vector<aiNode*>& nodes);
 
 	ModelId id_;
 	ModelName name_;
@@ -109,6 +109,7 @@ private:
 	bool animInterpolation_;
 	std::unordered_map<std::string, std::shared_ptr<const ModelNode>> nodes_;
 	std::unordered_map<std::string, std::shared_ptr<const Animation>> animations_;
+	std::unordered_map<std::string, ImageLoader::Data> images_;
 };
 
 #endif

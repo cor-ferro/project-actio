@@ -7,47 +7,65 @@ namespace Opengl {
 		, isUsed(false)
 		, fragmentShader(nullptr)
 		, vertexShader(nullptr)
+		, geometryShader(nullptr)
+		, watcher(nullptr)
 	{}
 
-	Program::Program(std::string name)
+	Program::Program(std::string name) : Program()
 	{
 		init(name);
 	}
 
-	void Program::init(std::string name)
+	void Program::init(std::string name, uint flags)
 	{
 		this->name = name;
 		isUsed = false;
 
-		Shader * newVertexShader = new Shader(Shader::VERTEX);
-		Shader * newFragmentShader = new Shader(Shader::FRAGMENT);
-		Shader * newGeometryShader = nullptr;
+		this->vertexShader = new Shader(Shader::VERTEX);
+		this->fragmentShader = new Shader(Shader::FRAGMENT);
+		this->geometryShader = nullptr;
 
 		std::string vertexShaderPath = getShaderPath(name) + std::string(".vert");
 		std::string fragmentShaderPath = getShaderPath(name) + std::string(".frag");
 		std::string geometryShaderPath = getShaderPath(name) + std::string(".geom");
 
-		newVertexShader->loadFromFile(vertexShaderPath);
-		newVertexShader->compile();
+		this->vertexShader->loadFromFile(vertexShaderPath);
+		this->vertexShader->compile();
 
-		newFragmentShader->loadFromFile(fragmentShaderPath);
-		newFragmentShader->compile();
+		this->fragmentShader->loadFromFile(fragmentShaderPath);
+		this->fragmentShader->compile();
 
 		if (Shader::Exists(geometryShaderPath)) {
-			newGeometryShader = new Shader(Shader::GEOMETRY);
-			newGeometryShader->loadFromFile(geometryShaderPath);
-			newGeometryShader->compile();
+			this->geometryShader = new Shader(Shader::GEOMETRY);
+			this->geometryShader->loadFromFile(geometryShaderPath);
+			this->geometryShader->compile();
 		}
-
-		int success;
-		char infoLog[4096];
 
 		handle = glCreateProgram();
-		glAttachShader(handle, newVertexShader->handle);
-		glAttachShader(handle, newFragmentShader->handle);
-		if (newGeometryShader != nullptr) {
-			glAttachShader(handle, newGeometryShader->handle);
+
+		glAttachShader(handle, this->vertexShader->handle);
+		glAttachShader(handle, this->fragmentShader->handle);
+		if (this->geometryShader != nullptr) {
+			glAttachShader(handle, this->geometryShader->handle);
 		}
+
+		if (compile()) {
+//			this->vertexShader->freeSources();
+//			this->fragmentShader->freeSources();
+//			if (this->geometryShader != nullptr) {
+//				this->geometryShader->freeSources();
+//			}
+		}
+
+		if ((flags & Watch_Changes) != 0) {
+			setupWatch();
+		}
+	}
+
+	bool Program::compile()
+	{
+		int success;
+		char infoLog[4096];
 
 		glLinkProgram(handle);
 		glGetProgramiv(handle, GL_LINK_STATUS, &success);
@@ -60,22 +78,19 @@ namespace Opengl {
 			success = false;
 		} else {
 			success = true;
-
-			this->vertexShader = newVertexShader;
-			this->fragmentShader = newFragmentShader;
-			this->geometryShader = newGeometryShader;
-
-			this->vertexShader->freeSources();
-			this->fragmentShader->freeSources();
-			if (newGeometryShader != nullptr) {
-				this->geometryShader->freeSources();
-			}
 		}
+
+		return success;
+	}
+
+	void Program::initShader() {
+
 	}
 
 	Program::~Program()
 	{
 		console::infop("destroy shader program %s", name.c_str());
+		removeWatch();
 	}
 
 	const GLuint Program::getHandle() const
@@ -304,5 +319,93 @@ namespace Opengl {
 	void Program::setVec(Opengl::Uniform::Common uniform, const glm::vec4 &vec) const
 	{
 		glUniform3fv(getUniformCacheLoc(uniform), 1, glm::value_ptr(vec));
+	}
+
+	void Program::checkShadersUpdate()
+	{
+		if (watcher == nullptr) return;
+
+		const int EVENT_SIZE = (sizeof(struct inotify_event));
+		const int EVENT_BUF_LEN = (1024 * (EVENT_SIZE + 16 ));
+
+		char buffer[EVENT_BUF_LEN];
+
+		int length = read(watcher->fd, buffer, EVENT_BUF_LEN);
+
+		if (length == 0) {
+			return;
+		}
+
+		int i = 0;
+		while ( i < length ) {
+			struct inotify_event * event = (struct inotify_event *) &buffer[i];
+
+			glDetachShader(handle, this->vertexShader->handle);
+			glDetachShader(handle, this->fragmentShader->handle);
+
+			this->vertexShader->freeSources();
+			this->fragmentShader->freeSources();
+
+			glDeleteProgram(handle);
+
+			handle = glCreateProgram();
+
+			this->vertexShader->create();
+			this->fragmentShader->create();
+
+			this->vertexShader->reloadSources();
+			this->fragmentShader->reloadSources();
+
+			glAttachShader(handle, this->vertexShader->handle);
+			glAttachShader(handle, this->fragmentShader->handle);
+
+			bool isCompiledVShader = this->vertexShader->compile();
+			bool isCompiledFShader = this->fragmentShader->compile();
+
+			if (isCompiledVShader && isCompiledFShader) {
+				this->compile();
+				console::info("compile new program");
+			}
+
+			i += EVENT_SIZE + event->len;
+		 }
+	}
+
+	void Program::setupWatch()
+	{
+		console::info("setup watch");
+		removeWatch();
+
+		watcher = new WatchDescriptor();
+		watcher->fd = inotify_init1(IN_NONBLOCK);
+
+		if (watcher->fd < 0) {
+			console::warn("failed init inotify");
+		}
+
+		if (this->vertexShader != nullptr) {
+			watcher->vertexFd = inotify_add_watch(watcher->fd, this->vertexShader->filePath.c_str(), IN_MODIFY);
+		}
+
+		if (this->fragmentShader != nullptr) {
+			watcher->fragmentFd = inotify_add_watch(watcher->fd, this->fragmentShader->filePath.c_str(), IN_MODIFY);
+		}
+
+		if (this->geometryShader != nullptr) {
+			watcher->geometryFd = inotify_add_watch(watcher->fd, this->geometryShader->filePath.c_str(), IN_MODIFY);
+		}
+
+	}
+
+	void Program::removeWatch()
+	{
+		if (watcher != nullptr) {
+			if (watcher->vertexFd >= 0) inotify_rm_watch(watcher->fd, watcher->vertexFd);
+			if (watcher->fragmentFd >= 0) inotify_rm_watch(watcher->fd, watcher->fragmentFd);
+			if (watcher->geometryFd >= 0) inotify_rm_watch(watcher->fd, watcher->geometryFd);
+			close(watcher->fd);
+			delete watcher;
+			watcher = nullptr;
+		}
 	}
 }

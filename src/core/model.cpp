@@ -76,9 +76,9 @@ Model::Model(Mesh * mesh)
 	: animInterpolation_(true)
 {
 	allocMeshes(1);
+	addMesh(mesh);
 	mesh->setup();
 	mesh->material.setupTextures();
-	addMesh(mesh);
 }
 
 Model::Model(ModelConfig& config)
@@ -117,8 +117,8 @@ Model::Model(ModelConfig& config)
 		console::warn("no animations");
 	}
 
-	console::info("materials", scene->mNumMaterials);
-	console::info("meshes", scene->mNumMeshes);
+	console::infop("materials: %i", scene->mNumMaterials);
+	console::infop("meshes: %i", scene->mNumMeshes);
 
 	allocMeshes(0);
 	initFromAi(assimpResource);
@@ -178,34 +178,101 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 	freeMeshes();
 	allocMeshes(assimpResource->scene->mNumMeshes);
 
-	// boost::thread_group tg;
-	// unsigned int numMeshes = assimpResource->scene->mNumMeshes;
-	// for (unsigned int i = 0; i < numMeshes; i++) {
-	// 	#ifndef THREAD_INIT_AI
-	// 	processMesh(assimpResource->scene->mMeshes[i], assimpResource);
-	// 	#endif
-	// 	#ifdef THREAD_INIT_AI
-	// 	tg.add_thread(
-	// 		new boost::thread(
-	// 			&Model::processMesh, this, assimpResource->scene->mMeshes[i], assimpResource
-	// 		)
-	// 	);
-	// 	#endif
-	// }
+	std::unordered_set<std::string> texturePaths = assimpResource->getTexturePaths();
+	std::vector<aiNode*> nodes = assimpResource->getAllNodes();
 
-	// #ifdef THREAD_INIT_AI
-	// tg.join_all();
-	// #endif
+	console::infop("nodes.size(): %i", nodes.size());
 
-	rootNode_ = new ModelNode(assimpResource->scene->mRootNode);
+	std::queue<aiNode*> queueNodes;
+	for (auto node : nodes)
+		queueNodes.push(node);
 
-	processNode(assimpResource->scene->mRootNode, rootNode_, assimpResource);
+	std::queue<std::string> queueImages;
+	for (auto path : texturePaths)
+		queueImages.push(path);
 
+	assert(queueNodes.front() == assimpResource->getRootNode());
+
+	rootNode_ = new ModelNode(queueNodes.front());
+	queueNodes.pop();
+
+	std::mutex lock;
+	auto nodeLoader = [this, &lock, &assimpResource](std::queue<aiNode*>& queue)
+	{
+		aiNode * node = nullptr;
+		while (queue.size() > 0) {
+			lock.lock();
+			node = queue.front();
+			queue.pop();
+			lock.unlock();
+//			console::info(std::this_thread::get_id());
+
+			ModelNode * modelNode = new ModelNode(node);
+			this->addNode(modelNode);
+
+			for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+				unsigned int meshIndex = node->mMeshes[i];
+				const aiMesh * mesh = assimpResource->getMesh(meshIndex);
+				const aiMaterial * meshMaterial = assimpResource->getMeshMaterial(mesh);
+
+				Mesh * modelMesh = new Mesh();
+				modelMesh->material.initFromAi(meshMaterial, assimpResource, images_);
+				modelMesh->geometry.initFromAi(mesh, assimpResource);
+
+				this->addMesh(modelMesh);
+				modelNode->addMesh(modelMesh);
+			}
+
+			// todo: выстраивать иерархию нод
+		}
+	};
+
+	auto imageLoader = [this, &lock, &assimpResource](std::queue<std::string>& queue)
+	{
+		std::string path("");
+		while (queue.size() > 0) {
+			lock.lock();
+			path = queue.front();
+			queue.pop();
+			lock.unlock();
+
+			ImageLoader::Data imageData = ImageLoader::load(path);
+
+			if (!imageData.isReady()) {
+				imageData = ImageLoader::load(assimpResource->getDefaultTexturePath());
+			}
+
+			this->images_.insert({ path, imageData });
+		}
+	};
+
+	const uint countThreads = 4;
+	std::vector<std::thread> nodeThreads;
+	std::vector<std::thread> imageThreads;
+
+	console::info("start load images");
+	for (uint i = 0; i < countThreads; i++)
+		imageThreads.push_back(std::thread(imageLoader, std::ref(queueImages)));
+	for (uint i = 0; i < countThreads; i++)
+		imageThreads[i].join();
+	console::info("end load images");
+
+	console::info("start init meshes");
+	for (uint i = 0; i < countThreads; i++)
+		nodeThreads.push_back(std::thread(nodeLoader, std::ref(queueNodes)));
+	for (uint i = 0; i < countThreads; i++)
+		nodeThreads[i].join();
+	console::info("end init meshes");
+
+	int i = 0;
 	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
 	{
+		console::infop("setup mesh %i", i);
 		(*mesh)->setup();
 		(*mesh)->material.setupTextures();
+		i++;
 	}
+
 }
 
 void Model::addMesh(Mesh * mesh)
@@ -218,26 +285,6 @@ void Model::addNode(ModelNode * node)
 	nodes_.insert(
 		std::pair<std::string, std::shared_ptr<ModelNode>>(node->name, std::shared_ptr<ModelNode>(node))
 	);
-}
-
-void Model::processNode(aiNode * node, ModelNode * modelNode, const Resource::Assimp * assimpResource)
-{
-	addNode(modelNode);
-
-	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-		unsigned int meshIndex = node->mMeshes[i];
-		aiMesh * mesh = assimpResource->scene->mMeshes[meshIndex];
-		Mesh * modelMesh = new Mesh(mesh, assimpResource);
-		addMesh(modelMesh);
-		modelNode->addMesh(modelMesh);
-	}
-
-	for (unsigned int i = 0; i < node->mNumChildren; i++) {
-		aiNode * childNode = node->mChildren[i];
-		ModelNode * childModelNode = new ModelNode(childNode);
-		modelNode->addNode(childModelNode);
-		processNode(childNode, childModelNode, assimpResource);
-	}
 }
 
 const ModelMeshes& Model::getMeshes()
@@ -392,3 +439,5 @@ void Model::processNodeAnimation(ModelNode * node, const Animation * animation, 
 		}
 	}
 }
+
+

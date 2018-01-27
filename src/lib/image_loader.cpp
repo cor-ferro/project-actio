@@ -11,7 +11,7 @@ namespace ImageLoader {
 		Data imageData;
 		
 		int chanels = 0;
-		RawData * data = SOIL_load_image(path.c_str(), &imageData.width, &imageData.height, &chanels, SOIL_LOAD_AUTO);
+		RawData * data = SOIL_load_image(path.c_str(), &imageData.width, &imageData.height, &chanels, SOIL_LOAD_RGB);
 		imageData.format = GL_RGB; // сделать автоопределение типа
 		imageData.set(data, imageData.width * imageData.height * chanels);
 		imageData.calcSize();
@@ -21,55 +21,74 @@ namespace ImageLoader {
 	}
 
 	inline Data loadByIl(std::string path) {
-		boost::mutex::scoped_lock lock(imageLoaderMutex);
-		ilInit();
-		iluInit();
-
-		ILuint id;
+		std::ifstream file(path.c_str(), std::ios::in|std::ios::binary|std::ios::ate);
 		Data imageData;
 
-		ilGenImages(1, &id);
-		ilBindImage(id);
-		ILboolean isImageLoad = ilLoadImage(path.c_str());
-		if (!isImageLoad) {
-			ILenum Error;
-			while ((Error = ilGetError()) != IL_NO_ERROR) {
-				std::string err("unknown");
-				switch (Error) {
-					case IL_NO_ERROR: err = "IL_NO_ERROR"; break;
-					case IL_INVALID_ENUM: err = "IL_INVALID_ENUM"; break;
-					case IL_OUT_OF_MEMORY: err = "IL_OUT_OF_MEMORY"; break;
-					case IL_FORMAT_NOT_SUPPORTED: err = "IL_FORMAT_NOT_SUPPORTED"; break;
-					case IL_INTERNAL_ERROR: err = "IL_INTERNAL_ERROR"; break;
-					case IL_INVALID_VALUE: err = "IL_INVALID_VALUE"; break;
-					case IL_ILLEGAL_OPERATION: err = "IL_ILLEGAL_OPERATION"; break;
-					case IL_ILLEGAL_FILE_VALUE: err = "IL_ILLEGAL_FILE_VALUE"; break;
-					case IL_INVALID_FILE_HEADER: err = "IL_INVALID_FILE_HEADER"; break;
-					case IL_INVALID_PARAM: err = "IL_INVALID_PARAM"; break;
-					case IL_COULD_NOT_OPEN_FILE: err = "IL_COULD_NOT_OPEN_FILE"; break;
-					case IL_INVALID_EXTENSION: err = "IL_INVALID_EXTENSION"; break;
-					case IL_FILE_ALREADY_EXISTS: err = "IL_FILE_ALREADY_EXISTS"; break;
-					case IL_OUT_FORMAT_SAME: err = "IL_OUT_FORMAT_SAME"; break;
-					case IL_STACK_OVERFLOW: err = "IL_STACK_OVERFLOW"; break;
-					case IL_STACK_UNDERFLOW: err = "IL_STACK_UNDERFLOW"; break;
-					case IL_INVALID_CONVERSION: err = "IL_INVALID_CONVERSION"; break;
-					case IL_BAD_DIMENSIONS: err = "IL_BAD_DIMENSIONS"; break;
-					case IL_FILE_READ_ERROR: err = "IL_FILE_READ/WRITE_ERROR"; break;
+		if (file.is_open()) {
+			std::streampos size;
+			size = file.tellg();
+			char * memblock = new char[size];
+			file.seekg(0, std::ios::beg);
+			file.read(memblock, size);
+			file.close();
+
+			imageLoaderMutex.lock();
+
+			ilInit();
+			iluInit();
+
+			ILuint id;
+			ilGenImages(1, &id);
+			ilBindImage(id);
+			ILboolean isImageLoad = ilLoadL(IL_TYPE_UNKNOWN, (ILubyte*)memblock, size);
+			if (!isImageLoad) {
+				ILenum Error;
+				while ((Error = ilGetError()) != IL_NO_ERROR) {
+					std::string err("unknown");
+					switch (Error) {
+						case IL_NO_ERROR: err = "IL_NO_ERROR"; break;
+						case IL_INVALID_ENUM: err = "IL_INVALID_ENUM"; break;
+						case IL_OUT_OF_MEMORY: err = "IL_OUT_OF_MEMORY"; break;
+						case IL_FORMAT_NOT_SUPPORTED: err = "IL_FORMAT_NOT_SUPPORTED"; break;
+						case IL_INTERNAL_ERROR: err = "IL_INTERNAL_ERROR"; break;
+						case IL_INVALID_VALUE: err = "IL_INVALID_VALUE"; break;
+						case IL_ILLEGAL_OPERATION: err = "IL_ILLEGAL_OPERATION"; break;
+						case IL_ILLEGAL_FILE_VALUE: err = "IL_ILLEGAL_FILE_VALUE"; break;
+						case IL_INVALID_FILE_HEADER: err = "IL_INVALID_FILE_HEADER"; break;
+						case IL_INVALID_PARAM: err = "IL_INVALID_PARAM"; break;
+						case IL_COULD_NOT_OPEN_FILE: err = "IL_COULD_NOT_OPEN_FILE"; break;
+						case IL_INVALID_EXTENSION: err = "IL_INVALID_EXTENSION"; break;
+						case IL_FILE_ALREADY_EXISTS: err = "IL_FILE_ALREADY_EXISTS"; break;
+						case IL_OUT_FORMAT_SAME: err = "IL_OUT_FORMAT_SAME"; break;
+						case IL_STACK_OVERFLOW: err = "IL_STACK_OVERFLOW"; break;
+						case IL_STACK_UNDERFLOW: err = "IL_STACK_UNDERFLOW"; break;
+						case IL_INVALID_CONVERSION: err = "IL_INVALID_CONVERSION"; break;
+						case IL_BAD_DIMENSIONS: err = "IL_BAD_DIMENSIONS"; break;
+						case IL_FILE_READ_ERROR: err = "IL_FILE_READ/WRITE_ERROR"; break;
+					}
+
+					console::warnp("error load image %s, %s", path.c_str(), err.c_str());
 				}
-				// printf("%d: %s/n", Error, iluErrorString());
-				console::warnp("error load image %s, %s", path.c_str(), err.c_str());
-			} 
 
-			return imageData;
+				return imageData;
+			}
+
+			imageData.width = ilGetInteger(IL_IMAGE_WIDTH);
+			imageData.height = ilGetInteger(IL_IMAGE_HEIGHT);
+			imageData.format = ilGetInteger(IL_IMAGE_FORMAT);
+
+			imageData.set(ilGetData(), imageData.width * imageData.height * componentSize(imageData.format));
+			imageData.calcSize();
+
+			ilBindImage(0);
+			ilDeleteImage(id);
+
+			imageLoaderMutex.unlock();
+
+			delete[] memblock;
+		} else {
+			console::warnp("no such file or directory: %s", path.c_str());
 		}
-
-		imageData.width = ilGetInteger(IL_IMAGE_WIDTH);
-		imageData.height = ilGetInteger(IL_IMAGE_HEIGHT);
-		imageData.format = ilGetInteger(IL_IMAGE_FORMAT);
-		imageData.set(ilGetData(), imageData.width * imageData.height * componentSize(imageData.format));
-		imageData.calcSize();
-		ilBindImage(0);
-		ilDeleteImage(id);
 
 		return imageData;
 	}

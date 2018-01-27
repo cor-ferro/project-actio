@@ -13,21 +13,13 @@ Mesh::Mesh(Geometry geometry)
 	, drawType(Mesh_Draw_Triangle)
 {}
 
-Mesh::Mesh(PhongMaterial material, Geometry geometry) 
+Mesh::Mesh(Material::Phong material, Geometry geometry)
 	: name("")
 	, isSetupReady(false)
 	, material(material)
 	, geometry(geometry)
 	, drawType(Mesh_Draw_Triangle)
 {}
-
-Mesh::Mesh(aiMesh * mesh, const Resource::Assimp * assimpResource)
-	: name("")
-	, isSetupReady(false)
-	, drawType(Mesh_Draw_Triangle)
-{
-	initFromAi(mesh, assimpResource);
-}
 
 Mesh::Mesh(const Mesh& other)
 {
@@ -52,87 +44,6 @@ Mesh::~Mesh()
 	// freeGeometry();
 	// freeMaterial();
 	// freeBuffers();
-}
-
-void Mesh::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
-{
-	freeGeometry();
-	freeMaterial();
-
-	setName(mesh->mName.C_Str());
-
-	if (mesh->mMaterialIndex >= 0) {
-		material.initFromAi(assimpResource->scene->mMaterials[mesh->mMaterialIndex], assimpResource);
-	} else{
-		console::warn("skip init material", assimpResource->resourcePath_);
-		material.initEmptyTextures();
-		material.setAmbient(0.0f, 1.0f, 0.0f);
-		material.setDiffuse(0.0f, 1.0f, 0.0f);
-		material.setSpecular(0.0f, 1.0f, 0.0f);
-	}
-
-	if (mesh->mNumVertices > 0) {
-	geometry.initFromAi(mesh, assimpResource);
-	}
-
-	if (mesh->mNumBones > 0) {
-		console::info("bones count: ", mesh->mNumBones);
-		transforms.reserve(mesh->mNumBones);
-		GeometryVertices * vertices = geometry.getVertices();
-		const int verticesCount = vertices->size();
-
-		std::unique_ptr<VerticesMap> verticesMap(new VerticesMap());
-
-		for (unsigned int boneId = 0; boneId < mesh->mNumBones; boneId++) {
-			aiBone * bone = mesh->mBones[boneId];
-
-			MeshBone meshBone(bone);
-
-			std::string boneName(bone->mName.data);
-			mat4 offsetBone = libAi::toNativeType(bone->mOffsetMatrix);
-
-			meshBone.setIndex(boneId);
-
-			bones.insert(
-				std::pair<std::string, MeshBone>(boneName, meshBone)
-			);
-
-			transforms.push_back(mat4(0.0f));
-			
-			// console::info("bone ", boneName, " ", bone->mNumWeights);
-			for (unsigned int j = 0; j < bone->mNumWeights; j++) {
-				const aiVertexWeight vertexWeight = bone->mWeights[j];
-
-				auto vertexIt = verticesMap->find(vertexWeight.mVertexId);
-
-				if (vertexIt != verticesMap->end()) {
-					vertexIt->second.push_back(BoneVertexWeight(boneId, vertexWeight.mWeight));
-				} else {
-					std::vector<BoneVertexWeight> mapping { BoneVertexWeight(boneId, vertexWeight.mWeight) };
-					verticesMap->insert({ vertexWeight.mVertexId, mapping });
-				}
-			}
-		}
-
-		for (auto it = verticesMap->begin(); it != verticesMap->end(); ++it) {
-			const uint& vertexId = it->first;
-			std::vector<BoneVertexWeight>& boneWeights = it->second;
-
-			Vertex& vertex = geometry.getVertex(vertexId);
-
-			unsigned int boneMappingIndex = 0;
-			for (auto itBoneWeights = boneWeights.begin(); itBoneWeights != boneWeights.end(); itBoneWeights++) {
-				vertex.BonedIDs[boneMappingIndex] = itBoneWeights->first;
-				vertex.Weights[boneMappingIndex] = itBoneWeights->second;
-
-				boneMappingIndex++;
-				if (boneMappingIndex > 4) {
-					console::info("boneWeights.size() ", boneWeights.size());
-				}
-				assert(boneMappingIndex <= 4);
-			}
-		}
-	}
 }
 
 void Mesh::freeGeometry() {}

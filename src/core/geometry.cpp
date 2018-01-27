@@ -28,7 +28,7 @@ Geometry::~Geometry()
 {
 }
 
-void Geometry::initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource)
+void Geometry::initFromAi(const aiMesh * mesh, const Resource::Assimp * assimpResource)
 {
 	unsigned int numVertices = mesh->mNumVertices;
 	unsigned int numBones = mesh->mNumBones;

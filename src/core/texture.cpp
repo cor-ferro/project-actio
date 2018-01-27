@@ -2,7 +2,7 @@
 
 Texture::Texture(Texture_Type type)
 	: type(type)
-	, name("")
+	, name(std::string(Texture::nameByType(type)))
 {}
 
 Texture::Texture(aiTextureType type)
@@ -17,11 +17,7 @@ Texture::Texture(const Texture& other)
 	, images_(other.images_) // @todo: проверить удаление ресурсов. Потенциальная утечка памяти.
 {}
 
-Texture::~Texture()
-{
-	// console::info("destory texture");
-	// freeData();
-}
+Texture::~Texture() {}
 
 Texture Texture::Empty(Texture_Type type = Texture_Diffuse, unsigned char color = 0)
 {
@@ -63,8 +59,7 @@ Texture Texture::loadFromMaterial(aiMaterial * mat, aiTextureType type, const Re
 
 		texture.setData(imageData);
 	} else {
-		console::warnp("texture %s not exist, create empty", Texture::charType(type));
-
+//		console::warnp("texture %s not exist, create empty", Texture::charType(type));
 		Texture_Type textureType = Texture::getType(type);
 		switch (textureType) {
 		case Texture_Specular:
@@ -83,13 +78,24 @@ void Texture::initTexture()
 	// boost::mutex::scoped_lock lock(textureInitMutex);
 }
 
+// @todo: осторожно добавлять данные, могут потеряться уже существующие данные
 void Texture::setData(ImageLoader::Data imageData)
 {
+	TextureImages::iterator it = images_.find(0);
+	if (it != images_.end()) {
+		images_.erase(it);
+	}
+
 	images_.insert(std::pair<char, ImageLoader::Data>(0, imageData));
 }
 
 void Texture::setData(ImageLoader::Data imageData, char index)
 {
+	TextureImages::iterator it = images_.find(index);
+	if (it != images_.end()) {
+		images_.erase(it);
+	}
+
 	images_.insert(std::pair<char, ImageLoader::Data>(index, imageData));
 }
 

@@ -64,6 +64,16 @@ struct Texture {
 		default: return "diffuse";
 		}
 	};
+	static const char * nameByType(Texture_Type type) {
+		switch (type) {
+			case Texture_Diffuse: return "diffuseTexture"; break;
+			case Texture_Specular: return "specularTexture"; break;
+			case Texture_Height: return "heightTexture"; break;
+			case Texture_Normal: return "normalTexture"; break;
+			case Texture_Cube: return "cubeTexture"; break;
+			default: return "diffuseTexture";
+		}
+	}
 
 	void initTexture();
 	void setup();

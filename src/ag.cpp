@@ -33,7 +33,7 @@ namespace AG
 				texture.setData(imageData, i);
 			}
 
-			Mesh * mesh = new Mesh(PhongMaterial(texture), geometry);
+			Mesh * mesh = new Mesh(Material::Phong(texture), geometry);
 			Model * model = new Model(mesh);
 
 			return model;
@@ -41,7 +41,7 @@ namespace AG
 
 		Model * box()
 		{
-			PhongMaterial material;
+			Material::Phong material;
 			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
@@ -54,7 +54,7 @@ namespace AG
 
 		Model * plane(uint width, uint height, uint widthSegments, uint heightSegments)
 		{
-			PhongMaterial material;
+			Material::Phong material;
 //			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
@@ -67,7 +67,7 @@ namespace AG
 
 		Model * sphere(float radius, uint widthSegments, uint heightSegments)
 		{
-			PhongMaterial material;
+			Material::Phong material;
 //			material.setWireframe(true);
 			material.setNoLight(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
@@ -81,7 +81,7 @@ namespace AG
 
 		Model * circle(float radius, uint segments)
 		{
-			PhongMaterial material;
+			Material::Phong material;
 			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
@@ -94,7 +94,7 @@ namespace AG
 
 		Model * cylinder(float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments)
 		{
-			PhongMaterial material;
+			Material::Phong material;
 //			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
@@ -116,7 +116,7 @@ namespace AG
 
 		Model * cone(float radius, float height, uint radialSegments, uint heightSegments)
 		{
-			PhongMaterial material;
+			Material::Phong material;
 			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
@@ -129,7 +129,7 @@ namespace AG
 
 		Model * ring(float innerRadius, float outerRadius, uint thetaSegments)
 		{
-			PhongMaterial material;
+			Material::Phong material;
 			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
@@ -142,7 +142,7 @@ namespace AG
 
 		Model * torus(float radius, float tube, uint radialSegments, uint tubularSegments)
 		{
-			PhongMaterial material;
+			Material::Phong material;
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Torus(radius, tube, radialSegments, tubularSegments, glm::two_pi<float>());
@@ -154,7 +154,7 @@ namespace AG
 
 		Model * octahedron(float radius)
 		{
-			PhongMaterial material;
+			Material::Phong material;
 			material.setWireframe(true);
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 

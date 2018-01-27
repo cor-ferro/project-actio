@@ -64,7 +64,7 @@ struct Geometry {
 	static Geometry Octahedron(float radius);
 	static Geometry Quad2d();
 
-	void initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource);
+	void initFromAi(const aiMesh * mesh, const Resource::Assimp * assimpResource);
 	GeometryVertices * getVertices();
 	GeometryIndices * getIndices();
 

@@ -31,18 +31,18 @@ void OpenglRenderer::start()
 
 	gbuffer.init(renderParams.width, renderParams.height);
 
-	forwardProgram.init("forward");
+	forwardProgram.init("forward", Opengl::Program::Watch_Changes);
 	forwardProgram.initUniformCache({ "model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]" });
 	forwardProgram.initUniformCache(Opengl::Uniform::Map);
 	forwardProgram.bindBlock("Matrices", 0);
 
-	geometryPassProgram.init("geometry_pass");
+	geometryPassProgram.init("geometry_pass", Opengl::Program::Watch_Changes);
 	geometryPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
 	geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
 	geometryPassProgram.bindBlock("Matrices", 0);
 	OpenglCheckErrors();
 
-	lightPassProgram.init("light_pass");
+	lightPassProgram.init("light_pass", Opengl::Program::Watch_Changes);
 //	lightPassProgram.bindBlock("Matrices", 0);
 	// lightPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
 	OpenglCheckErrors();
@@ -98,6 +98,8 @@ void OpenglRenderer::initMatricesBuffer()
 
 void OpenglRenderer::forwardRender(Scene * scene)
 {
+	forwardProgram.checkShadersUpdate();
+
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -227,6 +229,9 @@ void OpenglRenderer::forwardRender(Scene * scene)
 
 void OpenglRenderer::defferedRender(Scene * scene)
 {
+	geometryPassProgram.checkShadersUpdate();
+	lightPassProgram.checkShadersUpdate();
+
 	Camera * camera = scene->getActiveCamera();
 	const RendererParams& renderParams = getParams();
 

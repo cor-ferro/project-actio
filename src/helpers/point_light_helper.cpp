@@ -6,7 +6,7 @@ namespace Helpers
         : Model()
         , light(light)
     {
-        PhongMaterial material;
+    	Material::Phong material;
         material.setWireframe(true);
         material.setDiffuse(0.0f, 1.0f, 0.0f);
 

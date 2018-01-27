@@ -18,15 +18,19 @@ struct Shader {
 	};
 
 	Shader(ShaderType type);
+	void create();
+	void reloadSources();
 	void loadFromFile(std::string filePath);
 	void setSource(const char * source);
-	void compile();
+	bool compile();
 	void freeSources();
 
 	static bool Exists(std::string filePath);
 
+	ShaderType type;
 	GLuint handle;
 	bool success;
+	std::string filePath;
 };
 
 static std::string loadFile(const char * file_path) {

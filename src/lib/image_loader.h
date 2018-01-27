@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 #include <memory>
+#include <fstream>
 #include <unordered_map>
 #include <boost/thread.hpp>
 #include <boost/filesystem/path.hpp>

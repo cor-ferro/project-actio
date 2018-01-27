@@ -1,8 +1,18 @@
 #include "shader.h"
 
 Shader::Shader(ShaderType type)
+	: success(false)
+	, handle(-1)
+	, type(type)
 {
-	success = false;
+	create();
+}
+
+void Shader::create() {
+	if (handle != -1) {
+		console::warnp("shader already created %i", handle);
+	}
+
 	switch (type) {
 		case VERTEX:
 			handle = glCreateShader(GL_VERTEX_SHADER);
@@ -16,8 +26,14 @@ Shader::Shader(ShaderType type)
 	}
 }
 
+void Shader::reloadSources()
+{
+	loadFromFile(this->filePath);
+}
+
 void Shader::loadFromFile(std::string filePath)
 {
+	this->filePath = filePath;
 	std::string shaderStr = loadFile(filePath.c_str());
 
 	const char * shaderSource = shaderStr.c_str();
@@ -29,7 +45,7 @@ void Shader::setSource(const char * source)
 	glShaderSource(handle, 1, &source, NULL);
 }
 
-void Shader::compile()
+bool Shader::compile()
 {
 	GLint shaderStatusSuccess;
 	GLchar infoLog[512];
@@ -45,11 +61,16 @@ void Shader::compile()
 	} else {
 		success = true;
 	}
+
+	return success;
 }
 
 void Shader::freeSources()
 {
-	glDeleteShader(handle);
+	if (handle >= 0) {
+		glDeleteShader(handle);
+		handle = -1;
+	}
 }
 
 bool Shader::Exists(std::string filePath)
