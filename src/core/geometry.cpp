@@ -33,6 +33,9 @@ void Geometry::destroy()
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
 	glDeleteVertexArrays(1, &VAO);
+
+	freeVerties();
+	freeIndices();
 }
 
 void Geometry::initFromAi(const aiMesh * mesh, const Resource::Assimp * assimpResource)

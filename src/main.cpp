@@ -16,25 +16,28 @@
 
 #include "glm/gtc/random.hpp"
 
-#include "./app/app.h"
-#include "./ag.h"
+#include "app/app.h"
+#include "ag.h"
 
-#include "./renderer/window_context.h"
-#include "./lib/types.h"
-#include "./lib/cycle.h"
-#include "./lib/input_handler.h"
-#include "./lib/console.h"
-#include "./renderer/renderer.h"
-#include "./scenes/scene.h"
-#include "./cameras/camera.h"
-#include "./cameras/camera_control.h"
-#include "./lights/direction_light.h"
-#include "./core/model.h"
-#include "./helpers/arrow_helper.h"
-#include "./helpers/bounding_box_helper.h"
-#include "./helpers/point_light_helper.h"
-#include "./helpers/camera_orientation_helper.h"
-#include "./resources/resources.h"
+#include "renderer/window_context.h"
+#include "lib/types.h"
+#include "lib/cycle.h"
+#include "lib/input_handler.h"
+#include "lib/console.h"
+#include "renderer/renderer.h"
+#include "scenes/scene.h"
+#include "cameras/camera.h"
+#include "cameras/camera_control.h"
+#include "lights/direction_light.h"
+#include "core/model.h"
+#include "helpers/arrow_helper.h"
+#include "helpers/bounding_box_helper.h"
+#include "helpers/point_light_helper.h"
+#include "helpers/camera_orientation_helper.h"
+#include "resources/resources.h"
+#include "memory/freelistallocator.h"
+#include "memory/linearallocator.h"
+#include "memory/poolallocator.h"
 
 using namespace std;
 using namespace physx;
@@ -52,8 +55,13 @@ PxMaterial* gMaterial = NULL;
 void initPhysics();
 void stepPhysics();
 void cleanupPhysics();
+void cleanupScene(Scene * scene);
 
 PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity=PxVec3(0));
+
+memory::FreeListAllocator * imageAllocator = nullptr;
+memory::PoolAllocator * modelsAllocator = nullptr;
+memory::PoolAllocator * meshAllocator = nullptr;
 
 int main(int argc, char **argv) {
 	App& app = App::instance();
@@ -61,6 +69,19 @@ int main(int argc, char **argv) {
 	app.init(argc, argv);
 
 	console::info("start ", app.getName());
+	console::info("");
+	console::infop("sizeof Model: %i", sizeof(Model));
+	console::infop("sizeof Mesh: %i", sizeof(Mesh));
+	console::info("");
+
+	imageAllocator = new memory::FreeListAllocator(1e8, memory::FreeListAllocator::FIND_FIRST);
+	imageAllocator->Init();
+
+	modelsAllocator = new memory::PoolAllocator(sizeof(Model) * 10000, sizeof(Model));
+	modelsAllocator->Init();
+
+	meshAllocator = new memory::PoolAllocator(sizeof(Mesh) * 50000, sizeof(Mesh));
+	meshAllocator->Init();
 
 	unsigned int windowWidth = 1280;
 	unsigned int windowHeight = 720;
@@ -110,13 +131,13 @@ int main(int argc, char **argv) {
 	Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
 
 	for (int i = 0; i < 0; i++) {
-		Mesh * mesh = new Mesh(material, geometry);
+		Mesh * mesh = Mesh::Create(geometry, material);
 		mesh->setPosition(vec3(
 			glm::gaussRand(0.0f, 7.0f),
 			glm::gaussRand(0.0f, 7.0f),
 			glm::gaussRand(0.0f, 7.0f)
 		));
-		Model * model = new Model(mesh);
+		Model * model = Model::Create(mesh);
 
 		scene->add(model);
 	}
@@ -198,13 +219,29 @@ int main(int argc, char **argv) {
 	}
 
 	cleanupPhysics();
+	cleanupScene(scene.get());
+
+	std::vector<Model*> models = scene->getModels();
+
+	Model::Destroy(sphereModel);
+
+//	for (auto model : models) {
+//		Model::Destroy(model);
+//		console::info("destroy success");
+//		model = nullptr;
+//	}
+
+	delete imageAllocator;
+	delete modelsAllocator;
+	delete meshAllocator;
 
 	console::info("stop application");
 
 	return 0;
 }
 
-void initPhysics() {
+void initPhysics()
+{
 	gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
 	gPvd = PxCreatePvd(*gFoundation);
 	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true, gPvd);
@@ -230,13 +267,15 @@ void initPhysics() {
 	console::info("physics inited");
 }
 
-void stepPhysics() {
+void stepPhysics()
+{
 	PX_UNUSED(false);
 	gScene->simulate(1.0f/60.0f);
 	gScene->fetchResults(true);
 }
 
-void cleanupPhysics() {
+void cleanupPhysics()
+{
 	if (gScene) {
 		gScene->release();
 		gScene = NULL;
@@ -258,6 +297,11 @@ void cleanupPhysics() {
 	}
 
 	console::info("physics released");
+}
+
+void cleanupScene(Scene * scene)
+{
+
 }
 
 PxRigidDynamic * createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity)

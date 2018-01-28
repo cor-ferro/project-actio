@@ -23,9 +23,38 @@
 #include "./object3D.h"
 #include "./mesh.h"
 
+#include "../memory/poolallocator.h"
+
+#include "ozz/animation/runtime/animation.h"
+#include "ozz/animation/runtime/local_to_model_job.h"
+#include "ozz/animation/runtime/sampling_job.h"
+#include "ozz/animation/runtime/skeleton.h"
+
+#include "ozz/animation/offline/animation_builder.h"
+#include "ozz/animation/offline/raw_animation.h"
+#include "ozz/animation/offline/raw_skeleton.h"
+#include "ozz/animation/offline/skeleton_builder.h"
+
+#include "ozz/base/maths/quaternion.h"
+#include "ozz/base/maths/simd_math.h"
+#include "ozz/base/maths/soa_transform.h"
+#include "ozz/base/maths/vec_float.h"
+
+#include "ozz/base/memory/allocator.h"
+
+using ozz::math::Float3;
+using ozz::math::Float4;
+using ozz::math::Quaternion;
+using ozz::math::SoaTransform;
+using ozz::math::Float4x4;
+using ozz::animation::offline::RawSkeleton;
+using ozz::animation::offline::RawAnimation;
+
+extern memory::PoolAllocator * modelsAllocator;
+
 typedef int ModelId;
 typedef std::string ModelName;
-typedef std::shared_ptr<Mesh> ModelMesh;
+typedef Mesh * ModelMesh;
 typedef std::vector<ModelMesh> ModelMeshes;
 
 static size_t idCounter = 0;
@@ -33,20 +62,6 @@ static ModelId newId()
 {
 	return ++idCounter;
 }
-
-struct ModelConfig {
-	ModelConfig();
-	ModelConfig(const ModelConfig& other);
-
-	std::string name;
-	Resource::File file;
-	bool flipUv;
-	vec3 position;
-	vec3 rotation;
-	float rotationAngle;
-	vec3 scale;
-	std::string animation;
-};
 
 struct ModelNode {
 	ModelNode();
@@ -63,11 +78,27 @@ struct ModelNode {
 };
 
 struct Model {
+	struct Config {
+		Config();
+		Config(const Config& other);
+
+		std::string name;
+		Resource::File file;
+		bool flipUv;
+		vec3 position;
+		vec3 rotation;
+		float rotationAngle;
+		vec3 scale;
+		std::string animation;
+	};
+
 	Model();
-	// Model(Resource::File);
-	Model(ModelConfig& modelConfig);
-	Model(Mesh * mesh);
-	Model(const Model& model);
+
+	static Model * Create();
+	static Model * Create(Config& modelConfig);
+	static Model * Create(Mesh * mesh);
+	static void Destroy(Model * model);
+
 	~Model();
 
 	const ModelId& getId();
@@ -88,25 +119,25 @@ struct Model {
 	void setPosition(float x, float y, float z);
 	void setQuaternion(float x, float y, float z, float w);
 
-	void setCurrentAnimation(std::string animationName);
-	void addAnimation(const Animation *);
-	const Animation * const getAnimation(const std::string& name);
-	void processCurrentAnimation();
-	void processAnimation(AnimationProcess& animationProcess);
-	void processNodeAnimation(ModelNode * node, const Animation * const animation, mat4& transform, double tick);
-
-	void enableAnimIterpolation();
-	void disableAnimIterpolation();
-
 	const ModelMeshes& getMeshes();
 	Mesh * getFirstMesh();
 
-	AnimationProcess currentAnimation;
-	mat4 GlobalInverseTransform;
+	void setCurrentAnimation(std::string name);
 private:
+	Model(Config& modelConfig);
+	Model(Mesh * mesh);
+	Model(const Model& model);
+
+	void destroy();
+
 	void allocMeshes(unsigned int);
 	void freeMeshes();
 	void freeNodes();
+
+	RawSkeleton * createSkeleton(const Resource::Assimp * assimpResource);
+	void createJoints(const aiNode * node, RawSkeleton::Joint * joint);
+
+	RawAnimation * createAnimation(aiAnimation * assimpAnimation);
 
 	ModelId id_;
 	ModelName name_;
@@ -117,6 +148,12 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<const ModelNode>> nodes_;
 	std::unordered_map<std::string, std::shared_ptr<const Animation>> animations_;
 	std::unordered_map<std::string, ImageLoader::Data> images_;
+	RawSkeleton * skeleton;
+	ozz::animation::Animation * currentAnimation;
+	std::vector<ozz::animation::offline::RawAnimation*> rawAnimations;
+	std::unordered_map<std::string, ozz::animation::Animation*> animations;
 };
+
+static std::vector<Model*> _models;
 
 #endif

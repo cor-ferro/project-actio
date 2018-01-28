@@ -17,12 +17,15 @@
 #include "geometry.h"
 #include "texture.h"
 #include "mesh_bone.h"
+#include "../memory/poolallocator.h"
 
 #ifdef GRAPHIC_API_OPENGL
 #include "../renderer/opengl/program.h"
 #include "../renderer/opengl/uniforms.h"
 #include "../renderer/opengl/utils.h"
 #endif
+
+extern memory::PoolAllocator * meshAllocator;
 
 enum MeshDrawType {
 	Mesh_Draw_Triangle,
@@ -44,13 +47,12 @@ enum MeshDrawFlags {
 };
 
 struct Mesh : Object3D {
-	Mesh();
-	Mesh(Geometry geometry);
-	Mesh(Material::Phong material, Geometry geometry);
-	Mesh(const Mesh& mesh);
-	~Mesh();
+	static Mesh * Create();
+	static Mesh * Create(Geometry geometry);
+	static Mesh * Create(Geometry geometry, Material::Phong material);
+	static void Destroy(Mesh * mesh);
 
-	void destroy();
+	~Mesh();
 
 	std::string getName();
 	void setName(std::string newName);
@@ -69,16 +71,18 @@ struct Mesh : Object3D {
 	#ifdef GRAPHIC_API_OPENGL
 	void draw(Opengl::Program &program, uint flags = Mesh_Draw_All);
 	void setup();
-	void freeBuffers();
 	#endif
-
-	std::unordered_map<std::string, MeshBone> bones;
-	std::vector<mat4> transforms;
 
 	Material::Phong material;
 	Geometry geometry;
 private:
-	bool isSetupReady;
+	Mesh();
+	Mesh(Geometry geometry);
+	Mesh(Geometry geometry, Material::Phong material);
+	Mesh(const Mesh& mesh);
+
+	void destroy();
+
 	std::string name;
 	MeshDrawType drawType;
 };

@@ -2,17 +2,16 @@
 
 // #define THREAD_INIT_AI_
 
-ModelConfig::ModelConfig()
+Model::Config::Config()
 	: name("")
 	, flipUv(false)
 	, position(vec3(0.0f))
 	, rotation(vec3(1.0f))
 	, rotationAngle(0.0f)
 	, scale(vec3(1.0f))
-	, animation("")
 {}
 
-ModelConfig::ModelConfig(const ModelConfig& other)
+Model::Config::Config(const Model::Config& other)
 {
 	name = other.name;
 	file = other.file;
@@ -24,10 +23,7 @@ ModelConfig::ModelConfig(const ModelConfig& other)
 	animation = other.animation;
 }
 
-ModelNode::ModelNode() 
-	: name("")
-	{}
-
+ModelNode::ModelNode() : name("") {}
 ModelNode::~ModelNode() {}
 
 ModelNode::ModelNode(aiNode * node) 
@@ -49,10 +45,45 @@ void ModelNode::addNode(ModelNode * node)
 	children.push_back(std::shared_ptr<ModelNode>(node));
 }
 
+Model * Model::Create()
+{
+	void * place = modelsAllocator->Allocate(sizeof(Model), 8);
+	Model * model = new(place) Model();
+//	_models.push_back(model);
+
+	return model;
+}
+
+Model * Model::Create(Config& modelConfig)
+{
+	void * place = modelsAllocator->Allocate(sizeof(Model), 8);
+	Model * model = new(place) Model(modelConfig);
+//	_models.push_back(model);
+
+	return model;
+}
+
+Model * Model::Create(Mesh * mesh)
+{
+	void * place = modelsAllocator->Allocate(sizeof(Model), 8);
+	Model * model = new(place) Model(mesh);
+//	_models.push_back(model);
+
+	return model;
+}
+
+void Model::Destroy(Model * model)
+{
+	if (model == nullptr) return;
+
+	model->destroy();
+	model->~Model();
+	modelsAllocator->Free((void*)model);
+}
+
 Model::Model()
 	: id_(newId())
 	, name_()
-	, animInterpolation_(true)
 {
 	allocMeshes(1);
 }
@@ -66,24 +97,18 @@ Model::Model(const Model& other)
 	meshes_ = other.meshes_;
 	nodes_ = other.nodes_;
 	animations_ = other.animations_;
-	animInterpolation_ = other.animInterpolation_;
-	currentAnimation = other.currentAnimation;
-	GlobalInverseTransform = other.GlobalInverseTransform;
 	rootNode_ = other.rootNode_;
 }
 
-Model::Model(Mesh * mesh)
-	: animInterpolation_(true)
-{
+Model::Model(Mesh * mesh) {
 	allocMeshes(1);
 	addMesh(mesh);
 	mesh->setup();
 	mesh->material.setupTextures();
 }
 
-Model::Model(ModelConfig& config)
+Model::Model(Model::Config& config)
 	: id_(newId())
-	, animInterpolation_(true)
 {
 	Assimp::Importer importer;
 
@@ -103,16 +128,19 @@ Model::Model(ModelConfig& config)
 		return;
 	}
 
-	this->GlobalInverseTransform = libAi::toNativeType(scene->mRootNode->mTransformation);
-	this->GlobalInverseTransform = glm::inverse(GlobalInverseTransform);
-
 	if (scene->mNumAnimations > 0) {
 		console::info("animations: ", scene->mNumAnimations);
-		for (int i = 0; i < scene->mNumAnimations; i++)
-		{
-			const Animation * animation = new Animation(scene->mAnimations[i]);
-			addAnimation(animation);
-		}
+
+//		ozz::animation::offline::AnimationBuilder animationBuilder;
+//		skeleton = createSkeleton(assimpResource);
+//		animations.reserve(scene->mNumAnimations);
+//
+//		for (int i = 0; i < scene->mNumAnimations; i++)
+//		{
+//			RawAnimation * rawAnimation = createAnimation(scene->mAnimations[i]);
+//			rawAnimations.push_back(rawAnimation);
+//			animations.insert({ std::string(rawAnimation->name.c_str()), animationBuilder(*rawAnimation) });
+//		}
 	} else {
 		console::warn("no animations");
 	}
@@ -128,10 +156,6 @@ Model::Model(ModelConfig& config)
 	rotate(config.rotation, config.rotationAngle);
 	setScale(config.scale);
 
-	console::info("");
-	console::infop("config.scale: %f %f %f", config.scale.x, config.scale.y, config.scale.z);
-	console::info("");
-
 	if (config.animation != "") {
 		setCurrentAnimation(config.animation);
 	}
@@ -143,7 +167,27 @@ Model::Model(ModelConfig& config)
 Model::~Model()
 {
 	console::info("free model");
+}
+
+void Model::destroy()
+{
 	freeMeshes();
+    ozz::memory::Allocator* allocator = ozz::memory::default_allocator();
+    currentAnimation = nullptr;
+
+    allocator->Delete(skeleton);
+
+    for (auto rawAnimation : rawAnimations)
+    	allocator->Delete(rawAnimation);
+
+    std::unordered_map<std::string, ozz::animation::Animation*>::iterator it;
+
+    for (it = animations.begin(); it != animations.end(); it++)
+    	allocator->Delete(it->second);
+
+//    allocator->Deallocate(locals_);
+//    allocator->Deallocate(models_);
+//    allocator->Delete(cache_);
 }
 
 const ModelId& Model::getId()
@@ -169,6 +213,10 @@ void Model::allocMeshes(unsigned int count)
 
 void Model::freeMeshes()
 {
+	for (auto mesh : meshes_) {
+		Mesh::Destroy(mesh);
+	}
+
 	meshes_.clear();
 }
 
@@ -219,7 +267,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 				const aiMesh * mesh = assimpResource->getMesh(meshIndex);
 				const aiMaterial * meshMaterial = assimpResource->getMeshMaterial(mesh);
 
-				Mesh * modelMesh = new Mesh();
+				Mesh * modelMesh = Mesh::Create();
 				modelMesh->material.initFromAi(meshMaterial, assimpResource, images_);
 				modelMesh->geometry.initFromAi(mesh, assimpResource);
 
@@ -279,7 +327,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 void Model::addMesh(Mesh * mesh)
 {
 	mesh->setParentObject(&object);
-	meshes_.push_back(std::shared_ptr<Mesh>(mesh));
+	meshes_.push_back(mesh);
 }
 
 void Model::addNode(ModelNode * node)
@@ -290,11 +338,11 @@ void Model::addNode(ModelNode * node)
 void Model::removeMesh(Mesh * mesh)
 {
 	ModelMeshes::iterator it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const ModelMesh& ptr) {
-		return ptr.get() == mesh;
+		return ptr == mesh;
 	});
 
 	if (it != meshes_.end()) {
-		(*it).get()->setParentObject(nullptr);
+		(*it)->setParentObject(nullptr);
 		meshes_.erase(it);
 	}
 }
@@ -315,7 +363,7 @@ const ModelMeshes& Model::getMeshes()
 
 Mesh * Model::getFirstMesh()
 {
-	return meshes_.at(0).get();
+	return meshes_.at(0);
 }
 
 void Model::setScale(vec3 scale)
@@ -343,102 +391,90 @@ void Model::setQuaternion(float x, float y, float z, float w)
 	object.setQuaternion(x, y, z, w);
 }
 
-void Model::enableAnimIterpolation()
+RawSkeleton * Model::createSkeleton(const Resource::Assimp * assimpResource)
 {
-	animInterpolation_ = true;
+	const aiNode * rootNode = assimpResource->getRootNode();
+
+	ozz::memory::Allocator* allocator = ozz::memory::default_allocator();
+
+	RawSkeleton * skeleton = new RawSkeleton();
+	skeleton->roots.resize(1);
+
+	RawSkeleton::Joint * root = &skeleton->roots[0];
+	root->name = rootNode->mName.C_Str();
+	root->transform.translation = Float3(0.0f, 1.0f, 1.0f);
+	root->transform.rotation = Quaternion::identity();
+	root->transform.scale = Float3::one();
+
+	createJoints(rootNode, root);
+
+	return skeleton;
 }
 
-void Model::disableAnimIterpolation()
+void Model::createJoints(const aiNode * node, RawSkeleton::Joint * joint)
 {
-	animInterpolation_ = false;
+	joint->children.resize(node->mNumChildren);
+
+	for (uint i = 0; i < node->mNumChildren; i++) {
+		RawSkeleton::Joint * childJoint = &joint->children[i];
+		childJoint->name = node->mChildren[i]->mName.C_Str();
+		childJoint->transform.translation = Float3::zero();
+		childJoint->transform.rotation = Quaternion::FromAxisAngle(Float4(1.0f, 0.0f, 0.0f, 0.0f));
+		childJoint->transform.scale = Float3::one();
+
+		createJoints(node->mChildren[i], childJoint);
+	}
 }
 
-void Model::setCurrentAnimation(std::string animationName)
+RawAnimation * Model::createAnimation(aiAnimation * assimpAnimation)
 {
-	const Animation * animation = getAnimation(animationName);
+	RawAnimation * animation = new RawAnimation();
 
-	if (animation == nullptr) {
-		currentAnimation.setAnimation(nullptr);
-		console::warn("set current animation failed. animation not found: ", animationName);
+	animation->duration = (float)(assimpAnimation->mDuration * assimpAnimation->mTicksPerSecond);
+	animation->tracks.reserve(assimpAnimation->mNumChannels);
+	animation->name = assimpAnimation->mName.C_Str();
+
+	for (uint i = 0; i < assimpAnimation->mNumChannels; i++) {
+		RawAnimation::JointTrack& track = animation->tracks[i];
+		aiNodeAnim * nodeAnim = assimpAnimation->mChannels[i];
+
+		for (uint j = 0; j < nodeAnim->mNumPositionKeys; j++) {
+			aiVectorKey& mPositionKey = nodeAnim->mPositionKeys[j];
+			aiVector3D& mVec = mPositionKey.mValue;
+
+			const RawAnimation::TranslationKey tkey = {(float)mPositionKey.mTime, Float3(mVec.x, mVec.y, mVec.z)};
+
+			track.translations.push_back(tkey);
+		}
+
+		for (uint j = 0; j < nodeAnim->mNumRotationKeys; j++) {
+			aiQuatKey& mRotationKey = nodeAnim->mRotationKeys[j];
+			aiQuaternion& mQuat = mRotationKey.mValue;
+
+			const RawAnimation::RotationKey rkey = {(float)mRotationKey.mTime, Quaternion(mQuat.x, mQuat.y, mQuat.z, mQuat.w)};
+
+			track.rotations.push_back(rkey);
+		}
+
+		for (uint j = 0; j < nodeAnim->mNumScalingKeys; j++) {
+	        aiVectorKey& mScalingKey = nodeAnim->mScalingKeys[i];
+	        aiVector3D& mVec = mScalingKey.mValue;
+
+	        const RawAnimation::ScaleKey skey = {(float)mScalingKey.mTime, Float3(mVec.x, mVec.y, mVec.z)};
+
+	        track.scales.push_back(skey);
+		}
+	}
+
+	return animation;
+}
+
+void Model::setCurrentAnimation(std::string name) {
+	auto it = animations.find(name);
+
+	if (it == animations.end()) {
 		return;
 	}
 
-	currentAnimation.setAnimation(animation);
+	currentAnimation = it->second;
 }
-
-void Model::addAnimation(const Animation * animation)
-{
-	std::string animationName = animation->getName();
-	std::shared_ptr<const Animation> animationPtr(animation);
-
-	animations_.insert(
-		std::pair<std::string, std::shared_ptr<const Animation>>(animationName, animationPtr)
-	);
-}
-
-const Animation * const Model::getAnimation(const std::string& name)
-{
-	auto it = animations_.find(name);
-	
-	if (it == animations_.end()) {
-		return nullptr;
-	}
-
-	return it->second.get();
-}
-
-void Model::processCurrentAnimation()
-{
-	processAnimation(currentAnimation);
-}
-
-void Model::processAnimation(AnimationProcess& animationProcess)
-{
-	const Animation * animation = animationProcess.getAnimation();
-
-	if (animation == nullptr) {
-		console::warn("not found animation");
-		return;
-	}
-
-	double tick = animationProcess.getCurrentTick();
-	mat4 rootTransform(1.0);
-
-	processNodeAnimation(rootNode_, animation, rootTransform, tick);
-}
-
-// @todo: оптимизировать обход по иерархии нод
-void Model::processNodeAnimation(ModelNode * node, const Animation * animation, mat4& rootTransform, double tick)
-{
-	const NodeAnimation * nodeAnim = animation->findNode(node->name);
-
-	if (nodeAnim != nullptr) {
-		const AnimKey key = nodeAnim->findKey(tick, true);
-
-		mat4 newRootTransform = rootTransform * glm::translate(mat4(1.0f), key.position) * glm::toMat4(key.rotation)/* * glm::scale(mat4(1.0f), key.scale)*/;
-
-		// // @todo: мы проходимся по всем мешам в поиске нужных костей - оптимизировать обход
-		for (auto it = meshes_.begin(); it != meshes_.end(); it++) {
-			Mesh * mesh = (*it).get();
-			auto boneIt = mesh->bones.find(node->name);
-
-			if (boneIt != mesh->bones.end()) {
-				MeshBone& bone = boneIt->second;
-				mat4 finalTransform = newRootTransform * bone.getOffset();
-				bone.setTransform(finalTransform);
-				mesh->transforms.at(bone.getIndex()) = finalTransform;
-			}
-		}
-		
-		// @todo: одинаковые куски кода здесь и ниже кроме newRootTransform
-		for (auto it = node->children.begin(); it != node->children.end(); it++) {
-			processNodeAnimation((*it).get(), animation, newRootTransform, tick);
-		}
-	} else {
-		for (auto it = node->children.begin(); it != node->children.end(); it++) {
-			processNodeAnimation((*it).get(), animation, rootTransform, tick);
-		}
-	}
-}
-
-

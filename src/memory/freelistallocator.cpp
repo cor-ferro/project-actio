@@ -32,7 +32,7 @@ namespace memory {
 		Node * affectedNode,
 			 * previousNode;
 		this->Find(size, alignment, padding, previousNode, affectedNode);
-		assert (affectedNode != nullptr && "Not enough memory");
+		assert(affectedNode != nullptr && "Not enough memory");
 
 
 		const std::size_t alignmentPadding =  padding - allocationHeaderSize;

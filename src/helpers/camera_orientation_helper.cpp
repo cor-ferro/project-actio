@@ -9,9 +9,9 @@ namespace Helpers
 	direction_(direction),
 	length_(length)
 	{
-		lineUp = new Mesh();
-		lineLeft = new Mesh();
-		lineForward = new Mesh();
+		lineUp = Mesh::Create();
+		lineLeft = Mesh::Create();
+		lineForward = Mesh::Create();
 
 		addMesh(lineUp);
 		addMesh(lineLeft);

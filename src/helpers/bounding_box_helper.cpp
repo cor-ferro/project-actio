@@ -21,7 +21,7 @@ namespace Helpers
 
 	Mesh * BoundingBox::createBoxMesh(const Math::Box3& boundingBox)
 	{
-		Mesh * mesh = new Mesh();
+		Mesh * mesh = Mesh::Create();
 
 		mesh->setDrawType(Mesh_Draw_Line);
 		mesh->setPosition(boundingBox.center);

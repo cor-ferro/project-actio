@@ -70,7 +70,7 @@ bool Scene::initFromFile(Resource::File& file)
 	
 	console::info(" ");
 
-	std::vector<ModelConfig> * modelConfigs = new std::vector<ModelConfig>();
+	std::vector<Model::Config> * modelConfigs = new std::vector<Model::Config>();
 	Model * skyboxModel = nullptr;
 
 	std::istringstream models(iniModels);
@@ -99,7 +99,7 @@ bool Scene::initFromFile(Resource::File& file)
 			const char * iniModelScale = iniparser_getstring(ini, modelScaleKey.c_str(), "1.0");
 			const char * iniModelAnimation = iniparser_getstring(ini, modelAnimationKey.c_str(), "");
 
-			ModelConfig modelConfig;
+			Model::Config modelConfig;
 			modelConfig.name = model;
 			modelConfig.file = Resource::File(iniModelFile);
 			modelConfig.flipUv = iniModelFlipUv;
@@ -121,7 +121,7 @@ bool Scene::initFromFile(Resource::File& file)
 	allocModels(modelsCount);
 
 	for (auto it = modelConfigs->begin(); it != modelConfigs->end(); it++) {
-		ModelConfig& modelConfig = (*it);
+		Model::Config& modelConfig = (*it);
 		Model * model = AG::Models::create(modelConfig); // @todo: удалять модель
 
 		add(model);

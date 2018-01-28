@@ -2,20 +2,17 @@
 
 Mesh::Mesh()
 	: name("")
-	, isSetupReady(false)
 	, drawType(Mesh_Draw_Triangle)
 {}
 
-Mesh::Mesh(Geometry geometry) 
+Mesh::Mesh(Geometry geometry)
 	: name("")
-	, isSetupReady(false)
 	, geometry(geometry)
 	, drawType(Mesh_Draw_Triangle)
 {}
 
-Mesh::Mesh(Material::Phong material, Geometry geometry)
+Mesh::Mesh(Geometry geometry, Material::Phong material)
 	: name("")
-	, isSetupReady(false)
 	, material(material)
 	, geometry(geometry)
 	, drawType(Mesh_Draw_Triangle)
@@ -26,24 +23,50 @@ Mesh::Mesh(const Mesh& other)
 	freeGeometry();
 	freeMaterial();
 
-	freeBuffers();
-
 	console::info("copy mesh");
 
 	name = other.name;
 	material = other.material;
 	geometry = other.geometry;
-	isSetupReady = other.isSetupReady;
-	bones = other.bones;
-	transforms = other.transforms;
 	drawType = other.drawType;
+}
+
+Mesh * Mesh::Create()
+{
+	void * place = meshAllocator->Allocate(sizeof(Mesh), 8);
+	Mesh * mesh = new(place) Mesh();
+
+	return mesh;
+}
+
+Mesh * Mesh::Create(Geometry geometry)
+{
+	void * place = meshAllocator->Allocate(sizeof(Mesh), 8);
+	Mesh * mesh = new(place) Mesh(geometry);
+
+	return mesh;
+}
+
+Mesh * Mesh::Create(Geometry geometry, Material::Phong material)
+{
+	void * place = meshAllocator->Allocate(sizeof(Mesh), 8);
+	Mesh * mesh = new(place) Mesh(geometry, material);
+
+	return mesh;
+}
+
+void Mesh::Destroy(Mesh * mesh)
+{
+	if (mesh == nullptr) return;
+
+	mesh->destroy();
+	mesh->~Mesh();
+	meshAllocator->Free((void*)mesh);
 }
 
 Mesh::~Mesh()
 {
-	// freeGeometry();
-	// freeMaterial();
-	// freeBuffers();
+	console::info("free mesh");
 }
 
 void Mesh::destroy()
@@ -107,19 +130,19 @@ void Mesh::draw(Opengl::Program& program, uint flags)
 		program.setFloat(Opengl::Uniform::MaterialShininess, material.shininess);
 	}
 
-	if ((flags & Mesh_Draw_Bones) != 0) {
-		std::string boneTransformType;
-		if (bones.size() > 0) {
-			boneTransformType = "BoneTransformEnabled";
-			std::vector<mat4> * boneTransforms = &transforms;
-
-			program.setMat(Opengl::Uniform::Bones, boneTransforms);
-		} else {
-			boneTransformType = "BoneTransformDisabled";
-		}
-
-		program.enableVertexSubroutine(boneTransformType);
-	}
+//	if ((flags & Mesh_Draw_Bones) != 0) {
+//		std::string boneTransformType;
+//		if (bones.size() > 0) {
+//			boneTransformType = "BoneTransformEnabled";
+//			std::vector<mat4> * boneTransforms = &transforms;
+//
+//			program.setMat(Opengl::Uniform::Bones, boneTransforms);
+//		} else {
+//			boneTransformType = "BoneTransformDisabled";
+//		}
+//
+//		program.enableVertexSubroutine(boneTransformType);
+//	}
 
 	if ((flags & Mesh_Draw_Base) != 0) {
 		glBindVertexArray(geometry.VAO);
@@ -160,23 +183,7 @@ void Mesh::draw(Opengl::Program& program, uint flags)
 
 void Mesh::setup()
 {
-	if (isSetupReady == true)
-	{
-		console::warn("mesh already setup");
-		return;
-	}
-
 	geometry.setup();
-
-	isSetupReady = true;
 }
-
-void Mesh::freeBuffers()
-{
-	// glDeleteBuffers(1, &VBO);
-	// glDeleteBuffers(1, &EBO);
-	// glDeleteVertexArrays(1, &VAO);
-}
-
 
 #endif

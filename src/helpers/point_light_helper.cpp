@@ -11,7 +11,7 @@ namespace Helpers
         material.setDiffuse(0.0f, 1.0f, 0.0f);
 
         Geometry geometry = Geometry::Octahedron(1.0f);
-        meshHelper = new Mesh(material, geometry);
+        meshHelper = Mesh::Create(geometry, material);
         meshHelper->setup();
 
         addMesh(meshHelper);

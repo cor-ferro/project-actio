@@ -17,9 +17,9 @@ namespace AG
 		// 	return new Model(fileResource);
 		// }
 
-		Model * create(ModelConfig& modelConfig)
+		Model * create(Model::Config& modelConfig)
 		{
-			return new Model(modelConfig);
+			return Model::Create(modelConfig);
 		}
 
 		Model * skybox(std::vector<Resource::File> faces)
@@ -33,8 +33,8 @@ namespace AG
 				texture.setData(imageData, i);
 			}
 
-			Mesh * mesh = new Mesh(Material::Phong(texture), geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, Material::Phong(texture));
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -46,8 +46,8 @@ namespace AG
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Box();
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -59,8 +59,8 @@ namespace AG
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Plane(width, height, widthSegments, heightSegments);
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -73,8 +73,8 @@ namespace AG
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Sphere(radius, widthSegments, heightSegments, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -86,8 +86,8 @@ namespace AG
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Circle(radius, segments, 0.0f, glm::two_pi<float>());
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -108,8 +108,8 @@ namespace AG
 				0.0f, 
 				glm::two_pi<float>()
 			);
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -121,8 +121,8 @@ namespace AG
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Cone(radius, height, radialSegments, heightSegments, false, 0.0f, glm::two_pi<float>());
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -134,8 +134,8 @@ namespace AG
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Ring(innerRadius, outerRadius, thetaSegments,	8, 0.0f, glm::two_pi<float>());
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -146,8 +146,8 @@ namespace AG
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Torus(radius, tube, radialSegments, tubularSegments, glm::two_pi<float>());
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}
@@ -159,8 +159,8 @@ namespace AG
 			material.setDiffuse(0.0f, 1.0f, 0.0f);
 
 			Geometry geometry = Geometry::Octahedron(radius);
-			Mesh * mesh = new Mesh(material, geometry);
-			Model * model = new Model(mesh);
+			Mesh * mesh = Mesh::Create(geometry, material);
+			Model * model = Model::Create(mesh);
 
 			return model;
 		}

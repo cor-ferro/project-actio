@@ -9,8 +9,8 @@ namespace Helpers
 		, direction_(direction)
 		, length_(length)
 	{
-		line = new Mesh();
-		cone = new Mesh();
+		line = Mesh::Create();
+		cone = Mesh::Create();
 
 		addMesh(line);
 		addMesh(cone);

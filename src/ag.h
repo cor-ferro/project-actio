@@ -31,7 +31,7 @@ namespace AG
 
 	namespace Models {
 		// Model * create(Resource::File);
-		Model * create(ModelConfig& modelConfig);
+		Model * create(Model::Config& modelConfig);
 		Model * skybox(std::vector<Resource::File> faces);
 		Model * box();
 		Model * plane(uint width, uint height, uint widthSegments, uint heightSegments);

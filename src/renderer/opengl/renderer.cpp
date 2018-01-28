@@ -59,11 +59,11 @@ void OpenglRenderer::start()
 	skyboxDeferredProgram.bindBlock("Matrices", 0);
 	OpenglCheckErrors();
 
-	lightQuad = new Mesh(Geometry::Quad2d());
-	lightSphere = new Mesh(
+	lightQuad = Mesh::Create(Geometry::Quad2d());
+	lightSphere = Mesh::Create(
 		Geometry::Sphere(1.0f, 32, 32, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f)
 	);
-	lightCylinder = new Mesh(
+	lightCylinder = Mesh::Create(
 		Geometry::Cylinder(
 			4.0f,
 			1.0f,
@@ -249,16 +249,6 @@ void OpenglRenderer::defferedRender(Scene * scene)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 		OpenglCheckErrors();
-
-
-//		Model * skyboxModel = scene->getSkybox();
-//		Mesh * mesh = skyboxModel->getFirstMesh();
-//		Texture texture = mesh->material.getTextures().at(0);
-//
-//		OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, texture);
-//		skyboxProgram.setInt("cubeTexture", maxTextureUnits - 1);
-//		mesh->draw(skyboxProgram, Mesh_Draw_Base);
-//		OpenglCheckErrorsSilent();
 
 		geometryPassProgram.use();
 		drawModels(scene, geometryPassProgram);
@@ -474,12 +464,6 @@ void OpenglRenderer::drawModels(Scene * scene, Opengl::Program& program)
 	for (auto modelIt = models.begin(); modelIt != models.end(); modelIt++)
 	{
 		Model * model = *modelIt;
-
-		if (model->currentAnimation.isSet())
-		{
-			model->currentAnimation.tick(this->elaspsedTime * 1000.0);
-			model->processCurrentAnimation();
-		}
 
 		const ModelMeshes& meshes = model->getMeshes();
 		for(auto mesh = meshes.begin(); mesh != meshes.end(); mesh++)
