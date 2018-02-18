@@ -22,7 +22,7 @@ Texture::~Texture() {}
 void Texture::destroy()
 {
 	gTexture.destroy();
-	console::info("destroy texture");
+//	console::info("destroy texture");
 	// imageData_->free();
 	// delete imageData_;// @todo: not safe data remove
 

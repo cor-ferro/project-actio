@@ -4,10 +4,10 @@ namespace Helpers
 {
 
 	CameraOrientation::CameraOrientation(vec3 origin, vec3 direction, float length)
-		: Model(),
-	origin_(origin),
-	direction_(direction),
-	length_(length)
+		: Model()
+		, origin_(origin)
+		, direction_(direction)
+		, length_(length)
 	{
 		lineUp = Mesh::Create();
 		lineLeft = Mesh::Create();
