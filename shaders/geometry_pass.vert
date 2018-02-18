@@ -46,8 +46,8 @@ uniform mat4 model;
 void main()
 {
 	mat4 boneTransform = getBoneTransform();
-	vec4 worldPos = model * vec4(aPos, 1.0);
-	vec3 worldNormal = mat3(transpose(inverse(model))) * aNormal;
+	vec4 worldPos = model * boneTransform * vec4(aPos, 1.0);
+	vec3 worldNormal = mat3(transpose(inverse(model))) * (vec4(aNormal, 1.0)).xyz;
 
 	outData.position = aPos;
 	outData.worldPosition = vec3(worldPos);

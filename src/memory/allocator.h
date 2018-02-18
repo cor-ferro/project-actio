@@ -13,6 +13,10 @@ namespace memory {
 	public:
 		Allocator(const std::size_t totalSize);
 
+		std::size_t getTotatlSize();
+		std::size_t getUsed();
+		std::size_t getPeak();
+
 		virtual ~Allocator();
 
 		virtual void* Allocate(const std::size_t size, const std::size_t alignment = 0) = 0;

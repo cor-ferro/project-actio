@@ -2,17 +2,20 @@
 
 Mesh::Mesh()
 	: name("")
+	, id(newMeshId())
 	, drawType(Mesh_Draw_Triangle)
 {}
 
 Mesh::Mesh(Geometry geometry)
 	: name("")
+	, id(newMeshId())
 	, geometry(geometry)
 	, drawType(Mesh_Draw_Triangle)
 {}
 
 Mesh::Mesh(Geometry geometry, Material::Phong material)
 	: name("")
+	, id(newMeshId())
 	, material(material)
 	, geometry(geometry)
 	, drawType(Mesh_Draw_Triangle)
@@ -66,7 +69,7 @@ void Mesh::Destroy(Mesh * mesh)
 
 Mesh::~Mesh()
 {
-	console::info("free mesh");
+//	console::infop("free mesh %i", id);
 }
 
 void Mesh::destroy()
@@ -81,6 +84,11 @@ void Mesh::freeMaterial() {}
 std::string Mesh::getName()
 {
 	return name;
+}
+
+MeshId Mesh::getId()
+{
+	return id;
 }
 
 void Mesh::setName(std::string newName)
@@ -130,19 +138,11 @@ void Mesh::draw(Opengl::Program& program, uint flags)
 		program.setFloat(Opengl::Uniform::MaterialShininess, material.shininess);
 	}
 
-//	if ((flags & Mesh_Draw_Bones) != 0) {
-//		std::string boneTransformType;
-//		if (bones.size() > 0) {
-//			boneTransformType = "BoneTransformEnabled";
-//			std::vector<mat4> * boneTransforms = &transforms;
-//
-//			program.setMat(Opengl::Uniform::Bones, boneTransforms);
-//		} else {
-//			boneTransformType = "BoneTransformDisabled";
-//		}
-//
-//		program.enableVertexSubroutine(boneTransformType);
-//	}
+	if ((flags & Mesh_Draw_Bones) != 0) {
+		program.enableVertexSubroutine("BoneTransformEnabled");
+	} else {
+		program.enableVertexSubroutine("BoneTransformDisabled");
+	}
 
 	if ((flags & Mesh_Draw_Base) != 0) {
 		glBindVertexArray(geometry.VAO);

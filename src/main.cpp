@@ -24,6 +24,7 @@
 #include "lib/cycle.h"
 #include "lib/input_handler.h"
 #include "lib/console.h"
+#include "lib/utils.h"
 #include "renderer/renderer.h"
 #include "scenes/scene.h"
 #include "cameras/camera.h"
@@ -112,6 +113,11 @@ int main(int argc, char **argv) {
 	console::info("init scene");
 	Resource::File testScene("testScene.ini");
 	scene->initFromFile(testScene);
+	console::info("-------memory-------");
+	console::info("images: ", utils::formatMemorySize(imageAllocator->getUsed()));
+	console::info("models: ", utils::formatMemorySize(modelsAllocator->getUsed()));
+	console::info("mesh: ", utils::formatMemorySize(meshAllocator->getUsed()));
+	console::info("--------------------");
 
 //	std::shared_ptr<Light::Spot> spotLight(AG::Light::spot());
 //	spotLight->setAmbient(vec3(0.1f));
@@ -221,15 +227,28 @@ int main(int argc, char **argv) {
 	cleanupPhysics();
 	cleanupScene(scene.get());
 
-	std::vector<Model*> models = scene->getModels();
+	std::vector<Model*> sceneModels = scene->getModels();
 
-	Model::Destroy(sphereModel);
+	for (uint i = 0; i < sceneModels.size(); i++) {
+		Model * model = sceneModels[i];
+		Model::Destroy(model);
+	}
+
+	console::info("after loop free");
+
+//	sceneModels.clear();
 
 //	for (auto model : models) {
 //		Model::Destroy(model);
 //		console::info("destroy success");
 //		model = nullptr;
 //	}
+
+	console::info("-------memory-------");
+	console::info("images: ", utils::formatMemorySize(imageAllocator->getUsed()));
+	console::info("models: ", utils::formatMemorySize(modelsAllocator->getUsed()));
+	console::info("mesh: ", utils::formatMemorySize(meshAllocator->getUsed()));
+	console::info("--------------------");
 
 	delete imageAllocator;
 	delete modelsAllocator;

@@ -51,7 +51,9 @@ struct Program {
 	void setMat(const std::string&, const mat3&) const;
 	void setMat(const std::string&, const mat2&) const;
 
-	void setMat(const std::string&, const std::vector<mat4>*) const;
+	void setMat(const std::string&, const std::vector<mat4> * mats) const;
+	void setMat(const std::string&, const int size, const mat4 * mats) const;
+	void setMat(const std::string&, const int size, const float * numbers) const;
 
 	void setVec(const std::string&, const vec2 &) const;
 	void setVec(const std::string&, const vec3 &) const;
@@ -65,8 +67,8 @@ struct Program {
 	void setVec(Opengl::Uniform::Common, const glm::vec4&) const;
 
 	void enableSubroutine(unsigned int shaderType, std::string& subroutinName);
-	void enableVertexSubroutine(std::string& subroutinName);
-	void enableFragmentSubroutine(std::string& subroutinName);
+	void enableVertexSubroutine(std::string subroutinName);
+	void enableFragmentSubroutine(std::string subroutinName);
 
 	void bindBlock(const char *blockName, int point);
 

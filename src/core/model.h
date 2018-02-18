@@ -52,7 +52,7 @@ using ozz::animation::offline::RawAnimation;
 
 extern memory::PoolAllocator * modelsAllocator;
 
-typedef int ModelId;
+typedef std::size_t ModelId;
 typedef std::string ModelName;
 typedef Mesh * ModelMesh;
 typedef std::vector<ModelMesh> ModelMeshes;
@@ -73,7 +73,7 @@ struct ModelNode {
 
 	std::string name;
 	std::vector<std::shared_ptr<ModelNode>> children;
-	std::vector<std::shared_ptr<Mesh>> meshes;
+	std::vector<Mesh*> meshes;
 	mat4 transformation;
 };
 
@@ -122,7 +122,13 @@ struct Model {
 	const ModelMeshes& getMeshes();
 	Mesh * getFirstMesh();
 
+	const int getNodesCount();
+
 	void setCurrentAnimation(std::string name);
+	void tickAnimationTime(float time);
+	void processAnimation();
+
+	ozz::Range<ozz::math::Float4x4> * getBones();
 private:
 	Model(Config& modelConfig);
 	Model(Mesh * mesh);
@@ -134,10 +140,11 @@ private:
 	void freeMeshes();
 	void freeNodes();
 
-	RawSkeleton * createSkeleton(const Resource::Assimp * assimpResource);
+	void createSkeleton(const Resource::Assimp * assimpResource, RawSkeleton * skeleton);
 	void createJoints(const aiNode * node, RawSkeleton::Joint * joint);
+	void buildSkeleton();
 
-	RawAnimation * createAnimation(aiAnimation * assimpAnimation);
+	void createAnimation(aiAnimation * assimpAnimation, ozz::animation::offline::RawAnimation * rawAnimation);
 
 	ModelId id_;
 	ModelName name_;
@@ -148,10 +155,15 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<const ModelNode>> nodes_;
 	std::unordered_map<std::string, std::shared_ptr<const Animation>> animations_;
 	std::unordered_map<std::string, ImageLoader::Data> images_;
-	RawSkeleton * skeleton;
+	ozz::animation::Skeleton * skeleton;
 	ozz::animation::Animation * currentAnimation;
+	float animationTime = 0.0f;
 	std::vector<ozz::animation::offline::RawAnimation*> rawAnimations;
 	std::unordered_map<std::string, ozz::animation::Animation*> animations;
+
+	ozz::Range<ozz::math::SoaTransform> locals_;
+	ozz::Range<ozz::math::Float4x4> bones_;
+	ozz::animation::SamplingCache * cache_;
 };
 
 static std::vector<Model*> _models;

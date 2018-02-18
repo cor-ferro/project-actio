@@ -75,6 +75,35 @@ void Geometry::initFromAi(const aiMesh * mesh, const Resource::Assimp * assimpRe
 		addVertex(vertex);
 	}
 
+	if (numBones > 0) {
+		console::infop("numBones: %i", numBones);
+
+		std::vector<std::vector<std::pair<uint, float>>> affectedVertices;
+		affectedVertices.resize(vertices_->size());
+
+		for (uint i = 0; i < numBones; i++) {
+			aiBone * bone = mesh->mBones[i];
+
+			for (uint j = 0; j < bone->mNumWeights; j++) {
+				uint vertexId = bone->mWeights[j].mVertexId;
+				float weight = bone->mWeights[j].mWeight;
+
+				affectedVertices.at(vertexId).push_back({i, weight});
+			}
+		}
+
+		for (uint i = 0; i < affectedVertices.size(); i++) {
+			const std::vector<std::pair<uint, float>>& boneData = affectedVertices.at(i);
+
+			for (uint j = 0; j < boneData.size(); j++) {
+				vertices_->at(i).BonedIDs[j] = boneData[j].first;
+				vertices_->at(i).Weights[j] = boneData[j].second;
+
+				if (j == 3) break; // max num boneids/weights - 4
+			}
+		}
+	}
+
 	unsigned int numFaces = mesh->mNumFaces;
 	freeIndices();
 	allocIndices(numFaces);

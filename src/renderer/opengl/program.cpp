@@ -157,12 +157,12 @@ namespace Opengl {
 		glUniformSubroutinesuiv(shaderType, 1, &routineIndex);
 	}
 
-	void Program::enableVertexSubroutine(std::string& subroutineName)
+	void Program::enableVertexSubroutine(std::string subroutineName)
 	{
 		enableSubroutine(GL_VERTEX_SHADER, subroutineName);
 	}
 
-	void Program::enableFragmentSubroutine(std::string& subroutineName)
+	void Program::enableFragmentSubroutine(std::string subroutineName)
 	{
 		enableSubroutine(GL_FRAGMENT_SHADER, subroutineName);
 	}
@@ -229,7 +229,7 @@ namespace Opengl {
 			GLuint index = getSubroutineIndex(shaderType, soubroutineName);
 
 			if (index == GL_INVALID_INDEX) {
-				console::warnp("GL_INVALID_INDEX: %s", soubroutineName.c_str());
+				console::warnp("GL_INVALID_INDEX: %s, %s", name.c_str(), soubroutineName.c_str());
 			}
 
 			subroutineIndexCache->insert({ soubroutineName, index });
@@ -286,6 +286,16 @@ namespace Opengl {
 	void Program::setMat(const std::string &name, const std::vector<glm::mat4> * mats) const
 	{
 		glUniformMatrix4fv(getUniformCacheLoc(name), mats->size(), GL_FALSE, &mats->front()[0][0]);
+	}
+
+	void Program::setMat(const std::string& name, const int size, const glm::mat4 * mats) const
+	{
+		glUniformMatrix4fv(getUniformCacheLoc(name), size, GL_FALSE, &mats[0][0][0]);
+	}
+
+	void Program::setMat(const std::string& name, const int size, const float * numbers) const
+	{
+		glUniformMatrix4fv(getUniformCacheLoc(name.c_str()), size, GL_FALSE, numbers);
 	}
 
 	/* Vec2 */

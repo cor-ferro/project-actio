@@ -10,4 +10,19 @@ namespace memory {
 	Allocator::~Allocator(){
 		m_totalSize = 0;
 	}
+
+	std::size_t Allocator::getTotatlSize()
+	{
+		return m_totalSize;
+	}
+
+	std::size_t Allocator::getUsed()
+	{
+		return m_used;
+	}
+
+	std::size_t Allocator::getPeak()
+	{
+		return m_peak;
+	}
 }

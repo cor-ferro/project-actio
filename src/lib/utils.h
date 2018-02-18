@@ -1,18 +1,14 @@
-/*
- * utils.h
- *
- *  Created on: Oct 4, 2017
- *      Author: demitriy
- */
+#ifndef LIB_UTILS_H_
+#define LIB_UTILS_H_
 
-#ifndef UTILS_H_
-#define UTILS_H_
+#include <string>
+#include <sstream>
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 namespace utils {
-
+	std::string formatMemorySize(std::size_t size);
 }
 
 
-#endif /* UTILS_H_ */
+#endif /* LIB_UTILS_H_ */

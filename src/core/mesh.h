@@ -18,6 +18,7 @@
 #include "texture.h"
 #include "mesh_bone.h"
 #include "../memory/poolallocator.h"
+#include "ozz/base/maths/simd_math.h"
 
 #ifdef GRAPHIC_API_OPENGL
 #include "../renderer/opengl/program.h"
@@ -26,6 +27,14 @@
 #endif
 
 extern memory::PoolAllocator * meshAllocator;
+
+typedef std::size_t MeshId;
+
+static size_t idMeshCounter = 0;
+static MeshId newMeshId()
+{
+	return ++idMeshCounter;
+}
 
 enum MeshDrawType {
 	Mesh_Draw_Triangle,
@@ -55,6 +64,7 @@ struct Mesh : Object3D {
 	~Mesh();
 
 	std::string getName();
+	MeshId getId();
 	void setName(std::string newName);
 	void setName(const char * newName);
 
@@ -83,6 +93,7 @@ private:
 
 	void destroy();
 
+	std::size_t id;
 	std::string name;
 	MeshDrawType drawType;
 };

@@ -37,7 +37,7 @@ void OpenglRenderer::start()
 	forwardProgram.bindBlock("Matrices", 0);
 
 	geometryPassProgram.init("geometry_pass", Opengl::Program::Watch_Changes);
-	geometryPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
+	geometryPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]" });
 	geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
 	geometryPassProgram.bindBlock("Matrices", 0);
 	OpenglCheckErrors();
@@ -110,11 +110,6 @@ void OpenglRenderer::forwardRender(Scene * scene)
 	Camera * camera = scene->getActiveCamera();
 
 	const RendererParams& renderParams = getParams();
-
-	double newTime = glfwGetTime();
-
-	this->elaspsedTime = newTime - this->time;
-	this->time = newTime;
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
@@ -465,10 +460,60 @@ void OpenglRenderer::drawModels(Scene * scene, Opengl::Program& program)
 	{
 		Model * model = *modelIt;
 
+		uint renderFlags = 	Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Material;
+		ozz::Range<ozz::math::Float4x4> * bones = model->getBones();
+
+		if (bones->Count() > 0) {
+			renderFlags|= Mesh_Draw_Bones;
+			model->tickAnimationTime((float)elaspsedTime);
+			model->processAnimation();
+
+//			float * numbers = &bones[0].begin->cols[0][0];
+//			for (int i = 0; i < 63 * 4; i++) {
+//				if (numbers[i] > 0.00001) {
+//					console::infop("f: %f", numbers[i]);
+//				}
+//			}
+
+//			std::vector<glm::mat4> mats;
+//			mats.reserve(bones->Count());
+//
+//			for (int i = 0; i < bones->Count(); i++) {
+//				mat4 mat;
+//
+//				ozz::math::Float4x4 f = bones->operator [](i);
+//
+//				mat[0][0] = f.cols[0][0];
+//				mat[0][1] = f.cols[0][1];
+//				mat[0][2] = f.cols[0][2];
+//				mat[0][3] = f.cols[0][3];
+//
+//				mat[1][0] = f.cols[1][0];
+//				mat[1][1] = f.cols[1][1];
+//				mat[1][2] = f.cols[1][2];
+//				mat[1][3] = f.cols[1][3];
+//
+//				mat[2][0] = f.cols[2][0];
+//				mat[2][1] = f.cols[2][1];
+//				mat[2][2] = f.cols[2][2];
+//				mat[2][3] = f.cols[2][3];
+//
+//				mat[3][0] = f.cols[3][0];
+//				mat[3][1] = f.cols[3][1];
+//				mat[3][2] = f.cols[3][2];
+//				mat[3][3] = f.cols[3][3];
+//
+//				mats.push_back(mat);
+//			}
+
+			program.setMat("bones[]", bones->Count(), &bones[0].begin->cols[0][0]);
+//			program.setMat("bones[]", &mats);
+		}
+
 		const ModelMeshes& meshes = model->getMeshes();
 		for(auto mesh = meshes.begin(); mesh != meshes.end(); mesh++)
 		{
-			(*mesh)->draw(program, Mesh_Draw_All);
+			(*mesh)->draw(program, renderFlags);
 		}
 	}
 }
@@ -476,6 +521,12 @@ void OpenglRenderer::drawModels(Scene * scene, Opengl::Program& program)
 void OpenglRenderer::preRender()
 {
 	stats.startTime();
+
+	double newTime = glfwGetTime();
+
+	this->elaspsedTime = newTime - this->time;
+	this->time = newTime;
+
 	onPreRender();
 }
 
