@@ -13,9 +13,14 @@ struct CameraControl {
 	CameraControl(Camera * camera, InputHandler * ih);
 
 	void update();
+	void calcSensetivity(uint width, uint height, double dpi);
 private:
 	Camera * camera_;
 	InputHandler * ih_;
+
+	float sensetivity = 1.0f;
+	float speedFactor = 1.0f;
+	float speed = 1.0f;
 };
 
 #endif

@@ -6,13 +6,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <imgui/imgui.h>
-// #include "../imgui_impl_glfw_gl3.h"
+#include "../imgui_impl_glfw_gl3.h"
 #include "../lib/console.h"
 
-static void w1ErrorCallback(int error, const char* description)
-{
-    console::err("GLFW error: ", description);
-}
+
 
 struct WindowContext {
     WindowContext()
@@ -21,15 +18,6 @@ struct WindowContext {
     }
 
     bool init(unsigned int width, unsigned int height) {
-        glfwInit();
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_SAMPLES, 4);
-
-        glfwSetErrorCallback(w1ErrorCallback);
-
-        // GLFWmonitor* primary = glfwGetPrimaryMonitor();
         window = glfwCreateWindow(width, height, "Window", NULL, NULL);
 
         if (window == NULL)
@@ -39,14 +27,14 @@ struct WindowContext {
             return false;
         }
 
-        glfwMakeContextCurrent(window);
+        setAsCurrent();
         gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
         glfwSetWindowUserPointer(window, this);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         // glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 
-        // ImGui_ImplGlfwGL3_Init(window, true);
+        ImGui_ImplGlfwGL3_Init(window, true);
 
         // add callbacks
         glfwSetWindowSizeCallback(window, WindowContext::onResizeCallback);
@@ -54,6 +42,10 @@ struct WindowContext {
 	    glfwSetCursorPosCallback(window, WindowContext::onMouseMoveCallback);
 
         return true;
+    }
+
+    void setAsCurrent() {
+        glfwMakeContextCurrent(window);
     }
 
     void destroy() {

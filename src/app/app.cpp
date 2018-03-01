@@ -14,7 +14,35 @@ void App::init(int argc, char **argv)
 	argv_ = argv;
 
 	path_ = ".";
-	console::info("init path", path_);
+
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
+
+	glfwSetErrorCallback(w1ErrorCallback);
+
+	int countMonitors = 0;
+	GLFWmonitor ** monitors = glfwGetMonitors(&countMonitors);
+
+	for (int i = 0; i < countMonitors; i++) {
+		addMonitor(monitors[i]);
+	}
+
+	glfwSetMonitorCallback([](GLFWmonitor* monitor, int event) {
+		switch (event) {
+			case GLFW_CONNECTED:
+				console::info("monitor connected");
+				// addMonitor(monitor);
+				break;
+
+			case GLFW_DISCONNECTED:
+				console::info("monitor disconnected");
+				// this->removeMonitor(monitor);
+				break;
+		}
+	});
 }
 
 std::string App::getName()
@@ -50,4 +78,34 @@ std::string App::shadersPath(std::string fromPath)
 void App::setName(std::string name)
 {
 	name_ = name;
+}
+
+void App::addMonitor(GLFWmonitor * monitor)
+{
+	monitors.insert({ (void*)monitor,  Monitor(monitor) });
+}
+
+void App::removeMonitor(GLFWmonitor * monitor)
+{
+	auto it = monitors.find((void*)monitor);
+
+	if (it == monitors.end()) {
+		console::warn("try remove non exists monitor");
+		return;
+	}
+
+	monitors.erase(it);
+}
+
+const Monitor * const App::getPrimaryMonitor()
+{
+	GLFWmonitor * ptr = glfwGetPrimaryMonitor();
+
+	auto it = monitors.find((void*)ptr);
+
+	if (it == monitors.end()) {
+		return nullptr;
+	}
+
+	return &it->second;
 }

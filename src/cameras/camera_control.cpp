@@ -9,10 +9,6 @@ CameraControl::CameraControl(Camera * camera, InputHandler * ih)
 
 void CameraControl::update()
 {
-	float cameraSpeed = 0.25f;
-	float speedFactor = 10.0f;
-	float sensetivity = 1.2f;
-
 	float speedX = glm::abs(ih_->mouseMoved.x / speedFactor);
 	float speedY = glm::abs(ih_->mouseMoved.y / speedFactor);
 
@@ -22,11 +18,13 @@ void CameraControl::update()
 	if (angleY > 100.0f) {
 		console::info("over angle y", angleY, ih_->mouseMoved.x);
 		console::info("details", ih_->mouseMoved.x, ih_->mouseStart.x, ih_->mouse.x);
+		angleY = 10.0f;
 	}
 
 	if (angleX > 100.0f) {
 		console::info("over angle x", angleX);
 		console::info("details", ih_->mouseMoved.y, ih_->mouseStart.y, ih_->mouse.y);
+		angleX = 10.0f;
 	}
 
 	vec3 cameraPosition = camera_->getPosition();
@@ -47,10 +45,10 @@ void CameraControl::update()
 
 	vec3 left = glm::normalize(glm::cross(front, cameraUp));
 
-	if (ih_->isPress(InputHandler::KEY_W)) cameraPosition-= cameraSpeed * front;
-	if (ih_->isPress(InputHandler::KEY_S)) cameraPosition+= cameraSpeed * front;
-	if (ih_->isPress(InputHandler::KEY_A)) cameraPosition+= left * cameraSpeed;
-	if (ih_->isPress(InputHandler::KEY_D)) cameraPosition-= left * cameraSpeed;
+	if (ih_->isPress(InputHandler::KEY_W)) cameraPosition-= speed * front;
+	if (ih_->isPress(InputHandler::KEY_S)) cameraPosition+= speed * front;
+	if (ih_->isPress(InputHandler::KEY_A)) cameraPosition+= left * speed;
+	if (ih_->isPress(InputHandler::KEY_D)) cameraPosition-= left * speed;
 	if (ih_->isPress(InputHandler::KEY_C)) cameraPosition-= vec3(0.0f, 0.1f, 0.0f);
 	if (ih_->isPress(InputHandler::KEY_SPACE)) cameraPosition+= vec3(0.0f, 0.1f, 0.0f);
 
@@ -58,3 +56,7 @@ void CameraControl::update()
 	camera_->setPosition(cameraPosition);
 }
 
+void CameraControl::calcSensetivity(uint width, uint height, double dpi)
+{
+	speedFactor = (float)dpi * 1.5f;
+}
