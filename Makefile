@@ -32,17 +32,17 @@ LDFLAGS_COMPILE	=\
 				-Ivendor/ozz-animation/include
 LDFLAGS_BUILD  	=\
 				-L./libs/linux64 \
-				./libs/linux64/libSOIL.a \
-				./libs/linux64/libiniparser.a \
-				./libs/linux64/libimgui.a \
-				./libs/linux64/libPhysX3Extensions$(PHYSX_LIB).a \
-				./libs/linux64/libozz_animation_offline.a \
-				./libs/linux64/libozz_animation.a \
-				./libs/linux64/libozz_base.a \
-				./libs/linux64/libozz_geometry.a \
-				./libs/linux64/libozz_options.a \
-				./libs/linux64/libozz_animation_offline_anim_tools.a \
-				./libs/linux64/libozz_animation_offline_skel_tools.a \
+				./bin/linux64/libSOIL.a \
+				./bin/linux64/libiniparser.a \
+				./bin/linux64/libimgui.a \
+				./bin/linux64/libPhysX3Extensions$(PHYSX_LIB).a \
+				./bin/linux64/libozz_animation_offline.a \
+				./bin/linux64/libozz_animation.a \
+				./bin/linux64/libozz_base.a \
+				./bin/linux64/libozz_geometry.a \
+				./bin/linux64/libozz_options.a \
+				./bin/linux64/libozz_animation_offline_anim_tools.a \
+				./bin/linux64/libozz_animation_offline_skel_tools.a \
 				-Wl,-z,origin \
 				-Wl,-rpath='libs/linux64' \
 				-Wl,-rpath-link='libs/linux64' \

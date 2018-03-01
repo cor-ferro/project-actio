@@ -28,3 +28,6 @@
 [submodule "vendor/ozz-animation"]
 	path = vendor/ozz-animation
 	url = https://github.com/guillaumeblanc/ozz-animation
+[submodule "vendor/jasper"]
+	path = vendor/jasper
+	url = https://github.com/mdadams/jasper
