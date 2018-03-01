@@ -70,6 +70,8 @@ namespace ImageLoader {
 					console::warnp("error load image %s, %s", path.c_str(), err.c_str());
 				}
 
+				imageLoaderMutex.unlock();
+				
 				return imageData;
 			}
 
