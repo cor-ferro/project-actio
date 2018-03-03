@@ -20,19 +20,19 @@ build_dependencies()
 {
 	create_libs_dir	
 
-	#build_physx
-	#build_boost
-	#build_assimp
-	#build_entityx
-	#build_glm
-	#build_glfw
-	#build_glad
+	build_physx
+	build_boost
+	build_assimp
+	build_entityx
+	build_glm
+	build_glfw
+	build_glad
 	build_imgui
-	#build_iniparser
-	#build_ozz_animation
-	#build_soil
-	#build_devIL
-	#build_jasper
+	build_iniparser
+	build_ozz_animation
+	build_soil
+	build_devIL
+	build_jasper
 }
 
 create_libs_dir()
