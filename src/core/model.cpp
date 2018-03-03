@@ -140,6 +140,13 @@ Model::Model(Model::Config& config) : Model()
 
 		skeleton = skeletonBuilder(rawSkeleton);
 
+		ozz::Range<const char* const> jointNames = skeleton->joint_names();
+		int joint_names_count = jointNames.Count();
+
+		for (int i = 0; i < joint_names_count; i++) {
+			console::infop("joint: %s", jointNames[i]);
+		}
+
 		for (int i = 0; i < scene->mNumAnimations; i++)
 		{
 			ozz::animation::offline::AnimationBuilder animationBuilder;
@@ -166,6 +173,7 @@ Model::Model(Model::Config& config) : Model()
 		const int numJoints = rawSkeleton.num_joints();
 
 		console::infop("num_joints: %i", numJoints);
+		console::infop("num_soa_joints: %i", numSoaJoints);
 
 		locals_ = allocator->AllocateRange<ozz::math::SoaTransform>(numSoaJoints);
 		bones_ = allocator->AllocateRange<ozz::math::Float4x4>(numJoints);
@@ -440,9 +448,15 @@ void Model::createSkeleton(const Resource::Assimp * assimpResource, RawSkeleton 
 
 	RawSkeleton::Joint * root = &rawSkeleton->roots[0];
 	root->name = rootNode->mName.C_Str();
-	root->transform.translation = Float3(0.0f, 1.0f, 1.0f);
-	root->transform.rotation = Quaternion::identity();
-	root->transform.scale = Float3::one();
+
+	aiMatrix4x4 mat = rootNode->mTransformation;
+	aiVector3D translation, scale;
+	aiQuaternion rotation;
+	mat.Decompose(scale, rotation, translation);
+
+	root->transform.translation = Float3((float)translation.x, (float)translation.y, (float)translation.z);
+	root->transform.rotation = Quaternion((float)rotation.x, (float)rotation.y, (float)rotation.z, (float)rotation.w);
+	root->transform.scale = Float3((float)scale.x, (float)scale.y, (float)scale.z);
 
 	createJoints(rootNode, root);
 }
@@ -454,9 +468,15 @@ void Model::createJoints(const aiNode * node, RawSkeleton::Joint * joint)
 	for (uint i = 0; i < node->mNumChildren; i++) {
 		RawSkeleton::Joint * childJoint = &joint->children[i];
 		childJoint->name = node->mChildren[i]->mName.C_Str();
-		childJoint->transform.translation = Float3::zero();
-		childJoint->transform.rotation = Quaternion::FromAxisAngle(Float4(1.0f, 0.0f, 0.0f, 0.0f));
-		childJoint->transform.scale = Float3::one();
+		
+		aiMatrix4x4 mat = node->mTransformation;
+		aiVector3D translation, scale;
+		aiQuaternion rotation;
+		mat.Decompose(scale, rotation, translation);
+		
+		childJoint->transform.translation = Float3((float)translation.x, (float)translation.y, (float)translation.z);
+		childJoint->transform.rotation = Quaternion((float)rotation.x, (float)rotation.y, (float)rotation.z, (float)rotation.w);
+		childJoint->transform.scale = Float3((float)scale.x, (float)scale.y, (float)scale.z);
 
 		createJoints(node->mChildren[i], childJoint);
 	}
@@ -464,34 +484,59 @@ void Model::createJoints(const aiNode * node, RawSkeleton::Joint * joint)
 
 void Model::createAnimation(aiAnimation * assimpAnimation, ozz::animation::offline::RawAnimation * rawAnimation)
 {
+	// console::infop("animation name: %s", assimpAnimation->mName.C_Str());
+
 	rawAnimation->duration = (float)(assimpAnimation->mDuration / assimpAnimation->mTicksPerSecond);
-	rawAnimation->tracks.resize(assimpAnimation->mNumChannels);
-//	rawAnimation->name = assimpAnimation->mName.C_Str();
+	// rawAnimation->duration = assimpAnimation->mTicksPerSecond * assimpAnimation->mDuration;
+	rawAnimation->tracks.resize(skeleton->num_joints());
+	rawAnimation->name = assimpAnimation->mName.C_Str();
 
 	console::infop("duration %f", rawAnimation->duration);
 	console::infop("mDuration %f", assimpAnimation->mDuration);
 	console::infop("mTicksPerSecond %f", assimpAnimation->mTicksPerSecond);
 
-	for (uint i = 0; i < assimpAnimation->mNumChannels; i++) {
+	ozz::Range<const char* const> jointNames = skeleton->joint_names();
+
+	std::unordered_map<std::string, aiNodeAnim*> animNodes;
+
+	for (int j = 0; j < assimpAnimation->mNumChannels; j++) {
+		aiNodeAnim * nodeAnim = assimpAnimation->mChannels[j];
+
+		animNodes.insert({ std::string(nodeAnim->mNodeName.C_Str()), nodeAnim });
+	}
+
+	for (uint i = 0; i < rawAnimation->num_tracks(); ++i) {
 		RawAnimation::JointTrack& track = rawAnimation->tracks[i];
-		aiNodeAnim * nodeAnim = assimpAnimation->mChannels[i];
+		const char* jointName = jointNames[i];
+
+		auto it = animNodes.find(std::string(jointName));
+		if (it == animNodes.end()) {
+			console::warnp("not found joint: %s", jointName);
+			continue;
+		}
+
+		aiNodeAnim * nodeAnim = it->second;
+
+		assert(strcmp(nodeAnim->mNodeName.C_Str(), jointName) == 0);
+		assert(nodeAnim != nullptr);
 
 		track.translations.resize(nodeAnim->mNumPositionKeys);
 		track.rotations.resize(nodeAnim->mNumRotationKeys);
 		track.scales.resize(nodeAnim->mNumScalingKeys);
 
 		float previousTranslationTime = -1.0f;
+
 		for (uint j = 0; j < nodeAnim->mNumPositionKeys; j++) {
-			aiVectorKey& mPositionKey = nodeAnim->mPositionKeys[j];
-			aiVector3D& mVec = mPositionKey.mValue;
+			const aiVectorKey& mPositionKey = nodeAnim->mPositionKeys[j];
+			const aiVector3D& mVec = mPositionKey.mValue;
 
-			float time = (float)(mPositionKey.mTime / assimpAnimation->mTicksPerSecond);
+			float time = static_cast<float>(mPositionKey.mTime / assimpAnimation->mTicksPerSecond);
 			assert(time >= 0.0f && time <= rawAnimation->duration && "translation");
+			assert(time >= previousTranslationTime);
 
-			if (time <= previousTranslationTime) {
-				continue;
-			}
-			const RawAnimation::TranslationKey tkey = {time, Float3((float)mVec.x, (float)mVec.y, (float)mVec.z)};
+			RawAnimation::TranslationKey tkey;
+			tkey.time = time;
+			tkey.value = Float3((float)mVec.x, (float)mVec.y, (float)mVec.z);
 
 			track.translations[j] = tkey;
 
@@ -499,42 +544,37 @@ void Model::createAnimation(aiAnimation * assimpAnimation, ozz::animation::offli
 		}
 
 		for (uint j = 0; j < nodeAnim->mNumRotationKeys; j++) {
-			aiQuatKey& mRotationKey = nodeAnim->mRotationKeys[j];
-			aiQuaternion& mQuat = mRotationKey.mValue;
+			const aiQuatKey& mRotationKey = nodeAnim->mRotationKeys[j];
+			const aiQuaternion& mQuat = mRotationKey.mValue;
 
-			float time = (float)(mRotationKey.mTime  / assimpAnimation->mTicksPerSecond);
+			float time = static_cast<float>(mRotationKey.mTime / assimpAnimation->mTicksPerSecond);
 			assert(time >= 0.0f && time <= rawAnimation->duration && "rotate");
-			quat q = libAi::toNativeType(mQuat);
-//			q = glm::normalize(q);
-			float length = glm::length(q);
 
-			const RawAnimation::RotationKey rkey = {time, ozz::math::Quaternion::identity()};
+			// const RawAnimation::RotationKey rkey = { static_cast<float>(time), ozz::math::Quaternion(static_cast<float>(mQuat.x), static_cast<float>(mQuat.y), static_cast<float>(mQuat.z), static_cast<float>(mQuat.w)) };
+			RawAnimation::RotationKey rkey;
+			rkey.time = time;
+			rkey.value = ozz::math::Quaternion(static_cast<float>(mQuat.x), static_cast<float>(mQuat.y), static_cast<float>(mQuat.z), static_cast<float>(mQuat.w));
+
 			track.rotations[j] = rkey;
-
-//			track.rotations[j].time = time;
-//			track.rotations[j].value = ozz::math::Quaternion::identity();
-//			track.rotations[j].value.w = (float)mQuat.w;
-//			track.rotations[j].value.x = (float)mQuat.x;
-//			track.rotations[j].value.y = (float)mQuat.y;
-//			track.rotations[j].value.z = (float)mQuat.z;
-
-//			console::infop("rotation: %f %f %f %f, %f", mQuat.w, mQuat.x, mQuat.y, mQuat.z, length);
 		}
 
 		for (uint j = 0; j < nodeAnim->mNumScalingKeys; j++) {
-	        aiVectorKey& mScalingKey = nodeAnim->mScalingKeys[j];
-	        aiVector3D& mVec = mScalingKey.mValue;
+	        const aiVectorKey& mScalingKey = nodeAnim->mScalingKeys[j];
+	        const aiVector3D& mVec = mScalingKey.mValue;
 
-	        float time = (float)(mScalingKey.mTime / assimpAnimation->mTicksPerSecond);
-	        assert(time >= 0.0f && time <= rawAnimation->duration);
-	        const RawAnimation::ScaleKey skey = {time, Float3((float)mVec.x, (float)mVec.y, (float)mVec.z)};
+	        float time = static_cast<float>(mScalingKey.mTime / assimpAnimation->mTicksPerSecond);
+	        assert(time >= 0.0f && time <= rawAnimation->duration && "scale");
+	        
+			RawAnimation::ScaleKey skey;
+			skey.time = time;
+			skey.value = Float3((float)mVec.x, (float)mVec.y, (float)mVec.z);
 
 	        track.scales[j] = skey;
 		}
 	}
 
 	console::infop("animation time: %f", rawAnimation->duration);
-	console::infop("animation tracks: %i", rawAnimation->tracks.size());
+	console::infop("animation tracks: %i, %i", rawAnimation->tracks.size(), rawAnimation->num_tracks());
 	console::infop("Skeleton::kMaxJoints: %i", ozz::animation::Skeleton::kMaxJoints);
 
 //	  if (rawAnimation->duration <= 0.f) {  // Tests duration is valid.
