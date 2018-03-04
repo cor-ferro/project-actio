@@ -100,7 +100,6 @@ Model::Model(const Model& other)
 	nodes_ = other.nodes_;
 	animations_ = other.animations_;
 	rootNode_ = other.rootNode_;
-	bones_ = other.bones_;
 }
 
 Model::Model(Mesh * mesh) : Model() {
@@ -142,30 +141,12 @@ Model::Model(Model::Config& config) : Model()
 
 		for (int i = 0; i < scene->mNumAnimations; i++)
 		{
-			ozz::animation::offline::AnimationBuilder animationBuilder;
+			animation::Animation* animation = new animation::Animation(scene->mAnimations[i], skeleton);
 
-			RawAnimation rawAnimation;
-			createAnimation(scene->mAnimations[i], &rawAnimation);
-
-			ozz::animation::Animation * animation = animationBuilder(rawAnimation);
-
-			if (!animation) {
-				console::warnp("failed create animation %s, %i", scene->mAnimations[i]->mName.C_Str(), rawAnimation.Validate());
-				break;
+			if (animation->valid()) {
+				animations_.insert({ animation->getName(), animation });
 			}
-
-			console::infop("animation: %s", scene->mAnimations[i]->mName.C_Str());
-			animations.insert({ std::string(scene->mAnimations[i]->mName.C_Str()), animation });
 		}
-
-		ozz::memory::Allocator* allocator = ozz::memory::default_allocator();
-
-		const int numSoaJoints = skeleton->num_soa_joints();
-		const int numJoints = rawSkeleton.num_joints();
-
-		locals_ = allocator->AllocateRange<ozz::math::SoaTransform>(numSoaJoints);
-		bones_ = allocator->AllocateRange<ozz::math::Float4x4>(numJoints);
-		cache_ = allocator->New<ozz::animation::SamplingCache>(numJoints);
 	} else {
 		console::warn("no animations");
 	}
@@ -204,19 +185,16 @@ void Model::destroy()
 		console::info("destroy skeleton");
 		ozz::memory::Allocator* allocator = ozz::memory::default_allocator();
 
-		for (auto rawAnimation : rawAnimations)
-			allocator->Delete(rawAnimation);
+		for (auto &pair : animations_) {
+			delete pair.second;
+			pair.second = nullptr;
+		}
 
-		std::unordered_map<std::string, ozz::animation::Animation*>::iterator it;
-		for (it = animations.begin(); it != animations.end(); it++)
-			allocator->Delete(it->second);
+		animations_.erase(animations_.begin(), animations_.end());
+		currentAnimation = nullptr;
 
 		allocator->Delete(skeleton);
 		skeleton = nullptr;
-
-		allocator->Deallocate(locals_);
-		allocator->Deallocate(bones_);
-		allocator->Delete(cache_);
 	}
 }
 
@@ -304,10 +282,13 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 				modelMesh->boneTransforms.reserve(mesh->mNumBones);
 				modelMesh->boneTransforms.resize(mesh->mNumBones);
 
+				console::info("--------------------");
 				for (uint boneId = 0; boneId < mesh->mNumBones; boneId++) {
 					aiBone * bone = mesh->mBones[boneId];
 					
 					const char* boneName = bone->mName.C_Str();
+
+					// console::infop("bone name: %s %i", boneName, boneId);
 
 					BoneMap boneMap;
 					boneMap.id = boneId;
@@ -322,6 +303,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 						it->second.push_back(boneMap);
 					}
 				}
+				console::info("--------------------");
 
 				this->addMesh(modelMesh);
 				modelNode->addMesh(modelMesh);
@@ -464,9 +446,9 @@ void Model::createSkeleton(const Resource::Assimp * assimpResource, RawSkeleton 
 	aiQuaternion rotation;
 	mat.Decompose(scale, rotation, translation);
 
-	root->transform.translation = Float3((float)translation.x, (float)translation.y, (float)translation.z);
-	root->transform.rotation = Quaternion((float)rotation.x, (float)rotation.y, (float)rotation.z, (float)rotation.w);
-	root->transform.scale = Float3((float)scale.x, (float)scale.y, (float)scale.z);
+	// root->transform.translation = Float3((float)translation.x, (float)translation.y, (float)translation.z);
+	// root->transform.rotation = Quaternion((float)rotation.x, (float)rotation.y, (float)rotation.z, (float)rotation.w);
+	// root->transform.scale = Float3((float)scale.x, (float)scale.y, (float)scale.z);
 
 	createJoints(rootNode, root);
 }
@@ -484,121 +466,23 @@ void Model::createJoints(const aiNode * node, RawSkeleton::Joint * joint)
 		aiQuaternion rotation;
 		mat.Decompose(scale, rotation, translation);
 		
-		childJoint->transform.translation = Float3((float)translation.x, (float)translation.y, (float)translation.z);
-		childJoint->transform.rotation = Quaternion((float)rotation.x, (float)rotation.y, (float)rotation.z, (float)rotation.w);
-		childJoint->transform.scale = Float3((float)scale.x, (float)scale.y, (float)scale.z);
+		// childJoint->transform.translation = Float3((float)translation.x, (float)translation.y, (float)translation.z);
+		// childJoint->transform.rotation = Quaternion((float)rotation.x, (float)rotation.y, (float)rotation.z, (float)rotation.w);
+		// childJoint->transform.scale = Float3((float)scale.x, (float)scale.y, (float)scale.z);
 
 		createJoints(node->mChildren[i], childJoint);
 	}
 }
 
-void Model::createAnimation(aiAnimation * assimpAnimation, ozz::animation::offline::RawAnimation * rawAnimation)
-{
-	rawAnimation->duration = (float)(assimpAnimation->mDuration / assimpAnimation->mTicksPerSecond);
-	rawAnimation->tracks.resize(skeleton->num_joints());
-	rawAnimation->name = assimpAnimation->mName.C_Str();
-
-	console::infop("animation name: %s", assimpAnimation->mName.C_Str());
-	console::infop("duration %f", rawAnimation->duration);
-	console::infop("mDuration %f", assimpAnimation->mDuration);
-	console::infop("mTicksPerSecond %f", assimpAnimation->mTicksPerSecond);
-
-	ozz::Range<const char* const> jointNames = skeleton->joint_names();
-
-	std::unordered_map<std::string, aiNodeAnim*> animNodes;
-
-	for (int j = 0; j < assimpAnimation->mNumChannels; j++) {
-		aiNodeAnim * nodeAnim = assimpAnimation->mChannels[j];
-
-		animNodes.insert({ std::string(nodeAnim->mNodeName.C_Str()), nodeAnim });
-	}
-
-	for (uint i = 0; i < rawAnimation->num_tracks(); ++i) {
-		RawAnimation::JointTrack& track = rawAnimation->tracks[i];
-		const char* jointName = jointNames[i];
-
-		auto it = animNodes.find(std::string(jointName));
-		if (it == animNodes.end()) {
-			console::warnp("not found joint: %s", jointName);
-			continue;
-		}
-
-		aiNodeAnim * nodeAnim = it->second;
-
-		// console::infop("animation: %s %s",  jointName);
-
-		assert(strcmp(nodeAnim->mNodeName.C_Str(), jointName) == 0);
-		assert(nodeAnim != nullptr);
-
-		track.translations.resize(nodeAnim->mNumPositionKeys);
-		track.rotations.resize(nodeAnim->mNumRotationKeys);
-		track.scales.resize(nodeAnim->mNumScalingKeys);
-
-		float previousTranslationTime = -1.0f;
-
-		for (uint j = 0; j < nodeAnim->mNumPositionKeys; j++) {
-			const aiVectorKey& mPositionKey = nodeAnim->mPositionKeys[j];
-			const aiVector3D& mVec = mPositionKey.mValue;
-
-			float time = static_cast<float>(mPositionKey.mTime / assimpAnimation->mTicksPerSecond);
-			assert(time >= 0.0f && time <= rawAnimation->duration && "translation");
-			assert(time >= previousTranslationTime);
-
-			RawAnimation::TranslationKey tkey;
-			tkey.time = time;
-			tkey.value = Float3((float)mVec.x, (float)mVec.y, (float)mVec.z);
-
-			track.translations[j] = tkey;
-
-			previousTranslationTime = time;
-		}
-
-		for (uint j = 0; j < nodeAnim->mNumRotationKeys; j++) {
-			const aiQuatKey& mRotationKey = nodeAnim->mRotationKeys[j];
-			const aiQuaternion& mQuat = mRotationKey.mValue;
-
-			float time = static_cast<float>(mRotationKey.mTime / assimpAnimation->mTicksPerSecond);
-			assert(time >= 0.0f && time <= rawAnimation->duration && "rotate");
-
-			// const RawAnimation::RotationKey rkey = { static_cast<float>(time), ozz::math::Quaternion(static_cast<float>(mQuat.x), static_cast<float>(mQuat.y), static_cast<float>(mQuat.z), static_cast<float>(mQuat.w)) };
-			RawAnimation::RotationKey rkey;
-			rkey.time = time;
-			rkey.value = ozz::math::Quaternion(static_cast<float>(mQuat.x), static_cast<float>(mQuat.y), static_cast<float>(mQuat.z), static_cast<float>(mQuat.w));
-
-			track.rotations[j] = rkey;
-		}
-
-		for (uint j = 0; j < nodeAnim->mNumScalingKeys; j++) {
-	        const aiVectorKey& mScalingKey = nodeAnim->mScalingKeys[j];
-	        const aiVector3D& mVec = mScalingKey.mValue;
-
-	        float time = static_cast<float>(mScalingKey.mTime / assimpAnimation->mTicksPerSecond);
-	        assert(time >= 0.0f && time <= rawAnimation->duration && "scale");
-	        
-			RawAnimation::ScaleKey skey;
-			skey.time = time;
-			skey.value = Float3((float)mVec.x, (float)mVec.y, (float)mVec.z);
-
-	        track.scales[j] = skey;
-		}
-	}
-
-	console::infop("animation time: %f", rawAnimation->duration);
-	console::infop("animation tracks: %i, %i", rawAnimation->tracks.size(), rawAnimation->num_tracks());
-	console::infop("Skeleton::kMaxJoints: %i", ozz::animation::Skeleton::kMaxJoints);
-}
-
 void Model::setCurrentAnimation(std::string name) {
-	console::infop("setCurrentAnimation %s, %i", name.c_str(), animations.size());
-	auto it = animations.find(name);
+	auto it = animations_.find(name);
 
-	if (it == animations.end()) {
-		console::warnp("no animation found %s %i", name.c_str());
+	if (it == animations_.end()) {
+		console::warnp("animation not found %s", name.c_str());
 		return;
 	}
 
 	currentAnimation = it->second;
-	console::info("now current animation: ", currentAnimation);
 }
 
 void Model::tickAnimationTime(float time)
@@ -607,11 +491,7 @@ void Model::tickAnimationTime(float time)
 		return;
 	}
 
-	if (animationTime + time > currentAnimation->duration()) {
-		animationTime = 0.0f;
-	} else {
-		animationTime+= time;
-	}
+	currentAnimation->tick(time);
 }
 
 void Model::processAnimation()
@@ -620,24 +500,12 @@ void Model::processAnimation()
 		return;
 	}
 
-	ozz::animation::SamplingJob samplingJob;
-	samplingJob.animation = currentAnimation;
-	samplingJob.cache = cache_;
-	samplingJob.time = animationTime;
-	samplingJob.output = locals_;
-	if (!samplingJob.Run()) {
-		console::warn("job not start");
-		return;
-	}
-
-	ozz::animation::LocalToModelJob ltmJob;
-	ltmJob.skeleton = skeleton;
-	ltmJob.input = locals_;
-	ltmJob.output = bones_;
-	ltmJob.Run();
+	animation::process(currentAnimation, skeleton);
 
 	ozz::Range<const char* const> jointNames = skeleton->joint_names();
 	int joint_names_count = jointNames.Count();
+
+	ozz::Range<ozz::math::Float4x4>& bones_ = currentAnimation->getModels();
 
 	for (int i = 0; i < joint_names_count; i++) {
 		auto it = boneMeshMap.find(std::string(jointNames[i]));
@@ -653,7 +521,7 @@ void Model::processAnimation()
 	}
 }
 
-ozz::Range<ozz::math::Float4x4> * Model::getBones()
+bool Model::isAnimationProgress()
 {
-	return &bones_;
+	return currentAnimation != nullptr;
 }

@@ -14,6 +14,10 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <ozz/base/memory/allocator.h>
+#include <ozz/animation/runtime/skeleton.h>
+#include <ozz/animation/offline/raw_skeleton.h>
+#include <ozz/animation/offline/skeleton_builder.h>
 #include "../lib/console.h"
 #include "../lib/types.h"
 #include "../lib/assimp.h"
@@ -22,28 +26,12 @@
 #include "../lib/comparators.h"
 #include "../resources/resources.h"
 #include "../animation/animation.h"
+#include "../animation/process.h"
 #include "../math/Box3.h"
 #include "./object3D.h"
 #include "./mesh.h"
 
 #include "../memory/poolallocator.h"
-
-#include "ozz/animation/runtime/animation.h"
-#include "ozz/animation/runtime/local_to_model_job.h"
-#include "ozz/animation/runtime/sampling_job.h"
-#include "ozz/animation/runtime/skeleton.h"
-
-#include "ozz/animation/offline/animation_builder.h"
-#include "ozz/animation/offline/raw_animation.h"
-#include "ozz/animation/offline/raw_skeleton.h"
-#include "ozz/animation/offline/skeleton_builder.h"
-
-#include "ozz/base/maths/quaternion.h"
-#include "ozz/base/maths/simd_math.h"
-#include "ozz/base/maths/soa_transform.h"
-#include "ozz/base/maths/vec_float.h"
-
-#include "ozz/base/memory/allocator.h"
 
 using ozz::math::Float3;
 using ozz::math::Float4;
@@ -136,8 +124,7 @@ struct Model {
 	void setCurrentAnimation(std::string name);
 	void tickAnimationTime(float time);
 	void processAnimation();
-
-	ozz::Range<ozz::math::Float4x4> * getBones();
+	bool isAnimationProgress();
 private:
 	Model(Config& modelConfig);
 	Model(Mesh * mesh);
@@ -153,26 +140,17 @@ private:
 	void createJoints(const aiNode * node, RawSkeleton::Joint * joint);
 	void buildSkeleton();
 
-	void createAnimation(aiAnimation * assimpAnimation, ozz::animation::offline::RawAnimation * rawAnimation);
-
 	ModelId id_;
 	ModelName name_;
 	ModelMeshes meshes_;
 	ModelNode * rootNode_;
 	Object3D object;
-	bool animInterpolation_;
 	std::unordered_map<std::string, std::shared_ptr<const ModelNode>> nodes_;
-	std::unordered_map<std::string, std::shared_ptr<const Animation>> animations_;
 	std::unordered_map<std::string, ImageLoader::Data> images_;
-	ozz::animation::Skeleton * skeleton;
-	ozz::animation::Animation * currentAnimation;
-	float animationTime = 0.0f;
-	std::vector<ozz::animation::offline::RawAnimation*> rawAnimations;
-	std::unordered_map<std::string, ozz::animation::Animation*> animations;
 
-	ozz::Range<ozz::math::SoaTransform> locals_;
-	ozz::Range<ozz::math::Float4x4> bones_;
-	ozz::animation::SamplingCache * cache_;
+	ozz::animation::Skeleton * skeleton;
+	animation::Animation * currentAnimation;
+	std::unordered_map<std::string, animation::Animation*> animations_;
 	std::map<std::string, std::vector<BoneMap>> boneMeshMap;
 };
 

@@ -461,9 +461,8 @@ void OpenglRenderer::drawModels(Scene * scene, Opengl::Program& program)
 		Model * model = *modelIt;
 
 		uint renderFlags = 	Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Material;
-		ozz::Range<ozz::math::Float4x4> * bones = model->getBones();
 
-		if (bones->Count() > 0) {
+		if (model->isAnimationProgress()) {
 			renderFlags|= Mesh_Draw_Bones;
 		}
 
