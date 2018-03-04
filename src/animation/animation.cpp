@@ -194,4 +194,11 @@ namespace animation {
         return animation_;
     }
 
+    mat4* Animation::getBones()
+    {
+        void* vModels = static_cast<void*>(&models_[0].cols[0][0]);
+        mat4* bones = static_cast<mat4*>(vModels);
+
+        return bones;
+    }
 }

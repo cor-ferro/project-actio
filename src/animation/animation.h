@@ -13,6 +13,7 @@
 #include <ozz/base/maths/soa_transform.h>
 #include <ozz/base/maths/vec_float.h>
 #include <ozz/base/memory/allocator.h>
+#include "../lib/types.h"
 
 namespace animation {
     struct Animation {
@@ -33,6 +34,7 @@ namespace animation {
         ozz::Range<ozz::math::Float4x4>& getModels();
         ozz::animation::SamplingCache* getCache();
         ozz::animation::Animation* getAnimation();
+        mat4* getBones();
     private:
         void setName(const char* newName);
         void setName(std::string newName);

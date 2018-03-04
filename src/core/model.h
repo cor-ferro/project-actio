@@ -84,8 +84,8 @@ struct Model {
 	};
 
 	struct BoneMap {
-		uint id;
-		Mesh* mesh;
+		uint jointIndex;
+		uint boneIndex;
 		mat4 offset;
 	};
 
@@ -151,7 +151,7 @@ private:
 	ozz::animation::Skeleton * skeleton;
 	animation::Animation * currentAnimation;
 	std::unordered_map<std::string, animation::Animation*> animations_;
-	std::map<std::string, std::vector<BoneMap>> boneMeshMap;
+	std::map<Mesh*, std::vector<BoneMap>> boneMeshMap;
 };
 
 static std::vector<Model*> _models;

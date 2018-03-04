@@ -282,28 +282,32 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 				modelMesh->boneTransforms.reserve(mesh->mNumBones);
 				modelMesh->boneTransforms.resize(mesh->mNumBones);
 
-				console::info("--------------------");
-				for (uint boneId = 0; boneId < mesh->mNumBones; boneId++) {
-					aiBone * bone = mesh->mBones[boneId];
-					
-					const char* boneName = bone->mName.C_Str();
+				if (mesh->mNumBones > 0) {
+					std::vector<BoneMap> boneJointsMap;
+					ozz::Range<const char* const> jointNames = skeleton->joint_names();
 
-					// console::infop("bone name: %s %i", boneName, boneId);
+					for (uint boneId = 0; boneId < mesh->mNumBones; boneId++) {
+						aiBone * bone = mesh->mBones[boneId];
+						const char* boneName = bone->mName.C_Str();
+						uint jointIndex = 0;
 
-					BoneMap boneMap;
-					boneMap.id = boneId;
-					boneMap.mesh = modelMesh;
-					boneMap.offset = libAi::toNativeType(bone->mOffsetMatrix);
+						for (uint jIndex = 0; jIndex < jointNames.Count(); jIndex++) {
+							if (strcmp(jointNames[jIndex], boneName) == 0) {
+								jointIndex = jIndex;
+								break;
+							}
+						}
 
-					auto it = boneMeshMap.find(std::string(boneName));
+						BoneMap map;
+						map.jointIndex = jointIndex;
+						map.boneIndex = boneId;
+						map.offset = libAi::toNativeType(bone->mOffsetMatrix);
 
-					if (it == boneMeshMap.end()) {
-						boneMeshMap.insert({ std::string(boneName), { boneMap } });
-					} else {
-						it->second.push_back(boneMap);
+						boneJointsMap.push_back(map);
 					}
+
+					boneMeshMap.insert({ modelMesh, boneJointsMap });					
 				}
-				console::info("--------------------");
 
 				this->addMesh(modelMesh);
 				modelNode->addMesh(modelMesh);
@@ -502,21 +506,13 @@ void Model::processAnimation()
 
 	animation::process(currentAnimation, skeleton);
 
-	ozz::Range<const char* const> jointNames = skeleton->joint_names();
-	int joint_names_count = jointNames.Count();
+	mat4* bones_ = currentAnimation->getBones();
 
-	ozz::Range<ozz::math::Float4x4>& bones_ = currentAnimation->getModels();
+	for (auto const& x : boneMeshMap) {
+		Mesh * mesh = x.first;
 
-	for (int i = 0; i < joint_names_count; i++) {
-		auto it = boneMeshMap.find(std::string(jointNames[i]));
-		bool isFoundMap = it != boneMeshMap.end();
-
-		if (isFoundMap) {
-			std::vector<BoneMap>& maps = it->second;
-
-			for (const BoneMap& map : maps) {
-				map.mesh->boneTransforms[map.id] = libOzz::toNativeType(bones_[i]) * map.offset;
-			}
+		for (const BoneMap& jointBoneMap : x.second) {
+			mesh->boneTransforms[jointBoneMap.boneIndex] = bones_[jointBoneMap.jointIndex] * jointBoneMap.offset;
 		}
 	}
 }
