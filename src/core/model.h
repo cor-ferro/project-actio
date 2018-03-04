@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <map>
 #include <thread>
 #include <mutex>
 #include <queue>
@@ -16,7 +17,9 @@
 #include "../lib/console.h"
 #include "../lib/types.h"
 #include "../lib/assimp.h"
+#include "../lib/ozz.h"
 #include "../lib/image_loader.h"
+#include "../lib/comparators.h"
 #include "../resources/resources.h"
 #include "../animation/animation.h"
 #include "../math/Box3.h"
@@ -92,6 +95,12 @@ struct Model {
 		std::string animation;
 	};
 
+	struct BoneMap {
+		uint id;
+		Mesh* mesh;
+		mat4 offset;
+	};
+
 	Model();
 
 	static Model * Create();
@@ -164,6 +173,7 @@ private:
 	ozz::Range<ozz::math::SoaTransform> locals_;
 	ozz::Range<ozz::math::Float4x4> bones_;
 	ozz::animation::SamplingCache * cache_;
+	std::map<std::string, std::vector<BoneMap>> boneMeshMap;
 };
 
 static std::vector<Model*> _models;

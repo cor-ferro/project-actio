@@ -140,13 +140,6 @@ Model::Model(Model::Config& config) : Model()
 
 		skeleton = skeletonBuilder(rawSkeleton);
 
-		ozz::Range<const char* const> jointNames = skeleton->joint_names();
-		int joint_names_count = jointNames.Count();
-
-		for (int i = 0; i < joint_names_count; i++) {
-			console::infop("joint: %s", jointNames[i]);
-		}
-
 		for (int i = 0; i < scene->mNumAnimations; i++)
 		{
 			ozz::animation::offline::AnimationBuilder animationBuilder;
@@ -163,17 +156,12 @@ Model::Model(Model::Config& config) : Model()
 
 			console::infop("animation: %s", scene->mAnimations[i]->mName.C_Str());
 			animations.insert({ std::string(scene->mAnimations[i]->mName.C_Str()), animation });
-
-			break;
 		}
 
 		ozz::memory::Allocator* allocator = ozz::memory::default_allocator();
 
 		const int numSoaJoints = skeleton->num_soa_joints();
 		const int numJoints = rawSkeleton.num_joints();
-
-		console::infop("num_joints: %i", numJoints);
-		console::infop("num_soa_joints: %i", numSoaJoints);
 
 		locals_ = allocator->AllocateRange<ozz::math::SoaTransform>(numSoaJoints);
 		bones_ = allocator->AllocateRange<ozz::math::Float4x4>(numJoints);
@@ -312,6 +300,28 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 				Mesh * modelMesh = Mesh::Create();
 				modelMesh->material.initFromAi(meshMaterial, assimpResource, images_);
 				modelMesh->geometry.initFromAi(mesh, assimpResource);
+
+				modelMesh->boneTransforms.reserve(mesh->mNumBones);
+				modelMesh->boneTransforms.resize(mesh->mNumBones);
+
+				for (uint boneId = 0; boneId < mesh->mNumBones; boneId++) {
+					aiBone * bone = mesh->mBones[boneId];
+					
+					const char* boneName = bone->mName.C_Str();
+
+					BoneMap boneMap;
+					boneMap.id = boneId;
+					boneMap.mesh = modelMesh;
+					boneMap.offset = libAi::toNativeType(bone->mOffsetMatrix);
+
+					auto it = boneMeshMap.find(std::string(boneName));
+
+					if (it == boneMeshMap.end()) {
+						boneMeshMap.insert({ std::string(boneName), { boneMap } });
+					} else {
+						it->second.push_back(boneMap);
+					}
+				}
 
 				this->addMesh(modelMesh);
 				modelNode->addMesh(modelMesh);
@@ -484,13 +494,11 @@ void Model::createJoints(const aiNode * node, RawSkeleton::Joint * joint)
 
 void Model::createAnimation(aiAnimation * assimpAnimation, ozz::animation::offline::RawAnimation * rawAnimation)
 {
-	// console::infop("animation name: %s", assimpAnimation->mName.C_Str());
-
 	rawAnimation->duration = (float)(assimpAnimation->mDuration / assimpAnimation->mTicksPerSecond);
-	// rawAnimation->duration = assimpAnimation->mTicksPerSecond * assimpAnimation->mDuration;
 	rawAnimation->tracks.resize(skeleton->num_joints());
 	rawAnimation->name = assimpAnimation->mName.C_Str();
 
+	console::infop("animation name: %s", assimpAnimation->mName.C_Str());
 	console::infop("duration %f", rawAnimation->duration);
 	console::infop("mDuration %f", assimpAnimation->mDuration);
 	console::infop("mTicksPerSecond %f", assimpAnimation->mTicksPerSecond);
@@ -516,6 +524,8 @@ void Model::createAnimation(aiAnimation * assimpAnimation, ozz::animation::offli
 		}
 
 		aiNodeAnim * nodeAnim = it->second;
+
+		// console::infop("animation: %s %s",  jointName);
 
 		assert(strcmp(nodeAnim->mNodeName.C_Str(), jointName) == 0);
 		assert(nodeAnim != nullptr);
@@ -576,66 +586,6 @@ void Model::createAnimation(aiAnimation * assimpAnimation, ozz::animation::offli
 	console::infop("animation time: %f", rawAnimation->duration);
 	console::infop("animation tracks: %i, %i", rawAnimation->tracks.size(), rawAnimation->num_tracks());
 	console::infop("Skeleton::kMaxJoints: %i", ozz::animation::Skeleton::kMaxJoints);
-
-//	  if (rawAnimation->duration <= 0.f) {  // Tests duration is valid.
-//		  console::warn("failed check track");
-//	  }
-//	  if (rawAnimation->tracks.size() > ozz::animation::Skeleton::kMaxJoints) {  // Tests number of tracks.
-//		  console::warn("failed check track");
-//	  }
-
-//	  for (size_t j = 0; j < rawAnimation->tracks.size(); ++j) {
-//		const RawAnimation::JointTrack& track = rawAnimation->tracks[j];
-//
-//		{
-//			float previous_time = -1.f;
-//
-//			for (size_t k = 0; k < track.translations.size(); ++k) {
-//				const float frame_time = track.translations[k].time;
-//
-//				if (frame_time < 0.f || frame_time > rawAnimation->duration) {
-//					console::warn("failed check duration translation track ", frame_time, ", ", rawAnimation->duration);
-//				}
-//
-//				if (frame_time <= previous_time) {
-//					console::warn("failed check previous translation track ", frame_time, ", ", previous_time);
-//				}
-//				previous_time = frame_time;
-//			}
-//		}
-//
-//		{
-//			float previous_time = -1.f;
-//			for (size_t k = 0; k < track.rotations.size(); ++k) {
-//				const float frame_time = track.rotations[k].time;
-//
-//				if (frame_time < 0.f || frame_time > rawAnimation->duration) {
-//					console::warn("failed check rotation track ", frame_time, ", ", rawAnimation->duration);
-//				}
-//
-//				if (frame_time <= previous_time) {
-//					console::warn("failed check rotation track ", frame_time, ", ", previous_time);
-//				}
-//				previous_time = frame_time;
-//			}
-//		}
-//
-//		{
-//			float previous_time = -1.f;
-//			for (size_t k = 0; k < track.scales.size(); ++k) {
-//				const float frame_time = track.scales[k].time;
-//
-//				if (frame_time < 0.f || frame_time > rawAnimation->duration) {
-//					console::warn("failed check scale track ", frame_time, ", ", rawAnimation->duration);
-//				}
-//
-//				if (frame_time <= previous_time) {
-//					console::warn("failed check scale track ", frame_time, ", ", previous_time);
-//				}
-//				previous_time = frame_time;
-//			}
-//		}
-//	  }
 }
 
 void Model::setCurrentAnimation(std::string name) {
@@ -685,6 +635,22 @@ void Model::processAnimation()
 	ltmJob.input = locals_;
 	ltmJob.output = bones_;
 	ltmJob.Run();
+
+	ozz::Range<const char* const> jointNames = skeleton->joint_names();
+	int joint_names_count = jointNames.Count();
+
+	for (int i = 0; i < joint_names_count; i++) {
+		auto it = boneMeshMap.find(std::string(jointNames[i]));
+		bool isFoundMap = it != boneMeshMap.end();
+
+		if (isFoundMap) {
+			std::vector<BoneMap>& maps = it->second;
+
+			for (const BoneMap& map : maps) {
+				map.mesh->boneTransforms[map.id] = libOzz::toNativeType(bones_[i]) * map.offset;
+			}
+		}
+	}
 }
 
 ozz::Range<ozz::math::Float4x4> * Model::getBones()

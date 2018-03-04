@@ -44,11 +44,11 @@ int main(int argc, char **argv) {
 	initPhysics();
 
 	InputHandler inputHandler(mainContext);
-
-	Resource::File testSceneResource("testScene.ini");
-	Scene * scene = new Scene();
-	scene->initFromFile(testSceneResource);
 	
+	Scene * scene = new Scene();
+	Resource::File testSceneResource("testScene.ini");
+	scene->initFromFile(testSceneResource);
+
 	printMemoryStatus();
 
 	Camera * sceneActiveCamera = scene->getActiveCamera();
@@ -71,14 +71,6 @@ int main(int argc, char **argv) {
 		Model * model = Model::Create(mesh);
 
 		scene->add(model);
-	}
-
-	Light::Point * pointLight = scene->getPointLight(0);
-	if (pointLight != nullptr) {
-		Helpers::PointLight * pointLightHelper = new Helpers::PointLight(pointLight);
-
-		scene->add(pointLightHelper);
-		renderer->onPreRender.connect(boost::bind(&Helpers::PointLight::beforeRender, pointLightHelper));
 	}
 
 	Model * planeModel = AG::Models::plane(10, 10, 10, 10);
@@ -105,7 +97,14 @@ int main(int argc, char **argv) {
 
 			cameraControl.update();
 			inputHandler.onFrame();
-			
+
+			const std::vector<Model*>& models = scene->getModels();
+
+			for (Model * model : models) {
+				model->tickAnimationTime(0.016f);
+				model->processAnimation();
+			}
+
 			stepPhysics();
 
 			if (!ball->isSleeping()) {
@@ -113,15 +112,6 @@ int main(int argc, char **argv) {
 
 				sphereModel->setPosition(ballTransform.p.x, ballTransform.p.y, ballTransform.p.z);
 				sphereModel->setQuaternion(ballTransform.q.x, ballTransform.q.y, ballTransform.q.z, ballTransform.q.w);
-			}
-
-			if (pointLight != nullptr) {
-				vec3 centerPoint(0.0, 10.0f, 0.0f);
-				float rad = (glm::sin(elapsedTime * 0.1f)) * glm::two_pi<float>();
-				quat newQuat = glm::angleAxis(rad, vec3(1.0f, 1.0f, 1.0f));
-				vec3 newLightPos = centerPoint * newQuat;
-
-				pointLight->setPosition(newLightPos);
 			}
 
 			std::this_thread::sleep_for(std::chrono::microseconds(16600));

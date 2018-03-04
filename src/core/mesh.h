@@ -85,6 +85,8 @@ struct Mesh : Object3D {
 
 	Material::Phong material;
 	Geometry geometry;
+
+	std::vector<mat4> boneTransforms;
 private:
 	Mesh();
 	Mesh(Geometry geometry);

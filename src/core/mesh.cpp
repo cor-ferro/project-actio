@@ -140,6 +140,7 @@ void Mesh::draw(Opengl::Program& program, uint flags)
 
 	if ((flags & Mesh_Draw_Bones) != 0) {
 		program.enableVertexSubroutine("BoneTransformEnabled");
+		program.setMat("bones[]", &boneTransforms);
 	} else {
 		program.enableVertexSubroutine("BoneTransformDisabled");
 	}

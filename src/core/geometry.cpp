@@ -1,5 +1,7 @@
 #include "geometry.h"
 
+#define MAX_BONES 4
+
 Geometry::Geometry() {
 	vertices_.reset(new GeometryVertices());
 	indices_.reset(new GeometryIndices());
@@ -76,8 +78,6 @@ void Geometry::initFromAi(const aiMesh * mesh, const Resource::Assimp * assimpRe
 	}
 
 	if (numBones > 0) {
-		console::infop("numBones: %i", numBones);
-
 		std::vector<std::vector<std::pair<uint, float>>> affectedVertices;
 		affectedVertices.resize(vertices_->size());
 
@@ -94,12 +94,16 @@ void Geometry::initFromAi(const aiMesh * mesh, const Resource::Assimp * assimpRe
 
 		for (uint i = 0; i < affectedVertices.size(); i++) {
 			const std::vector<std::pair<uint, float>>& boneData = affectedVertices.at(i);
+			const int bonesDataSize = boneData.size();
 
-			for (uint j = 0; j < boneData.size(); j++) {
-				vertices_->at(i).BonedIDs[j] = boneData[j].first;
-				vertices_->at(i).Weights[j] = boneData[j].second;
-
-				if (j == 3) break; // max num boneids/weights - 4
+			for (uint j = 0; j < MAX_BONES; j++) {
+				if (j < bonesDataSize) {
+					vertices_->at(i).BonedIDs[j] = boneData[j].first;
+					vertices_->at(i).Weights[j] = boneData[j].second;
+				} else {
+					vertices_->at(i).BonedIDs[j] = 0;
+					vertices_->at(i).Weights[j] = 0;
+				}
 			}
 		}
 	}

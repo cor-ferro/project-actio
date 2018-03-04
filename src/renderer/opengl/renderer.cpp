@@ -465,42 +465,6 @@ void OpenglRenderer::drawModels(Scene * scene, Opengl::Program& program)
 
 		if (bones->Count() > 0) {
 			renderFlags|= Mesh_Draw_Bones;
-			model->tickAnimationTime(0.016f);
-			model->processAnimation();
-
-			// std::vector<glm::mat4> mats;
-			// mats.reserve(bones->Count());
-
-			// for (int i = 0; i < bones->Count(); i++) {
-			// 	mat4 mat;
-
-			// 	ozz::math::Float4x4 f = bones->operator [](i);
-
-			// 	mat[0][0] = f.cols[0][0];
-			// 	mat[0][1] = f.cols[0][1];
-			// 	mat[0][2] = f.cols[0][2];
-			// 	mat[0][3] = f.cols[0][3];
-
-			// 	mat[1][0] = f.cols[1][0];
-			// 	mat[1][1] = f.cols[1][1];
-			// 	mat[1][2] = f.cols[1][2];
-			// 	mat[1][3] = f.cols[1][3];
-
-			// 	mat[2][0] = f.cols[2][0];
-			// 	mat[2][1] = f.cols[2][1];
-			// 	mat[2][2] = f.cols[2][2];
-			// 	mat[2][3] = f.cols[2][3];
-
-			// 	mat[3][0] = f.cols[3][0];
-			// 	mat[3][1] = f.cols[3][1];
-			// 	mat[3][2] = f.cols[3][2];
-			// 	mat[3][3] = f.cols[3][3];
-
-			// 	mats.push_back(mat);
-			// }
-
-			program.setMat("bones[]", bones->Count(), &bones[0].begin->cols[0][0]);
-			// program.setMat("bones[]", &mats);
 		}
 
 		const ModelMeshes& meshes = model->getMeshes();
@@ -543,7 +507,7 @@ void OpenglRenderer::draw(Scene * scene)
 {
 	preRender();
 
-//	 forwardRender(scene);
+	// forwardRender(scene);
 	defferedRender(scene);
 
 	postRender();

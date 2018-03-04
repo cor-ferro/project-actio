@@ -18,6 +18,7 @@
 #include "../../scenes/scene.h"
 #include "../../cameras/camera.h"
 #include "../../lib/types.h"
+#include "../../lib/ozz.h"
 #include "../../core/geometry.h"
 #include "../../core/mesh.h"
 #include "shader.h"
