@@ -1,4 +1,13 @@
+#include <algorithm>
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <unordered_set>
 #include "model.h"
+#include "../lib/console.h"
+#include "../lib/ozz.h"
+#include "../lib/assimp.h"
+#include "../math/Box3.h"
 
 // #define THREAD_INIT_AI_
 
@@ -49,7 +58,6 @@ Model * Model::Create()
 {
 	void * place = modelsAllocator->Allocate(sizeof(Model), 8);
 	Model * model = new(place) Model();
-//	_models.push_back(model);
 
 	return model;
 }
@@ -58,7 +66,6 @@ Model * Model::Create(Config& modelConfig)
 {
 	void * place = modelsAllocator->Allocate(sizeof(Model), 8);
 	Model * model = new(place) Model(modelConfig);
-//	_models.push_back(model);
 
 	return model;
 }
@@ -67,7 +74,6 @@ Model * Model::Create(Mesh * mesh)
 {
 	void * place = modelsAllocator->Allocate(sizeof(Model), 8);
 	Model * model = new(place) Model(mesh);
-//	_models.push_back(model);
 
 	return model;
 }

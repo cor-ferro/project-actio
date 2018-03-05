@@ -1,24 +1,17 @@
 #ifndef MESH_H_
 #define MESH_H_
 
-#include <glad/glad.h>
-#include "glm/ext.hpp"
-
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include <assimp/scene.h>
-#include "object3D.h"
-#include "vertex.h"
-#include "../lib/assimp.h"
-#include "../lib/colors.h"
 #include "../materials/material.h"
 #include "../resources/resources.h"
+#include "../memory/poolallocator.h"
 #include "geometry.h"
 #include "texture.h"
 #include "mesh_bone.h"
-#include "../memory/poolallocator.h"
-#include "ozz/base/maths/simd_math.h"
+#include "object3D.h"
+#include "vertex.h"
 
 #ifdef GRAPHIC_API_OPENGL
 #include "../renderer/opengl/program.h"

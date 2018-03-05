@@ -2,15 +2,9 @@
 #define MODEL_H_
 
 #include <memory>
-#include <boost/thread.hpp>
 #include <unordered_map>
-#include <unordered_set>
-#include <vector>
 #include <map>
-#include <thread>
-#include <mutex>
-#include <queue>
-#include <algorithm>
+#include <vector>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -18,16 +12,12 @@
 #include <ozz/animation/runtime/skeleton.h>
 #include <ozz/animation/offline/raw_skeleton.h>
 #include <ozz/animation/offline/skeleton_builder.h>
-#include "../lib/console.h"
 #include "../lib/types.h"
-#include "../lib/assimp.h"
-#include "../lib/ozz.h"
 #include "../lib/image_loader.h"
 #include "../lib/comparators.h"
 #include "../resources/resources.h"
 #include "../animation/animation.h"
 #include "../animation/process.h"
-#include "../math/Box3.h"
 #include "./object3D.h"
 #include "./mesh.h"
 
@@ -147,7 +137,5 @@ private:
 	std::unordered_map<std::string, animation::Animation*> animations_;
 	std::map<Mesh*, std::vector<BoneMap>> boneMeshMap;
 };
-
-static std::vector<Model*> _models;
 
 #endif

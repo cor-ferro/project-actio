@@ -1,3 +1,8 @@
+#include <assimp/scene.h>
+#include <glad/glad.h>
+#include <glm/ext.hpp>
+#include "../lib/assimp.h"
+#include "../lib/colors.h"
 #include "mesh.h"
 
 Mesh::Mesh()
