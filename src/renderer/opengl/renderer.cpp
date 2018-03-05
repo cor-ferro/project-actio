@@ -281,7 +281,7 @@ void OpenglRenderer::defferedRender(Scene * scene)
 	lightPassProgram.setInt("gPositionMap", 0);
 	lightPassProgram.setInt("gNormalMap", 1);
 	lightPassProgram.setInt("gAlbedoMap", 2);
-	lightPassProgram.setVec("gScreenSize", vec3(1280.0f, 720.0f, 0.0f)); // fix to vec2
+	lightPassProgram.setVec("gScreenSize", vec3(static_cast<float>(renderParams.width), static_cast<float>(renderParams.height), 0.0f)); // fix to vec2
 	lightPassProgram.setVec("viewDir", camera->getPosition());
 
 	glStencilFunc(GL_ALWAYS, 0, 0);
