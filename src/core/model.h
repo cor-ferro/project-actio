@@ -33,13 +33,7 @@
 
 #include "../memory/poolallocator.h"
 
-using ozz::math::Float3;
-using ozz::math::Float4;
-using ozz::math::Quaternion;
-using ozz::math::SoaTransform;
-using ozz::math::Float4x4;
 using ozz::animation::offline::RawSkeleton;
-using ozz::animation::offline::RawAnimation;
 
 extern memory::PoolAllocator * modelsAllocator;
 

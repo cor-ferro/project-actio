@@ -20,21 +20,5 @@ namespace animation {
         ltmJob.input = animation->getLocals();
         ltmJob.output = animation->getModels();
         ltmJob.Run();
-
-        // ozz::Range<const char* const> jointNames = skeleton->joint_names();
-        // int joint_names_count = jointNames.Count();
-
-        // for (int i = 0; i < joint_names_count; i++) {
-        //     auto it = boneMeshMap.find(std::string(jointNames[i]));
-        //     bool isFoundMap = it != boneMeshMap.end();
-
-        //     if (isFoundMap) {
-        //         std::vector<BoneMap>& maps = it->second;
-
-        //         for (const BoneMap& map : maps) {
-        //             map.mesh->boneTransforms[map.id] = libOzz::toNativeType(bones_[i]) * map.offset;
-        //         }
-        //     }
-        // }
     }
 }
