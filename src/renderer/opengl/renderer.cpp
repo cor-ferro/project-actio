@@ -249,6 +249,21 @@ void OpenglRenderer::defferedRender(Scene * scene)
 		drawModels(scene, geometryPassProgram);
 		OpenglCheckErrorsSilent();
 
+		bool isHasSkybox = scene->hasSkybox();
+		if (isHasSkybox) {
+			Model * skyboxModel = scene->getSkybox();
+			Mesh * mesh = skyboxModel->getFirstMesh();
+			Texture texture = mesh->material.getTextures().at(0);
+
+			glDepthFunc(GL_LEQUAL);
+			OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, texture);
+			skyboxDeferredProgram.use();
+			skyboxDeferredProgram.setInt("cubeTexture", maxTextureUnits - 1);
+			mesh->draw(skyboxDeferredProgram, Mesh_Draw_Base);
+			glDepthFunc(GL_LESS);
+			OpenglCheckErrorsSilent();
+		}
+
 		glDepthMask(GL_FALSE);
 		OpenglCheckErrors();
 	// Light pass

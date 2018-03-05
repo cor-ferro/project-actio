@@ -16,5 +16,5 @@ void main()
 {
     gWorldPosition = inData.worldPosition.xyz;
     gNormal = inData.worldNormal;
-	gAlbedo = vec4(vec3(0.0, 1.0, 0.0), 0.0);//vec4(texture(cubeTexture, inData.texCoord).xyz, 0.0);
+	gAlbedo = vec4(texture(cubeTexture, inData.texCoord).xyz, 0.0);
 }
