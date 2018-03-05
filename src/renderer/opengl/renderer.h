@@ -38,6 +38,11 @@ namespace Renderer {
 	typedef std::function<void()> callback;
 
 	struct OpenglRenderer : BaseRenderer {
+		enum RenderType {
+			RenderForward,
+			RenderDeferred
+		};
+
 		OpenglRenderer(RendererParams);
 		~OpenglRenderer();
 		bool init(int, char **);
@@ -58,6 +63,8 @@ namespace Renderer {
 
 		void addPreRenderHandler(callback handler);
 		void addPostRenderHandler(callback handler);
+
+		void setType(RenderType newType);
 
 		double elaspsedTime = 0.0;
 		double time = 1.0;
@@ -88,6 +95,8 @@ namespace Renderer {
 		Mesh * lightQuad;
 		Mesh * lightSphere;
 		Mesh * lightCylinder;
+
+		RenderType type;
 	};
 
 }

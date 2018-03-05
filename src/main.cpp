@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
 
 	// init renderer before scene loading
 	Renderer::OpenglRenderer * renderer = new Renderer::OpenglRenderer(rendererParams);
+	renderer->setType(Renderer::OpenglRenderer::RenderDeferred);
 	renderer->init(argc, argv);
 	renderer->start();
 

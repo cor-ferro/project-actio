@@ -5,7 +5,9 @@ namespace Renderer {
 const float timeScale = 0.008f;
 GLint maxTextureUnits;
 
-OpenglRenderer::OpenglRenderer(RendererParams params) : BaseRenderer(params)
+OpenglRenderer::OpenglRenderer(RendererParams params)
+	: BaseRenderer(params)
+	, type(RenderForward)
 {
 
 }
@@ -83,6 +85,11 @@ void OpenglRenderer::start()
 	OpenglCheckErrors();
 
 	initMatricesBuffer();
+}
+
+void OpenglRenderer::setType(RenderType newType)
+{
+	type = newType;
 }
 
 void OpenglRenderer::initMatricesBuffer()
@@ -219,8 +226,8 @@ void OpenglRenderer::forwardRender(Scene * scene)
 
 void OpenglRenderer::defferedRender(Scene * scene)
 {
-	geometryPassProgram.checkShadersUpdate();
-	lightPassProgram.checkShadersUpdate();
+	// geometryPassProgram.checkShadersUpdate();
+	// lightPassProgram.checkShadersUpdate();
 
 	Camera * camera = scene->getActiveCamera();
 	const RendererParams& renderParams = getParams();
@@ -521,8 +528,14 @@ void OpenglRenderer::draw(Scene * scene)
 {
 	preRender();
 
-	// forwardRender(scene);
-	defferedRender(scene);
+	switch (type) {
+		case RenderForward:
+			forwardRender(scene);
+			break;
+		case RenderDeferred:
+			defferedRender(scene);
+			break;
+	}
 
 	postRender();
 }
