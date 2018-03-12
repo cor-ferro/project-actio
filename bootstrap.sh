@@ -43,7 +43,7 @@ create_libs_dir()
 copy_to_libs()
 {
 	local pattern=$1
-	cp -fva $pattern $DEST_LIBS_DIR
+	cp -fva $pattern $DEST_LIBS_DIR 2>/dev/null
 }
 
 copy_to_bin()
@@ -84,7 +84,7 @@ build_entityx()
 
 build_physx()
 {
-	#init_git_module "vendor/PhysX-3.4"
+	init_git_module "vendor/PhysX-3.4"
 
 	cd $CURRENT_DIR/vendor/PhysX-3.4/PhysX_3.4/Source/compiler/linux64
 	make clean
@@ -284,6 +284,8 @@ build_devIL()
 
 build_jasper()
 {
+	init_git_module "vendor/jasper"
+
 	cd $CURRENT_DIR/vendor/jasper
 
 	rm -rf ./buildlib
@@ -293,6 +295,7 @@ build_jasper()
 	make install -j$COUNT_THREADS
 	cd ..
 	copy_to_libs "./install/lib/*.so*"
+	copy_to_libs "./install/lib64/*.so*"
 	rm -rf ./buildlib
 	rm -rf ./install
 }
