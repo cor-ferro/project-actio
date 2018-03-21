@@ -9,8 +9,8 @@ CameraControl::CameraControl(Camera * camera, InputHandler * ih)
 
 void CameraControl::update()
 {
-	float speedX = glm::abs(ih_->mouseMoved.x / speedFactor);
-	float speedY = glm::abs(ih_->mouseMoved.y / speedFactor);
+	float speedX = glm::abs(ih_->mouseMoved.x * speedFactor);
+	float speedY = glm::abs(ih_->mouseMoved.y * speedFactor);
 
 	float angleX = ih_->mouseMoved.y * -glm::pow(speedY, sensetivity);
 	float angleY = ih_->mouseMoved.x * -glm::pow(speedX, sensetivity);
@@ -58,5 +58,5 @@ void CameraControl::update()
 
 void CameraControl::calcSensetivity(uint width, uint height, double dpi)
 {
-	speedFactor = (float)dpi * 1.5f;
+	speedFactor = static_cast<float>(dpi) / 1000.0f;
 }

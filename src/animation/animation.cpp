@@ -94,7 +94,7 @@ namespace animation {
         animation_ = animationBuilder(rawAnimation);
 
         if (!animation_) {
-            console::warnp("failed create animation %s", rawAnimation.name);
+            console::warnp("failed create animation %s", rawAnimation.name.c_str());
             return;
         }
 
