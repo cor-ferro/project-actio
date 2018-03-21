@@ -11,7 +11,7 @@ namespace Resource {
 	File::File(std::string path) 
 		: path_(path)
 	{
-		console::infop("resource::file %s", path_.string());
+		console::infop("resource::file %s", path_.string().c_str());
 	}
 	
 	File::~File() {}
