@@ -10,7 +10,7 @@
 
 #include <string>
 #include <boost/filesystem/path.hpp>
-#include "../app/app.h"
+#include "../lib/console.h"
 
 namespace Resource {
 
@@ -20,7 +20,7 @@ namespace Resource {
 		File(const File& other);
 		~File();
 
-		std::string getPath();
+		std::string getPath() const;
 
 	private:
 		boost::filesystem::path path_;

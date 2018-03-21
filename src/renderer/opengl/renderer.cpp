@@ -33,31 +33,31 @@ void OpenglRenderer::start()
 
 	gbuffer.init(renderParams.width, renderParams.height);
 
-	forwardProgram.init("forward", Opengl::Program::Watch_Changes);
+	forwardProgram.init("forward", shadersFolder);
 	forwardProgram.initUniformCache({ "model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]" });
 	forwardProgram.initUniformCache(Opengl::Uniform::Map);
 	forwardProgram.bindBlock("Matrices", 0);
 
-	geometryPassProgram.init("geometry_pass", Opengl::Program::Watch_Changes);
+	geometryPassProgram.init("geometry_pass", shadersFolder);
 	geometryPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]" });
 	geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
 	geometryPassProgram.bindBlock("Matrices", 0);
 	OpenglCheckErrors();
 
-	lightPassProgram.init("light_pass", Opengl::Program::Watch_Changes);
+	lightPassProgram.init("light_pass", shadersFolder);
 //	lightPassProgram.bindBlock("Matrices", 0);
 	// lightPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
 	OpenglCheckErrors();
 
-	nullProgram.init("null");
+	nullProgram.init("null", shadersFolder);
 	nullProgram.bindBlock("Matrices", 0);
 	OpenglCheckErrors();
 
-	skyboxProgram.init("skybox");
+	skyboxProgram.init("skybox", shadersFolder);
 	skyboxProgram.bindBlock("Matrices", 0);
 	OpenglCheckErrors();
 
-	skyboxDeferredProgram.init("skybox-deferred");
+	skyboxDeferredProgram.init("skybox-deferred", shadersFolder);
 	skyboxDeferredProgram.bindBlock("Matrices", 0);
 	OpenglCheckErrors();
 
@@ -90,6 +90,11 @@ void OpenglRenderer::start()
 void OpenglRenderer::setType(RenderType newType)
 {
 	type = newType;
+}
+
+void OpenglRenderer::setShadersFolder(Path path)
+{
+	shadersFolder = path;
 }
 
 void OpenglRenderer::initMatricesBuffer()

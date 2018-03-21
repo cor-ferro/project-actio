@@ -6,6 +6,8 @@
 #include <functional>
 #include <boost/filesystem/path.hpp>
 #include "../lib/console.h"
+#include "../lib/path.h"
+#include "../resources/file_resource.h"
 
 #include "monitor.h"
 
@@ -26,13 +28,16 @@ struct App {
 	App();
 
 	void init(int argc, char **argv);
-
+	
 	std::string getName();
-	std::string getPath();
-	std::string resourcePath();
-	std::string resourcePath(std::string fromPath);
-	std::string shadersPath();
-	std::string shadersPath(std::string fromPath);
+	Path getPath();
+	Path resourcePath();
+	Path resourcePath(std::string fromPath);
+	Path shadersPath();
+	Path shadersPath(std::string fromPath);
+
+	const Resource::File resource(std::string path);
+
 	void setName(std::string name);
 
 	const Monitor * const getPrimaryMonitor();
@@ -46,7 +51,7 @@ private:
 	App& operator= (App const &);
 
 	std::string name_;
-	std::string path_;
+	Path path_;
 
 	Monitors monitors;
 	void addMonitor(GLFWmonitor * monitor);

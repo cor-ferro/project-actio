@@ -19,6 +19,7 @@
 #include "../../cameras/camera.h"
 #include "../../lib/types.h"
 #include "../../lib/ozz.h"
+#include "../../lib/path.h"
 #include "../../core/geometry.h"
 #include "../../core/mesh.h"
 #include "shader.h"
@@ -65,6 +66,7 @@ namespace Renderer {
 		void addPostRenderHandler(callback handler);
 
 		void setType(RenderType newType);
+		void setShadersFolder(Path path);
 
 		double elaspsedTime = 0.0;
 		double time = 1.0;
@@ -97,6 +99,7 @@ namespace Renderer {
 		Mesh * lightCylinder;
 
 		RenderType type;
+		Path shadersFolder;
 	};
 
 }

@@ -9,14 +9,14 @@ namespace Resource {
 	}
 
 	File::File(std::string path) 
-		: path_(App::instance().resourcePath(path))
+		: path_(path)
 	{
-		console::info("resource::file ", path_.string());
+		console::infop("resource::file %s", path_.string());
 	}
 	
 	File::~File() {}
 
-	std::string File::getPath()
+	std::string File::getPath() const
 	{
 		return path_.string();
 	}

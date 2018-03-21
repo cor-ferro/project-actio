@@ -9,8 +9,6 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "iniparser/src/iniparser.h"
-#include "iniparser/src/dictionary.h"
 #include "../ag.h"
 #include "../resources/resources.h"
 #include "../core/model.h"
@@ -29,7 +27,6 @@ struct Scene {
 	Scene(const Scene& other);
 	~Scene();
 
-	bool initFromFile(Resource::File& file);
 	bool init();
 	const std::vector<Model*>& getModels();
 	Model * getModelByName(ModelName name);

@@ -14,6 +14,7 @@
 #include <assimp/scene.h>
 #include <boost/filesystem/path.hpp>
 #include "../app/app.h"
+#include "../lib/path.h"
 
 namespace Resource {
 	struct Assimp {

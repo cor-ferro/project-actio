@@ -1,5 +1,3 @@
-#define NDEBUG
-
 #include <thread>
 #include <mutex>
 #include <functional>
@@ -10,13 +8,6 @@
 // #include <memory>
 #include <signal.h>
 #include <boost/bind.hpp>
-
-#include "PxPhysics.h"
-#include "PxScene.h"
-#include "PxRigidDynamic.h"
-#include "PxShape.h"
-#include "PxPhysicsAPI.h"
-#include "pvd/PxPvd.h"
 
 #include "glm/gtc/random.hpp"
 
@@ -31,7 +22,6 @@
 #include "lib/console.h"
 #include "lib/utils.h"
 #include "renderer/renderer.h"
-#include "scenes/scene.h"
 #include "cameras/camera.h"
 #include "cameras/camera_control.h"
 #include "lights/direction_light.h"
@@ -45,29 +35,15 @@
 #include "memory/linearallocator.h"
 #include "memory/poolallocator.h"
 
+#include "game/game.h"
+
 using namespace std;
-using namespace physx;
 
 int main(int argc, char **argv);
 
-PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity=PxVec3(0));
-
-void initPhysics();
-void stepPhysics();
-void cleanupPhysics();
-void cleanupScene(Scene * scene);
+// void cleanupScene(Scene * scene);
 
 void printMemoryStatus();
-
-PxDefaultAllocator gAllocator;
-PxDefaultErrorCallback gErrorCallback;
-
-PxFoundation* gFoundation = NULL;
-PxPhysics*  gPhysics = NULL;
-PxPvd* gPvd = NULL;
-PxDefaultCpuDispatcher* gDispatcher = NULL;
-PxScene* gScene = NULL;
-PxMaterial* gMaterial = NULL;
 
 memory::FreeListAllocator * imageAllocator = nullptr;
 memory::PoolAllocator * modelsAllocator = nullptr;

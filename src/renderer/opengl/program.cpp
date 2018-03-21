@@ -18,6 +18,11 @@ namespace Opengl {
 
 	void Program::init(std::string name, uint flags)
 	{
+		init(name, ".", flags);
+	}
+
+	void Program::init(std::string name, Path path, uint flags)
+	{
 		this->name = name;
 		isUsed = false;
 
@@ -25,19 +30,19 @@ namespace Opengl {
 		this->fragmentShader = new Shader(Shader::FRAGMENT);
 		this->geometryShader = nullptr;
 
-		std::string vertexShaderPath = getShaderPath(name) + std::string(".vert");
-		std::string fragmentShaderPath = getShaderPath(name) + std::string(".frag");
-		std::string geometryShaderPath = getShaderPath(name) + std::string(".geom");
+		Path vertexShaderPath = createPath(path, name + ".vert");
+		Path fragmentShaderPath = createPath(path, name + ".frag");
+		Path geometryShaderPath = createPath(path, name + ".geom");
 
-		this->vertexShader->loadFromFile(vertexShaderPath);
+		this->vertexShader->loadFromFile(vertexShaderPath.string());
 		this->vertexShader->compile();
 
-		this->fragmentShader->loadFromFile(fragmentShaderPath);
+		this->fragmentShader->loadFromFile(fragmentShaderPath.string());
 		this->fragmentShader->compile();
 
-		if (Shader::Exists(geometryShaderPath)) {
+		if (Shader::Exists(geometryShaderPath.string())) {
 			this->geometryShader = new Shader(Shader::GEOMETRY);
-			this->geometryShader->loadFromFile(geometryShaderPath);
+			this->geometryShader->loadFromFile(geometryShaderPath.string());
 			this->geometryShader->compile();
 		}
 
@@ -96,11 +101,6 @@ namespace Opengl {
 	const GLuint Program::getHandle() const
 	{
 		return handle;
-	}
-
-	std::string Program::getShaderPath(std::string name)
-	{
-		return App::instance().shadersPath("/" + name);
 	}
 
 	void Program::use()

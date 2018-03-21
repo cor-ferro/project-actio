@@ -29,7 +29,8 @@ LDFLAGS_COMPILE	=\
 				-Ivendor/boost_1_65_1 \
 				-Ivendor/PhysX-3.4/PhysX_3.4/Include \
 				-Ivendor/PhysX-3.4/PxShared/include \
-				-Ivendor/ozz-animation/include
+				-Ivendor/ozz-animation/include \
+				-Ivendor/entityx
 LDFLAGS_BUILD  	=\
 				-L./libs/linux64 \
 				./bin/linux64/libSOIL.a \

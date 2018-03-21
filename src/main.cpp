@@ -38,51 +38,48 @@ int main(int argc, char **argv) {
 
 	// init renderer before scene loading
 	Renderer::OpenglRenderer * renderer = new Renderer::OpenglRenderer(rendererParams);
+	renderer->setShadersFolder(app.shadersPath());
 	renderer->setType(Renderer::OpenglRenderer::RenderDeferred);
 	renderer->init(argc, argv);
 	renderer->start();
 
-	initPhysics();
-
 	InputHandler inputHandler(mainContext);
-	
-	Scene * scene = new Scene();
-	Resource::File testSceneResource("testScene.ini");
-	scene->initFromFile(testSceneResource);
 
 	printMemoryStatus();
 
-	Camera * sceneActiveCamera = scene->getActiveCamera();
-	CameraControl cameraControl(sceneActiveCamera, &inputHandler);
+	// Camera * sceneActiveCamera = scene->getActiveCamera();
+	// CameraControl cameraControl(sceneActiveCamera, &inputHandler);
 
-	cameraControl.calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
-	sceneActiveCamera->setParam(CameraParam::ASPECT, rendererParams.aspectRatio);
+	// cameraControl.calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
+	// sceneActiveCamera->setParam(CameraParam::ASPECT, rendererParams.aspectRatio);
 
-	Material::Phong material;
-	material.setDiffuse(0.0f, 1.0f, 0.0f);
-	Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
+	// Material::Phong material;
+	// material.setDiffuse(0.0f, 1.0f, 0.0f);
+	// Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
 
-	for (int i = 0; i < 1; i++) {
-		Mesh * mesh = Mesh::Create(geometry, material);
-		mesh->setPosition(vec3(
-			glm::gaussRand(0.0f, 7.0f),
-			glm::gaussRand(0.0f, 7.0f),
-			glm::gaussRand(0.0f, 7.0f)
-		));
-		Model * model = Model::Create(mesh);
+	// for (int i = 0; i < 1; i++) {
+	// 	Mesh * mesh = Mesh::Create(geometry, material);
+	// 	mesh->setPosition(vec3(
+	// 		glm::gaussRand(0.0f, 7.0f),
+	// 		glm::gaussRand(0.0f, 7.0f),
+	// 		glm::gaussRand(0.0f, 7.0f)
+	// 	));
+	// 	Model * model = Model::Create(mesh);
 
-		scene->add(model);
-	}
+	// 	scene->add(model);
+	// }
 
-	Model * planeModel = AG::Models::plane(10, 10, 10, 10);
-	planeModel->rotate(vec3(0.0f, 1.0f, 1.0f), glm::pi<float>());
-	scene->add(planeModel);
+	// Model * planeModel = AG::Models::plane(10, 10, 10, 10);
+	// planeModel->rotate(vec3(0.0f, 1.0f, 1.0f), glm::pi<float>());
+	// scene->add(planeModel);
 
-	Model * sphereModel = AG::Models::sphere(3.0f, 16, 16);
-	scene->add(sphereModel);
+	// Model * sphereModel = AG::Models::sphere(3.0f, 16, 16);
+	// scene->add(sphereModel);
 
-	PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(0, 20, 0)), PxSphereGeometry(3), PxVec3(0, -25, -5));
-	PxRigidBodyExt::updateMassAndInertia(*ball, 1000.0f);
+	const Resource::File testWorldFile = app.resource("testScene.ini");
+
+	game::World* world = game::createWorld();
+	world->initFromFile(testWorldFile);
 
 	GLFWwindow * const window = mainContext.getWindow();
 
@@ -96,24 +93,17 @@ int main(int argc, char **argv) {
 		while(execRenderLoop) {
 			const float elapsedTime = 16.6f;
 
-			cameraControl.update();
+			// cameraControl.update();
 			inputHandler.onFrame();
 
-			const std::vector<Model*>& models = scene->getModels();
+			// const std::vector<Model*>& models = scene->getModels();
 
-			for (Model * model : models) {
-				model->tickAnimationTime(0.016f);
-				model->processAnimation();
-			}
+			// for (Model * model : models) {
+			// 	model->tickAnimationTime(elapsedTime / 1000.0f);
+			// 	model->processAnimation();
+			// }
 
-			stepPhysics();
-
-			if (!ball->isSleeping()) {
-				PxTransform ballTransform = ball->getGlobalPose();
-
-				sphereModel->setPosition(ballTransform.p.x, ballTransform.p.y, ballTransform.p.z);
-				sphereModel->setQuaternion(ballTransform.q.x, ballTransform.q.y, ballTransform.q.z, ballTransform.q.w);
-			}
+			world->update(elapsedTime);
 
 			std::this_thread::sleep_for(std::chrono::microseconds(16600));
 		}
@@ -123,7 +113,9 @@ int main(int argc, char **argv) {
 
 	while(!glfwWindowShouldClose(window))
 	{
-		renderer->draw(scene);
+		float elapsedTime = static_cast<float>(glfwGetTime());
+		// renderer->draw(scene);
+		world->render(elapsedTime);
 
 		{
 			ImGui_ImplGlfwGL3_NewFrame();
@@ -159,16 +151,17 @@ int main(int argc, char **argv) {
 		continue;
 	}
 
-	cleanupPhysics();
-	cleanupScene(scene);
+	world->destroy();
 
+	// cleanupScene(scene);
 	printMemoryStatus();
 
 	delete imageAllocator;
 	delete modelsAllocator;
 	delete meshAllocator;
 
-	delete scene;
+	// delete scene;
+	delete world;
 	delete renderer;
 
 	console::info("stop application");
@@ -176,84 +169,15 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-void initPhysics()
-{
-	gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
-	gPvd = PxCreatePvd(*gFoundation);
-	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true, gPvd);
+// void cleanupScene(Scene * scene)
+// {
+// 	std::vector<Model*> sceneModels = scene->getModels();
 
-	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f, -9.8f, 0.0f);
-	gDispatcher = PxDefaultCpuDispatcherCreate(4);
-	sceneDesc.cpuDispatcher = gDispatcher;
-	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-
-	sceneDesc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
-	sceneDesc.flags |= PxSceneFlag::eENABLE_PCM;
-	sceneDesc.flags |= PxSceneFlag::eENABLE_STABILIZATION;
-	sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
-	sceneDesc.gpuMaxNumPartitions = 8;
-
-	gScene = gPhysics->createScene(sceneDesc);
-
-	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-	PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
-	gScene->addActor(*groundPlane);
-
-	console::info("physics inited");
-}
-
-void stepPhysics()
-{
-	PX_UNUSED(false);
-	gScene->simulate(1.0f/60.0f);
-	gScene->fetchResults(true);
-}
-
-void cleanupPhysics()
-{
-	if (gScene) {
-		gScene->release();
-		gScene = NULL;
-	}
-
-	if (gDispatcher) {
-		gDispatcher->release();
-		gDispatcher = NULL;
-	}
-
-	if (gPhysics) {
-		gPhysics->release();
-		gPhysics = NULL;
-	}
-
-	if (gFoundation) {
-		gFoundation->release();
-		gFoundation = NULL;
-	}
-
-	console::info("physics released");
-}
-
-void cleanupScene(Scene * scene)
-{
-	std::vector<Model*> sceneModels = scene->getModels();
-
-	for (uint i = 0; i < sceneModels.size(); i++) {
-		Model * model = sceneModels[i];
-		Model::Destroy(model);
-	}
-}
-
-PxRigidDynamic * createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity)
-{
-	PxRigidDynamic* dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
-	dynamic->setAngularDamping(0.5f);
-	dynamic->setLinearVelocity(velocity);
-	gScene->addActor(*dynamic);
-
-	return dynamic;
-}
+// 	for (uint i = 0; i < sceneModels.size(); i++) {
+// 		Model * model = sceneModels[i];
+// 		Model::Destroy(model);
+// 	}
+// }
 
 void printMemoryStatus()
 {

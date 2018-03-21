@@ -50,29 +50,38 @@ std::string App::getName()
 	return name_;
 }
 
-std::string App::getPath()
+Path App::getPath()
 {
 	return path_;
 }
 
-std::string App::resourcePath()
+Path App::resourcePath()
 {
-	return path_ + "/resources";
+	return createPath(path_, "/resources");
 }
 
-std::string App::resourcePath(std::string fromPath)
+Path App::resourcePath(std::string fromPath)
 {
-	return path_ + "/resources/" + fromPath;
+	return createPath(path_, "/resources", fromPath);
 }
 
-std::string App::shadersPath()
+Path App::shadersPath()
 {
-	return path_ + "/shaders/";
+	return createPath(path_, "/shaders");
 }
 
-std::string App::shadersPath(std::string fromPath)
+Path App::shadersPath(std::string fromPath)
 {
-	return path_ + "/shaders/" + fromPath;
+	return createPath(path_, "/shaders", fromPath);
+}
+
+const Resource::File App::resource(std::string path)
+{
+	Path resourceFilePath = resourcePath(path);
+
+	Resource::File file(resourceFilePath.string());
+
+	return file;
 }
 
 void App::setName(std::string name)

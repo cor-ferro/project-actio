@@ -12,6 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "../../lib/console.h"
 #include "../../lib/types.h"
+#include "../../lib/path.h"
 #include "../../app/app.h"
 
 #include <sys/inotify.h>
@@ -33,7 +34,8 @@ struct Program {
 	Program();
 	explicit Program(std::string);
 	~Program();
-	void init(std::string, uint flags = 0x0);
+	void init(std::string name, uint flags = 0x0);
+	void init(std::string name, Path path, uint flags = 0x0);
 	void initShader();
 	void use();
 	void nouse();
@@ -95,7 +97,6 @@ private:
 	WatchDescriptor * watcher;
 	bool isUsed;
 	bool success;
-	std::string getShaderPath(std::string);
 	std::unordered_map<std::string, GLint> uniformIndexCache;
 	std::map<short int, GLint> uniformIndexCache2;
 	std::unordered_map<std::string, GLuint> subroutineVertexIndexCache;

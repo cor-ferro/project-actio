@@ -2,10 +2,10 @@
 
 namespace Resource {
 	Assimp::Assimp(const aiScene * scene, std::string path) : scene(scene) {
-		boost::filesystem::path boostBasePath(path);
+		Path basePath(path);
 
 		resourcePath_ = path;
-		basePath_ = boostBasePath.parent_path().string();
+		basePath_ = basePath.parent_path().string();
 
 		console::info("resourcePath_", resourcePath_);
 		console::info("basePath_", basePath_);
@@ -22,7 +22,8 @@ namespace Resource {
 	}
 
 	std::string Assimp::getDefaultTexturePath() const {
-		return App::instance().resourcePath("default2.png");
+		Path p = App::instance().resourcePath("default2.png");
+		return p.string();
 	}
 
 	std::unordered_set<std::string> Assimp::getTexturePaths() const {
