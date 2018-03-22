@@ -16,14 +16,14 @@ void CameraControl::update()
 	float angleY = ih_->mouseMoved.x * -glm::pow(speedX, sensetivity);
 
 	if (angleY > 100.0f) {
-		console::info("over angle y", angleY, ih_->mouseMoved.x);
-		console::info("details", ih_->mouseMoved.x, ih_->mouseStart.x, ih_->mouse.x);
+		console::info("over angle y %f %i", angleY, ih_->mouseMoved.x);
+		console::info("details %i %i %i", ih_->mouseMoved.x, ih_->mouseStart.x, ih_->mouse.x);
 		angleY = 10.0f;
 	}
 
 	if (angleX > 100.0f) {
-		console::info("over angle x", angleX);
-		console::info("details", ih_->mouseMoved.y, ih_->mouseStart.y, ih_->mouse.y);
+		console::info("over angle x %i", angleX);
+		console::info("details %i %i %i", ih_->mouseMoved.y, ih_->mouseStart.y, ih_->mouse.y);
 		angleX = 10.0f;
 	}
 

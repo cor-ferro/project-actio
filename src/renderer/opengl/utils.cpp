@@ -49,7 +49,7 @@ namespace OpenglUtils {
 		}
 
 		if (error.size() != 0) {
-			console::errp("GL: %s [%s:%i]", error.c_str(), file, line);
+			console::err("GL: %s [%s:%i]", error, file, line);
 		}
 	}
 }

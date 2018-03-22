@@ -74,7 +74,7 @@ void Mesh::Destroy(Mesh * mesh)
 
 Mesh::~Mesh()
 {
-//	console::infop("free mesh %i", id);
+//	console::info("free mesh %i", id);
 }
 
 void Mesh::destroy()
@@ -178,7 +178,7 @@ void Mesh::draw(Opengl::Program& program, uint flags)
 		switch (drawMode) {
 			case Mesh_Draw_Arrays: 		glDrawArrays(primitiveType, 0, vertices->size()); break;
 			case Mesh_Draw_Elements: 	glDrawElements(primitiveType, indices->size(), GL_UNSIGNED_INT, 0);	break;
-			default: console::warn("unknown draw mode: ", drawMode);
+			default: console::warn("unknown draw mode: %i", drawMode);
 		}
 
 		if (material.wireframe == true) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

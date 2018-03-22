@@ -94,7 +94,7 @@ namespace Opengl {
 
 	Program::~Program()
 	{
-		console::infop("destroy shader program %s", name.c_str());
+		console::info("destroy shader program %s", name);
 		removeWatch();
 	}
 
@@ -128,7 +128,7 @@ namespace Opengl {
 			GLint index = getUniformLoc(locationName.c_str());
 
 			if (index == -1) {
-				console::warn("uniform ", locationName, " cache failed.");
+				console::warn("uniform %s cache failed.", locationName);
 			}
 
 			uniformIndexCache.insert({locationName, index});
@@ -144,7 +144,7 @@ namespace Opengl {
 			GLint index = getUniformLoc(locationName.c_str());
 
 			if (index == -1) {
-				console::warn("uniform ", locationName, " cache2 failed.");
+				console::warn("uniform %s cache2 failed.", locationName);
 			} else {
 				uniformIndexCache2.insert({ it->first, index });
 			}
@@ -173,7 +173,7 @@ namespace Opengl {
 
 		if (uniformBlockIndex == GL_INVALID_INDEX)
 		{
-			console::warn("failed bind block", blockName, "at point", point);
+			console::warn("failed bind block %s at point %i", blockName, point);
 		}
 
 		glUniformBlockBinding(handle, uniformBlockIndex, point);
@@ -229,7 +229,7 @@ namespace Opengl {
 			GLuint index = getSubroutineIndex(shaderType, soubroutineName);
 
 			if (index == GL_INVALID_INDEX) {
-				console::warnp("GL_INVALID_INDEX: %s, %s", name.c_str(), soubroutineName.c_str());
+				console::warn("GL_INVALID_INDEX: %s, %s", name, soubroutineName);
 			}
 
 			subroutineIndexCache->insert({ soubroutineName, index });

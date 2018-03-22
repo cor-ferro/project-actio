@@ -94,11 +94,11 @@ namespace animation {
         animation_ = animationBuilder(rawAnimation);
 
         if (!animation_) {
-            console::warnp("failed create animation %s", rawAnimation.name.c_str());
+            console::warn("failed create animation %s", rawAnimation.name.c_str());
             return;
         }
 
-        console::infop("animation: %s", getName().c_str());
+        console::info("animation: %s", getName().c_str());
 
         ozz::memory::Allocator* allocator = ozz::memory::default_allocator();
 

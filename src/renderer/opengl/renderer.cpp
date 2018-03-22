@@ -29,7 +29,7 @@ void OpenglRenderer::start()
 	const RendererParams& renderParams = getParams();
 
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
-	console::info("GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ", maxTextureUnits);
+	console::info("GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS %i", maxTextureUnits);
 
 	gbuffer.init(renderParams.width, renderParams.height);
 

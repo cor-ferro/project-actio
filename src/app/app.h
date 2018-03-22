@@ -13,7 +13,7 @@
 
 static void w1ErrorCallback(int error, const char* description)
 {
-    console::err("GLFW error: ", description);
+    console::err("GLFW error: %s", description);
 }
 
 struct App {

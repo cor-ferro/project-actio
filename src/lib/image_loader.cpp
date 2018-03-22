@@ -67,7 +67,7 @@ namespace ImageLoader {
 						case IL_FILE_READ_ERROR: err = "IL_FILE_READ/WRITE_ERROR"; break;
 					}
 
-					console::warnp("error load image %s, %s", path.c_str(), err.c_str());
+					console::warn("error load image %s, %s", path, err);
 				}
 
 				imageLoaderMutex.unlock();
@@ -89,7 +89,7 @@ namespace ImageLoader {
 
 			delete[] memblock;
 		} else {
-			console::warnp("no such file or directory: %s", path.c_str());
+			console::warn("no such file or directory: %s", path);
 		}
 
 		return imageData;
@@ -123,7 +123,7 @@ namespace ImageLoader {
 			case GL_BGRA_INTEGER:
 				return 4;
 			default:
-				console::warn("unknown image format", format);
+				console::warn("unknown image format %s", format);
 				return 3;
 		}
 	}

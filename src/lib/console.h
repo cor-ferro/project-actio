@@ -8,71 +8,41 @@
 #define COLOR_RED "[31m"
 
 #include <iostream>
+#include <boost/format.hpp>
 
 namespace console {
 	template <typename ...Arg>
-	static void log(Arg... arg)
-	{
-		using expander = int[];
-		(void) expander{ (std::cout << "" << std::forward<Arg>(arg), void(), 0)... };
+	static void log(const char * format, Arg... args) {
+		boost::format f(format);
+		int unroll[] {0, (f % std::forward<Arg>(args), 0)...};
+		static_cast<void>(unroll);
+
+		std::cout << boost::str(f);
 		std::cout << std::endl;
 	}
 
 	template <typename ...Arg>
-	static void info(Arg... arg)
-	{
+	static void info(const char * format, Arg... arg) {
 		std::cout << CONSOLE_ESC COLOR_CYAN;
 		std::cout << "[info] ";
 		std::cout << CONSOLE_ESC CONSOLE_RESET;
-		log(arg...);
+		log(format, arg...);
 	}
 
 	template <typename ...Arg>
-	static void warn(Arg... arg)
-	{
+	static void warn(const char * format, Arg... arg) {
 		std::cout << CONSOLE_ESC COLOR_YELLOW;
 		std::cout << "[warn] ";
 		std::cout << CONSOLE_ESC CONSOLE_RESET;
-		log(arg...);
+		log(format, arg...);
 	}
 
 	template <typename ...Arg>
-	static void err(Arg... arg)
-	{
+	static void err(const char * format, Arg... arg) {
 		std::cout << CONSOLE_ESC COLOR_RED;
 		std::cout << "[err] ";
 		std::cout << CONSOLE_ESC CONSOLE_RESET;
-		log(arg...);
-	}
-
-	template <typename ...Arg>
-	static void logp(const char * format, Arg... arg) {
-		printf(format, arg...);
-		std::cout << std::endl;
-	}
-
-	template <typename ...Arg>
-	static void infop(const char * format, Arg... arg) {
-		std::cout << CONSOLE_ESC COLOR_CYAN;
-		std::cout << "[info] ";
-		std::cout << CONSOLE_ESC CONSOLE_RESET;
-		logp(format, arg...);
-	}
-
-	template <typename ...Arg>
-	static void warnp(const char * format, Arg... arg) {
-		std::cout << CONSOLE_ESC COLOR_YELLOW;
-		std::cout << "[warn] ";
-		std::cout << CONSOLE_ESC CONSOLE_RESET;
-		logp(format, arg...);
-	}
-
-	template <typename ...Arg>
-	static void errp(const char * format, Arg... arg) {
-		std::cout << CONSOLE_ESC COLOR_RED;
-		std::cout << "[err] ";
-		std::cout << CONSOLE_ESC CONSOLE_RESET;
-		logp(format, arg...);
+		log(format, arg...);
 	}
 };
 

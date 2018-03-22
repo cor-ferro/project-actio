@@ -157,8 +157,8 @@ Model::Model(Model::Config& config) : Model()
 		console::warn("no animations");
 	}
 
-	console::infop("materials: %i", scene->mNumMaterials);
-	console::infop("meshes: %i", scene->mNumMeshes);
+	console::info("materials: %i", scene->mNumMaterials);
+	console::info("meshes: %i", scene->mNumMeshes);
 
 	allocMeshes(0);
 	initFromAi(assimpResource);
@@ -178,7 +178,7 @@ Model::Model(Model::Config& config) : Model()
 
 Model::~Model()
 {
-//	console::infop("free model %i", id_);
+//	console::info("free model %i", id_);
 }
 
 void Model::destroy()
@@ -247,7 +247,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 	std::unordered_set<std::string> texturePaths = assimpResource->getTexturePaths();
 	std::vector<aiNode*> nodes = assimpResource->getAllNodes();
 
-	console::infop("nodes.size(): %i", nodes.size());
+	console::info("nodes.size(): %i", nodes.size());
 
 	std::queue<aiNode*> queueNodes;
 	for (auto node : nodes)
@@ -358,7 +358,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 		nodeThreads.push_back(std::thread(nodeLoader, std::ref(queueNodes)));
 	for (uint i = 0; i < countThreads; i++)
 		nodeThreads[i].join();
-	console::info("end init meshes", nodes_.size());
+	console::info("end init meshes %i", nodes_.size());
 
 	for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
 	{
@@ -488,7 +488,7 @@ void Model::setCurrentAnimation(std::string name) {
 	auto it = animations_.find(name);
 
 	if (it == animations_.end()) {
-		console::warnp("animation not found %s", name.c_str());
+		console::warn("animation not found %s", name.c_str());
 		return;
 	}
 

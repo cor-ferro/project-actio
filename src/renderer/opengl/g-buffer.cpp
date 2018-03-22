@@ -29,7 +29,7 @@ GBuffer::~GBuffer()
 
 bool GBuffer::init(Renderer::ScreenSize width, Renderer::ScreenSize height)
 {
-	console::infop("gbuffer init: %i, %i", width, height);
+	console::info("gbuffer init: %i, %i", width, height);
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
@@ -81,7 +81,7 @@ bool GBuffer::init(Renderer::ScreenSize width, Renderer::ScreenSize height)
 
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	console::infop("framebuffer status: %i", status);
+	console::info("framebuffer status: %i", status);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
 		const char * message = "";
 		switch (status) {
@@ -92,7 +92,7 @@ bool GBuffer::init(Renderer::ScreenSize width, Renderer::ScreenSize height)
 			case GL_FRAMEBUFFER_UNSUPPORTED: message = "UNSUPPORTED"; break;
 		}
 
-		console::errp("framebuffer error: %s", message);
+		console::err("framebuffer error: %s", message);
 
 		return false;
 	}

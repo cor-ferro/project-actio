@@ -242,7 +242,7 @@ void Geometry::fillIndices()
 		}
 	}
 
-	console::info("fillIndices: ", indices_->size());
+	console::info("fillIndices: %i", indices_->size());
 }
 
 void Geometry::addIndex(unsigned int i) {
@@ -814,8 +814,8 @@ void Geometry::computeBoundingBox()
 
 	console::info("");
 	console::info("bounding box");
-	console::info("size: ", size.x, ", ", size.y, ", ", size.z);
-	console::info("center: ", center.x, ", ", center.y, ", ", center.z);
+	console::info("size: %i %i %i", size.x, ", ", size.y, ", ", size.z);
+	console::info("center: %i %i %i", center.x, ", ", center.y, ", ", center.z);
 	console::info("");
 }
 

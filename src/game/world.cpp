@@ -193,6 +193,6 @@ namespace game {
 
         pxMaterials.erase(pxMaterials.begin(), pxMaterials.end());
 
-        console::infop("world %s destroyed", name.c_str());
+        console::info("world %s destroyed", name);
     }
 }

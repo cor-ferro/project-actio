@@ -69,11 +69,11 @@ namespace libAi {
 
 	void print(const aiVector3D& aiVec)
 	{
-		console::infop("vec: %.2f %.2f %.2f", aiVec.x, aiVec.y, aiVec.z);
+		console::info("vec: %.2f %.2f %.2f", aiVec.x, aiVec.y, aiVec.z);
 	}
 
     void print(const aiQuaternion& aiQuat)
 	{
-		console::infop("quat: %.2f %.2f %.2f %.2f", aiQuat.x, aiQuat.y, aiQuat.z, aiQuat.w);
+		console::info("quat: %.2f %.2f %.2f %.2f", aiQuat.x, aiQuat.y, aiQuat.z, aiQuat.w);
 	}
 }

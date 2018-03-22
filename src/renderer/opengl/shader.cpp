@@ -10,7 +10,7 @@ Shader::Shader(ShaderType type)
 
 void Shader::create() {
 	if (handle != -1) {
-		console::warnp("shader already created %i", handle);
+		console::warn("shader already created %i", handle);
 	}
 
 	switch (type) {

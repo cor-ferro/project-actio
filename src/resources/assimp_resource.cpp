@@ -7,8 +7,8 @@ namespace Resource {
 		resourcePath_ = path;
 		basePath_ = basePath.parent_path().string();
 
-		console::info("resourcePath_", resourcePath_);
-		console::info("basePath_", basePath_);
+		console::info("resourcePath %s", resourcePath_);
+		console::info("basePath %s", basePath_);
 	}
 
 	Assimp::~Assimp() {

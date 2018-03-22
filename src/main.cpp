@@ -5,7 +5,7 @@ int main(int argc, char **argv) {
 	app.setName("project actio");
 	app.init(argc, argv);
 
-	console::info("start ", app.getName());
+	console::info("start %s", app.getName());
 
 	const size_t maxModels = 10000;
 	const size_t maxMeshes = 50000;
@@ -182,8 +182,8 @@ int main(int argc, char **argv) {
 void printMemoryStatus()
 {
 	console::info("-------memory-------");
-	console::info("images: ", utils::formatMemorySize(imageAllocator->getUsed()));
-	console::info("models: ", utils::formatMemorySize(modelsAllocator->getUsed()));
-	console::info("mesh: ", utils::formatMemorySize(meshAllocator->getUsed()));
+	console::info("images: %s", utils::formatMemorySize(imageAllocator->getUsed()));
+	console::info("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()));
+	console::info("mesh: %s", utils::formatMemorySize(meshAllocator->getUsed()));
 	console::info("--------------------");
 }

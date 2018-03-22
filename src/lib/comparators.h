@@ -7,7 +7,7 @@
 namespace comparators {
     struct chars {
         bool operator()(const char *a, const char *b) {
-            console::infop("compare: %s, %s", a, b);
+            console::info("compare: %s, %s", a, b);
             return std::strcmp(a, b) == 0;
         }
     };

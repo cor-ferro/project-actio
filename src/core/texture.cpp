@@ -77,7 +77,7 @@ Texture Texture::loadFromMaterial(aiMaterial * mat, aiTextureType type, const Re
 
 		texture.setData(imageData);
 	} else {
-//		console::warnp("texture %s not exist, create empty", Texture::charType(type));
+//		console::warn("texture %s not exist, create empty", Texture::charType(type));
 		Texture_Type textureType = Texture::getType(type);
 		switch (textureType) {
 		case Texture_Specular:
@@ -122,7 +122,7 @@ void Texture::setup()
 	TextureImages::const_iterator got = images_.find(0);
 
 	if (got == images_.end()) {
-		console::warn("texture images map is empty", name);
+		console::warn("texture images map is empty %s", name);
 		return;
 	}
 

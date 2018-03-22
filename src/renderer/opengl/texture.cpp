@@ -80,7 +80,7 @@ void OpenglTexture::setupCube(std::unordered_map<char, ImageLoader::Data>& image
 		const std::unordered_map<char, ImageLoader::Data>::const_iterator got = imageDataList.find(i);
 
 		if (got == imageDataList.end()) {
-			console::warn("cannot get image map", i);
+			console::warn("cannot get image map %i", i);
 			continue;
 		}
 
