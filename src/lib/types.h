@@ -2,7 +2,7 @@
 #define TYPES_H_
 
 #include <stdalign.h>
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 typedef glm::vec2 vec2;
