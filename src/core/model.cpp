@@ -32,10 +32,10 @@ Model::Config::Config(const Model::Config& other)
 	animation = other.animation;
 }
 
-ModelNode::ModelNode() : name("") {}
-ModelNode::~ModelNode() {}
+Model::Node::Node() : name("") {}
+Model::Node::~Node() {}
 
-ModelNode::ModelNode(aiNode * node) 
+Model::Node::Node(aiNode * node)
 	: name(std::string(node->mName.C_Str()))
 {
 	meshes.reserve(node->mNumMeshes);
@@ -44,14 +44,14 @@ ModelNode::ModelNode(aiNode * node)
 	transformation = libAi::toNativeType(node->mTransformation);
 }
 
-void ModelNode::addMesh(Mesh * mesh)
+void Model::Node::addMesh(Mesh * mesh)
 {
 	meshes.push_back(mesh);
 }
 
-void ModelNode::addNode(ModelNode * node)
+void Model::Node::addNode(Model::Node * node)
 {
-	children.push_back(std::shared_ptr<ModelNode>(node));
+	children.push_back(std::shared_ptr<Model::Node>(node));
 }
 
 Model * Model::Create()
@@ -93,19 +93,35 @@ Model::Model()
 	, skeleton(nullptr)
 	, currentAnimation(nullptr)
 {
-	allocMeshes(1);
+    console::info("alloc new model");
 }
 
 Model::Model(const Model& other)
 {
-	console::info("copy model");
-	freeMeshes();
+	console::info("copy model by reference");
+
 	id_ = other.id_;
 	name_ = other.name_;
 	meshes_ = other.meshes_;
 	nodes_ = other.nodes_;
 	animations_ = other.animations_;
 	rootNode_ = other.rootNode_;
+}
+
+Model::Model(const Model* other)
+{
+    console::info("copy model by pointer");
+
+    console::info("%i : %i", id_, other->id_);
+    console::info("%i, %i, %i, %i", id_, other->meshes_.size(), other->nodes_.size(), other->animations_.size());
+    assert(id_ == other->id_);
+
+    id_ = other->id_;
+    name_ = other->name_;
+    meshes_ = other->meshes_;
+    nodes_ = other->nodes_;
+    animations_ = other->animations_;
+    rootNode_ = other->rootNode_;
 }
 
 Model::Model(Mesh * mesh) : Model() {
@@ -259,7 +275,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 
 	assert(queueNodes.front() == assimpResource->getRootNode());
 
-	rootNode_ = new ModelNode(queueNodes.front());
+	rootNode_ = new Model::Node(queueNodes.front());
 	queueNodes.pop();
 
 	std::mutex lock;
@@ -273,7 +289,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 			lock.unlock();
 //			console::info(std::this_thread::get_id());
 
-			ModelNode * modelNode = new ModelNode(node);
+            Model::Node * modelNode = new Model::Node(node);
 			this->addNode(modelNode); // todo: atomic insert
 
 			for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -374,14 +390,14 @@ void Model::addMesh(Mesh * mesh)
 	meshes_.push_back(mesh);
 }
 
-void Model::addNode(ModelNode * node)
+void Model::addNode(Node * node)
 {
-	nodes_.insert({ node->name, std::shared_ptr<ModelNode>(node) });
+	nodes_.insert({ node->name, std::shared_ptr<Node>(node) });
 }
 
 void Model::removeMesh(Mesh * mesh)
 {
-	ModelMeshes::iterator it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const ModelMesh& ptr) {
+	ModelMeshes::iterator it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const Mesh* ptr) {
 		return ptr == mesh;
 	});
 
@@ -391,7 +407,7 @@ void Model::removeMesh(Mesh * mesh)
 	}
 }
 
-void Model::removeNode(ModelNode * node)
+void Model::removeNode(Node * node)
 {
 	auto it = nodes_.find(node->name);
 

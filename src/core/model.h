@@ -29,28 +29,13 @@ extern memory::PoolAllocator * modelsAllocator;
 
 typedef std::size_t ModelId;
 typedef std::string ModelName;
-typedef Mesh * ModelMesh;
-typedef std::vector<ModelMesh> ModelMeshes;
+typedef std::vector<Mesh*> ModelMeshes;
 
 static size_t idCounter = 0;
 static ModelId newId()
 {
 	return ++idCounter;
 }
-
-struct ModelNode {
-	ModelNode();
-	ModelNode(aiNode * node);
-	~ModelNode();
-
-	void addMesh(Mesh * mesh);
-	void addNode(ModelNode * node);
-
-	std::string name;
-	std::vector<std::shared_ptr<ModelNode>> children;
-	std::vector<Mesh*> meshes;
-	mat4 transformation;
-};
 
 struct Model {
 	struct Config {
@@ -67,6 +52,20 @@ struct Model {
 		std::string animation;
 	};
 
+	struct Node {
+		Node();
+		Node(aiNode * node);
+		~Node();
+
+		void addMesh(Mesh * mesh);
+		void addNode(Node * node);
+
+		std::string name;
+		std::vector<std::shared_ptr<Node>> children;
+		std::vector<Mesh*> meshes;
+		mat4 transformation;
+	};
+
 	struct BoneMap {
 		uint jointIndex;
 		uint boneIndex;
@@ -74,6 +73,8 @@ struct Model {
 	};
 
 	Model();
+    Model(const Model& model);
+    Model(const Model* model);
 
 	static Model * Create();
 	static Model * Create(Config& modelConfig);
@@ -89,10 +90,10 @@ struct Model {
 
 	void initFromAi(const Resource::Assimp * assimpResource);
 	void addMesh(Mesh * mesh);
-	void addNode(ModelNode * node);
+	void addNode(Node * node);
 	
 	void removeMesh(Mesh * mesh);
-	void removeNode(ModelNode * node);
+	void removeNode(Node * node);
 
 	void setScale(vec3 scale);
 	void rotate(vec3 rotate, float angle);
@@ -112,7 +113,6 @@ struct Model {
 private:
 	Model(Config& modelConfig);
 	Model(Mesh * mesh);
-	Model(const Model& model);
 
 	void destroy();
 
@@ -122,14 +122,13 @@ private:
 
 	void createSkeleton(const Resource::Assimp * assimpResource, RawSkeleton * skeleton);
 	void createJoints(const aiNode * node, RawSkeleton::Joint * joint);
-	void buildSkeleton();
 
 	ModelId id_;
 	ModelName name_;
 	ModelMeshes meshes_;
-	ModelNode * rootNode_;
+	Node * rootNode_ = nullptr;
 	Object3D object;
-	std::unordered_map<std::string, std::shared_ptr<const ModelNode>> nodes_;
+	std::unordered_map<std::string, std::shared_ptr<const Node>> nodes_;
 	std::unordered_map<std::string, ImageLoader::Data> images_;
 
 	ozz::animation::Skeleton * skeleton;
