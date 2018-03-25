@@ -86,9 +86,9 @@ struct Geometry {
 	void computeBoundingSphere();
 	const Math::Box3& getBoundingBox();
 
-	GLuint VAO;
-	GLuint VBO;
-	GLuint EBO;
+	GLuint VAO = 0;
+	GLuint VBO = 0;
+	GLuint EBO = 0;
 
 protected:
 	void allocVertices(unsigned int count);
