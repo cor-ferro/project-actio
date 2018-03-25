@@ -123,7 +123,7 @@ void Mesh::draw()
 
 #ifdef GRAPHIC_API_OPENGL
 
-void Mesh::draw(Opengl::Program& program, uint flags)
+void Mesh::draw(renderer::Opengl::Program& program, uint flags)
 {
 	if ((flags & Mesh_Draw_Textures) != 0) {
 		unsigned int textureIndex = 0;
@@ -137,10 +137,10 @@ void Mesh::draw(Opengl::Program& program, uint flags)
 	}
 
 	if ((flags & Mesh_Draw_Material) != 0) {
-		program.setVec(Opengl::Uniform::MaterialAmbient, material.ambient);
-		program.setVec(Opengl::Uniform::MaterialDiffuse, material.diffuse);
-		program.setVec(Opengl::Uniform::MaterialSpecular, material.specular);
-		program.setFloat(Opengl::Uniform::MaterialShininess, material.shininess);
+		program.setVec(renderer::Opengl::Uniform::MaterialAmbient, material.ambient);
+		program.setVec(renderer::Opengl::Uniform::MaterialDiffuse, material.diffuse);
+		program.setVec(renderer::Opengl::Uniform::MaterialSpecular, material.specular);
+		program.setFloat(renderer::Opengl::Uniform::MaterialShininess, material.shininess);
 	}
 
 	if ((flags & Mesh_Draw_Bones) != 0) {

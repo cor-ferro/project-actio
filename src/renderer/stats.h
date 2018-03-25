@@ -13,25 +13,25 @@
 #include "../lib/console.h"
 #include "../core/geometry.h"
 
-namespace Renderer {
+namespace renderer {
 
-typedef boost::chrono::system_clock SystemClock;
+	typedef boost::chrono::system_clock SystemClock;
 
-struct Stats {
-	Stats();
+	struct Stats {
+		Stats();
 
-	void startTime();
-	void updateTime();
+		void startTime();
+		void updateTime();
 
-	double fps;
-	double msFrame;
+		double fps;
+		double msFrame;
 
-private:
-	SystemClock::time_point timeTick1_;
-	SystemClock::time_point timeTick2_;
-	SystemClock::time_point timeFrame_;
-	double fpsCounter;
-};
+	private:
+		SystemClock::time_point timeTick1_;
+		SystemClock::time_point timeTick2_;
+		SystemClock::time_point timeFrame_;
+		double fpsCounter;
+	};
 
 }
 

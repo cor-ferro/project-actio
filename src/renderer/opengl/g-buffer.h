@@ -7,43 +7,44 @@
 #include "../../lib/console.h"
 #include "../../lib/utils.h"
 
-namespace Renderer {
+namespace renderer {
+	namespace Opengl {
+		class GBuffer {
+		public:
+			enum GBUFFER_TEXTURE_TYPE {
+				GBUFFER_TEXTURE_TYPE_POSITION,
+				GBUFFER_TEXTURE_TYPE_ALBEDO,
+				GBUFFER_TEXTURE_TYPE_NORMAL,
+				GBUFFER_NUM_TEXTURES
+			};
 
-class GBuffer {
-public:
-	enum GBUFFER_TEXTURE_TYPE {
-		GBUFFER_TEXTURE_TYPE_POSITION,
-		GBUFFER_TEXTURE_TYPE_ALBEDO,
-		GBUFFER_TEXTURE_TYPE_NORMAL,
-		GBUFFER_NUM_TEXTURES
-	};
+			GBuffer();
+			~GBuffer();
 
-	GBuffer();
-	~GBuffer();
+			bool init(renderer::ScreenSize width, renderer::ScreenSize height);
 
-	bool init(Renderer::ScreenSize width, Renderer::ScreenSize height);
+			const std::vector<GLuint>& getTextures();
 
-	const std::vector<GLuint>& getTextures();
+			void bindForWriting();
+			void bindForReading();
+			void setReadBuffer(GBUFFER_TEXTURE_TYPE);
 
-	void bindForWriting();
-	void bindForReading();
-	void setReadBuffer(GBUFFER_TEXTURE_TYPE);
+			void startFrame();
+			void geometryPass();
+			void lightPass();
+			void stencilPass();
+			void finalPass();
 
-	void startFrame();
-	void geometryPass();
-	void lightPass();
-	void stencilPass();
-	void finalPass();
+			GLuint fbo;
 
-	GLuint fbo;
+		private:
+			std::vector<GLuint> textures;
+			GLuint rboDepth;
+			GLuint depthTexture;
+			GLuint finalTexture;
 
-private:
-	std::vector<GLuint> textures;
-	GLuint rboDepth;
-	GLuint depthTexture;
-	GLuint finalTexture;
-	
-};
+		};
+	}
 
 }
 

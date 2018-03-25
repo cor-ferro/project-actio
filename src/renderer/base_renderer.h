@@ -1,46 +1,58 @@
-/*
- * base_renderer.h
- *
- *  Created on: Jul 20, 2017
- *      Author: demitriy
- */
-
 #ifndef BASE_RENDERER_H_
 #define BASE_RENDERER_H_
 
 #include <vector>
 #include <functional>
 #include <algorithm>
-#include "../core/model.h"
-#include "../core/mesh.h"
+#include <boost/signals2.hpp>
+#include "../scenes/scene.h"
+#include "../lib/path.h"
+#include "stats.h"
 #include "renderer_types.h"
 
-typedef std::function<void()> callback;
+namespace renderer {
+    enum RenderType {
+        RenderForward,
+        RenderDeferred
+    };
 
-struct RendererParams {
-	Renderer::ScreenSize width;
-	Renderer::ScreenSize height;
-	float aspectRatio;
+    struct Renderer {
+        Renderer();
 
-	void calcAspectRatio();
-};
+        Renderer(renderer::Params);
 
-struct BaseRenderer {
-	BaseRenderer();
-	BaseRenderer(RendererParams);
+        const renderer::Params &getParams();
 
-	const RendererParams& getParams();
+        void setViewSize(renderer::ScreenSize, renderer::ScreenSize);
 
-	void setViewSize(Renderer::ScreenSize, Renderer::ScreenSize);
+        void setType(RenderType newType);
 
-	void addFrameHandler(callback cb);
-	void doFrameHandlers();
+        void setShadersFolder(Path path);
 
-private:
-	RendererParams params_;
-	std::vector<callback> frameHandlers_;
-};
+        void preRender();
 
+        void postRender();
+
+        virtual void draw(Scene *scene) = 0;
+
+        virtual bool init() = 0;
+
+    protected:
+        RenderType type;
+        Path shadersFolder;
+        Stats stats;
+
+        double elaspsedTime = 0.0;
+        double time = 1.0;
+
+        boost::signals2::signal<void()> onPreRender;
+        boost::signals2::signal<void()> onPostRender;
+
+    private:
+        renderer::Params params_;
+
+    };
+}
 
 
 #endif /* BASE_RENDERER_H_ */

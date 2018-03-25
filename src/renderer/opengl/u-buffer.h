@@ -10,56 +10,58 @@
 
 #define UBUFFER_DEFAULT_GROUP_NAME "main"
 
-namespace Renderer {
-	struct UBufferData {
-		UBufferData();
-		UBufferData(std::vector<std::size_t> sizes);
-		UBufferData(uint count, std::vector<std::size_t> sizes);
-		UBufferData(const UBufferData& other);
+namespace renderer {
+	namespace Opengl {
+		struct UBufferData {
+			UBufferData();
+			UBufferData(std::vector<std::size_t> sizes);
+			UBufferData(uint count, std::vector<std::size_t> sizes);
+			UBufferData(const UBufferData& other);
 
-		const std::vector<std::size_t>& getSizes() const;
-		const uint getCount() const;
-	private:
-		uint count;
-		std::vector<std::size_t> sizes;
-	};
+			const std::vector<std::size_t>& getSizes() const;
+			const uint getCount() const;
+		private:
+			uint count;
+			std::vector<std::size_t> sizes;
+		};
 
-	struct UBUfferOffset {
-		UBUfferOffset();
-		UBUfferOffset(const UBufferData& data, size_t& globalOffset);
-		UBUfferOffset(const UBUfferOffset& other);
+		struct UBUfferOffset {
+			UBUfferOffset();
+			UBUfferOffset(const UBufferData& data, size_t& globalOffset);
+			UBUfferOffset(const UBUfferOffset& other);
 
-		const std::pair<std::size_t, std::size_t>& get(uint index) const;
-		const std::pair<std::size_t, std::size_t>& get(uint offsetIndex, uint index) const;
-	private:
-		uint count;
-		std::vector<std::pair<std::size_t, std::size_t>> offsets;
-	};
+			const std::pair<std::size_t, std::size_t>& get(uint index) const;
+			const std::pair<std::size_t, std::size_t>& get(uint offsetIndex, uint index) const;
+		private:
+			uint count;
+			std::vector<std::pair<std::size_t, std::size_t>> offsets;
+		};
 
-	typedef std::unordered_map<std::string, UBufferData> UBufferMapSizes;
+		typedef std::unordered_map<std::string, UBufferData> UBufferMapSizes;
 
-	struct UBuffer {
-		UBuffer();
-		~UBuffer();
+		struct UBuffer {
+			UBuffer();
+			~UBuffer();
 
-		void init(std::vector<std::size_t> sizes, GLuint mountPoint);
-		void init(UBufferMapSizes mapSizes, GLuint mountPoint);
+			void init(std::vector<std::size_t> sizes, GLuint mountPoint);
+			void init(UBufferMapSizes mapSizes, GLuint mountPoint);
 
-		void set(short int index, const GLvoid * data);
-		void set(std::string group, short int index, const GLvoid * data);
-		void set(std::string group, short int offsetIndex, short int index, const GLvoid * data);
-		void use();
-		void nouse();
+			void set(short int index, const GLvoid * data);
+			void set(std::string group, short int index, const GLvoid * data);
+			void set(std::string group, short int offsetIndex, short int index, const GLvoid * data);
+			void use();
+			void nouse();
 
-		void setDataSize(size_t size);
-		const size_t& getDataSize();
+			void setDataSize(size_t size);
+			const size_t& getDataSize();
 
-	private:
-		GLuint uboHandle_;
-		size_t dataSize_;
-		bool isUsed_;
-		std::unordered_map<std::string, UBUfferOffset> offsets_;
-	};
+		private:
+			GLuint uboHandle_;
+			size_t dataSize_;
+			bool isUsed_;
+			std::unordered_map<std::string, UBUfferOffset> offsets_;
+		};
+	}
 }
 
 

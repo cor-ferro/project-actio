@@ -1,44 +1,44 @@
 #include "base_renderer.h"
+#include <GLFW/glfw3.h>
 
-BaseRenderer::BaseRenderer()
-{
-	RendererParams renderParams;
-	renderParams.width = 500;
-	renderParams.height = 500;
+namespace renderer {
+    Renderer::Renderer()
+            : type(RenderForward) {}
 
-	params_ = renderParams;
-}
+    Renderer::Renderer(renderer::Params params)
+            : params_(params), type(RenderForward) {}
 
-BaseRenderer::BaseRenderer(RendererParams params)
-	: params_(params)
-{
-}
+    const renderer::Params &Renderer::getParams() {
+        return params_;
+    }
 
-const RendererParams& BaseRenderer::getParams()
-{
-	return params_;
-}
+    void Renderer::setViewSize(renderer::ScreenSize width, renderer::ScreenSize height) {
+        params_.width = width;
+        params_.height = height;
+        params_.calcAspectRatio();
+    }
 
-void BaseRenderer::setViewSize(Renderer::ScreenSize width, Renderer::ScreenSize height)
-{
-	params_.width = width;
-	params_.height = height;
-	params_.calcAspectRatio();
-}
+    void Renderer::setType(RenderType newType) {
+        type = newType;
+    }
 
-void BaseRenderer::addFrameHandler(callback cb)
-{
-	frameHandlers_.push_back(cb);
-}
+    void Renderer::setShadersFolder(Path path) {
+        shadersFolder = path;
+    }
 
-void BaseRenderer::doFrameHandlers()
-{
-	std::for_each(frameHandlers_.begin(), frameHandlers_.end(), [](callback cb) {
-		cb();
-	});
-}
+    void Renderer::preRender() {
+        stats.startTime();
 
-void RendererParams::calcAspectRatio()
-{
-	aspectRatio = (float)width / (float)height;
+        double newTime = glfwGetTime();
+
+        this->elaspsedTime = newTime - this->time;
+        this->time = newTime;
+
+        onPreRender();
+    }
+
+    void Renderer::postRender() {
+        onPostRender();
+        stats.updateTime();
+    }
 }

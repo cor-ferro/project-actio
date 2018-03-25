@@ -3,18 +3,20 @@
 
 #include <map>
 
-namespace Opengl {
-    namespace Uniform {
-        enum Common {
-            Model,
-            MaterialAmbient,
-            MaterialDiffuse,
-            MaterialSpecular,
-            MaterialShininess,
-            Bones
-        };
+namespace renderer {
+    namespace Opengl {
+        namespace Uniform {
+            enum Common {
+                Model,
+                MaterialAmbient,
+                MaterialDiffuse,
+                MaterialSpecular,
+                MaterialShininess,
+                Bones
+            };
 
-        extern std::map <Common, std::string> Map;
+            extern std::map <Common, std::string> Map;
+        }
     }
 }
 

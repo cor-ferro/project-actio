@@ -17,92 +17,121 @@
 
 #include <sys/inotify.h>
 
-namespace Opengl {
+namespace renderer {
+	namespace Opengl {
 
-struct Program {
-	enum Program_Flags {
-		Watch_Changes = 0x1
-	};
+		struct Program {
+			enum Program_Flags {
+				Watch_Changes = 0x1
+			};
 
-	struct WatchDescriptor {
-		int fd = -1;
-		int vertexFd = -1;
-		int fragmentFd = -1;
-		int geometryFd = -1;
-	};
+			struct WatchDescriptor {
+				int fd = -1;
+				int vertexFd = -1;
+				int fragmentFd = -1;
+				int geometryFd = -1;
+			};
 
-	Program();
-	explicit Program(std::string);
-	~Program();
-	void init(std::string name, uint flags = 0x0);
-	void init(std::string name, Path path, uint flags = 0x0);
-	void initShader();
-	void use();
-	void nouse();
+			Program();
 
-	GLint getUniformLoc(const char *) const;
-	GLint getUniformCacheLoc(std::string locationName) const;
-	GLint getUniformCacheLoc(Opengl::Uniform::Common& uniform) const;
+			explicit Program(std::string);
 
-	GLuint getSubroutineIndex(unsigned int& shaderType, std::string soubroutineName);
-	GLuint getSubroutineCacheIndex(unsigned int& shaderType, std::string soubroutineName);
+			~Program();
 
-	void setFloat(const std::string&, const float&) const;
-	void setInt(const std::string&, const int&) const;
-	void setMat(const std::string&, const mat4&) const;
-	void setMat(const std::string&, const mat3&) const;
-	void setMat(const std::string&, const mat2&) const;
+			void init(std::string name, uint flags = 0x0);
 
-	void setMat(const std::string&, const std::vector<mat4> * mats) const;
-	void setMat(const std::string&, const int size, const mat4 * mats) const;
-	void setMat(const std::string&, const int size, const float * numbers) const;
+			void init(std::string name, Path path, uint flags = 0x0);
 
-	void setVec(const std::string&, const vec2 &) const;
-	void setVec(const std::string&, const vec3 &) const;
-	void setVec(const std::string&, const vec4 &) const;
+			void initShader();
 
-	void setMat(Opengl::Uniform::Common, const mat4&) const;
-	void setMat(Opengl::Uniform::Common, const std::vector<mat4>*) const;
-	void setFloat(Opengl::Uniform::Common, const float&) const;
-	void setVec(Opengl::Uniform::Common, const glm::vec2&) const;
-	void setVec(Opengl::Uniform::Common, const glm::vec3&) const;
-	void setVec(Opengl::Uniform::Common, const glm::vec4&) const;
+			void use();
 
-	void enableSubroutine(unsigned int shaderType, std::string& subroutinName);
-	void enableVertexSubroutine(std::string subroutinName);
-	void enableFragmentSubroutine(std::string subroutinName);
+			void nouse();
 
-	void bindBlock(const char *blockName, int point);
+			GLint getUniformLoc(const char *) const;
 
-	void initUniformCache(std::vector<std::string> locations);
-	void initUniformCache(std::map <Opengl::Uniform::Common, std::string> locations);
+			GLint getUniformCacheLoc(std::string locationName) const;
 
-	void checkShadersUpdate();
+			GLint getUniformCacheLoc(Opengl::Uniform::Common &uniform) const;
 
-	const GLuint getHandle() const;
+			GLuint getSubroutineIndex(unsigned int &shaderType, std::string soubroutineName);
 
-	GLuint handle;
+			GLuint getSubroutineCacheIndex(unsigned int &shaderType, std::string soubroutineName);
 
-	Shader * vertexShader;
-	Shader * fragmentShader;
-	Shader * geometryShader;
+			void setFloat(const std::string &, const float &) const;
 
-	std::string name;
-private:
-	void setupWatch();
-	void removeWatch();
+			void setInt(const std::string &, const int &) const;
 
-	bool compile();
+			void setMat(const std::string &, const mat4 &) const;
 
-	WatchDescriptor * watcher;
-	bool isUsed;
-	bool success;
-	std::unordered_map<std::string, GLint> uniformIndexCache;
-	std::map<short int, GLint> uniformIndexCache2;
-	std::unordered_map<std::string, GLuint> subroutineVertexIndexCache;
-	std::unordered_map<std::string, GLuint> subroutineFragmentIndexCache;
-};
+			void setMat(const std::string &, const mat3 &) const;
 
+			void setMat(const std::string &, const mat2 &) const;
+
+			void setMat(const std::string &, const std::vector<mat4> *mats) const;
+
+			void setMat(const std::string &, const int size, const mat4 *mats) const;
+
+			void setMat(const std::string &, const int size, const float *numbers) const;
+
+			void setVec(const std::string &, const vec2 &) const;
+
+			void setVec(const std::string &, const vec3 &) const;
+
+			void setVec(const std::string &, const vec4 &) const;
+
+			void setMat(Opengl::Uniform::Common, const mat4 &) const;
+
+			void setMat(Opengl::Uniform::Common, const std::vector<mat4> *) const;
+
+			void setFloat(Opengl::Uniform::Common, const float &) const;
+
+			void setVec(Opengl::Uniform::Common, const glm::vec2 &) const;
+
+			void setVec(Opengl::Uniform::Common, const glm::vec3 &) const;
+
+			void setVec(Opengl::Uniform::Common, const glm::vec4 &) const;
+
+			void enableSubroutine(unsigned int shaderType, std::string &subroutinName);
+
+			void enableVertexSubroutine(std::string subroutinName);
+
+			void enableFragmentSubroutine(std::string subroutinName);
+
+			void bindBlock(const char *blockName, int point);
+
+			void initUniformCache(std::vector<std::string> locations);
+
+			void initUniformCache(std::map<Opengl::Uniform::Common, std::string> locations);
+
+			void checkShadersUpdate();
+
+			const GLuint getHandle() const;
+
+			GLuint handle;
+
+			Shader *vertexShader;
+			Shader *fragmentShader;
+			Shader *geometryShader;
+
+			std::string name;
+		private:
+			void setupWatch();
+
+			void removeWatch();
+
+			bool compile();
+
+			WatchDescriptor *watcher;
+			bool isUsed;
+			bool success;
+			std::unordered_map<std::string, GLint> uniformIndexCache;
+			std::map<short int, GLint> uniformIndexCache2;
+			std::unordered_map<std::string, GLuint> subroutineVertexIndexCache;
+			std::unordered_map<std::string, GLuint> subroutineFragmentIndexCache;
+		};
+
+	}
 }
 
 #endif /* PROGRAM_H_ */

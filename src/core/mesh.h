@@ -72,7 +72,7 @@ struct Mesh : Object3D {
 	MeshDrawType getDrawType();
 
 	#ifdef GRAPHIC_API_OPENGL
-	void draw(Opengl::Program &program, uint flags = Mesh_Draw_All);
+	void draw(renderer::Opengl::Program &program, uint flags = Mesh_Draw_All);
 	void setup();
 	#endif
 
