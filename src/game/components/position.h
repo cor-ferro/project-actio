@@ -12,6 +12,10 @@ namespace game {
                 pos.z = z;
             };
 
+            Position(glm::vec3& newPos) {
+                pos = newPos;
+            }
+
             glm::vec3 pos;
         };
     }

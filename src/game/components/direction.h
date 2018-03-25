@@ -7,12 +7,12 @@ namespace game {
     namespace components {
         struct Direction {
             Direction(float x, float y, float z) {
-                pos.x = x;
-                pos.y = y;
-                pos.z = z;
+                dir.x = x;
+                dir.y = y;
+                dir.z = z;
             };
 
-            glm::vec3 pos;
+            glm::vec3 dir;
         };
     }
 }

@@ -15,7 +15,7 @@ OBJS			:=$(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 OBJ_TREE 		:=$(shell find $(SRCDIR) -type d)
 OBJ_TREE 		:=$(patsubst src%,obj%,$(OBJ_TREE))
 OBJS			:=$(patsubst %/%,%_%,$(OBJS))
-CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -DGLM_ENABLE_EXPERIMENTAL -std=c++11 -pipe -O$(OPTIMIZE_LEVEL)
+CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -DGLM_ENABLE_EXPERIMENTAL -DGLFW_INCLUDE_NONE -std=c++11 -pipe -O$(OPTIMIZE_LEVEL)
 LDFLAGS_COMPILE	=\
 				-I/usr/include \
 				-Ivendor/ \
@@ -52,7 +52,7 @@ LDFLAGS_BUILD  	=\
 					-lX11 -ldl -lGL -lz -lglfw \
 					-ljasper -lIL -lILU -lILUT \
 					-lassimp -lentityx \
-					-lPhysX3Common$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3Gpu$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3Cooking$(PHYSX_LIB)_$(PHYSX_ARCH) -lPxFoundation$(PHYSX_LIB)_$(PHYSX_ARCH) -lPxPvdSDK$(PHYSX_LIB)_$(PHYSX_ARCH) \
+					-lPhysX3Common$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3Gpu$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3Cooking$(PHYSX_LIB)_$(PHYSX_ARCH) -lPxFoundation$(PHYSX_LIB)_$(PHYSX_ARCH) -lPxPvdSDK$(PHYSX_LIB)_$(PHYSX_ARCH) -lPhysX3CharacterKinematic$(PHYSX_LIB)_$(PHYSX_ARCH) \
 					-lboost_thread -lboost_system -lboost_timer -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_regex
 
 DEPS = $(OBJS:.o=.d)

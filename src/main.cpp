@@ -1,4 +1,6 @@
 #include "main.h"
+#include "renderer/renderer_types.h"
+#include "renderer/renderer.h"
 
 int main(int argc, char **argv) {
 	App& app = App::instance();
@@ -31,17 +33,16 @@ int main(int argc, char **argv) {
 
 	mainContext.setTitle(app.getName().c_str());
 
-	RendererParams rendererParams;
+	renderer::Params rendererParams;
 	rendererParams.width = monitor->getWidth();
 	rendererParams.height = monitor->getHeight();
 	rendererParams.calcAspectRatio();
 
 	// init renderer before scene loading
-	Renderer::OpenglRenderer * renderer = new Renderer::OpenglRenderer(rendererParams);
+	renderer::Renderer* renderer = new renderer::OpenglRenderer(rendererParams);
 	renderer->setShadersFolder(app.shadersPath());
-	renderer->setType(Renderer::OpenglRenderer::RenderDeferred);
-	renderer->init(argc, argv);
-	renderer->start();
+	renderer->setType(renderer::RenderDeferred);
+	renderer->init();
 
 	InputHandler inputHandler(mainContext);
 
@@ -79,6 +80,8 @@ int main(int argc, char **argv) {
 	const Resource::File testWorldFile = app.resource("testScene.ini");
 
 	game::World* world = game::createWorld();
+    world->setupRenderer(renderer);
+    world->setup();
 	world->initFromFile(testWorldFile);
 
 	GLFWwindow * const window = mainContext.getWindow();
@@ -124,7 +127,7 @@ int main(int argc, char **argv) {
 			ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoBringToFrontOnFocus;
 
 			ImGui::Begin("Metrics", NULL, flags);
-			ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
+//			ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
 			ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
 			ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
 			ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
@@ -152,6 +155,9 @@ int main(int argc, char **argv) {
 	}
 
 	world->destroy();
+	// delete scene;
+	delete world;
+	delete renderer;
 
 	// cleanupScene(scene);
 	printMemoryStatus();
@@ -159,10 +165,6 @@ int main(int argc, char **argv) {
 	delete imageAllocator;
 	delete modelsAllocator;
 	delete meshAllocator;
-
-	// delete scene;
-	delete world;
-	delete renderer;
 
 	console::info("stop application");
 

@@ -21,7 +21,6 @@
 #include "lib/input_handler.h"
 #include "lib/console.h"
 #include "lib/utils.h"
-#include "renderer/renderer.h"
 #include "cameras/camera.h"
 #include "cameras/camera_control.h"
 #include "lights/direction_light.h"

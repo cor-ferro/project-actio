@@ -1,39 +1,46 @@
+#include <algorithm>
 #include "world.h"
+#include "systems/physic.h"
 #include "systems/movement.h"
 #include "systems/render.h"
 #include "components/position.h"
+#include "components/transform.h"
 #include "components/state.h"
 #include "components/renderable.h"
+#include "components/physic.h"
+#include "components/controlled.h"
+#include "components/model.h"
 
 namespace game {
     World::World()
-        : name("")
-        , time(0)
-    {
-        systems.add<systems::Movement>();
-        systems.add<systems::Render>();
-        systems.configure();
+            : name(""), time(0) {
 
-        initPhysics();
     }
 
-    void World::update(TimeDelta dt)
-    {
-        systems.update<systems::Movement>(dt);
+    void World::update(TimeDelta dt) {
+        systems.update<game::systems::Physic>(dt);
+        systems.update<game::systems::Movement>(dt);
     }
 
-    void World::render(TimeDelta dt)
-    {
+    void World::render(TimeDelta dt) {
         systems.update<systems::Render>(dt);
     }
 
-    inline void World::spawn(Character* character)
-    {
+    void World::setupRenderer(renderer::Renderer *renderer) {
+        systems.add<game::systems::Render>(renderer);
+    }
+
+    void World::setup() {
+        systems.add<game::systems::Movement>();
+        systems.add<game::systems::Physic>();
+        systems.configure();
+    }
+
+    inline void World::spawn(Character *character) {
         spawn(character, vec3(0.0f, 0.0f, 0.0f));
     }
 
-    void World::spawn(Character* character, vec3 position)
-    {
+    void World::spawn(Character *character, vec3 position) {
         entityx::Entity entity = entities.create();
         entity.assign<components::State>();
         entity.assign<components::Renderable>();
@@ -48,133 +55,85 @@ namespace game {
         // characters.push_back(object);
     }
 
-    void World::initPhysics()
-    {
-        gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
-        gPvd = PxCreatePvd(*gFoundation);
-        gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true, gPvd);
-
-        gDispatcher = PxDefaultCpuDispatcherCreate(4);
-
-        PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-        sceneDesc.gravity = PxVec3(0.0f, -9.8f, 0.0f);
-        sceneDesc.cpuDispatcher = gDispatcher;
-        sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-        sceneDesc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
-        sceneDesc.flags |= PxSceneFlag::eENABLE_PCM;
-        sceneDesc.flags |= PxSceneFlag::eENABLE_STABILIZATION;
-        sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
-        sceneDesc.gpuMaxNumPartitions = 8;
-
-        gScene = gPhysics->createScene(sceneDesc);
-
-        pxMaterials.insert({ "default", gPhysics->createMaterial(0.5f, 0.5f, 0.6f) });
-
-        console::info("world physics inited");
-    }
-
-    void World::add()
-    {
-        // PxMaterial* gMaterial = pxMaterials.find("default")->second;
-        
-        // PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
-        // gScene->addActor(*groundPlane);
-
-        // PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(0, 20, 0)), PxSphereGeometry(3), PxVec3(0, -25, -5));
-	    // PxRigidBodyExt::updateMassAndInertia(*ball, 1000.0f);
-        // gScene->addActor(*ball);
-    }
-
-    void World::remove()
-    {
+    void World::add() {
 
     }
 
-    PxRigidDynamic* World::createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity)
-    {
-        PxMaterial* gMaterial = pxMaterials.find("default")->second;
+    void World::remove() {
 
-        PxRigidDynamic* dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
-        dynamic->setAngularDamping(0.5f);
-        dynamic->setLinearVelocity(velocity);
-
-        return dynamic;
     }
 
-    void World::stepPhysics()
-    {
-        PX_UNUSED(false);
+    void World::initFromFile(const Resource::File &file) {
+        console::info("load world from file: %s", file.getPath());
 
-        gScene->simulate(1.0f/60.0f);
-        gScene->fetchResults(true);
-    }
-
-    void World::applyPhysics()
-    {
-        // if (!ball->isSleeping()) {
-        //     PxTransform ballTransform = ball->getGlobalPose();
-
-        //     sphereModel->setPosition(ballTransform.p.x, ballTransform.p.y, ballTransform.p.z);
-        //     sphereModel->setQuaternion(ballTransform.q.x, ballTransform.q.y, ballTransform.q.z, ballTransform.q.w);
-        // }
-    }
-
-    void World::cleanupPhysics()
-    {
-        if (gScene) {
-            gScene->release();
-            gScene = NULL;
-        }
-
-        if (gDispatcher) {
-            gDispatcher->release();
-            gDispatcher = NULL;
-        }
-
-        if (gPhysics) {
-            gPhysics->release();
-            gPhysics = NULL;
-        }
-
-        if (gFoundation) {
-            gFoundation->release();
-            gFoundation = NULL;
-        }
-
-        console::info("physics released");
-    }
-
-    void World::initFromFile(const Resource::File& file) {
         IniLoader iniLoader;
         iniLoader.defineSection("world", {"models", "lights", "skybox", "camera"});
-        iniLoader.defineSection("model", {"File", "FlipUv", "Animation", "Position", "Rotation", "RotationAngle", "Scale"});
+        iniLoader.defineSection("model", {"File", "FlipUv", "Animation", "Position", "Rotation", "Scale", "Player"});
         iniLoader.defineSection("camera", {"Type", "Position", "Target", "AspectRatio", "Fov", "Near", "Far"});
-        iniLoader.defineSection("light", {"Type", "Ambient", "Diffuse", "Specular", "Position", "Constant", "Linear", "Quadratic", "Direction"});
-        iniLoader.defineSection("skybox", {"PositiveX", "NegativeX", "PositiveY", "NegativeY", "PositiveZ", "NegativeZ"});
+        iniLoader.defineSection("light", {"Type", "Ambient", "Diffuse", "Specular", "Position", "Constant", "Linear",
+                                          "Quadratic", "Direction"});
+        iniLoader.defineSection("skybox",
+                                {"PositiveX", "NegativeX", "PositiveY", "NegativeY", "PositiveZ", "NegativeZ"});
         iniLoader.load(file.getPath());
 
-        const std::vector<IniLoader::Section>* models = iniLoader.getSections("model");
+        std::shared_ptr<game::systems::Physic> physicSystem = systems.system<game::systems::Physic>();
+        physx::PxControllerManager *const controllerManager = physicSystem->getControllerManager();
+
+        const IniLoader::Section *world = iniLoader.getSection("world");
+
+        std::vector<std::string> worldModels;
+
+        if (world != nullptr) {
+            world->getField("models", worldModels, ' ');
+        }
+
+        const std::vector<IniLoader::Section> *models = iniLoader.getSections("model");
         if (models != nullptr) {
             for (auto it = models->begin(); it != models->end(); ++it) {
-                const IniLoader::Section& section = (*it);
+                const IniLoader::Section &section = (*it);
 
-                console::info("create entity");
+                vec3 pos, scale;
+                vec4 rot;
+                std::string filePath, animation;
+                bool flipUv, player, isInWorld;
+
+                section.getFieldVec<vec3>("Position", pos);
+                section.getFieldVec<vec4>("Rotation", rot);
+                section.getFieldVec<vec3>("Scale", scale, 1.0f);
+
+                section.getField("File", filePath);
+                section.getField("FlipUv", flipUv);
+                section.getField("Animation", animation);
+                section.getField("Player", player);
+
+                isInWorld = std::find(worldModels.begin(), worldModels.end(), section.name) != worldModels.end();
+
+                Material::Phong material;
+                material.setWireframe(true);
+                material.setDiffuse(0.0f, 1.0f, 0.0f);
+
+                Geometry geometry = Geometry::Box();
+                Mesh *mesh = Mesh::Create(geometry, material);
+
+                entityx::Entity entity = entities.create();
+
+                entity.assign<components::Transform>(pos, rot, scale);
+                entity.assign<components::Model>(mesh);
+
+                if (player) {
+                    entity.assign<components::Controlled>(controllerManager);
+                }
+
+                if (isInWorld) {
+                    console::info("is in world: %s", section.name);
+                    entity.assign<components::Renderable>();
+                }
             }
-
-            // for (const IniLoader::Section& section : models) {
-                // vec3 pos = section.getFieldVec("Position");
-                
-                // console::info("create entity");
-                // entityx::Entity entity = entities.create();
-                // entity.assign<components::Position>(pos.x, pos.y, pos.z);
-            // }
         }
     }
 
-    void World::destroy()
-    {
-        for (WorldObject<Character>& object : characters)
-        {
+    void World::destroy() {
+        for (WorldObject<Character> &object : characters) {
             if (object.object != nullptr) {
                 delete object.object;
                 object.object = nullptr;
@@ -182,16 +141,6 @@ namespace game {
         }
 
         characters.erase(characters.begin(), characters.end());
-
-        cleanupPhysics();
-
-        for (auto& x : pxMaterials)
-        {
-            // delete x->second;
-            // x->second = nullptr;
-        }
-
-        pxMaterials.erase(pxMaterials.begin(), pxMaterials.end());
 
         console::info("world %s destroyed", name);
     }

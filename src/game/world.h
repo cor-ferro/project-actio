@@ -8,19 +8,13 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include "entityx/entityx.h"
-#include "PxPhysics.h"
-#include "PxScene.h"
-#include "PxRigidDynamic.h"
-#include "PxShape.h"
-#include "PxPhysicsAPI.h"
-#include "pvd/PxPvd.h"
 #include "character.h"
 #include "../lib/console.h"
 #include "../resources/file_resource.h"
 #include "../lib/ini_loader.h"
+#include "../renderer/base_renderer.h"
 
 namespace game {
-    using namespace physx;
     using namespace entityx;
 
     typedef glm::vec3 vec3;
@@ -28,9 +22,9 @@ namespace game {
     typedef glm::mat4 mat4;
 
     struct World : EntityX {
-        template <typename Object>
+        template<typename Object>
         struct WorldObject {
-            Object* object;
+            Object *object;
             vec3 position;
             bool frozen;
             bool hidden;
@@ -38,46 +32,35 @@ namespace game {
 
         World();
 
-        void initFromFile(const Resource::File& file);
+        void setupRenderer(renderer::Renderer *);
+
+        void setup();
+
+        void initFromFile(const Resource::File &file);
+
         void destroy();
 
-        inline void spawn(Character* character);
-        void spawn(Character* character, glm::vec3 pos);
+        inline void spawn(Character *character);
+
+        void spawn(Character *character, glm::vec3 pos);
+
         void add();
+
         void remove();
 
         void update(TimeDelta dt);
+
         void render(TimeDelta dt);
-        void subscribe();
-        void unsubscribe();
-
-        void updatePhysics();
-
-        void initPhysics();
-        void stepPhysics();
-        void applyPhysics();
-        void cleanupPhysics();
 
     private:
         std::string name;
         uint time;
 
         std::vector<WorldObject<Character>> characters;
-
-        PxDefaultAllocator gAllocator;
-        PxDefaultErrorCallback gErrorCallback;
-        PxFoundation* gFoundation = NULL;
-        PxPhysics*  gPhysics = NULL;
-        PxPvd* gPvd = NULL;
-        PxDefaultCpuDispatcher* gDispatcher = NULL;
-        PxScene* gScene = NULL;
-        std::unordered_map<std::string, PxMaterial*> pxMaterials;
-
-        PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity=PxVec3(0));
     };
 
     struct WorldController {
-        static void move(World* world, Character* character);
+        static void move(World *world, Character *character);
     };
 }
 
