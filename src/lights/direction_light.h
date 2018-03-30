@@ -12,33 +12,43 @@
 #include "../lib/types.h"
 
 namespace Light {
-	struct Directional {
-		Directional();
-		Directional(vec3 ambient, vec3 diffuse, vec3 specular);
+    struct Directional {
+        Directional();
 
-		void setAmbient(vec3 ambient);
-		void setAmbient(float r, float g, float b);
+        Directional(vec3 ambient, vec3 diffuse, vec3 specular);
 
-		void setDiffuse(vec3 diffuse);
-		void setDiffuse(float r, float g, float b);
+        Directional(vec3 ambient, vec3 diffuse, vec3 specular, vec3 direction);
 
-		void setSpecular(vec3 specular);
-		void setSpecular(float r, float g, float b);
+        void setAmbient(vec3 ambient);
 
-		void setDirection(vec3 specular);
-		void setDirection(float r, float g, float b);
+        void setAmbient(float r, float g, float b);
 
-		vec3 getAmbient();
-		vec3 getDiffuse();
-		vec3 getSpecular();
-		vec3 getDirection();
+        void setDiffuse(vec3 diffuse);
 
-		// keep same order
-		vec3 ambient;
-		vec3 diffuse;
-		vec3 specular;
-		vec3 direction;
-	};
+        void setDiffuse(float r, float g, float b);
+
+        void setSpecular(vec3 specular);
+
+        void setSpecular(float r, float g, float b);
+
+        void setDirection(vec3 specular);
+
+        void setDirection(float r, float g, float b);
+
+        vec3 getAmbient();
+
+        vec3 getDiffuse();
+
+        vec3 getSpecular();
+
+        vec3 getDirection();
+
+        // keep same order
+        vec3 ambient;
+        vec3 diffuse;
+        vec3 specular;
+        vec3 direction;
+    };
 } // Light
 
 #endif /* DIRECTION_LIGHT_H_ */
