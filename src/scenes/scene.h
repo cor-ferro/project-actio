@@ -23,59 +23,82 @@
 #include "../core/mesh.h"
 
 struct Scene {
-	Scene();
-	Scene(const Scene& other);
-	~Scene();
+    Scene();
 
-	bool init();
-	const std::vector<Model*>& getModels();
-	Model * getModelByName(ModelName name);
-	Model * getModelById(ModelId id);
-	
-	void allocModels(unsigned int count);
-	void allocCameras(unsigned int count);
-	void allocLights(unsigned int count);
+    Scene(const Scene &other);
 
-	Camera * getActiveCamera();
-	void setActiveCamera(Camera *);
+    ~Scene();
 
-	void add(Model *);
-	void add(std::shared_ptr<Model>);
-	void add(Camera *);
-	void remove(Model *);
-	void remove(Camera *);
+    bool init();
 
-	Model * getSkybox();
-	void setSkybox(Model *);
-	bool hasSkybox();
+    const std::vector<Model *> &getModels();
 
-	const std::vector<Light::Directional*>& getDirectionalLights();
-	const std::vector<Light::Point*>& getPointLights();
-	const std::vector<Light::Spot*>& getSpotLights();
+    Model *getModelByName(ModelName name);
 
-	Light::Directional * getDirectionalLight(uint index);
-	Light::Point * getPointLight(uint index);
-	Light::Spot * getSpotLight(uint index);
+    Model *getModelById(ModelId id);
 
-	void add(Light::Directional *);
-	void add(Light::Point *);
-	void add(Light::Spot *);
-	void remove(Light::Directional *);
-	void remove(Light::Point *);
-	void remove(Light::Spot *);
+    void allocModels(unsigned int count);
+
+    void allocCameras(unsigned int count);
+
+    void allocLights(unsigned int count);
+
+    Camera *getActiveCamera();
+
+    void setActiveCamera(Camera *);
+
+    void add(Model *);
+
+    void add(std::shared_ptr<Model>);
+
+    void add(Camera *);
+
+    void remove(Model *);
+
+    void remove(Camera *);
+
+    Model *getSkybox();
+
+    void setSkybox(Model *);
+
+    bool hasSkybox();
+
+    const std::vector<Light::Directional *> &getDirectionalLights();
+
+    const std::vector<Light::Point *> &getPointLights();
+
+    const std::vector<Light::Spot *> &getSpotLights();
+
+    Light::Directional *getDirectionalLight(uint index);
+
+    Light::Point *getPointLight(uint index);
+
+    Light::Spot *getSpotLight(uint index);
+
+    void add(Light::Directional *);
+
+    void add(Light::Point *);
+
+    void add(Light::Spot *);
+
+    void remove(Light::Directional *);
+
+    void remove(Light::Point *);
+
+    void remove(Light::Spot *);
 
 private:
-	Model * skybox_ = nullptr;
-	std::vector<Model*> models_;
-	std::vector<Camera*> cameras_;
+    Model *skybox_ = nullptr;
+    std::vector<Model *> models_;
+    std::vector<Camera *> cameras_;
 
-	std::vector<Light::Directional*> directionalLights_;
-	std::vector<Light::Point*> pointLights_;
-	std::vector<Light::Spot*> spotLights_;
+    std::vector<Light::Directional *> directionalLights_;
+    std::vector<Light::Point *> pointLights_;
+    std::vector<Light::Spot *> spotLights_;
 
-	Camera * camera_;
+    Camera *camera_;
 };
 
-vec3 parseVec(const char * str);
+vec3 parseVec(const char *str);
 
 #endif
