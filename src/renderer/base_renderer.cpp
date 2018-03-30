@@ -8,6 +8,8 @@ namespace renderer {
     Renderer::Renderer(renderer::Params params)
             : params_(params), type(RenderForward) {}
 
+    Renderer::~Renderer() {}
+
     const renderer::Params &Renderer::getParams() {
         return params_;
     }

@@ -58,6 +58,12 @@ namespace renderer {
 
 			GLuint getSubroutineCacheIndex(unsigned int &shaderType, std::string soubroutineName);
 
+            template<typename T>
+            void set(const std::string &name, const T &ref);
+
+            template<typename T>
+            void set(Opengl::Uniform::Common uniform, const T &ref);
+
 			void setFloat(const std::string &, const float &) const;
 
 			void setInt(const std::string &, const int &) const;
@@ -107,6 +113,7 @@ namespace renderer {
 			void checkShadersUpdate();
 
 			const GLuint getHandle() const;
+			const bool isSuccess() const;
 
 			GLuint handle;
 

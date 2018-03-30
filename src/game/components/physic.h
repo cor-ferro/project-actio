@@ -7,16 +7,12 @@
 
 namespace game {
     namespace components {
-		using namespace physx;
+        using namespace physx;
 
         struct Physic {
-        	Physic() {
-        		material = nullptr;
-        		dynamic = nullptr;
-            };
+            Physic(PxRigidDynamic *dynamic) :  dynamic(dynamic) {};
 
-			PxMaterial* material;
-			PxRigidDynamic* dynamic;
+            PxRigidDynamic *dynamic;
         };
     }
 }

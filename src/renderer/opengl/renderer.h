@@ -19,8 +19,20 @@
 #include "u-buffer.h"
 #include "uniforms.h"
 #include "utils.h"
+#include "pipeline.h"
+
+#include "../../game/components/camera.h"
+#include "../../game/components/transform.h"
+#include "../../game/components/target.h"
+#include "../../game/components/renderable.h"
+#include "../../game/components/light_directional.h"
+#include "../../game/components/light_point.h"
+#include "../../game/components/light_spot.h"
 
 namespace renderer {
+    using namespace game;
+    namespace ex = entityx;
+
     struct OpenglRenderer : Renderer {
         OpenglRenderer(renderer::Params);
 
@@ -30,17 +42,23 @@ namespace renderer {
 
         void draw(Scene *scene);
 
+        void draw(entityx::EntityManager &es);
+
         void drawModels(Scene *scene, Opengl::Program &program);
+
+        void drawModels(entityx::EntityManager &es);
 
         void forwardRender(Scene *scene);
 
-        void defferedRender(Scene *scene);
+        void deferredRender(Scene *scene);
 
-        void renderPointLights(Scene &scene);
+        void deferredRender(entityx::EntityManager &es);
 
-        void renderDirLights(Scene &scene);
+        void renderPointLights(ex::EntityManager &es, vec3 &cameraPosition);
 
-        void renderSpotLights(Scene &scene);
+        void renderSpotLights(ex::EntityManager &es, vec3 &cameraPosition);
+
+        void renderDirLights(ex::EntityManager &es);
 
         GLuint depthMapFBO;
         GLuint depthMap;
@@ -57,6 +75,10 @@ namespace renderer {
         Opengl::Program geometryPassProgram;
         Opengl::Program lightPassProgram;
         Opengl::Program nullProgram;
+
+        renderer::Opengl::MeshDrawPipeline modelPipeline;
+        renderer::Opengl::MeshDrawPipeline skyboxPipeline;
+        renderer::Opengl::MeshDrawPipeline nullPipeline;
 
         Mesh *lightQuad;
         Mesh *lightSphere;

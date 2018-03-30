@@ -61,8 +61,6 @@ struct Mesh : Object3D {
 	void setName(std::string newName);
 	void setName(const char * newName);
 
-	void initFromAi(aiMesh * mesh, const Resource::Assimp * assimpResource);
-
 	void draw();
 
 	void freeGeometry();

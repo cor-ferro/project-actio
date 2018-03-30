@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <chrono>
 #include "entityx/entityx.h"
 #include "../components/renderable.h"
 #include "../components/transform.h"
@@ -13,6 +14,7 @@
 #include "../../lights/direction_light.h"
 #include "../../lights/point_light.h"
 #include "../../lights/spot_light.h"
+#include "../../cameras/camera.h"
 
 namespace game {
     namespace systems {
@@ -20,27 +22,16 @@ namespace game {
 
         class Render : public entityx::System<Render> {
         public:
-            Render(renderer::Renderer *newRenderer) {
+            explicit Render(renderer::Renderer *newRenderer) {
                 renderer = newRenderer;
             }
 
             void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
-                // console::info("render");
-                es.each<components::Renderable, components::Transform, components::Model>([](
-                        Entity entity,
-                        components::Renderable &,
-                        components::Transform &transform,
-                        components::Model &model
-                ) {
-                    console::info("render entity");
-                });
+                renderer->draw(es);
             }
 
         private:
-            renderer::Renderer *renderer;
-            std::vector<Light::Directional> directionalLights;
-            std::vector<Light::Point> pointLights;
-            std::vector<Light::Spot> spotLights;
+            renderer::Renderer *renderer = nullptr;
         };
     }
 }

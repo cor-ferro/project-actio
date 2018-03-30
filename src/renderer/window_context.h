@@ -65,6 +65,10 @@ struct WindowContext {
         glfwSetCursorPos(window, x, y);
     }
 
+    void getMousePosition(double &xpos, double &ypos) {
+        glfwGetCursorPos(window, &xpos, &ypos);
+    }
+
     void enableVSync() {
         glfwSwapInterval(1);
     }

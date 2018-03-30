@@ -265,7 +265,6 @@ namespace game {
             });
 
             if (it != meshes_.end()) {
-                (*it)->setParentObject(nullptr);
                 meshes_.erase(it);
             }
         }

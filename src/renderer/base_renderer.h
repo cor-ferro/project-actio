@@ -5,10 +5,13 @@
 #include <functional>
 #include <algorithm>
 #include <boost/signals2.hpp>
+#include "../game/components/model.h"
+#include "../game/components/transform.h"
 #include "../scenes/scene.h"
 #include "../lib/path.h"
 #include "stats.h"
 #include "renderer_types.h"
+#include "entityx/entityx.h"
 
 namespace renderer {
     enum RenderType {
@@ -20,6 +23,8 @@ namespace renderer {
         Renderer();
 
         Renderer(renderer::Params);
+
+        virtual ~Renderer() = 0;
 
         const renderer::Params &getParams();
 
@@ -34,6 +39,7 @@ namespace renderer {
         void postRender();
 
         virtual void draw(Scene *scene) = 0;
+        virtual void draw(entityx::EntityManager &es) = 0;
 
         virtual bool init() = 0;
 

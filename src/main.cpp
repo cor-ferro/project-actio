@@ -3,172 +3,164 @@
 #include "renderer/renderer.h"
 
 int main(int argc, char **argv) {
-	App& app = App::instance();
-	app.setName("project actio");
-	app.init(argc, argv);
+    App &app = App::instance();
+    app.setName("project actio");
+    app.init(argc, argv);
 
-	console::info("start %s", app.getName());
+    console::info("start %s", app.getName());
 
-	const size_t maxModels = 10000;
-	const size_t maxMeshes = 50000;
+    const size_t maxModels = 10000;
+    const size_t maxMeshes = 50000;
 
-	imageAllocator = new memory::FreeListAllocator(1e8, memory::FreeListAllocator::FIND_FIRST);
-	imageAllocator->Init();
+    imageAllocator = new memory::FreeListAllocator(1e8, memory::FreeListAllocator::FIND_FIRST);
+    imageAllocator->Init();
 
-	modelsAllocator = new memory::PoolAllocator(sizeof(Model) * maxModels, sizeof(Model));
-	modelsAllocator->Init();
+    modelsAllocator = new memory::PoolAllocator(sizeof(Model) * maxModels, sizeof(Model));
+    modelsAllocator->Init();
 
-	meshAllocator = new memory::PoolAllocator(sizeof(Mesh) * maxMeshes, sizeof(Mesh));
-	meshAllocator->Init();
+    meshAllocator = new memory::PoolAllocator(sizeof(Mesh) * maxMeshes, sizeof(Mesh));
+    meshAllocator->Init();
 
-	const Monitor * const monitor = app.getPrimaryMonitor();
-	uint windowWidth = monitor->getWidth() / 2;
-	uint windowHeight = monitor->getHeight() / 2;
+    const Monitor *const monitor = app.getPrimaryMonitor();
+    uint windowWidth = monitor->getWidth() / 2;
+    uint windowHeight = monitor->getHeight() / 2;
 
-	WindowContext mainContext;
-	
-	if (!mainContext.init(windowWidth, windowHeight)) {
-		return -1;
-	}
+    WindowContext mainContext;
 
-	mainContext.setTitle(app.getName().c_str());
+    if (!mainContext.init(windowWidth, windowHeight)) {
+        return -1;
+    }
 
-	renderer::Params rendererParams;
-	rendererParams.width = monitor->getWidth();
-	rendererParams.height = monitor->getHeight();
-	rendererParams.calcAspectRatio();
+    mainContext.setTitle(app.getName().c_str());
 
-	// init renderer before scene loading
-	renderer::Renderer* renderer = new renderer::OpenglRenderer(rendererParams);
-	renderer->setShadersFolder(app.shadersPath());
-	renderer->setType(renderer::RenderDeferred);
-	renderer->init();
+    renderer::Params rendererParams;
+    rendererParams.width = monitor->getWidth();
+    rendererParams.height = monitor->getHeight();
+    rendererParams.calcAspectRatio();
 
-	InputHandler inputHandler(mainContext);
+    // init renderer before scene loading
+    renderer::Renderer *renderer = new renderer::OpenglRenderer(rendererParams);
+    renderer->setShadersFolder(app.shadersPath());
+    renderer->setType(renderer::RenderDeferred);
+    renderer->init();
 
-	printMemoryStatus();
+    InputHandler *inputHandler = new InputHandler(mainContext);
+    inputHandler->calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
 
-	// Camera * sceneActiveCamera = scene->getActiveCamera();
-	// CameraControl cameraControl(sceneActiveCamera, &inputHandler);
+    printMemoryStatus();
 
-	// cameraControl.calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
-	// sceneActiveCamera->setParam(CameraParam::ASPECT, rendererParams.aspectRatio);
+    // Camera * sceneActiveCamera = scene->getActiveCamera();
+//	 CameraControl cameraControl(sceneActiveCamera, &inputHandler);
 
-	// Material::Phong material;
-	// material.setDiffuse(0.0f, 1.0f, 0.0f);
-	// Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
+    // cameraControl.calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
+    // sceneActiveCamera->setParam(CameraParam::ASPECT, rendererParams.aspectRatio);
 
-	// for (int i = 0; i < 1; i++) {
-	// 	Mesh * mesh = Mesh::Create(geometry, material);
-	// 	mesh->setPosition(vec3(
-	// 		glm::gaussRand(0.0f, 7.0f),
-	// 		glm::gaussRand(0.0f, 7.0f),
-	// 		glm::gaussRand(0.0f, 7.0f)
-	// 	));
-	// 	Model * model = Model::Create(mesh);
+    // Material::Phong material;
+    // material.setDiffuse(0.0f, 1.0f, 0.0f);
+    // Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
 
-	// 	scene->add(model);
-	// }
+    // for (int i = 0; i < 1; i++) {
+    // 	Mesh * mesh = Mesh::Create(geometry, material);
+    // 	mesh->setPosition(vec3(
+    // 		glm::gaussRand(0.0f, 7.0f),
+    // 		glm::gaussRand(0.0f, 7.0f),
+    // 		glm::gaussRand(0.0f, 7.0f)
+    // 	));
+    // 	Model * model = Model::Create(mesh);
 
-	// Model * planeModel = AG::Models::plane(10, 10, 10, 10);
-	// planeModel->rotate(vec3(0.0f, 1.0f, 1.0f), glm::pi<float>());
-	// scene->add(planeModel);
+    // 	scene->add(model);
+    // }
 
-	// Model * sphereModel = AG::Models::sphere(3.0f, 16, 16);
-	// scene->add(sphereModel);
+    // Model * planeModel = AG::Models::plane(10, 10, 10, 10);
+    // planeModel->rotate(vec3(0.0f, 1.0f, 1.0f), glm::pi<float>());
+    // scene->add(planeModel);
 
-	const Resource::File testWorldFile = app.resource("testScene.ini");
+    // Model * sphereModel = AG::Models::sphere(3.0f, 16, 16);
+    // scene->add(sphereModel);
 
-	game::World* world = game::createWorld();
+    const Resource::File testWorldFile = app.resource("testScene.ini");
+
+    game::World *world = game::createWorld();
     world->setupRenderer(renderer);
+    world->setupMovement(inputHandler);
     world->setup();
-	world->initFromFile(testWorldFile);
+    world->initFromFile(testWorldFile);
 
-	GLFWwindow * const window = mainContext.getWindow();
+    GLFWwindow *const window = mainContext.getWindow();
 
-	mainContext.setAsCurrent();
-	mainContext.enableVSync();
+    mainContext.setAsCurrent();
+    mainContext.enableVSync();
 
-	bool execAppLoop = true;
-	bool execRenderLoop = true;
+    bool execAppLoop = true;
+    bool execRenderLoop = true;
 
-	std::thread([&]() {
-		while(execRenderLoop) {
-			const float elapsedTime = 16.6f;
+    std::thread([&]() {
+        while (execRenderLoop) {
+            const float elapsedTime = 16.6f;
 
-			// cameraControl.update();
-			inputHandler.onFrame();
+            inputHandler->onFrame();
+            world->update(elapsedTime);
 
-			// const std::vector<Model*>& models = scene->getModels();
+            std::this_thread::sleep_for(std::chrono::microseconds(16600));
+        }
 
-			// for (Model * model : models) {
-			// 	model->tickAnimationTime(elapsedTime / 1000.0f);
-			// 	model->processAnimation();
-			// }
+        execAppLoop = false;
+    }).detach();
 
-			world->update(elapsedTime);
+    while (!glfwWindowShouldClose(window)) {
+        float elapsedTime = static_cast<float>(glfwGetTime());
 
-			std::this_thread::sleep_for(std::chrono::microseconds(16600));
-		}
+        world->render(elapsedTime);
 
-		execAppLoop = false;
-	}).detach();
+        {
+            ImGui_ImplGlfwGL3_NewFrame();
+            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
 
-	while(!glfwWindowShouldClose(window))
-	{
-		float elapsedTime = static_cast<float>(glfwGetTime());
-		// renderer->draw(scene);
-		world->render(elapsedTime);
+            ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+                                     ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-		{
-			ImGui_ImplGlfwGL3_NewFrame();
-			ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
+            ImGui::Begin("Metrics", NULL, flags);
+//            ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
+            ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
+            ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
+            ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
 
-			ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoBringToFrontOnFocus;
+            ImGui::SetWindowSize(ImVec2(200.0f, 80.0f));
+            ImGui::End();
+            ImGui::Render();
+        }
 
-			ImGui::Begin("Metrics", NULL, flags);
-//			ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
-			ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
-			ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
-			ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
 
-			ImGui::SetWindowSize(ImVec2(200.0f, 80.0f));
-			ImGui::End();
-			ImGui::Render();
-		}
-		
+        glfwSwapBuffers(window);
+        glfwPollEvents();
 
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+        if (inputHandler->isPress(InputHandler::KEY_ESC)) {
+            mainContext.destroy();
+            execRenderLoop = false;
+            break;
+        }
+    }
 
-		if (inputHandler.isPress(InputHandler::KEY_ESC))
-		{
-			mainContext.destroy();
-			execRenderLoop = false;
-			break;
-		}
-	}
+    // wait all loops finish
+    while (execRenderLoop || execAppLoop) {
+        continue;
+    }
 
-	// wait all loops finish
-	while (execRenderLoop || execAppLoop) {
-		continue;
-	}
+    world->destroy();
+    // delete scene;
+    delete world;
+    delete renderer;
 
-	world->destroy();
-	// delete scene;
-	delete world;
-	delete renderer;
+    // cleanupScene(scene);
+    printMemoryStatus();
 
-	// cleanupScene(scene);
-	printMemoryStatus();
+    delete imageAllocator;
+    delete modelsAllocator;
+    delete meshAllocator;
 
-	delete imageAllocator;
-	delete modelsAllocator;
-	delete meshAllocator;
+    console::info("stop application");
 
-	console::info("stop application");
-
-	return 0;
+    return 0;
 }
 
 // void cleanupScene(Scene * scene)
@@ -181,11 +173,10 @@ int main(int argc, char **argv) {
 // 	}
 // }
 
-void printMemoryStatus()
-{
-	console::info("-------memory-------");
-	console::info("images: %s", utils::formatMemorySize(imageAllocator->getUsed()));
-	console::info("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()));
-	console::info("mesh: %s", utils::formatMemorySize(meshAllocator->getUsed()));
-	console::info("--------------------");
+void printMemoryStatus() {
+    console::info("-------memory-------");
+    console::info("images: %s", utils::formatMemorySize(imageAllocator->getUsed()));
+    console::info("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()));
+    console::info("mesh: %s", utils::formatMemorySize(meshAllocator->getUsed()));
+    console::info("--------------------");
 }

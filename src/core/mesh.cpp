@@ -121,8 +121,6 @@ void Mesh::draw()
 	console::info("empty draw");
 }
 
-#ifdef GRAPHIC_API_OPENGL
-
 void Mesh::draw(renderer::Opengl::Program& program, uint flags)
 {
 	if ((flags & Mesh_Draw_Textures) != 0) {
@@ -143,18 +141,18 @@ void Mesh::draw(renderer::Opengl::Program& program, uint flags)
 		program.setFloat(renderer::Opengl::Uniform::MaterialShininess, material.shininess);
 	}
 
-	if ((flags & Mesh_Draw_Bones) != 0) {
-		program.enableVertexSubroutine("BoneTransformEnabled");
-		program.setMat("bones[]", &boneTransforms);
-	} else {
+//	if ((flags & Mesh_Draw_Bones) != 0) {
+//		program.enableVertexSubroutine("BoneTransformEnabled");
+//		program.setMat("bones[]", &boneTransforms);
+//	} else {
 		program.enableVertexSubroutine("BoneTransformDisabled");
-	}
+//	}
 
 	if ((flags & Mesh_Draw_Base) != 0) {
 		glBindVertexArray(geometry.VAO);
 
 		updateModelMatrix(false);
-		program.setMat("model", finalMatrix);
+		program.setMat("model", modelMatrix);
 
 		GeometryVertices * vertices = geometry.getVertices();
 		GeometryIndices * indices = geometry.getIndices();
@@ -191,5 +189,3 @@ void Mesh::setup()
 {
 	geometry.setup();
 }
-
-#endif

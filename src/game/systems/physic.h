@@ -15,11 +15,14 @@
 #include "../components/transform.h"
 #include "../../lib/console.h"
 #include "../components/controlled.h"
+#include "../events/physic_create.h"
 
 namespace game {
     namespace systems {
         using namespace entityx;
         using namespace physx;
+
+        namespace ex = entityx;
 
         class Physic : public entityx::System<Physic>, public Receiver<Physic> {
         public:
@@ -47,7 +50,10 @@ namespace game {
                 gScene = gPhysics->createScene(sceneDesc);
                 gControllerManager = PxCreateControllerManager(*gScene);
 
-                pxMaterials.insert({ "default", gPhysics->createMaterial(0.5f, 0.5f, 0.6f) });
+                pxMaterials.insert({"default", gPhysics->createMaterial(0.5f, 0.5f, 0.6f)});
+
+                PxRigidStatic *groundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *(pxMaterials["default"]));
+                gScene->addActor(*groundPlane);
 
                 console::info("system physics inited");
             }
@@ -106,44 +112,43 @@ namespace game {
                 gScene->simulate(static_cast<PxReal>(dt / 1000.0));
                 gScene->fetchResults(true);
 
-                es.each<components::Physic, components::Transform>([](Entity entity, components::Physic& physic, components::Transform& transform) {
-                     if (!physic.dynamic->isSleeping()) {
-                         PxTransform newTransform = physic.dynamic->getGlobalPose();
+                es.each<components::Physic, components::Transform>(
+                        [](Entity entity, components::Physic &physic, components::Transform &transform) {
+                            if (!physic.dynamic->isSleeping()) {
+                                PxTransform newTransform = physic.dynamic->getGlobalPose();
 
-                         transform.setPosition(newTransform.p.x, newTransform.p.y, newTransform.p.z);
-                         transform.setQuaternion(newTransform.q.x, newTransform.q.y, newTransform.q.z, newTransform.q.w);
-                     }
-                });
+                                transform.setPosition(newTransform.p.x, newTransform.p.y, newTransform.p.z);
+                                transform.setQuaternion(newTransform.q.x, newTransform.q.y, newTransform.q.z,
+                                                        newTransform.q.w);
+                            }
+                        });
             }
 
             void add() {
-                PxMaterial* gMaterial = pxMaterials.find("default")->second;
-
-                PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
-                gScene->addActor(*groundPlane);
-
-                PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(0, 20, 0)), PxSphereGeometry(3), PxVec3(0, -25, -5));
+                PxRigidDynamic *ball = createDynamic(PxTransform(PxVec3(0, 20, 0)), PxSphereGeometry(3),
+                                                     PxVec3(0, -25, -5));
                 PxRigidBodyExt::updateMassAndInertia(*ball, 1000.0f);
                 gScene->addActor(*ball);
             }
 
-            PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity) {
-                PxMaterial* gMaterial = pxMaterials.find("default")->second;
+            PxRigidDynamic *createDynamic(const PxTransform &t, const PxGeometry &geometry, const PxVec3 &velocity) {
+                PxMaterial *gMaterial = pxMaterials.find("default")->second;
 
-                PxRigidDynamic* dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
+                PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
                 dynamic->setAngularDamping(0.5f);
                 dynamic->setLinearVelocity(velocity);
 
                 return dynamic;
             }
 
-            PxControllerManager* const getControllerManager() {
+            PxControllerManager *const getControllerManager() {
                 return gControllerManager;
             }
 
             void configure(entityx::EventManager &event_manager) {
                 event_manager.subscribe<EntityCreatedEvent>(*this);
                 event_manager.subscribe<EntityDestroyedEvent>(*this);
+                event_manager.subscribe<events::PhysicCreate>(*this);
             }
 
             void receive(const EntityCreatedEvent &event) {
@@ -155,18 +160,38 @@ namespace game {
 //                event.entity.assign<components::Controlled>(gControllerManager);
             }
 
+            void receive(const events::PhysicCreate &event) {
+                ex::Entity entity = event.entity;
+
+                ex::ComponentHandle<components::Transform> transform = entity.component<components::Transform>();
+
+                PxMaterial *gMaterial = pxMaterials.find("default")->second;
+                const PxTransform pxTransform(PxVec3(transform->position.x, transform->position.y, transform->position.z));
+                const PxSphereGeometry pxGeometry(3);
+
+                PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 10.0f);
+                dynamic->setAngularDamping(0.5f);
+                dynamic->setLinearVelocity(PxVec3(0, -25, -5));
+
+                entity.assign<components::Physic>(dynamic);
+
+                PxRigidBodyExt::updateMassAndInertia(*dynamic, 1000.0f);
+
+                gScene->addActor(*dynamic);
+            }
+
         private:
             PxDefaultAllocator gAllocator;
             PxDefaultErrorCallback gErrorCallback;
-            PxFoundation* gFoundation = nullptr;
-            PxPhysics*  gPhysics = nullptr;
-            PxPvd* gPvd = nullptr;
-            PxDefaultCpuDispatcher* cpuDispatcher = nullptr;
-            PxGpuDispatcher* gpuDispatcher = nullptr;
+            PxFoundation *gFoundation = nullptr;
+            PxPhysics *gPhysics = nullptr;
+            PxPvd *gPvd = nullptr;
+            PxDefaultCpuDispatcher *cpuDispatcher = nullptr;
+            PxGpuDispatcher *gpuDispatcher = nullptr;
 //            PxCudaContextManager* cudaContextManager = nullptr;
-            PxScene* gScene = nullptr;
-            PxControllerManager* gControllerManager = nullptr;
-            std::unordered_map<std::string, PxMaterial*> pxMaterials;
+            PxScene *gScene = nullptr;
+            PxControllerManager *gControllerManager = nullptr;
+            std::unordered_map<std::string, PxMaterial *> pxMaterials;
         };
     }
 }

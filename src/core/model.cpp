@@ -386,7 +386,6 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 
 void Model::addMesh(Mesh * mesh)
 {
-	mesh->setParentObject(&object);
 	meshes_.push_back(mesh);
 }
 
@@ -402,7 +401,6 @@ void Model::removeMesh(Mesh * mesh)
 	});
 
 	if (it != meshes_.end()) {
-		(*it)->setParentObject(nullptr);
 		meshes_.erase(it);
 	}
 }

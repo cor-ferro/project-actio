@@ -7,7 +7,19 @@
 namespace game {
     namespace components {
         struct Transform : Object3D {
-        	Transform(glm::vec3 newPosition, glm::vec4 newRotation, glm::vec3 newScale) : Object3D() {
+            Transform() = default;
+
+            explicit Transform(glm::vec3 newPosition) : Object3D() {
+                position = newPosition;
+            }
+
+            Transform(glm::vec3 newPosition, glm::quat newRotation, glm::vec3 newScale) : Object3D() {
+                position = newPosition;
+                quaternion = newRotation;
+                scale = newScale;
+            }
+
+            Transform(glm::vec3 newPosition, glm::vec4 newRotation, glm::vec3 newScale) : Object3D() {
                 position = newPosition;
 
                 quaternion.x = newRotation[0];

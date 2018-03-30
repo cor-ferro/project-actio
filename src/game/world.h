@@ -10,6 +10,7 @@
 #include "entityx/entityx.h"
 #include "character.h"
 #include "../lib/console.h"
+#include "../lib/input_handler.h"
 #include "../resources/file_resource.h"
 #include "../lib/ini_loader.h"
 #include "../renderer/base_renderer.h"
@@ -33,6 +34,8 @@ namespace game {
         World();
 
         void setupRenderer(renderer::Renderer *);
+
+        void setupMovement(InputHandler *ih);
 
         void setup();
 

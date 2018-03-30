@@ -9,8 +9,6 @@
 #include "../lib/types.h"
 #include <math.h>
 
-static int countObjects = 0;
-
 struct Object3D {
 	Object3D();
 	Object3D(const Object3D& other);
@@ -35,7 +33,6 @@ struct Object3D {
 	void rotateZ(float angle);
 
 	const mat4& getModelMatrix();
-	void setParentObject(Object3D * parent);
 	void updateModelMatrix(bool force);
 
 	vec3 position;
@@ -45,8 +42,6 @@ struct Object3D {
 
 protected:
 	mat4 modelMatrix;
-	mat4 finalMatrix;
-	Object3D * parentObject;
 	
 
 private:
