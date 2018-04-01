@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <thread>
 #include "world.h"
 #include "systems/physic.h"
 #include "systems/movement.h"
@@ -16,6 +17,7 @@
 #include "components/light_spot.h"
 #include "components/camera.h"
 #include "components/target.h"
+#include "../math/Box3.h"
 
 namespace game {
     World::World()
@@ -45,6 +47,8 @@ namespace game {
         systems.add<game::systems::Physic>();
         systems.add<game::systems::BallShoot>();
         systems.configure();
+
+        initGroudPlane();
     }
 
     inline void World::spawn(Character *character) {
@@ -79,7 +83,7 @@ namespace game {
 
         IniLoader iniLoader;
         iniLoader.defineSection("world", {"models", "lights", "skybox", "camera"});
-        iniLoader.defineSection("model", {"File", "FlipUv", "Animation", "Position", "Rotation", "Scale", "Player"});
+        iniLoader.defineSection("model", {"Geometry", "Size", "File", "FlipUv", "Animation", "Position", "Rotation", "Scale", "Player", "Physic"});
         iniLoader.defineSection("camera", {"Type", "Position", "Target", "AspectRatio", "Fov", "Near", "Far"});
         iniLoader.defineSection("light", {"Type", "Ambient", "Diffuse", "Specular", "Position", "Constant", "Linear",
                                           "Quadratic", "Direction", "CutOff", "OuterCutOff"});
@@ -103,12 +107,16 @@ namespace game {
             for (const auto &section : *models) {
                 vec3 pos, scale;
                 vec4 rot;
-                std::string filePath, animation;
-                bool flipUv, player, isInWorld;
+                quat rotQuat;
+                std::string geometryType, filePath, animation;
+                bool flipUv, player, isInWorld, isPhysic;
 
-                section.getFieldVec<vec3>("Position", pos);
+                section.getFieldVec<vec3>("Position", pos, vec3(0.0f));
                 section.getFieldVec<vec4>("Rotation", rot);
-                section.getFieldVec<vec3>("Scale", scale, 1.0f);
+                section.getFieldVec<vec3>("Scale", scale, vec3(1.0f));
+
+                section.getField("Geometry", geometryType, "file");
+                section.getField("Physic", isPhysic);
 
                 section.getField("File", filePath);
                 section.getField("FlipUv", flipUv);
@@ -117,25 +125,59 @@ namespace game {
 
                 isInWorld = std::find(worldModels.begin(), worldModels.end(), section.name) != worldModels.end();
 
-                Material::Phong material;
-//                material.setWireframe(true);
-                material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-                Geometry geometry = Geometry::Box();
-                Mesh *mesh = Mesh::Create(geometry, material);
-
                 entityx::Entity entity = entities.create();
 
-                entity.assign<components::Transform>(vec3(0.0f), vec4(0.0f, 0.0f, 0.0f, 1.0f), vec3(1.0f));
-                entity.assign<components::Model>(mesh);
+                rotQuat = glm::angleAxis(glm::radians(rot.w), vec3(rot.x, rot.y, rot.z));
+                entity.assign<components::Transform>(pos, rotQuat, scale);
+
+                if (geometryType == "file" && isInWorld) {
+                    console::info("flipUv: %i", flipUv);
+                    components::Model::File modelFile(std::string("resources/") + filePath);
+                    modelFile.name = section.name;
+                    modelFile.flipUv = flipUv;
+                    modelFile.animation = animation;
+
+                    entityx::ComponentHandle<components::Model> model = entity.assign<components::Model>(modelFile);
+
+                    if (isPhysic) {
+//                        events.emit<events::PhysicCreateBox>(entity, size.x, size.y, size.z);
+                        std::vector<Mesh*> meshes = model->getMeshes();
+                        for (Mesh *mesh : meshes) {
+//                            console::info("=============== bounding box");
+//                            mesh->geometry.computeBoundingBox();
+//                            const Math::Box3& meshBbox = mesh->geometry.getBoundingBox();
+//
+//                            events.emit<events::PhysicCreateBox>(entity, meshBbox.radius.x, meshBbox.radius.y, meshBbox.radius.z);
+                        }
+                    }
+
+                    for (Mesh* mesh : model->getMeshes()) {
+                        this->events.emit<game::events::RenderSetupMesh>(entity, mesh);
+                    }
+
+                } else if (geometryType == "box") {
+                    vec3 size;
+                    section.getFieldVec<vec3>("Size", size, vec3(1.0f));
+
+                    Material::Phong material;
+//                    material.setWireframe(true);
+                    material.setDiffuse(0.0f, 1.0f, 0.0f);
+
+                    Geometry geometry = Geometry::Box(size.x, size.y, size.z);
+                    Mesh *mesh = Mesh::Create(geometry, material);
+                    entity.assign<components::Model>(mesh);
+
+                    if (isPhysic) {
+                        events.emit<events::PhysicCreateBox>(entity, size.x, size.y, size.z);
+                    }
+
+                    if (isInWorld) {
+                        events.emit<events::RenderSetupMesh>(entity, mesh);
+                    }
+                }
 
                 if (player) {
                     entity.assign<components::Controlled>(controllerManager);
-                }
-
-                if (isInWorld) {
-                    console::info("is in world: %s", section.name);
-                    entity.assign<components::Renderable>();
                 }
             }
         }
@@ -167,6 +209,14 @@ namespace game {
                     light.setSpecular(specular);
                     light.setAttenuation(constant, linear, quadratic);
 
+                    console::info("ambient: %f, %f, %f", ambient.x, ambient.y, ambient.z);
+                    console::info("diffuse: %f, %f, %f", diffuse.x, diffuse.y, diffuse.z);
+                    console::info("specular: %f, %f, %f", specular.x, specular.y, specular.z);
+                    console::info("position: %f, %f, %f", position.x, position.y, position.z);
+                    console::info("constant: %f", constant);
+                    console::info("linear: %f", linear);
+                    console::info("quadratic: %f", quadratic);
+
                     entity.assign<components::LightPoint>(light);
                     entity.assign<components::Transform>(position);
                 } else if (type == "directional") {
@@ -176,6 +226,11 @@ namespace game {
                     section.getFieldVec<vec3>("Diffuse", diffuse);
                     section.getFieldVec<vec3>("Specular", specular);
                     section.getFieldVec<vec3>("Direction", direction);
+
+                    console::info("ambient: %f, %f, %f", ambient.x, ambient.y, ambient.z);
+                    console::info("diffuse: %f, %f, %f", diffuse.x, diffuse.y, diffuse.z);
+                    console::info("specular: %f, %f, %f", specular.x, specular.y, specular.z);
+                    console::info("direction: %f, %f, %f", direction.x, direction.y, direction.z);
 
                     components::LightDirectional light;
                     light.setAmbient(ambient);
@@ -243,6 +298,26 @@ namespace game {
                 console::warn("unsupported camera type");
             }
         }
+    }
+
+    void World::initGroudPlane() {
+        Material::Phong material;
+        material.setWireframe(true);
+        material.setDiffuse(0.0f, 0.0f, 0.5f);
+
+        Geometry geometry = Geometry::Plane(20, 20, 10, 10);
+        Mesh *mesh = Mesh::Create(geometry, material);
+
+        entityx::Entity entity = entities.create();
+
+        entity.assign<components::Transform>(
+                vec3(0.0f),
+                glm::angleAxis(glm::radians(90.f), glm::vec3(1.0f, 0.0f, 0.0f)),
+                vec3(1.0f)
+        );
+        entity.assign<components::Model>(mesh);
+
+        events.emit<game::events::RenderSetupMesh>(entity, mesh);
     }
 
     void World::destroy() {

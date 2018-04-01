@@ -13,6 +13,7 @@
 #include "../../lib/types.h"
 #include "../../core/geometry.h"
 #include "../../core/mesh.h"
+#include "../../materials/material.h"
 #include "shader.h"
 #include "program.h"
 #include "g-buffer.h"
@@ -59,6 +60,12 @@ namespace renderer {
         void renderSpotLights(ex::EntityManager &es, vec3 &cameraPosition);
 
         void renderDirLights(ex::EntityManager &es);
+
+        void setupMesh(Mesh *mesh) override;
+
+        void setupMaterial(Material::Phong *material);
+
+        void destroyMesh(Mesh *mesh) override;
 
         GLuint depthMapFBO;
         GLuint depthMap;

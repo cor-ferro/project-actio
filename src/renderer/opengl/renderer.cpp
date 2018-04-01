@@ -293,8 +293,8 @@ namespace renderer {
         }
         OpenglCheckErrors();
 
-        renderPointLights(es, cameraPosition);
-        renderSpotLights(es, cameraPosition);
+//        renderPointLights(es, cameraPosition);
+//        renderSpotLights(es, cameraPosition);
         renderDirLights(es);
 
         gbuffer.finalPass();
@@ -341,6 +341,7 @@ namespace renderer {
             glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
             OpenglCheckErrors();
 
+            modelPipeline.setInitialTransform();
             modelPipeline.draw(&nullProgram, *lightSphere, Mesh_Draw_Base);
             OpenglCheckErrorsSilent();
 
@@ -358,6 +359,7 @@ namespace renderer {
 
             lightPassProgram.enableFragmentSubroutine(programLightName);
             OpenglCheckErrors();
+
             lightPassProgram.setVec("gEyePosition", cameraPosition);
             lightPassProgram.setVec("pointLight.ambient", light->ambient);
             lightPassProgram.setVec("pointLight.diffuse", light->diffuse);
@@ -367,7 +369,7 @@ namespace renderer {
             lightPassProgram.setFloat("pointLight.linear", light->linear);
             lightPassProgram.setFloat("pointLight.quadratic", light->quadratic);
             OpenglCheckErrors();
-            modelPipeline.setObject(*transform);
+            modelPipeline.setTransform(*transform);
             modelPipeline.draw(&lightPassProgram, *lightSphere, Mesh_Draw_Base);
             OpenglCheckErrorsSilent();
 
@@ -427,7 +429,7 @@ namespace renderer {
             lightPassProgram.setFloat("spotLight.cutOff", light->cutOff);
             lightPassProgram.setFloat("spotLight.outerCutOff", light->outerCutOff);
             OpenglCheckErrors();
-            modelPipeline.setObject(*transform);
+            modelPipeline.setTransform(*transform);
             modelPipeline.draw(&lightPassProgram, *lightCylinder, Mesh_Draw_Base);
             OpenglCheckErrorsSilent();
 
@@ -454,15 +456,17 @@ namespace renderer {
 
         ex::ComponentHandle<components::LightDirectional> light;
 
+        lightPassProgram.enableFragmentSubroutine(programLightName);
+        OpenglCheckErrors();
+
         for (ex::Entity entity : es.entities_with_components(light)) {
             lightPassProgram.setVec("dirLight.ambient", light->ambient);
             lightPassProgram.setVec("dirLight.diffuse", light->diffuse);
             lightPassProgram.setVec("dirLight.specular", light->specular);
             lightPassProgram.setVec("dirLight.direction", light->direction);
             OpenglCheckErrors();
-            lightPassProgram.enableFragmentSubroutine(programLightName);
-            OpenglCheckErrors();
 
+            modelPipeline.setInitialTransform();
             modelPipeline.draw(&lightPassProgram, *lightQuad, Mesh_Draw_Base);
             OpenglCheckErrorsSilent();
         }
@@ -500,7 +504,7 @@ namespace renderer {
 
             const ModelMeshes &meshes = model.getMeshes();
             for (auto &mesh : meshes) {
-                modelPipeline.setObject(transform); // todo: pass pointer instead of copy
+                modelPipeline.setTransform(transform); // todo: pass pointer instead of copy
                 modelPipeline.draw(*mesh, renderFlags);
             }
         });
@@ -534,6 +538,58 @@ namespace renderer {
         }
 
         postRender();
+    }
+
+    void OpenglRenderer::setupMesh(Mesh *mesh) {
+        glGenVertexArrays(1, &mesh->geometry.VAO);
+        glGenBuffers(1, &mesh->geometry.VBO);
+
+        glBindVertexArray(mesh->geometry.VAO);
+
+        GeometryVertices * vertices = mesh->geometry.getVertices();
+
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->geometry.VBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
+
+        glGenBuffers(1, &mesh->geometry.EBO);
+        GeometryIndices * indices = mesh->geometry.getIndices();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->geometry.EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+
+        glEnableVertexAttribArray(5);
+        glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
+
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Weights));
+
+        glBindVertexArray(0);
+
+        setupMaterial(&mesh->material);
+    }
+
+    void OpenglRenderer::setupMaterial(Material::Phong *material) {
+        material->setupTextures();
+    }
+
+    void OpenglRenderer::destroyMesh(Mesh *mesh) {
+        if (mesh->geometry.VBO != 0) glDeleteBuffers(1, &mesh->geometry.VBO);
+        if (mesh->geometry.EBO != 0) glDeleteBuffers(1, &mesh->geometry.EBO);
+        if (mesh->geometry.VAO != 0) glDeleteVertexArrays(1, &mesh->geometry.VAO);
     }
 
 

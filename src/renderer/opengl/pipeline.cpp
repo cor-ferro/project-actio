@@ -17,10 +17,13 @@ namespace renderer {
             return program;
         }
 
-        void Pipeline::setObject(Object3D &newObject) {
+        void Pipeline::setTransform(Object3D &newObject) {
             object = newObject;
         }
 
+        void Pipeline::setInitialTransform() {
+            object = Object3D();
+        }
 
         MeshDrawPipeline::MeshDrawPipeline()
                 : Pipeline() {};

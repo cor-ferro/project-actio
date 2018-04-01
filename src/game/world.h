@@ -41,6 +41,8 @@ namespace game {
 
         void initFromFile(const Resource::File &file);
 
+        void initGroudPlane();
+
         void destroy();
 
         inline void spawn(Character *character);

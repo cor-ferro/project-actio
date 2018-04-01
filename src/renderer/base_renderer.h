@@ -26,6 +26,16 @@ namespace renderer {
 
         virtual ~Renderer() = 0;
 
+        virtual bool init() = 0;
+
+        virtual void draw(Scene *scene) = 0;
+
+        virtual void draw(entityx::EntityManager &es) = 0;
+
+        virtual void setupMesh(Mesh *mesh) = 0;
+
+        virtual void destroyMesh(Mesh *mesh) = 0;
+
         const renderer::Params &getParams();
 
         void setViewSize(renderer::ScreenSize, renderer::ScreenSize);
@@ -37,11 +47,6 @@ namespace renderer {
         void preRender();
 
         void postRender();
-
-        virtual void draw(Scene *scene) = 0;
-        virtual void draw(entityx::EntityManager &es) = 0;
-
-        virtual bool init() = 0;
 
     protected:
         RenderType type;

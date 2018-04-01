@@ -25,7 +25,8 @@ namespace renderer {
 
             Program *getProgram();
 
-            void setObject(Object3D &object);
+            void setTransform(Object3D &object);
+            void setInitialTransform();
 
             virtual void draw(Mesh &mesh, uint flags = Mesh_Draw_All) = 0;
             virtual void draw(Program *program, Mesh &mesh, uint flags = Mesh_Draw_All) = 0;
