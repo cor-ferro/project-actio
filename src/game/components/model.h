@@ -29,17 +29,14 @@ namespace game {
         typedef std::vector<Mesh*> ModelMeshes;
 
         struct Model {
-            struct Config {
-                Config();
-                Config(const Config& other);
+            struct File {
+                File();
+                File(std::string filePath);
+                File(const File& other);
 
                 std::string name;
                 Resource::File file;
                 bool flipUv;
-                vec3 position;
-                vec3 rotation;
-                float rotationAngle;
-                vec3 scale;
                 std::string animation;
             };
 
@@ -64,7 +61,7 @@ namespace game {
             };
 
             Model();
-//            Model(Config& modelConfig);
+            Model(File& modelFile);
             Model(Mesh * mesh);
             ~Model();
 

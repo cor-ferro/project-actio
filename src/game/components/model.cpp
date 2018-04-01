@@ -12,102 +12,91 @@
 
 namespace game {
     namespace components {
-        Model::Config::Config()
+        Model::File::File()
                 : name("")
-                , flipUv(false)
-        {}
+                , flipUv(false) {}
 
-        Model::Config::Config(const Model::Config& other)
-        {
-            name = other.name;
-            file = other.file;
-            flipUv = other.flipUv;
-        }
+        Model::File::File(std::string filePath)
+                : file(filePath) {}
+
+        Model::File::File(const Model::File &other)
+                : name(other.name)
+                , file(other.file)
+                , flipUv(other.flipUv)
+                , animation(other.animation) {}
 
         Model::Node::Node() : name("") {}
+
         Model::Node::~Node() {}
 
-        Model::Node::Node(aiNode * node)
-                : name(std::string(node->mName.C_Str()))
-        {
+        Model::Node::Node(aiNode *node) : name(std::string(node->mName.C_Str())) {
             meshes.reserve(node->mNumMeshes);
             children.reserve(node->mNumChildren);
 
             transformation = libAi::toNativeType(node->mTransformation);
         }
 
-        void Model::Node::addMesh(Mesh * mesh)
-        {
+        void Model::Node::addMesh(Mesh *mesh) {
             meshes.push_back(mesh);
         }
 
-        void Model::Node::addNode(Model::Node * node)
-        {
+        void Model::Node::addNode(Model::Node *node) {
             children.push_back(node);
         }
 
         Model::Model() : name_() {}
 
-        Model::Model(Mesh * mesh) : Model() {
+        Model::Model(Mesh *mesh) : Model() {
             addMesh(mesh);
-            mesh->setup();
-            mesh->material.setupTextures();
         }
 
-//        Model::Model(Model::Config& config) : Model()
-//        {
-//            Assimp::Importer importer;
-//
-//            std::string pFile = config.file.getPath();
-//            unsigned int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_CalcTangentSpace;
-//
-//            if (config.flipUv) {
-//                flags|= aiProcess_FlipUVs;
-//            }
-//
-//            const aiScene * scene = importer.ReadFile(pFile, flags);
-//            const Resource::Assimp * assimpResource = new Resource::Assimp(scene, pFile);
-//
-//            if(!scene)
-//            {
-//                console::err("failed model loading", importer.GetErrorString());
-//                return;
-//            }
-//
-//            console::info("materials: %i", scene->mNumMaterials);
-//            console::info("meshes: %i", scene->mNumMeshes);
-//
-//            initFromAi(assimpResource);
-//
-//            setName(config.name);
-//
-//            importer.FreeScene();
-//            delete assimpResource;
-//        }
-
-        Model::~Model()
+        Model::Model(Model::File& modelFile) : Model()
         {
+            console::info("load from file %s", modelFile.name);
+            Assimp::Importer importer;
+
+            std::string pFile = modelFile.file.getPath();
+            unsigned int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_CalcTangentSpace;
+//
+            if (modelFile.flipUv) {
+                flags|= aiProcess_FlipUVs;
+            }
+
+            const aiScene * scene = importer.ReadFile(pFile, flags);
+            const Resource::Assimp * assimpResource = new Resource::Assimp(scene, pFile);
+
+            if(!scene)
+            {
+                console::err("failed model loading %s", importer.GetErrorString());
+                return;
+            }
+
+            initFromAi(assimpResource);
+
+            setName(modelFile.name);
+
+            importer.FreeScene();
+            delete assimpResource;
+        }
+
+        Model::~Model() {
             destroy();
         }
 
-        void Model::destroy()
-        {
+        void Model::destroy() {
             freeMeshes();
             freeNodes();
         }
 
-        const ModelName& Model::getName()
-        {
+        const ModelName &Model::getName() {
             return name_;
         }
 
-        void Model::setName(std::string newName)
-        {
+        void Model::setName(std::string newName) {
             name_ = newName;
         }
 
-        void Model::freeMeshes()
-        {
+        void Model::freeMeshes() {
             for (auto mesh : meshes_) {
                 Mesh::Destroy(mesh);
             }
@@ -115,21 +104,19 @@ namespace game {
             meshes_.clear();
         }
 
-        void Model::freeNodes()
-        {
+        void Model::freeNodes() {
             nodes_.clear();
         }
 
-        void Model::initFromAi(const Resource::Assimp * assimpResource)
-        {
+        void Model::initFromAi(const Resource::Assimp *assimpResource) {
             freeMeshes();
 
             std::unordered_set<std::string> texturePaths = assimpResource->getTexturePaths();
-            std::vector<aiNode*> nodes = assimpResource->getAllNodes();
+            std::vector<aiNode *> nodes = assimpResource->getAllNodes();
 
             console::info("nodes.size(): %i", nodes.size());
 
-            std::queue<aiNode*> queueNodes;
+            std::queue<aiNode *> queueNodes;
             for (auto node : nodes)
                 queueNodes.push(node);
 
@@ -143,9 +130,8 @@ namespace game {
             queueNodes.pop();
 
             std::mutex lock;
-            auto nodeLoader = [this, &lock, &assimpResource](std::queue<aiNode*>& queue)
-            {
-                aiNode * node = nullptr;
+            auto nodeLoader = [this, &lock, &assimpResource](std::queue<aiNode *> &queue) {
+                aiNode *node = nullptr;
                 while (queue.size() > 0) {
                     lock.lock();
                     node = queue.front();
@@ -153,15 +139,15 @@ namespace game {
                     lock.unlock();
 //			console::info(std::this_thread::get_id());
 
-                    Model::Node * modelNode = new Model::Node(node);
+                    Model::Node *modelNode = new Model::Node(node);
                     this->addNode(modelNode); // todo: atomic insert
 
                     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
                         unsigned int meshIndex = node->mMeshes[i];
-                        const aiMesh * mesh = assimpResource->getMesh(meshIndex);
-                        const aiMaterial * meshMaterial = assimpResource->getMeshMaterial(mesh);
+                        const aiMesh *mesh = assimpResource->getMesh(meshIndex);
+                        const aiMaterial *meshMaterial = assimpResource->getMeshMaterial(mesh);
 
-                        Mesh * modelMesh = Mesh::Create();
+                        Mesh *modelMesh = Mesh::Create();
                         modelMesh->material.initFromAi(meshMaterial, assimpResource, images_);
                         modelMesh->geometry.initFromAi(mesh, assimpResource);
 
@@ -203,8 +189,7 @@ namespace game {
                 }
             };
 
-            auto imageLoader = [this, &lock, &assimpResource](std::queue<std::string>& queue)
-            {
+            auto imageLoader = [this, &lock, &assimpResource](std::queue<std::string> &queue) {
                 std::string path("");
                 while (queue.size() > 0) {
                     lock.lock();
@@ -218,7 +203,7 @@ namespace game {
                         imageData = ImageLoader::load(assimpResource->getDefaultTexturePath());
                     }
 
-                    this->images_.insert({ path, imageData });
+                    this->images_.insert({path, imageData});
                 }
             };
 
@@ -240,27 +225,23 @@ namespace game {
                 nodeThreads[i].join();
             console::info("end init meshes %i", nodes_.size());
 
-            for(auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++)
-            {
-                (*mesh)->setup();
-                (*mesh)->material.setupTextures();
-            }
+//            for (auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++) {
+//                (*mesh)->setup();
+//                (*mesh)->material.setupTextures();
+//            }
 
         }
 
-        void Model::addMesh(Mesh * mesh)
-        {
+        void Model::addMesh(Mesh *mesh) {
             meshes_.push_back(mesh);
         }
 
-        void Model::addNode(Node * node)
-        {
-            nodes_.insert({ node->name, std::shared_ptr<Node>(node) });
+        void Model::addNode(Node *node) {
+            nodes_.insert({node->name, std::shared_ptr<Node>(node)});
         }
 
-        void Model::removeMesh(Mesh * mesh)
-        {
-            ModelMeshes::iterator it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const Mesh* ptr) {
+        void Model::removeMesh(Mesh *mesh) {
+            ModelMeshes::iterator it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const Mesh *ptr) {
                 return ptr == mesh;
             });
 
@@ -269,8 +250,7 @@ namespace game {
             }
         }
 
-        void Model::removeNode(Node * node)
-        {
+        void Model::removeNode(Node *node) {
             auto it = nodes_.find(node->name);
 
             if (it != nodes_.end()) {
@@ -278,18 +258,15 @@ namespace game {
             }
         }
 
-        const ModelMeshes& Model::getMeshes()
-        {
+        const ModelMeshes &Model::getMeshes() {
             return meshes_;
         }
 
-        Mesh * Model::getFirstMesh()
-        {
+        Mesh *Model::getFirstMesh() {
             return meshes_.at(0);
         }
 
-        const int Model::getNodesCount()
-        {
+        const int Model::getNodesCount() {
             return nodes_.size();
         }
     }
