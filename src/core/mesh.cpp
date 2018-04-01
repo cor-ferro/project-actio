@@ -79,7 +79,7 @@ Mesh::~Mesh()
 
 void Mesh::destroy()
 {
-	geometry.destroy();
+	geometry.destroy(); // @todo: удаление ресурсов не работает корректно, из за переноса логики setup в рендер
 	material.destroy();
 }
 
