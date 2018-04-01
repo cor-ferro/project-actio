@@ -12,6 +12,8 @@ InputHandler::InputHandler(WindowContext &windowContext)
         onMouseMove(x, y);
     });
 
+//    windowContext.onMousePress.connect([this](int button, int action, int mods) {});
+
     double xpos, ypos;
     windowContext.getMousePosition(xpos, ypos);
 
@@ -109,6 +111,10 @@ void InputHandler::calcSensetivity(int width, int height, double dpi) {
 
 void InputHandler::subscribeMouseMove(const std::function<void(double, double)>& f) {
     window->onMouseMove.connect(f);
+}
+
+void InputHandler::subscribeMousePress(const std::function<void(int, int, int)>& f) {
+    window->onMousePress.connect(f);
 }
 
 void InputHandler::subscribeKeyPress(const std::function<void(int, int, int, int)>& f) {

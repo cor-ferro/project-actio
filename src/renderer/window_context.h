@@ -10,18 +10,15 @@
 #include "../lib/console.h"
 
 
-
 struct WindowContext {
     WindowContext()
-        : window(nullptr)
-    {
+            : window(nullptr) {
     }
 
     bool init(unsigned int width, unsigned int height) {
-        window = glfwCreateWindow(width, height, "Window", NULL, NULL);
+        window = glfwCreateWindow(width, height, "Window", nullptr, nullptr);
 
-        if (window == NULL)
-        {
+        if (window == nullptr) {
             console::info("Failed to create GLFW window");
             glfwTerminate();
             return false;
@@ -39,7 +36,8 @@ struct WindowContext {
         // add callbacks
         glfwSetWindowSizeCallback(window, WindowContext::onResizeCallback);
         glfwSetKeyCallback(window, WindowContext::onKeyPressCallback);
-	    glfwSetCursorPosCallback(window, WindowContext::onMouseMoveCallback);
+        glfwSetCursorPosCallback(window, WindowContext::onMouseMoveCallback);
+        glfwSetMouseButtonCallback(window, WindowContext::onMousePressCallback);
 
         return true;
     }
@@ -53,7 +51,7 @@ struct WindowContext {
         window = nullptr;
     }
 
-    void setTitle(const char * text) {
+    void setTitle(const char *text) {
         glfwSetWindowTitle(window, text);
     }
 
@@ -77,28 +75,33 @@ struct WindowContext {
         glfwSwapInterval(0);
     }
 
-    GLFWwindow * const getWindow() {
+    GLFWwindow *const getWindow() {
         return window;
     }
 
-    static void onResizeCallback(GLFWwindow * window, int width, int height) {
-        ((WindowContext*)glfwGetWindowUserPointer(window))->onResize(width, height);
+    static void onResizeCallback(GLFWwindow *window, int width, int height) {
+        ((WindowContext *) glfwGetWindowUserPointer(window))->onResize(width, height);
     }
 
-    static void onKeyPressCallback(GLFWwindow * window, int key, int scancode, int action, int mods) {
-        ((WindowContext*)glfwGetWindowUserPointer(window))->onKeyPress(key, scancode, action, mods);
+    static void onKeyPressCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+        ((WindowContext *) glfwGetWindowUserPointer(window))->onKeyPress(key, scancode, action, mods);
     }
 
-    static void onMouseMoveCallback(GLFWwindow * window, double x, double y) {
-        ((WindowContext*)glfwGetWindowUserPointer(window))->onMouseMove(x, y);
+    static void onMouseMoveCallback(GLFWwindow *window, double x, double y) {
+        ((WindowContext *) glfwGetWindowUserPointer(window))->onMouseMove(x, y);
     }
 
-    boost::signals2::signal<void (int, int)> onResize;
-    boost::signals2::signal<void (int, int, int, int)> onKeyPress;
-    boost::signals2::signal<void (double, double)> onMouseMove;
+    static void onMousePressCallback(GLFWwindow *window, int button, int action, int mods) {
+        ((WindowContext *) glfwGetWindowUserPointer(window))->onMousePress(button, action, mods);
+    }
 
-    private:
-        GLFWwindow * window;
+    boost::signals2::signal<void(int, int)> onResize;
+    boost::signals2::signal<void(int, int, int, int)> onKeyPress;
+    boost::signals2::signal<void(double, double)> onMouseMove;
+    boost::signals2::signal<void(int, int, int)> onMousePress;
+
+private:
+    GLFWwindow *window;
 };
 
 #endif

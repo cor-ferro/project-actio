@@ -46,11 +46,13 @@ struct Camera {
 	vec3& getRotation();
 	vec3& getFront();
 	vec3& getUp();
+	vec3& getTarget();
 	mat4& getView();
 
 	vec3 position_;
 	vec3 rotation_;
 	mat4 view_;
+	vec3 target_;
 
 protected:
 	void updateViewMatrix();

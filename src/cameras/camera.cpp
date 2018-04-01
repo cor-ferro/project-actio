@@ -68,6 +68,7 @@ mat4& Camera::getView() { return view_; }
 vec3& Camera::getPosition() { return position_; }
 vec3& Camera::getRotation() { return rotation_; }
 vec3& Camera::getFront() { return front_; }
+vec3& Camera::getTarget() { return target_; }
 vec3& Camera::getUp() { return up_; }
 mat4& Camera::getProjection() { return projection_; }
 

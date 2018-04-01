@@ -104,6 +104,8 @@ struct InputHandler {
 
     void subscribeMouseMove(const std::function<void(double, double)>& f);
 
+    void subscribeMousePress(const std::function<void(int, int, int)>& f);
+
     void subscribeKeyPress(const std::function<void(int, int, int, int)>& f);
 
     MousePosition mouse;
