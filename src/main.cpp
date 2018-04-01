@@ -34,8 +34,8 @@ int main(int argc, char **argv) {
     mainContext.setTitle(app.getName().c_str());
 
     renderer::Params rendererParams;
-    rendererParams.width = monitor->getWidth();
-    rendererParams.height = monitor->getHeight();
+    rendererParams.width = windowWidth;
+    rendererParams.height = windowHeight;
     rendererParams.calcAspectRatio();
 
     // init renderer before scene loading
@@ -116,10 +116,13 @@ int main(int argc, char **argv) {
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
 
-            ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
-                                     ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBringToFrontOnFocus;
+            ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
+                                     | ImGuiWindowFlags_NoMove
+                                     | ImGuiWindowFlags_NoResize
+                                     | ImGuiWindowFlags_NoInputs
+                                     | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-            ImGui::Begin("Metrics", NULL, flags);
+            ImGui::Begin("Metrics", nullptr, flags);
 //            ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
             ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
             ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
