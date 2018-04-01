@@ -47,10 +47,6 @@ const float Epsilon = 0.0000001;
 
 subroutine vec3 LightType(vec3, vec3, vec3, vec4);
 
-subroutine (LightType) vec3 NoLightType(vec3 fragPos, vec3 normal, vec3 viewDir, vec4 albedo) {
-	return albedo.xyz;
-}
-
 subroutine (LightType) vec3 DirLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
 	vec3 lightDir = normalize(-dirLight.direction);
 	vec3 reflectDir = normalize(reflect(-lightDir, worldNormal));
@@ -96,9 +92,7 @@ subroutine (LightType) vec3 SpotLightType(vec3 worldPos, vec3 worldNormal, vec3 
 	vec3 diffuse = spotLight.diffuse * diff * albedo.xyz * attenuation * intensity;
 	vec3 specular = spotLight.specular * spec * albedo.w * attenuation/* * intensity*/;
 
-	// return ambient + diffuse + specular;
-	return diffuse;
-	// return vec3(theta);
+	return ambient + diffuse + specular;
 }
 
 subroutine uniform LightType getLightColor;
