@@ -7,6 +7,7 @@
 
 #include <entityx/entityx/System.h>
 #include <stack>
+#include <glm/glm/gtc/random.inl>
 #include "../events/key_press.h"
 #include "../../lib/console.h"
 #include "../../lib/types.h"
@@ -17,6 +18,9 @@
 #include "../../core/mesh.h"
 #include "../components/model.h"
 #include "../components/renderable.h"
+#include "../events/render_setup_geometry.h"
+#include "../events/mouse_press.h"
+#include "../events/physic_force.h"
 
 namespace game {
     namespace systems {
@@ -26,39 +30,47 @@ namespace game {
         public:
             void configure(EventManager &event_manager) {
                 event_manager.subscribe<events::KeyPress>(*this);
+                event_manager.subscribe<events::MousePress>(*this);
             }
 
             void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
-                vec3 cameraPosition;
+                vec3 cameraPosition, cameraTarget;
 
-                es.each<components::Camera>([&cameraPosition](entityx::Entity entity, components::Camera &camera) {
+                es.each<components::Camera>([&cameraPosition, &cameraTarget](entityx::Entity entity, components::Camera &camera) {
                     cameraPosition = camera.getPosition();
+                    cameraTarget = camera.getTarget();
                 });
 
                 while (!newItems.empty()) {
-                    console::info("newItems not empty");
                     newItems.pop();
 
                     entityx::Entity ball = es.create();
 
                     Material::Phong material;
                     material.setDiffuse(0.0f, 1.0f, 0.0f);
-                    Geometry geometry = Geometry::Sphere(5.0f, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+//                    material.setWireframe(true);
+
+                    float raidus = 1.0f;
+                    Geometry geometry = Geometry::Sphere(raidus, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
                     Mesh *mesh = Mesh::Create(geometry, material);
 
                     ball.assign<components::Model>(mesh);
-                    ball.assign<components::Renderable>();
-                    ball.assign<components::Transform>(vec3(0.0f));
+                    ball.assign<components::Transform>(cameraPosition);
 
-                    events.emit<events::PhysicCreate>(ball);
-
-                    console::warn("create sphere");
+                    events.emit<events::PhysicCreateSphere>(ball, raidus);
+                    events.emit<events::PhysicForce>(ball, cameraTarget, 30.0f);
+                    events.emit<events::RenderSetupMesh>(ball, mesh);
                 }
             }
 
             void receive(const events::KeyPress &event) {
-//                console::info("event: %i %i %i %i", event.key, event.scancode, event.action, event.mods);
-                if (event.key == 32 && event.action == 1) {
+//                if (event.key == 32 && event.action == 1) {
+//                    newItems.push(1);
+//                }
+            }
+
+            void receive(const events::MousePress &event) {
+                if (event.button == 0 && event.action == 1) {
                     newItems.push(1);
                 }
             }

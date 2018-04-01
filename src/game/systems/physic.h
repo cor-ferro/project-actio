@@ -5,7 +5,8 @@
 #ifndef ACTIO_PHYSIC_H
 #define ACTIO_PHYSIC_H
 
-#include "entityx/entityx.h"
+#include <entityx/entityx/Entity.h>
+#include <entityx/entityx/System.h>
 #include "PxPhysics.h"
 #include "PxScene.h"
 #include "PxRigidDynamic.h"
@@ -16,6 +17,7 @@
 #include "../../lib/console.h"
 #include "../components/controlled.h"
 #include "../events/physic_create.h"
+#include "../events/physic_force.h"
 
 namespace game {
     namespace systems {
@@ -102,6 +104,14 @@ namespace game {
 //                console::info("physics released");
             }
 
+            void configure(entityx::EventManager &event_manager) {
+                event_manager.subscribe<EntityCreatedEvent>(*this);
+                event_manager.subscribe<EntityDestroyedEvent>(*this);
+                event_manager.subscribe<events::PhysicCreateSphere>(*this);
+                event_manager.subscribe<events::PhysicCreateBox>(*this);
+                event_manager.subscribe<events::PhysicForce>(*this);
+            }
+
             void destroy() {
 
             }
@@ -145,12 +155,6 @@ namespace game {
                 return gControllerManager;
             }
 
-            void configure(entityx::EventManager &event_manager) {
-                event_manager.subscribe<EntityCreatedEvent>(*this);
-                event_manager.subscribe<EntityDestroyedEvent>(*this);
-                event_manager.subscribe<events::PhysicCreate>(*this);
-            }
-
             void receive(const EntityCreatedEvent &event) {
 //                const Entity& e = event.entity;
 //                event.entity.assign<components::Controlled>(gControllerManager);
@@ -160,24 +164,51 @@ namespace game {
 //                event.entity.assign<components::Controlled>(gControllerManager);
             }
 
-            void receive(const events::PhysicCreate &event) {
+            void receive(const events::PhysicCreateSphere &event) {
                 ex::Entity entity = event.entity;
 
                 ex::ComponentHandle<components::Transform> transform = entity.component<components::Transform>();
 
                 PxMaterial *gMaterial = pxMaterials.find("default")->second;
                 const PxTransform pxTransform(PxVec3(transform->position.x, transform->position.y, transform->position.z));
-                const PxSphereGeometry pxGeometry(3);
+                const PxSphereGeometry pxGeometry(event.radius);
 
-                PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 10.0f);
-                dynamic->setAngularDamping(0.5f);
-                dynamic->setLinearVelocity(PxVec3(0, -25, -5));
-
-                entity.assign<components::Physic>(dynamic);
-
+                PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 100.0f);
+                dynamic->setAngularDamping(10.5f);
+                dynamic->setLinearVelocity(PxVec3(0, 0, 0));
                 PxRigidBodyExt::updateMassAndInertia(*dynamic, 1000.0f);
 
                 gScene->addActor(*dynamic);
+
+                entity.assign<components::Physic>(dynamic);
+            }
+
+            void receive(const events::PhysicCreateBox &event) {
+                ex::Entity entity = event.entity;
+
+                ex::ComponentHandle<components::Transform> transform = entity.component<components::Transform>();
+
+                PxMaterial *gMaterial = pxMaterials.find("default")->second;
+                const PxTransform pxTransform(PxVec3(transform->position.x, transform->position.y, transform->position.z));
+                const PxBoxGeometry pxGeometry(event.hx / 2.0f, event.hy / 2.0f, event.hz / 2.0f);
+
+                PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 1.0f);
+                dynamic->setAngularDamping(0.5f);
+                dynamic->setLinearVelocity(PxVec3(0, 0, 0));
+                PxRigidBodyExt::updateMassAndInertia(*dynamic, 3000.0f);
+
+                gScene->addActor(*dynamic);
+
+                entity.assign<components::Physic>(dynamic);
+            }
+
+            void receive(const events::PhysicForce &event) {
+                ex::Entity entity = event.entity;
+
+                ex::ComponentHandle<components::Physic> physic = entity.component<components::Physic>();
+
+                PxVec3 dir(event.direction.x, event.direction.y, event.direction.z);
+                physic->dynamic->addForce(dir, PxForceMode::eVELOCITY_CHANGE);
             }
 
         private:
