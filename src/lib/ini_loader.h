@@ -16,47 +16,53 @@ struct IniLoader {
         std::vector<std::string> fields;
         std::unordered_map<std::string, std::string> values;
 
-        bool hasField(std::string key) {
+        bool hasField(std::string &key) {
             auto it = values.find(key);
 
             return it != values.end();
         }
 
-        template <class Vec>
-        void getFieldVec(std::string key, Vec& value, float defaultValue = 0.0f) const {
+        bool hasNotEmpty(std::string &key) const {
             auto it = values.find(key);
 
-            const_cast<Vec&>(value) = it != values.end()
+            return it != values.end() && !it->second.empty();
+        }
+
+        template <class Vec>
+        void getFieldVec(std::string key, Vec& value, Vec defaultValue = Vec(0.0f)) const {
+            auto it = values.find(key);
+
+            const_cast<Vec&>(value) = hasNotEmpty(key)
                 ? utils::stovec<Vec>(it->second)
-                : Vec(defaultValue);
+                : defaultValue;
         }
 
         void getField(std::string key, std::string& value, const std::string& defaultValue = "") const {
             auto it = values.find(key);
-            value = it != values.end() ? it->second : defaultValue;
+            value = hasNotEmpty(key) ? it->second : defaultValue;
         }
 
         void getField(std::string key, std::vector<std::string>& value, const char separator = ',') const {
             auto it = values.find(key);
 
-            if (it != values.end()) {
+            if (hasNotEmpty(key)) {
                 value = utils::split(it->second, separator);
             }
         }
 
         void getField(std::string key, float& value) const {
             auto it = values.find(key);
-            value = it != values.end() ? std::stof(it->second) : 0.0f;
+            value = hasNotEmpty(key) ? std::stof(it->second) : 0.0f;
         }
 
         void getField(std::string key, int& value) const {
             auto it = values.find(key);
-            value = it != values.end() ? std::stoi(it->second) : 0;
+            value = hasNotEmpty(key) ? std::stoi(it->second) : 0;
         }
 
         void getField(std::string key, bool& value) const {
             auto it = values.find(key);
-            if (it == values.end()) {
+            if (!hasNotEmpty(key)) {
                 value = false;
                 return;
             }
@@ -66,7 +72,7 @@ struct IniLoader {
     };
 
     ~IniLoader();
-    
+
     void load(Path path);
     void defineSection(std::string name, std::vector<std::string> fields);
     const std::vector<Section>* getSections(const std::string& name);
