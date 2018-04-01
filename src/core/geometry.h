@@ -53,7 +53,7 @@ struct Geometry {
 	static void SubTotalCountVertices(size_t count) { TotalCountVertices-= count; }
 	static size_t GetTotalCountVertices() {	return TotalCountVertices; }
 
-	static Geometry Box();
+	static Geometry Box(float width = 1.0f, float height = 1.0f, float depth = 1.0f, int widthSegments = 1, int heightSegments = 1, int depthSegments = 1);
 	static Geometry Plane(uint width, uint height, uint widthSegments, uint heightSegments);
 	static Geometry Sphere(float radius, uint widthSegments, uint heightSegments, float phiStart, float phiLength, float thetaStart, float thetaLength);
 	static Geometry Circle(float radius, uint segments, float thetaStart, float thetaLength);
