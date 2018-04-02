@@ -293,8 +293,8 @@ namespace renderer {
         }
         OpenglCheckErrors();
 
-//        renderPointLights(es, cameraPosition);
-//        renderSpotLights(es, cameraPosition);
+        renderPointLights(es, cameraPosition);
+        renderSpotLights(es, cameraPosition);
         renderDirLights(es);
 
         gbuffer.finalPass();
