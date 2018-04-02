@@ -46,14 +46,16 @@ uniform SpotLight spotLight;
 const float Epsilon = 0.0000001;
 
 subroutine vec3 LightType(vec3, vec3, vec3, vec4);
+subroutine uniform LightType getLightColor;
 
-subroutine (LightType) vec3 DirLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
+subroutine (LightType)
+vec3 DirLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
 	vec3 lightDir = normalize(-dirLight.direction);
 	vec3 reflectDir = normalize(reflect(-lightDir, worldNormal));
 	float diff = max(dot(worldNormal, lightDir), 0.0);
 
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 100.0);
-	
+
 	vec3 ambient = dirLight.ambient * albedo.xyz;
 	vec3 diffuse = dirLight.diffuse * diff * albedo.xyz;
 	vec3 specular = dirLight.specular * spec * albedo.w;
@@ -61,11 +63,12 @@ subroutine (LightType) vec3 DirLightType(vec3 worldPos, vec3 worldNormal, vec3 v
 	return ambient + diffuse + specular;
 }
 
-subroutine (LightType) vec3 PointLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
+subroutine (LightType)
+vec3 PointLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
     vec3 lightDir = normalize(pointLight.position - worldPos);
 	vec3 reflectDir = normalize(reflect(-lightDir, worldNormal));
 	float diff = max(dot(worldNormal, lightDir), 0.0);
-    
+
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 100.0);
 	float distance = length(pointLight.position - worldPos);
 	float attenuation = 1.0 / (pointLight.constant + pointLight.linear * distance + pointLight.quadratic * (distance * distance));
@@ -77,7 +80,8 @@ subroutine (LightType) vec3 PointLightType(vec3 worldPos, vec3 worldNormal, vec3
     return ambient + diffuse + specular;
 }
 
-subroutine (LightType) vec3 SpotLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
+subroutine (LightType)
+vec3 SpotLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
 	vec3 lightDir = normalize(spotLight.position - worldPos);
 	vec3 reflectDir = normalize(reflect(-lightDir, worldNormal));
 	float diff = max(dot(worldNormal, lightDir), 0.0);
@@ -94,8 +98,6 @@ subroutine (LightType) vec3 SpotLightType(vec3 worldPos, vec3 worldNormal, vec3 
 
 	return ambient + diffuse + specular;
 }
-
-subroutine uniform LightType getLightColor;
 
 vec2 calcTexCoord() {
     return gl_FragCoord.xy / gScreenSize.xy;

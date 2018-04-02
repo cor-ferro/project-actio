@@ -102,6 +102,9 @@ namespace renderer {
             }
 
             if (compile()) {
+                glGetProgramStageiv(handle, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &numActiveVertexUniforms);
+                glGetProgramStageiv(handle, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &numActiveFragmentUniforms);
+
                 //			this->vertexShader->freeSources();
                 //			this->fragmentShader->freeSources();
                 //			if (this->geometryShader != nullptr) {
@@ -194,16 +197,35 @@ namespace renderer {
         }
 
         void Program::enableSubroutine(unsigned int shaderType, std::string &subroutineName) {
-            GLuint routineIndex = getSubroutineCacheIndex(shaderType, subroutineName);
-            glUniformSubroutinesuiv(shaderType, 1, &routineIndex);
+
         }
 
-        void Program::enableVertexSubroutine(std::string subroutineName) {
-            enableSubroutine(GL_VERTEX_SHADER, subroutineName);
+        void Program::enableVertexSubroutine(std::string f, std::string subroutineName) {
+            GLint locationOfFunction = glGetSubroutineUniformLocation(handle, GL_VERTEX_SHADER, f.c_str());
+
+            auto it = vertexSubroutines.find(subroutineName);
+
+            if (it != vertexSubroutines.end()) {
+                std::unique_ptr<GLuint> indices (new GLuint(numActiveVertexUniforms));
+                indices.get()[locationOfFunction] = it->second;
+                glUniformSubroutinesuiv(GL_VERTEX_SHADER, numActiveVertexUniforms, indices.get());
+            }
         }
 
-        void Program::enableFragmentSubroutine(std::string subroutineName) {
-            enableSubroutine(GL_FRAGMENT_SHADER, subroutineName);
+        void Program::enableFragmentSubroutine(std::string f, std::string subroutineName) {
+            GLint locationOfFunction = glGetSubroutineUniformLocation(handle, GL_FRAGMENT_SHADER, f.c_str());
+
+            if (locationOfFunction == -1) {
+                return;
+            }
+
+            auto it = fragmentSubroutines.find(subroutineName);
+
+            if (it != fragmentSubroutines.end()) {
+                std::unique_ptr<GLuint> indices (new GLuint(numActiveFragmentUniforms));
+                indices.get()[locationOfFunction] = it->second;
+                glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, numActiveFragmentUniforms, indices.get());
+            }
         }
 
         void Program::bindBlock(const char *blockName, int point) {
@@ -438,6 +460,30 @@ namespace renderer {
                 close(watcher->fd);
                 delete watcher;
                 watcher = nullptr;
+            }
+        }
+
+        void Program::defineFragmentSubroutines(std::string uniform, std::vector<std::string> functions)
+        {
+            GLint locationOfFunction = glGetSubroutineUniformLocation(handle, GL_FRAGMENT_SHADER, uniform.c_str());
+
+            for (const std::string &functionName : functions)
+            {
+                GLuint indexFunc = glGetSubroutineIndex(handle, GL_FRAGMENT_SHADER, functionName.c_str());
+
+                fragmentSubroutines.insert({ functionName, indexFunc });
+            }
+        }
+
+        void Program::defineVertexSubroutines(std::string uniform, std::vector<std::string> functions)
+        {
+            GLint locationOfFunction = glGetSubroutineUniformLocation(handle, GL_VERTEX_SHADER, uniform.c_str());
+
+            for (const std::string &functionName : functions)
+            {
+                GLuint indexFunc = glGetSubroutineIndex(handle, GL_VERTEX_SHADER, functionName.c_str());
+
+                vertexSubroutines.insert({ functionName, indexFunc });
             }
         }
     }

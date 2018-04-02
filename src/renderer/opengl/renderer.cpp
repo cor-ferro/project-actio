@@ -24,6 +24,7 @@ namespace renderer {
         forwardProgram.bindBlock("Matrices", 0);
 
         geometryPassProgram.init("geometry_pass", shadersFolder);
+        geometryPassProgram.defineVertexSubroutines("getBoneTransform", {"BoneTransformEnabled", "BoneTransformDisabled"});
         geometryPassProgram.initUniformCache(
                 {"projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]"});
         geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
@@ -31,6 +32,7 @@ namespace renderer {
         OpenglCheckErrors();
 
         lightPassProgram.init("light_pass", shadersFolder);
+        lightPassProgram.defineFragmentSubroutines("getLightColor", {"DirLightType", "PointLightType", "SpotLightType"});
         //	lightPassProgram.bindBlock("Matrices", 0);
         // lightPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
         OpenglCheckErrors();
@@ -49,7 +51,7 @@ namespace renderer {
 
         lightQuad = Mesh::Create(Geometry::Quad2d());
         lightSphere = Mesh::Create(
-                Geometry::Sphere(1.0f, 32, 32, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f)
+                Geometry::Sphere(1.0f, 64, 64, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f)
         );
         lightCylinder = Mesh::Create(
                 Geometry::Cylinder(
@@ -311,7 +313,7 @@ namespace renderer {
 
     void OpenglRenderer::renderPointLights(ex::EntityManager &es, vec3 &cameraPosition) {
 //        console::info("renderPointLights");
-        std::string programLightName = "PointLightType";
+        gbuffer.lightPass();
 
         ex::ComponentHandle<components::LightPoint> light;
         ex::ComponentHandle<components::Transform> transform;
@@ -321,12 +323,12 @@ namespace renderer {
                     std::fmaxf(light->diffuse.r, light->diffuse.g),
                     light->diffuse.b
             );
-            float radius = (-light->linear + glm::sqrt(light->linear * light->linear -
-                                                       4 * light->quadratic *
-                                                       (light->constant - (256.0f / 5.0f) * lightMax))) /
-                           (2 * light->quadratic);
 
-            lightSphere->setScale(radius);
+            float colorDiff = (light->constant - (256.0f / 5.0f) * lightMax);
+            float linearSquare = glm::sqrt(light->linear * light->linear - 4 * light->quadratic * colorDiff);
+            float radius = (-light->linear + linearSquare) / (2 * light->quadratic);
+
+            transform->setScale(radius);
 
             // Stencil
             nullProgram.use();
@@ -348,26 +350,25 @@ namespace renderer {
             // Light
             gbuffer.lightPass();
             lightPassProgram.use();
-            //		glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+
+            glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
             glDisable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);
             glBlendEquation(GL_FUNC_ADD);
             glBlendFunc(GL_ONE, GL_ONE);
             glEnable(GL_CULL_FACE);
             glCullFace(GL_FRONT);
-            //		checkGlError(__FILE__, __LINE__);
-
-            lightPassProgram.enableFragmentSubroutine(programLightName);
             OpenglCheckErrors();
 
             lightPassProgram.setVec("gEyePosition", cameraPosition);
             lightPassProgram.setVec("pointLight.ambient", light->ambient);
             lightPassProgram.setVec("pointLight.diffuse", light->diffuse);
             lightPassProgram.setVec("pointLight.specular", light->specular);
-            lightPassProgram.setVec("pointLight.position", light->position);
+            lightPassProgram.setVec("pointLight.position", transform->getPosition());
             lightPassProgram.setFloat("pointLight.constant", light->constant);
             lightPassProgram.setFloat("pointLight.linear", light->linear);
             lightPassProgram.setFloat("pointLight.quadratic", light->quadratic);
+            lightPassProgram.enableFragmentSubroutine("getLightColor", "PointLightType");
             OpenglCheckErrors();
             modelPipeline.setTransform(*transform);
             modelPipeline.draw(&lightPassProgram, *lightSphere, Mesh_Draw_Base);
@@ -382,7 +383,6 @@ namespace renderer {
 
     void OpenglRenderer::renderSpotLights(ex::EntityManager &es, vec3 &cameraPosition) {
 //        console::info("renderSpotLights");
-        std::string programLightName = "SpotLightType";
 
         ex::ComponentHandle<components::LightSpot> light;
         ex::ComponentHandle<components::Transform> transform;
@@ -416,7 +416,7 @@ namespace renderer {
             //		glCullFace(GL_FRONT);
             OpenglCheckErrors();
 
-            lightPassProgram.enableFragmentSubroutine(programLightName);
+            lightPassProgram.enableFragmentSubroutine("getLightColor", "SpotLightType");
             OpenglCheckErrors();
             lightPassProgram.setVec("spotLight.ambient", light->ambient);
             lightPassProgram.setVec("spotLight.diffuse", light->diffuse);
@@ -448,16 +448,16 @@ namespace renderer {
         lightPassProgram.use();
         lightPassProgram.setMat("projection", mat4(1.0f));
         lightPassProgram.setMat("view", mat4(1.0f));
+        lightPassProgram.enableFragmentSubroutine("getLightColor", "DirLightType");
 
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
         glBlendFunc(GL_ONE, GL_ONE);
 
-        ex::ComponentHandle<components::LightDirectional> light;
-
-        lightPassProgram.enableFragmentSubroutine(programLightName);
         OpenglCheckErrors();
+
+        ex::ComponentHandle<components::LightDirectional> light;
 
         for (ex::Entity entity : es.entities_with_components(light)) {
             lightPassProgram.setVec("dirLight.ambient", light->ambient);
@@ -494,6 +494,7 @@ namespace renderer {
     }
 
     void OpenglRenderer::drawModels(entityx::EntityManager &es) {
+        modelPipeline.use();
         es.each<components::Renderable, components::Transform, components::Model>([this](
                 ex::Entity entity,
                 components::Renderable &,

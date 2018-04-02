@@ -40,7 +40,6 @@ namespace renderer {
         }
 
         void MeshDrawPipeline::draw(Program *drawProgram, Mesh &mesh, uint flags) {
-            drawProgram->use();
             assert(!drawProgram->isSuccess() && "cannot set program");
 
             if ((flags & Mesh_Draw_Textures) != 0) {
@@ -61,10 +60,10 @@ namespace renderer {
             }
 
             if ((flags & Mesh_Draw_Bones) != 0) {
-                drawProgram->enableVertexSubroutine("BoneTransformEnabled");
+                drawProgram->enableVertexSubroutine("getBoneTransform", "BoneTransformEnabled");
                 drawProgram->setMat("bones[]", &mesh.boneTransforms);
             } else {
-                drawProgram->enableVertexSubroutine("BoneTransformDisabled");
+                drawProgram->enableVertexSubroutine("getBoneTransform", "BoneTransformDisabled");
             }
 
             if ((flags & Mesh_Draw_Base) != 0) {
