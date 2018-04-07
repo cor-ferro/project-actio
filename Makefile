@@ -6,6 +6,7 @@ PHYSX_LIB=CHECKED
 PHYSX_ARCH=x64
 BUILD_TYPE=debug
 OPTIMIZE_LEVEL=0
+RESOURCE_DIR='"./resources"'
 
 SRCDIR :=src
 OBJDIR :=obj
@@ -15,7 +16,7 @@ OBJS			:=$(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 OBJ_TREE 		:=$(shell find $(SRCDIR) -type d)
 OBJ_TREE 		:=$(patsubst src%,obj%,$(OBJ_TREE))
 OBJS			:=$(patsubst %/%,%_%,$(OBJS))
-CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -DGLM_ENABLE_EXPERIMENTAL -DGLFW_INCLUDE_NONE -std=c++11 -pipe -O$(OPTIMIZE_LEVEL)
+CPPFLAGS		=$(@:$(OBJDIR)/%.o)-DGRAPHIC_API_$(GRAPHIC_API) -DGLM_ENABLE_EXPERIMENTAL -DGLFW_INCLUDE_NONE -DRESOURCE_DIR=$(RESOURCE_DIR) -std=c++11 -pipe -O$(OPTIMIZE_LEVEL)
 LDFLAGS_COMPILE	=\
 				-I/usr/include \
 				-Ivendor/ \

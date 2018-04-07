@@ -62,7 +62,7 @@ Path App::resourcePath()
 
 Path App::resourcePath(std::string fromPath)
 {
-	return createPath(path_, "/resources", fromPath);
+	return createPath(path_, RESOURCE_DIR, fromPath);
 }
 
 Path App::shadersPath()
