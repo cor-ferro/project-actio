@@ -1,6 +1,7 @@
 #include "main.h"
 #include "renderer/renderer_types.h"
 #include "renderer/renderer.h"
+#include "game/world_importer.h"
 
 int main(int argc, char **argv) {
     App &app = App::instance();
@@ -84,7 +85,9 @@ int main(int argc, char **argv) {
     world->setupRenderer(renderer);
     world->setupMovement(inputHandler);
     world->setup();
-    world->initFromFile(testWorldFile);
+
+    auto worldImporter = new game::WorldImporter(world);
+    worldImporter->import(testWorldFile);
 
     GLFWwindow *const window = mainContext.getWindow();
 

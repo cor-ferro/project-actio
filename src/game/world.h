@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include "entityx/entityx.h"
 #include "character.h"
+#include "components/skin.h"
 #include "../lib/console.h"
 #include "../lib/input_handler.h"
 #include "../resources/file_resource.h"
@@ -38,8 +39,6 @@ namespace game {
         void setupMovement(InputHandler *ih);
 
         void setup();
-
-        void initFromFile(const Resource::File &file);
 
         void initGroudPlane();
 
