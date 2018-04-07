@@ -19,76 +19,103 @@
 #include "../renderer/opengl/utils.h"
 #endif
 
-extern memory::PoolAllocator * meshAllocator;
+extern memory::PoolAllocator *meshAllocator;
 
 typedef std::size_t MeshId;
 
 static size_t idMeshCounter = 0;
-static MeshId newMeshId()
-{
-	return ++idMeshCounter;
+
+static MeshId newMeshId() {
+    return ++idMeshCounter;
 }
 
 enum MeshDrawType {
-	Mesh_Draw_Triangle,
-	Mesh_Draw_Line,
-	Mesh_Draw_Line_Loop
+    Mesh_Draw_Triangle,
+    Mesh_Draw_Line,
+    Mesh_Draw_Line_Loop
 };
 
 enum MeshDrawMode {
-	Mesh_Draw_Arrays,
-	Mesh_Draw_Elements
+    Mesh_Draw_Arrays,
+    Mesh_Draw_Elements
 };
 
 enum MeshDrawFlags {
-	Mesh_Draw_Base = 0x1,
-	Mesh_Draw_Textures = 0x2,
-	Mesh_Draw_Bones = 0x4,
-	Mesh_Draw_Material = 0x8,
-	Mesh_Draw_All = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Bones | Mesh_Draw_Material
+    Mesh_Draw_Base = 0x1,
+    Mesh_Draw_Textures = 0x2,
+    Mesh_Draw_Bones = 0x4,
+    Mesh_Draw_Material = 0x8,
+    Mesh_Draw_All = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Bones | Mesh_Draw_Material
 };
 
 struct Mesh : Object3D {
-	static Mesh * Create();
-	static Mesh * Create(Geometry geometry);
-	static Mesh * Create(Geometry geometry, Material::Phong material);
-	static void Destroy(Mesh * mesh);
+    struct BonesMap {
+        unsigned int count;
+        std::vector<mat4> transforms;
+        std::vector<mat4> offsets;
+        std::vector<unsigned int> indexes;
+        std::vector<std::string> names;
 
-	~Mesh();
+        void resize(unsigned int size) {
+            transforms.resize(size);
+            offsets.resize(size);
+            indexes.resize(size);
+            names.resize(size);
+            count = size;
+        }
+    };
 
-	std::string getName();
-	MeshId getId();
-	void setName(std::string newName);
-	void setName(const char * newName);
+    static Mesh *Create();
 
-	void draw();
+    static Mesh *Create(Geometry geometry);
 
-	void freeGeometry();
-	void freeMaterial();
+    static Mesh *Create(Geometry geometry, Material::Phong material);
 
-	void setDrawType(MeshDrawType type);
-	MeshDrawType getDrawType();
+    static void Destroy(Mesh *mesh);
 
-	#ifdef GRAPHIC_API_OPENGL
-	void draw(renderer::Opengl::Program &program, uint flags = Mesh_Draw_All);
-	void setup();
-	#endif
+    ~Mesh();
 
-	Material::Phong material;
-	Geometry geometry;
+    std::string getName();
 
-	std::vector<mat4> boneTransforms;
+    MeshId getId();
+
+    void setName(std::string newName);
+
+    void setName(const char *newName);
+
+    void draw();
+
+    void freeGeometry();
+
+    void freeMaterial();
+
+    void setDrawType(MeshDrawType type);
+
+    MeshDrawType getDrawType();
+
+#ifdef GRAPHIC_API_OPENGL
+    void draw(renderer::Opengl::Program &program, uint flags = Mesh_Draw_All);
+    void setup();
+#endif
+
+    Material::Phong material;
+    Geometry geometry;
+
+    BonesMap bones;
 private:
-	Mesh();
-	Mesh(Geometry geometry);
-	Mesh(Geometry geometry, Material::Phong material);
-	Mesh(const Mesh& mesh);
+    Mesh();
 
-	void destroy();
+    Mesh(Geometry geometry);
 
-	std::size_t id;
-	std::string name;
-	MeshDrawType drawType;
+    Mesh(Geometry geometry, Material::Phong material);
+
+    Mesh(const Mesh &mesh);
+
+    void destroy();
+
+    std::size_t id;
+    std::string name;
+    MeshDrawType drawType;
 };
 
 #endif

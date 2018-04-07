@@ -301,8 +301,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 				modelMesh->material.initFromAi(meshMaterial, assimpResource, images_);
 				modelMesh->geometry.initFromAi(mesh, assimpResource);
 
-				modelMesh->boneTransforms.reserve(mesh->mNumBones);
-				modelMesh->boneTransforms.resize(mesh->mNumBones);
+				modelMesh->bones.resize(mesh->mNumBones);
 
 				if (mesh->mNumBones > 0) {
 					std::vector<BoneMap> boneJointsMap;
@@ -328,7 +327,7 @@ void Model::initFromAi(const Resource::Assimp * assimpResource)
 						boneJointsMap.push_back(map);
 					}
 
-					boneMeshMap.insert({ modelMesh, boneJointsMap });					
+					boneMeshMap.insert({ modelMesh, boneJointsMap });
 				}
 
 				this->addMesh(modelMesh);
@@ -532,7 +531,7 @@ void Model::processAnimation()
 		Mesh * mesh = x.first;
 
 		for (const BoneMap& jointBoneMap : x.second) {
-			mesh->boneTransforms[jointBoneMap.boneIndex] = bones_[jointBoneMap.jointIndex] * jointBoneMap.offset;
+			mesh->bones.transforms[jointBoneMap.boneIndex] = bones_[jointBoneMap.jointIndex] * jointBoneMap.offset;
 		}
 	}
 }

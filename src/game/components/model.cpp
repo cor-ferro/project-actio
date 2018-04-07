@@ -50,33 +50,12 @@ namespace game {
             addMesh(mesh);
         }
 
-        Model::Model(Model::File& modelFile) : Model()
-        {
-            console::info("load from file %s", modelFile.name);
-            Assimp::Importer importer;
-
-            std::string pFile = modelFile.file.getPath();
-            unsigned int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_CalcTangentSpace;
-//
-            if (modelFile.flipUv) {
-                flags|= aiProcess_FlipUVs;
-            }
-
-            const aiScene * scene = importer.ReadFile(pFile, flags);
-            const Resource::Assimp * assimpResource = new Resource::Assimp(scene, pFile);
-
-            if(!scene)
-            {
-                console::err("failed model loading %s", importer.GetErrorString());
-                return;
-            }
-
-            initFromAi(assimpResource);
-
+        Model::Model(Model::File &modelFile) : Model() {
             setName(modelFile.name);
+        }
 
-            importer.FreeScene();
-            delete assimpResource;
+        Model::Model(const Resource::Assimp *assimpResource) {
+            initFromAi(assimpResource);
         }
 
         Model::~Model() {
@@ -117,8 +96,7 @@ namespace game {
             console::info("nodes.size(): %i", nodes.size());
 
             std::queue<aiNode *> queueNodes;
-            for (auto node : nodes)
-                queueNodes.push(node);
+            for (auto node : nodes) queueNodes.push(node);
 
             std::queue<std::string> queueImages;
             for (auto path : texturePaths)
@@ -132,14 +110,14 @@ namespace game {
             std::mutex lock;
             auto nodeLoader = [this, &lock, &assimpResource](std::queue<aiNode *> &queue) {
                 aiNode *node = nullptr;
-                while (queue.size() > 0) {
+
+                while (!queue.empty()) {
                     lock.lock();
                     node = queue.front();
                     queue.pop();
                     lock.unlock();
-//			console::info(std::this_thread::get_id());
 
-                    Model::Node *modelNode = new Model::Node(node);
+                    auto *modelNode = new Model::Node(node);
                     this->addNode(modelNode); // todo: atomic insert
 
                     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -148,38 +126,19 @@ namespace game {
                         const aiMaterial *meshMaterial = assimpResource->getMeshMaterial(mesh);
 
                         Mesh *modelMesh = Mesh::Create();
+                        modelMesh->setName(mesh->mName.C_Str());
                         modelMesh->material.initFromAi(meshMaterial, assimpResource, images_);
                         modelMesh->geometry.initFromAi(mesh, assimpResource);
 
-                        modelMesh->boneTransforms.reserve(mesh->mNumBones);
-                        modelMesh->boneTransforms.resize(mesh->mNumBones);
+                        if (mesh->mNumBones > 0) {
+                            modelMesh->bones.resize(mesh->mNumBones);
 
-//                        if (mesh->mNumBones > 0) {
-//                            std::vector<BoneMap> boneJointsMap;
-//                            ozz::Range<const char* const> jointNames = skeleton->joint_names();
-//
-//                            for (uint boneId = 0; boneId < mesh->mNumBones; boneId++) {
-//                                aiBone * bone = mesh->mBones[boneId];
-//                                const char* boneName = bone->mName.C_Str();
-//                                uint jointIndex = 0;
-//
-//                                for (uint jIndex = 0; jIndex < jointNames.Count(); jIndex++) {
-//                                    if (strcmp(jointNames[jIndex], boneName) == 0) {
-//                                        jointIndex = jIndex;
-//                                        break;
-//                                    }
-//                                }
-//
-//                                BoneMap map;
-//                                map.jointIndex = jointIndex;
-//                                map.boneIndex = boneId;
-//                                map.offset = libAi::toNativeType(bone->mOffsetMatrix);
-//
-//                                boneJointsMap.push_back(map);
-//                            }
-//
-//                            boneMeshMap.insert({ modelMesh, boneJointsMap });
-//                        }
+                            for (uint boneId = 0; boneId < mesh->mNumBones; boneId++) {
+                                aiBone *bone = mesh->mBones[boneId];
+                                modelMesh->bones.offsets[boneId] = libAi::toNativeType(bone->mOffsetMatrix);
+                                modelMesh->bones.names[boneId] = std::string(bone->mName.C_Str());
+                            }
+                        }
 
                         this->addMesh(modelMesh);
                         modelNode->addMesh(modelMesh);
@@ -191,7 +150,7 @@ namespace game {
 
             auto imageLoader = [this, &lock, &assimpResource](std::queue<std::string> &queue) {
                 std::string path("");
-                while (queue.size() > 0) {
+                while (!queue.empty()) {
                     lock.lock();
                     path = queue.front();
                     queue.pop();
@@ -224,12 +183,6 @@ namespace game {
             for (uint i = 0; i < countThreads; i++)
                 nodeThreads[i].join();
             console::info("end init meshes %i", nodes_.size());
-
-//            for (auto mesh = meshes_.begin(); mesh != meshes_.end(); mesh++) {
-//                (*mesh)->setup();
-//                (*mesh)->material.setupTextures();
-//            }
-
         }
 
         void Model::addMesh(Mesh *mesh) {
@@ -268,6 +221,22 @@ namespace game {
 
         const int Model::getNodesCount() {
             return nodes_.size();
+        }
+
+        void Model::reindexMeshBones(std::unordered_map<std::string, uint> &nodeIndexes) {
+            // fill mesh node->bone indexes
+            for (auto &mesh : meshes_) {
+                for (unsigned int boneId = 0; boneId < mesh->bones.count; boneId++) {
+                    auto nodeIndexIt = nodeIndexes.find(mesh->bones.names[boneId]);
+
+                    if (nodeIndexIt != nodeIndexes.end()) {
+                        mesh->bones.indexes[boneId] = nodeIndexIt->second;
+                    } else {
+                        console::warn("node not found: %s", mesh->bones.names[boneId]);
+                        mesh->bones.indexes[boneId] = 0;
+                    }
+                }
+            }
         }
     }
 }

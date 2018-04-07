@@ -62,6 +62,7 @@ namespace game {
 
             Model();
             Model(File& modelFile);
+            Model(const Resource::Assimp * assimpResource);
             Model(Mesh * mesh);
             ~Model();
 
@@ -80,6 +81,8 @@ namespace game {
             Mesh * getFirstMesh();
 
             const int getNodesCount();
+
+            void reindexMeshBones(std::unordered_map<std::string, uint> &nodeIndexes);
         private:
             void destroy();
 

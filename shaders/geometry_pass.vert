@@ -15,15 +15,16 @@ uniform Matrices {
 	mat4 view;
 };
 
-uniform mat4 bones[MAX_BONES];
+uniform mat4 boneTransforms[MAX_BONES];
+uniform mat4 boneOffsets[MAX_BONES];
 
 subroutine mat4 BoneTransform();
 
 subroutine (BoneTransform) mat4 BoneTransformEnabled() {
-	mat4 boneTransform = bones[BoneIDs[0]] * Weights[0];
-	boneTransform+= bones[BoneIDs[1]] * Weights[1];
-	boneTransform+= bones[BoneIDs[2]] * Weights[2];
-	boneTransform+= bones[BoneIDs[3]] * Weights[3];
+	mat4 boneTransform = (boneTransforms[BoneIDs[0]] * boneOffsets[BoneIDs[0]]) * Weights[0];
+	boneTransform+= (boneTransforms[BoneIDs[1]] * boneOffsets[BoneIDs[1]]) * Weights[1];
+	boneTransform+= (boneTransforms[BoneIDs[2]] * boneOffsets[BoneIDs[2]]) * Weights[2];
+	boneTransform+= (boneTransforms[BoneIDs[3]] * boneOffsets[BoneIDs[3]]) * Weights[3];
 
 	return boneTransform;
 }

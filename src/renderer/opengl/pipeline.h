@@ -55,6 +55,11 @@ namespace renderer {
 
             void draw(Mesh &mesh, uint flags = Mesh_Draw_All) override;
             void draw(Program *program, Mesh &mesh, uint flags = Mesh_Draw_All) override;
+
+            void setBonesTransform(std::vector<mat4> *newBones);
+
+        private:
+            std::vector<mat4> *bones = nullptr;
         };
 
         struct SkyboxPipeline : Pipeline {

@@ -61,7 +61,8 @@ namespace renderer {
 
             if ((flags & Mesh_Draw_Bones) != 0) {
                 drawProgram->enableVertexSubroutine("getBoneTransform", "BoneTransformEnabled");
-                drawProgram->setMat("bones[]", &mesh.boneTransforms);
+                drawProgram->setMat("boneTransforms[]", &mesh.bones.transforms);
+                drawProgram->setMat("boneOffsets[]", &mesh.bones.offsets);
             } else {
                 drawProgram->enableVertexSubroutine("getBoneTransform", "BoneTransformDisabled");
             }
@@ -110,6 +111,10 @@ namespace renderer {
                 glBindVertexArray(0);
             }
         };
+
+        void MeshDrawPipeline::setBonesTransform(std::vector<mat4> *newBones) {
+            bones = newBones;
+        }
 
         void SkyboxPipeline::setTexture() {
 //            OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, texture);

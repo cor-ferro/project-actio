@@ -1,5 +1,7 @@
 #include "renderer.h"
 #include "../../game/components/camera.h"
+#include "../../game/components/skin.h"
+#include "../../game/components/transform.h"
 
 #define UBO_MATRICES_POINT_INDEX 0
 #define DEFAULT_FRAME_BUFFER 0
@@ -24,15 +26,16 @@ namespace renderer {
         forwardProgram.bindBlock("Matrices", 0);
 
         geometryPassProgram.init("geometry_pass", shadersFolder);
-        geometryPassProgram.defineVertexSubroutines("getBoneTransform", {"BoneTransformEnabled", "BoneTransformDisabled"});
-        geometryPassProgram.initUniformCache(
-                {"projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]"});
+        geometryPassProgram.defineVertexSubroutines("getBoneTransform",
+                                                    {"BoneTransformEnabled", "BoneTransformDisabled"});
+        geometryPassProgram.initUniformCache({"projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture", "boneTransforms[]", "boneOffsets[]"});
         geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
         geometryPassProgram.bindBlock("Matrices", 0);
         OpenglCheckErrors();
 
         lightPassProgram.init("light_pass", shadersFolder);
-        lightPassProgram.defineFragmentSubroutines("getLightColor", {"DirLightType", "PointLightType", "SpotLightType"});
+        lightPassProgram.defineFragmentSubroutines("getLightColor",
+                                                   {"DirLightType", "PointLightType", "SpotLightType"});
         //	lightPassProgram.bindBlock("Matrices", 0);
         // lightPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
         OpenglCheckErrors();
@@ -501,10 +504,16 @@ namespace renderer {
                 components::Transform &transform,
                 components::Model &model
         ) {
+            entityx::ComponentHandle<components::Skin> skin = entity.component<components::Skin>();
+
             uint renderFlags = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Material;
 
             const ModelMeshes &meshes = model.getMeshes();
             for (auto &mesh : meshes) {
+                if (skin) {
+                    renderFlags |= Mesh_Draw_Bones;
+                }
+
                 modelPipeline.setTransform(transform); // todo: pass pointer instead of copy
                 modelPipeline.draw(*mesh, renderFlags);
             }
@@ -547,36 +556,36 @@ namespace renderer {
 
         glBindVertexArray(mesh->geometry.VAO);
 
-        GeometryVertices * vertices = mesh->geometry.getVertices();
+        GeometryVertices *vertices = mesh->geometry.getVertices();
 
         glBindBuffer(GL_ARRAY_BUFFER, mesh->geometry.VBO);
         glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
 
         glGenBuffers(1, &mesh->geometry.EBO);
-        GeometryIndices * indices = mesh->geometry.getIndices();
+        GeometryIndices *indices = mesh->geometry.getIndices();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->geometry.EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
 
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Normal));
 
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, TexCoords));
 
         glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Tangent));
 
         glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Bitangent));
 
         glEnableVertexAttribArray(5);
-        glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BonedIDs));
+        glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void *) offsetof(Vertex, BonedIDs));
 
         glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Weights));
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Weights));
 
         glBindVertexArray(0);
 

@@ -113,8 +113,6 @@ namespace animation {
     Animation::~Animation()
     {
         if (animation_ != nullptr) {
-            console::info("destroy animation ", name.c_str());
-
             ozz::memory::Allocator* allocator = ozz::memory::default_allocator();
 
             allocator->Delete(animation_);
