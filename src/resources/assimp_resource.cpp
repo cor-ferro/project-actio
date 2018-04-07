@@ -88,6 +88,10 @@ namespace Resource {
 		}
 	}
 
+	aiScene const * Assimp::getScene() const {
+		return scene;
+	}
+
 	const aiNode * Assimp::getRootNode() const {
 		return scene->mRootNode;
 	}
@@ -106,5 +110,9 @@ namespace Resource {
 		}
 
 		return nullptr;
+	}
+
+	bool Assimp::hasAnimations() const {
+	    return scene->mNumAnimations > 0;
 	}
 }

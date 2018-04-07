@@ -1,4 +1,9 @@
 #include "file_resource.h"
+#include "../lib/path.h"
+
+#ifndef RESOURCE_DIR
+#error "undefined RESOURCE_DIR"
+#endif
 
 namespace Resource {
 	File::File() {};
@@ -9,7 +14,7 @@ namespace Resource {
 	}
 
 	File::File(std::string path) 
-		: path_(path)
+		: path_(createPath(path))
 	{
 		console::info("resource::file %s", path_.string());
 	}

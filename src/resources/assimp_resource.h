@@ -27,9 +27,11 @@ namespace Resource {
 		std::unordered_set<std::string> getTexturePaths() const;
 		std::vector<aiNode*> getAllNodes() const;
 
+		aiScene const * getScene() const;
 		const aiNode * getRootNode() const;
 		const aiMesh * getMesh(uint index) const;
 		const aiMaterial * getMeshMaterial(const aiMesh * mesh) const;
+		bool hasAnimations() const;
 
 		aiScene const * scene;
 		std::string resourcePath_;
