@@ -1,4 +1,5 @@
 #include "ag.h"
+#include "core/geometry_primitive.h"
 
 namespace AG
 {
@@ -25,7 +26,6 @@ namespace AG
 		Model * skybox(std::vector<Resource::File> faces)
 		{
 			Texture texture = Texture::Cube();
-			Geometry geometry = Geometry::Box();
 
 			for (char i = 0; i < 6; i++) {
 				// @todo: потоковая загрузка
@@ -33,137 +33,16 @@ namespace AG
 				texture.setData(imageData, i);
 			}
 
-			Mesh * mesh = Mesh::Create(geometry, Material::Phong(texture));
+			Mesh * mesh = Mesh::Create();
+
+			GeometryPrimitive::Box(mesh->geometry);
+            mesh->material.addTexture(texture);
+
 			Model * model = Model::Create(mesh);
 
 			return model;
 		}
 
-		Model * box()
-		{
-			Material::Phong material;
-			material.setWireframe(true);
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Box();
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
-
-		Model * plane(uint width, uint height, uint widthSegments, uint heightSegments)
-		{
-			Material::Phong material;
-//			material.setWireframe(true);
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Plane(width, height, widthSegments, heightSegments);
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
-
-		Model * sphere(float radius, uint widthSegments, uint heightSegments)
-		{
-			Material::Phong material;
-//			material.setWireframe(true);
-			material.setNoLight(true);
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Sphere(radius, widthSegments, heightSegments, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
-
-		Model * circle(float radius, uint segments)
-		{
-			Material::Phong material;
-			material.setWireframe(true);
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Circle(radius, segments, 0.0f, glm::two_pi<float>());
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
-
-		Model * cylinder(float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments)
-		{
-			Material::Phong material;
-//			material.setWireframe(true);
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Cylinder(
-				radiusTop, 
-				radiusBottom, 
-				height, 
-				radialSegments, 
-				heightSegments, 
-				false, 
-				0.0f, 
-				glm::two_pi<float>()
-			);
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
-
-		Model * cone(float radius, float height, uint radialSegments, uint heightSegments)
-		{
-			Material::Phong material;
-			material.setWireframe(true);
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Cone(radius, height, radialSegments, heightSegments, false, 0.0f, glm::two_pi<float>());
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
-
-		Model * ring(float innerRadius, float outerRadius, uint thetaSegments)
-		{
-			Material::Phong material;
-			material.setWireframe(true);
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Ring(innerRadius, outerRadius, thetaSegments,	8, 0.0f, glm::two_pi<float>());
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
-
-		Model * torus(float radius, float tube, uint radialSegments, uint tubularSegments)
-		{
-			Material::Phong material;
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Torus(radius, tube, radialSegments, tubularSegments, glm::two_pi<float>());
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
-
-		Model * octahedron(float radius)
-		{
-			Material::Phong material;
-			material.setWireframe(true);
-			material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-			Geometry geometry = Geometry::Octahedron(radius);
-			Mesh * mesh = Mesh::Create(geometry, material);
-			Model * model = Model::Create(mesh);
-
-			return model;
-		}
 	}
 
 	namespace Helper {
