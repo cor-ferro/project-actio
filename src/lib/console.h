@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <boost/format.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 namespace console {
 	template <typename ...Arg>
@@ -43,6 +44,11 @@ namespace console {
 		std::cout << "[err] ";
 		std::cout << CONSOLE_ESC CONSOLE_RESET;
 		log(format, arg...);
+	}
+
+	template <typename T>
+	static void geom(const char * format, T t) {
+		console::log(format, glm::to_string(t));
 	}
 };
 
