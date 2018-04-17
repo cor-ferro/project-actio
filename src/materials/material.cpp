@@ -44,6 +44,22 @@ namespace Material {
 		return textures_;
 	}
 
+	Phong::Phong(vec3 diffuse)
+			: Base()
+			, diffuse(diffuse)
+			, shininess(1.0f)
+			, noLight(false)
+	{}
+
+	Phong::Phong(vec3 diffuse, vec3 ambient, vec3 specular)
+			: Base()
+			, diffuse(diffuse)
+			, ambient(ambient)
+			, specular(specular)
+			, shininess(1.0f)
+			, noLight(false)
+	{}
+
 	Phong::Phong(Texture texture)
 		: Base(texture)
 		, shininess(1.0f)

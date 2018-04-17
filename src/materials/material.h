@@ -34,6 +34,8 @@ namespace Material {
 
 	struct Phong : Base {
 		Phong();
+		Phong(vec3 diffuse);
+		Phong(vec3 diffuse, vec3 ambient, vec3 specular);
 		Phong(Texture texture);
 		~Phong();
 
