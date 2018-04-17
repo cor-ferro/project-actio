@@ -63,6 +63,8 @@ namespace renderer {
 
         void setupMesh(Mesh *mesh) override;
 
+        void updateMesh(Mesh *mesh) override;
+
         void setupMaterial(Material::Phong *material);
 
         void destroyMesh(Mesh *mesh) override;

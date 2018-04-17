@@ -28,7 +28,7 @@ struct WindowContext {
         gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
         glfwSetWindowUserPointer(window, this);
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         // glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 
         ImGui_ImplGlfwGL3_Init(window, true);

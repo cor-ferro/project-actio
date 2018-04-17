@@ -78,14 +78,17 @@ namespace renderer {
 
                 GLenum primitiveType;
                 switch (mesh.getDrawType()) {
+                    case Mesh_Draw_Triangle:
+                        primitiveType = GL_TRIANGLES;
+                        break;
                     case Mesh_Draw_Line:
                         primitiveType = GL_LINES;
                         break;
                     case Mesh_Draw_Line_Loop:
                         primitiveType = GL_LINE_LOOP;
                         break;
-                    case Mesh_Draw_Triangle:
-                        primitiveType = GL_TRIANGLES;
+                    case Mesh_Draw_Point:
+                        primitiveType = GL_POINT;
                         break;
                     default:
                         primitiveType = GL_TRIANGLES;

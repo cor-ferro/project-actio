@@ -2,6 +2,7 @@
 #include "../../game/components/camera.h"
 #include "../../game/components/skin.h"
 #include "../../game/components/transform.h"
+#include "../../core/geometry_primitive.h"
 
 #define UBO_MATRICES_POINT_INDEX 0
 #define DEFAULT_FRAME_BUFFER 0
@@ -28,7 +29,9 @@ namespace renderer {
         geometryPassProgram.init("geometry_pass", shadersFolder);
         geometryPassProgram.defineVertexSubroutines("getBoneTransform",
                                                     {"BoneTransformEnabled", "BoneTransformDisabled"});
-        geometryPassProgram.initUniformCache({"projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture", "boneTransforms[]", "boneOffsets[]"});
+        geometryPassProgram.initUniformCache(
+                {"projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture",
+                 "boneTransforms[]", "boneOffsets[]"});
         geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
         geometryPassProgram.bindBlock("Matrices", 0);
         OpenglCheckErrors();
@@ -52,22 +55,13 @@ namespace renderer {
         skyboxDeferredProgram.bindBlock("Matrices", 0);
         OpenglCheckErrors();
 
-        lightQuad = Mesh::Create(Geometry::Quad2d());
-        lightSphere = Mesh::Create(
-                Geometry::Sphere(1.0f, 64, 64, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f)
-        );
-        lightCylinder = Mesh::Create(
-                Geometry::Cylinder(
-                        4.0f,
-                        1.0f,
-                        10.0f,
-                        16,
-                        16,
-                        false,
-                        0.0f,
-                        glm::two_pi<float>()
-                )
-        );
+        lightQuad = Mesh::Create();
+        lightSphere = Mesh::Create();
+        lightCylinder = Mesh::Create();
+
+        GeometryPrimitive::Quad2d(lightQuad->geometry);
+        GeometryPrimitive::Sphere(lightSphere->geometry, 1.0f, 64, 64, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+        GeometryPrimitive::Cylinder(lightCylinder->geometry, 4.0f, 1.0f, 10.0f, 16, 16, false, 0.0f, glm::two_pi<float>());
 
         lightQuad->setup();
         lightSphere->setup();
@@ -322,14 +316,7 @@ namespace renderer {
         ex::ComponentHandle<components::Transform> transform;
 
         for (ex::Entity entity : es.entities_with_components(light, transform)) {
-            float lightMax = std::fmaxf(
-                    std::fmaxf(light->diffuse.r, light->diffuse.g),
-                    light->diffuse.b
-            );
-
-            float colorDiff = (light->constant - (256.0f / 5.0f) * lightMax);
-            float linearSquare = glm::sqrt(light->linear * light->linear - 4 * light->quadratic * colorDiff);
-            float radius = (-light->linear + linearSquare) / (2 * light->quadratic);
+            float radius = light->getRadius();
 
             transform->setScale(radius);
 
@@ -558,13 +545,27 @@ namespace renderer {
 
         GeometryVertices *vertices = mesh->geometry.getVertices();
 
+        GLenum geometryType;
+
+        switch (mesh->geometry.getType()) {
+            case Geometry::Geometry_Static:
+                geometryType = GL_STATIC_DRAW;
+                break;
+            case Geometry::Geometry_Dynamic:
+                geometryType = GL_DYNAMIC_DRAW;
+                break;
+            default:
+                console::warn("Unknown draw type");
+                geometryType = GL_STATIC_DRAW;
+        }
+
         glBindBuffer(GL_ARRAY_BUFFER, mesh->geometry.VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), geometryType);
 
         glGenBuffers(1, &mesh->geometry.EBO);
         GeometryIndices *indices = mesh->geometry.getIndices();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->geometry.EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), geometryType);
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
@@ -591,6 +592,28 @@ namespace renderer {
 
         setupMaterial(&mesh->material);
     }
+
+    void OpenglRenderer::updateMesh(Mesh *mesh) {
+        if (mesh->geometry.VBO == 0) {
+            console::warn("skip update mesh");
+            return;
+        }
+
+        GeometryVertices *vertices = mesh->geometry.getVertices();
+
+        glBindVertexArray(mesh->geometry.VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->geometry.VBO);
+        if (mesh->geometry.isNeedUpdateVertices()) {
+            glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_DYNAMIC_DRAW);
+            mesh->geometry.setNeedUpdateVertices(false);
+        } else {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices->size() * sizeof(Vertex), &vertices->front());
+        }
+
+        glBindVertexArray(0);
+        OpenglCheckErrors();
+    };
 
     void OpenglRenderer::setupMaterial(Material::Phong *material) {
         material->setupTextures();

@@ -6,6 +6,7 @@
 
 namespace animation {
     void process(Animation * animation, ozz::animation::Skeleton * skeleton);
+    void process(animation::AnimationHandler &animationSamplers, animation::Handler *handler);
 }
 
 #endif

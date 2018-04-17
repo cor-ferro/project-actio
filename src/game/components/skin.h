@@ -20,9 +20,6 @@ namespace game {
 
                 const aiNode *rootNode = assimpResource->getRootNode();
 
-                inverseMat = libAi::toNativeType(rootNode->mTransformation);
-                inverseMat = glm::inverse(inverseMat);
-
                 if (scene->mNumAnimations > 0) {
                     ozz::animation::offline::SkeletonBuilder skeletonBuilder;
 
@@ -39,17 +36,13 @@ namespace game {
                         }
                     }
 
-                    ozz::Range<const char* const> jointNames = skeleton->joint_names();
+                    ozz::Range<const char *const> jointNames = skeleton->joint_names();
 
-                    for (uint jIndex = 0; jIndex < jointNames.Count(); jIndex++) {
-//                        console::info("joint: %s, %i", jointNames[jIndex], jIndex);
-                    }
+                    animHandler = new animation::Handler(skeleton);
                 }
             }
 
             ~Skin() {
-                currentAnimation = nullptr;
-
                 if (skeleton != nullptr) {
                     ozz::memory::Allocator *allocator = ozz::memory::default_allocator();
 
@@ -59,31 +52,36 @@ namespace game {
                     }
 
                     animations.erase(animations.begin(), animations.end());
-                    currentAnimation = nullptr;
 
                     allocator->Delete(skeleton);
                     skeleton = nullptr;
                 }
+
+                delete animHandler;
             }
 
             void processAnimation(double dt) {
-                assert(currentAnimation != nullptr);
+                if (primarySampler.isCanUsed()) {
+                    primarySampler.tick(dt / 1000.0);
+                }
 
-                currentAnimation->tick(static_cast<float>(dt / 1000.0));
+                if (secondarySampler.isCanUsed()) {
+                    secondarySampler.tick(dt / 1000.0);
+                }
+
+                for (auto &sampler : animSamplers.getSamplers()) {
+                    sampler.tick(dt / 1000.0);
+                }
 
                 processAnimation();
             }
 
             void processAnimation() {
-                assert(currentAnimation != nullptr);
-
-                animation::process(currentAnimation, skeleton);
+                animation::process(animSamplers, animHandler);
             }
 
             mat4 *getTransforms() {
-                assert(currentAnimation != nullptr);
-
-                return currentAnimation->getBones();
+                return animHandler->getTransforms();
             }
 
             int getNumBones() {
@@ -93,28 +91,45 @@ namespace game {
             std::unordered_map<std::string, uint> getNodeIndexes() {
                 std::unordered_map<std::string, uint> map;
 
-                ozz::Range<const char* const> jointNames = skeleton->joint_names();
+                ozz::Range<const char *const> jointNames = skeleton->joint_names();
 
                 for (uint jIndex = 0; jIndex < jointNames.Count(); jIndex++) {
-                    map.insert({ std::string(jointNames[jIndex]), jIndex });
+                    map.insert({std::string(jointNames[jIndex]), jIndex});
                 }
 
                 return map;
             };
 
             bool canProcessAnimation() {
-                return currentAnimation != nullptr;
+                return primarySampler.isCanUsed();
             }
 
             void setCurrentAnimation(std::string animationName) {
                 auto it = animations.find(animationName);
 
                 if (it != animations.end()) {
-                    currentAnimation = it->second;
+                    primarySampler.animation = it->second;
                 }
             }
 
-            mat4 inverseMat;
+            void setSecondaryAnimation(std::string animationName) {
+                auto it = animations.find(animationName);
+
+                if (it != animations.end()) {
+                    secondarySampler.animation = it->second;
+                }
+            }
+
+            animation::Animation *getAnimation(std::string name) {
+                auto it = animations.find(name);
+                if (it == animations.end()) {
+                    return nullptr;
+                }
+
+                return it->second;
+            }
+
+            animation::AnimationHandler animSamplers;
 
         private:
             void createSkeleton(const Resource::Assimp *assimpResource, RawSkeleton *rawSkeleton) {
@@ -148,7 +163,9 @@ namespace game {
             }
 
             ozz::animation::Skeleton *skeleton = nullptr;
-            animation::Animation *currentAnimation = nullptr;
+            animation::Sampler primarySampler;
+            animation::Sampler secondarySampler;
+            animation::Handler *animHandler = nullptr;
             std::unordered_map<std::string, animation::Animation *> animations;
         };
     }

@@ -219,6 +219,10 @@ namespace game {
             return meshes_.at(0);
         }
 
+        Mesh *Model::getMesh() {
+            return meshes_.at(0);
+        }
+
         const int Model::getNodesCount() {
             return nodes_.size();
         }

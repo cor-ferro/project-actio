@@ -113,6 +113,8 @@ namespace animation {
     Animation::~Animation()
     {
         if (animation_ != nullptr) {
+            console::info("Destroy animation %s", getName());
+
             ozz::memory::Allocator* allocator = ozz::memory::default_allocator();
 
             allocator->Delete(animation_);
@@ -192,7 +194,7 @@ namespace animation {
         return animation_;
     }
 
-    mat4* Animation::getBones()
+    mat4* Animation::getTransforms()
     {
         void* vModels = static_cast<void*>(&models_[0].cols[0][0]);
         mat4* bones = static_cast<mat4*>(vModels);

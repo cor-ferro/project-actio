@@ -79,6 +79,7 @@ namespace game {
 
             const ModelMeshes& getMeshes();
             Mesh * getFirstMesh();
+            Mesh * getMesh();
 
             const int getNodesCount();
 

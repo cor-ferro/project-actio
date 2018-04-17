@@ -34,6 +34,8 @@ namespace renderer {
 
         virtual void setupMesh(Mesh *mesh) = 0;
 
+        virtual void updateMesh(Mesh *mesh) = 0;
+
         virtual void destroyMesh(Mesh *mesh) = 0;
 
         const renderer::Params &getParams();
