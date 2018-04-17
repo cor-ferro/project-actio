@@ -81,7 +81,8 @@ namespace game {
 
     private:
         std::string name;
-        double time;
+        double time = 0.0;
+        double daySize = 60.0;
 
         std::vector<WorldObject<Character>> characters;
 

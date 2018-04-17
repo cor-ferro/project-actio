@@ -20,6 +20,7 @@
 #include "components/light_point.h"
 #include "components/light_directional.h"
 #include "desc/light_spot.h"
+#include "systems/day_time.h"
 
 namespace game {
     World::World()
@@ -36,6 +37,7 @@ namespace game {
         systems.update<game::systems::Animations>(dt);
         systems.update<game::systems::BallShoot>(dt);
         systems.update<game::systems::LightHelpers>(dt);
+        systems.update<game::systems::DayTime>(dt);
     }
 
     void World::render(TimeDelta dt) {
@@ -57,6 +59,7 @@ namespace game {
         systems.add<game::systems::Physic>();
         systems.add<game::systems::BallShoot>();
         systems.add<game::systems::LightHelpers>();
+        systems.add<game::systems::DayTime>();
 
         systems.configure();
 
