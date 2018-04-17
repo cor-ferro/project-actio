@@ -11,20 +11,20 @@ Mesh::Mesh()
 	, drawType(Mesh_Draw_Triangle)
 {}
 
-Mesh::Mesh(Geometry geometry)
-	: name("")
-	, id(newMeshId())
-	, geometry(geometry)
-	, drawType(Mesh_Draw_Triangle)
-{}
-
-Mesh::Mesh(Geometry geometry, Material::Phong material)
-	: name("")
-	, id(newMeshId())
-	, material(material)
-	, geometry(geometry)
-	, drawType(Mesh_Draw_Triangle)
-{}
+//Mesh::Mesh(Geometry geometry)
+//	: name("")
+//	, id(newMeshId())
+//	, geometry(geometry)
+//	, drawType(Mesh_Draw_Triangle)
+//{}
+//
+//Mesh::Mesh(Geometry geometry, Material::Phong material)
+//	: name("")
+//	, id(newMeshId())
+//	, material(material)
+//	, geometry(geometry)
+//	, drawType(Mesh_Draw_Triangle)
+//{}
 
 Mesh::Mesh(const Mesh& other)
 {
@@ -47,21 +47,21 @@ Mesh * Mesh::Create()
 	return mesh;
 }
 
-Mesh * Mesh::Create(Geometry geometry)
-{
-	void * place = meshAllocator->Allocate(sizeof(Mesh), 8);
-	Mesh * mesh = new(place) Mesh(geometry);
-
-	return mesh;
-}
-
-Mesh * Mesh::Create(Geometry geometry, Material::Phong material)
-{
-	void * place = meshAllocator->Allocate(sizeof(Mesh), 8);
-	Mesh * mesh = new(place) Mesh(geometry, material);
-
-	return mesh;
-}
+//Mesh * Mesh::Create(Geometry geometry)
+//{
+//	void * place = meshAllocator->Allocate(sizeof(Mesh), 8);
+//	Mesh * mesh = new(place) Mesh(geometry);
+//
+//	return mesh;
+//}
+//
+//Mesh * Mesh::Create(Geometry geometry, Material::Phong material)
+//{
+//	void * place = meshAllocator->Allocate(sizeof(Mesh), 8);
+//	Mesh * mesh = new(place) Mesh(geometry, material);
+//
+//	return mesh;
+//}
 
 void Mesh::Destroy(Mesh * mesh)
 {
@@ -189,3 +189,10 @@ void Mesh::setup()
 {
 	geometry.setup();
 }
+
+void Mesh::setDrawStride(unsigned int value) {
+	drawStride = value;
+};
+unsigned int Mesh::getDrawStride() {
+	return drawStride;
+};

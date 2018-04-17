@@ -41,9 +41,13 @@ struct GeometryCone {
 };
 
 struct Geometry {
+	enum GeometryType {
+		Geometry_Static = 1,
+		Geometry_Dynamic = 2,
+	};
+
 	Geometry();
 	Geometry(aiMesh * mesh, const Resource::Assimp * assimpResource);
-	Geometry(const Geometry& geometry);
 	~Geometry();
 
 	void destroy();
@@ -53,22 +57,14 @@ struct Geometry {
 	static void SubTotalCountVertices(size_t count) { TotalCountVertices-= count; }
 	static size_t GetTotalCountVertices() {	return TotalCountVertices; }
 
-	static Geometry Box(float width = 1.0f, float height = 1.0f, float depth = 1.0f, int widthSegments = 1, int heightSegments = 1, int depthSegments = 1);
-	static Geometry Plane(uint width, uint height, uint widthSegments, uint heightSegments);
-	static Geometry Sphere(float radius, uint widthSegments, uint heightSegments, float phiStart, float phiLength, float thetaStart, float thetaLength);
-	static Geometry Circle(float radius, uint segments, float thetaStart, float thetaLength);
-	static Geometry Cone(float radius, float height, uint radialSegments, uint heightSegments, bool openEnded, float thetaStart, float thetaLength);
-	static void CylinderTorso(GeometryCone& params, Geometry& geometry);
-	static void CylinderCap(GeometryCone& params, Geometry& geometry, bool top);
-	static Geometry Cylinder(float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments, bool openEnded, float thetaStart, float thetaLength);
-	static Geometry Ring(float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments, float thetaStart, float thetaLength);
-	static Geometry Torus(float radius, float tube, uint radialSegments, uint tubularSegments, float arc);
-	static Geometry Octahedron(float radius);
-	static Geometry Quad2d();
-
 	void initFromAi(const aiMesh * mesh, const Resource::Assimp * assimpResource);
 	GeometryVertices * getVertices();
 	GeometryIndices * getIndices();
+
+	void setType(GeometryType newType);
+	GeometryType getType();
+
+	void setVertices(std::vector<vec3> vertices);
 
 	void addVertex(Vertex vertex);
 	void addVertex(float x, float y, float z);
@@ -86,19 +82,37 @@ struct Geometry {
 	void computeBoundingSphere();
 	const Math::Box3& getBoundingBox();
 
+    void allocVertices(unsigned int count);
+    void allocIndices(unsigned int count);
+
+    size_t getCountVertices();
+	size_t getCountIndices();
+
+	void freeVerties();
+	void freeIndices();
+
+	void setNeedUpdateVertices(bool);
+	void setNeedUpdateIndices(bool);
+
+	bool isNeedUpdateVertices();
+	bool isNeedUpdateIndices();
+
 	GLuint VAO = 0;
 	GLuint VBO = 0;
 	GLuint EBO = 0;
 
 protected:
-	void allocVertices(unsigned int count);
-	void allocIndices(unsigned int count);
-	void freeVerties();
-	void freeIndices();
 
 	Math::Box3 boundingBox;
 	std::shared_ptr<GeometryVertices> vertices_;
 	std::shared_ptr<GeometryIndices> indices_;
+	GeometryType type = Geometry_Static;
+
+private:
+	Geometry(const Geometry& geometry);
+
+	bool needUpdateVertices = false;
+	bool needUpdateIndices = false;
 };
 
 #endif

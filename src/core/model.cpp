@@ -525,7 +525,7 @@ void Model::processAnimation()
 
 	animation::process(currentAnimation, skeleton);
 
-	mat4* bones_ = currentAnimation->getBones();
+	mat4* bones_ = currentAnimation->getTransforms();
 
 	for (auto const& x : boneMeshMap) {
 		Mesh * mesh = x.first;

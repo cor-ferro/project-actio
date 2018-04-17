@@ -32,7 +32,8 @@ static MeshId newMeshId() {
 enum MeshDrawType {
     Mesh_Draw_Triangle,
     Mesh_Draw_Line,
-    Mesh_Draw_Line_Loop
+    Mesh_Draw_Line_Loop,
+    Mesh_Draw_Point
 };
 
 enum MeshDrawMode {
@@ -67,9 +68,9 @@ struct Mesh : Object3D {
 
     static Mesh *Create();
 
-    static Mesh *Create(Geometry geometry);
-
-    static Mesh *Create(Geometry geometry, Material::Phong material);
+//    static Mesh *Create(Geometry geometry);
+//
+//    static Mesh *Create(Geometry geometry, Material::Phong material);
 
     static void Destroy(Mesh *mesh);
 
@@ -93,6 +94,9 @@ struct Mesh : Object3D {
 
     MeshDrawType getDrawType();
 
+    void setDrawStride(unsigned int value);
+    unsigned int getDrawStride();
+
 #ifdef GRAPHIC_API_OPENGL
     void draw(renderer::Opengl::Program &program, uint flags = Mesh_Draw_All);
     void setup();
@@ -105,9 +109,9 @@ struct Mesh : Object3D {
 private:
     Mesh();
 
-    Mesh(Geometry geometry);
-
-    Mesh(Geometry geometry, Material::Phong material);
+//    Mesh(Geometry geometry);
+//
+//    Mesh(Geometry geometry, Material::Phong material);
 
     Mesh(const Mesh &mesh);
 
@@ -116,6 +120,8 @@ private:
     std::size_t id;
     std::string name;
     MeshDrawType drawType;
+    unsigned int drawStride = 0;
+
 };
 
 #endif
