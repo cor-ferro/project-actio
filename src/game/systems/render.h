@@ -16,7 +16,8 @@
 #include "../../lights/point_light.h"
 #include "../../lights/spot_light.h"
 #include "../../cameras/camera.h"
-#include "../events/render_setup_geometry.h"
+#include "../events/render_setup_mesh.h"
+#include "../events/render_update_mesh.h"
 
 namespace game {
     namespace systems {
@@ -30,15 +31,21 @@ namespace game {
 
             void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
                 uploadGeometry();
+                updateGeometry();
                 renderer->draw(es);
             }
 
             void configure(entityx::EventManager &event_manager) override {
                 event_manager.subscribe<events::RenderSetupMesh>(*this);
+                event_manager.subscribe<events::RenderUpdateMesh>(*this);
             }
 
             void receive(const events::RenderSetupMesh &event) {
                 setupMesh.push({ event.mesh, event.entity });
+            }
+
+            void receive(const events::RenderUpdateMesh &event) {
+                updateMesh.push({ event.mesh, event.entity });
             }
 
         private:
@@ -55,8 +62,21 @@ namespace game {
                 }
             }
 
+            void updateGeometry() {
+                int counter = 0;
+                while (!updateMesh.empty() && counter < 5) {
+                    std::pair<Mesh*, entityx::Entity> pair = updateMesh.top();
+                    updateMesh.pop();
+
+                    renderer->updateMesh(pair.first);
+
+                    counter++;
+                }
+            }
+
             renderer::Renderer *renderer = nullptr;
             std::stack<std::pair<Mesh*, entityx::Entity>> setupMesh;
+            std::stack<std::pair<Mesh*, entityx::Entity>> updateMesh;
         };
     }
 }

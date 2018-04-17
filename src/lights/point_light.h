@@ -11,6 +11,7 @@
 
 #include "light.h"
 #include "../lib/types.h"
+#include <glm/gtx/extended_min_max.hpp>
 
 namespace Light {
 	struct Point {
@@ -33,6 +34,8 @@ namespace Light {
 
 		void setPosition(vec3 position);
 		void setAttenuation(float constant, float linear, float quadratic);
+
+		float getRadius();
 
 		vec3 ambient;
 		vec3 diffuse;

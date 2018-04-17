@@ -60,4 +60,14 @@ namespace Light {
 		this->linear = linear;
 		this->quadratic = quadratic;
 	}
+
+	float Point::getRadius() {
+		float lightMax = glm::max(diffuse.r, diffuse.g, diffuse.b);
+
+		float colorDiff = (constant - (256.0f / 5.0f) * lightMax);
+		float linearSquare = glm::sqrt(linear * linear - 4 * quadratic * colorDiff);
+		float radius = (-linear + linearSquare) / (2 * quadratic);
+
+		return radius;
+	};
 }

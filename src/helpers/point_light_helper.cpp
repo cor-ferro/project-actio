@@ -1,4 +1,5 @@
 #include "point_light_helper.h"
+#include "../core/geometry_primitive.h"
 
 namespace Helpers
 {
@@ -6,12 +7,12 @@ namespace Helpers
         : Model()
         , light(light)
     {
-    	Material::Phong material;
-        material.setWireframe(true);
-        material.setDiffuse(0.0f, 1.0f, 0.0f);
+        meshHelper = Mesh::Create();
 
-        Geometry geometry = Geometry::Octahedron(1.0f);
-        meshHelper = Mesh::Create(geometry, material);
+        GeometryPrimitive::Octahedron(meshHelper->geometry, 1.0f);
+        meshHelper->material.setWireframe(true);
+        meshHelper->material.setDiffuse(0.0f, 1.0f, 0.0f);
+
         meshHelper->setup();
 
         addMesh(meshHelper);

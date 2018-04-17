@@ -2,8 +2,8 @@
 // Created by demitriy on 3/29/18.
 //
 
-#ifndef ACTIO_LIGHT_DIRECTIONAL_H
-#define ACTIO_LIGHT_DIRECTIONAL_H
+#ifndef ACTIO_GAME_LIGHT_DIRECTIONAL_H
+#define ACTIO_GAME_LIGHT_DIRECTIONAL_H
 
 #include "../../lights/direction_light.h"
 

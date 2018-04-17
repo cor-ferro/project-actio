@@ -2,8 +2,8 @@
 // Created by demitriy on 3/29/18.
 //
 
-#ifndef ACTIO_LIGHT_POINT_H
-#define ACTIO_LIGHT_POINT_H
+#ifndef ACTIO_GAME_LIGHT_POINT_H
+#define ACTIO_GAME_LIGHT_POINT_H
 
 
 #include "../../lights/point_light.h"
