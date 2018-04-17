@@ -54,8 +54,11 @@ namespace game {
 
                         helper.assign<components::LightHelper>(lightEntity);
                         helper.assign<components::Model>(mesh);
-                        helper.assign<components::Renderable>();
                         helper.assign<components::Transform>(position);
+
+                        if (isShowHelpers) {
+                            helper.assign<components::Renderable>();
+                        }
 
                         lightEntity.assign<components::Helper>(helper);
 
@@ -64,24 +67,17 @@ namespace game {
                 }
 
                 if (isChangeStatus) {
-                    console::info("isChangeStatus");
-                    if (showHelpers) {
-                        ComponentHandle<components::LightHelper> helper;
-
-                        for (Entity entity : es.entities_with_components(helper)) {
-                            entity.assign<components::Renderable>();
-                        }
+                    if (isShowHelpers) {
+                        showHelpers(es);
                     } else {
-                        ComponentHandle<components::LightHelper> helper;
-                        ComponentHandle<components::Renderable> renderable;
-
-                        for (Entity entity : es.entities_with_components(helper, renderable)) {
-                            entity.remove<components::Renderable>();
-                            console::info("remove renderable");
-                        }
+                        hideHelpers(es);
                     }
 
                     isChangeStatus = false;
+                }
+
+                if (isShowHelpers) {
+                    updateHelperPositions(es);
                 }
             }
 
@@ -104,13 +100,42 @@ namespace game {
 
             void receive(const events::LightHelperShow &event) {
                 isChangeStatus = true;
-                showHelpers = event.value;
+                isShowHelpers = event.value;
             }
 
         private:
+            void showHelpers(EntityManager &es) {
+                ComponentHandle<components::LightHelper> helper;
+
+                for (Entity entity : es.entities_with_components(helper)) {
+                    entity.assign<components::Renderable>();
+                }
+            }
+
+            void hideHelpers(EntityManager &es) {
+                ComponentHandle<components::LightHelper> helper;
+                ComponentHandle<components::Renderable> renderable;
+
+                for (Entity entity : es.entities_with_components(helper, renderable)) {
+                    entity.remove<components::Renderable>();
+                }
+            }
+
+            void updateHelperPositions(EntityManager &es) {
+                ComponentHandle<components::LightHelper> helper;
+                ComponentHandle<components::Renderable> renderable;
+
+                for (Entity entity : es.entities_with_components(helper, renderable)) {
+                    auto lightTransform = components::get<components::Transform>(helper->entity);
+                    auto helperTransform = components::get<components::Transform>(helper->entity);
+
+                    helperTransform->setPosition(lightTransform->getPosition());
+                }
+            }
+
             std::stack<entityx::Entity> newEntities;
             bool isChangeStatus = false;
-            bool showHelpers = false;
+            bool isShowHelpers = false;
         };
     }
 }

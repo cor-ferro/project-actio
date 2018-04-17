@@ -66,6 +66,8 @@ int main(int argc, char **argv) {
 
     WorldSettings guiSettings = settings;
 
+    world->setLightDebug(guiSettings.debugLight);
+
     GLFWwindow *const window = mainContext.getWindow();
 
     mainContext.setAsCurrent();
