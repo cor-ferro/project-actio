@@ -44,6 +44,26 @@ int main(int argc, char **argv);
 
 void printMemoryStatus();
 
+struct WorldSettings {
+    WorldSettings() {}
+
+    WorldSettings(const WorldSettings& other) {
+        debugPhysics = other.debugPhysics;
+        debugLight = other.debugLight;
+        cameraFov = other.cameraFov;
+        cameraAspect = other.cameraAspect;
+        cameraNear = other.cameraNear;
+        cameraFar = other.cameraFar;
+    }
+
+    bool debugPhysics;
+    bool debugLight;
+    float cameraFov = 45.0f;
+    float cameraAspect = 1.77f;
+    float cameraNear = 0.1f;
+    float cameraFar = 500.0f;
+};
+
 memory::FreeListAllocator * imageAllocator = nullptr;
 memory::PoolAllocator * modelsAllocator = nullptr;
 memory::PoolAllocator * meshAllocator = nullptr;

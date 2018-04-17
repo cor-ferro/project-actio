@@ -50,44 +50,21 @@ int main(int argc, char **argv) {
 
     printMemoryStatus();
 
-    // Camera * sceneActiveCamera = scene->getActiveCamera();
-//	 CameraControl cameraControl(sceneActiveCamera, &inputHandler);
-
-    // cameraControl.calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
-    // sceneActiveCamera->setParam(CameraParam::ASPECT, rendererParams.aspectRatio);
-
-    // Material::Phong material;
-    // material.setDiffuse(0.0f, 1.0f, 0.0f);
-    // Geometry geometry = Geometry::Torus(5.0f, 1.0f, 16, 100, glm::two_pi<float>());
-
-    // for (int i = 0; i < 1; i++) {
-    // 	Mesh * mesh = Mesh::Create(geometry, material);
-    // 	mesh->setPosition(vec3(
-    // 		glm::gaussRand(0.0f, 7.0f),
-    // 		glm::gaussRand(0.0f, 7.0f),
-    // 		glm::gaussRand(0.0f, 7.0f)
-    // 	));
-    // 	Model * model = Model::Create(mesh);
-
-    // 	scene->add(model);
-    // }
-
-    // Model * planeModel = AG::Models::plane(10, 10, 10, 10);
-    // planeModel->rotate(vec3(0.0f, 1.0f, 1.0f), glm::pi<float>());
-    // scene->add(planeModel);
-
-    // Model * sphereModel = AG::Models::sphere(3.0f, 16, 16);
-    // scene->add(sphereModel);
-
     const Resource::File testWorldFile = app.resource("testScene.ini");
 
     game::World *world = game::createWorld();
     world->setupRenderer(renderer);
-    world->setupMovement(inputHandler);
+    world->setupInput(inputHandler);
     world->setup();
 
     auto worldImporter = new game::WorldImporter(world);
     worldImporter->import(testWorldFile);
+
+    WorldSettings settings;
+    settings.debugPhysics = true;
+    settings.debugLight = true;
+
+    WorldSettings guiSettings = settings;
 
     GLFWwindow *const window = mainContext.getWindow();
 
@@ -116,13 +93,36 @@ int main(int argc, char **argv) {
         world->render(elapsedTime);
 
         {
+            if (guiSettings.debugPhysics != settings.debugPhysics) {
+                settings = guiSettings;
+
+                world->setPhysicsDebug(settings.debugPhysics);
+            }
+
+            if (guiSettings.debugLight != settings.debugLight) {
+                settings = guiSettings;
+
+                world->setLightDebug(settings.debugLight);
+            }
+
+            if (guiSettings.cameraFov != settings.cameraFov ||
+                guiSettings.cameraAspect != settings.cameraAspect ||
+                guiSettings.cameraNear != settings.cameraNear ||
+                guiSettings.cameraFar != settings.cameraFar
+            ) {
+                settings = guiSettings;
+
+                world->setCameraSettings(guiSettings.cameraFov, guiSettings.cameraAspect, guiSettings.cameraNear, guiSettings.cameraFar);
+            }
+
+            const float inputFlags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AlwaysInsertMode;
+
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
 
             ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
                                      | ImGuiWindowFlags_NoMove
                                      | ImGuiWindowFlags_NoResize
-                                     | ImGuiWindowFlags_NoInputs
                                      | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
             ImGui::Begin("Metrics", nullptr, flags);
@@ -130,8 +130,16 @@ int main(int argc, char **argv) {
             ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
             ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
             ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
+            ImGui::Separator();
+            ImGui::Checkbox("Debug physics", &guiSettings.debugPhysics);
+            ImGui::Checkbox("Debug light", &guiSettings.debugLight);
+            ImGui::Separator();
+            ImGui::SliderFloat("fow", &guiSettings.cameraFov, 0.0f, 180.0f, "fow = %.3f");
+            ImGui::SliderFloat("aspect", &guiSettings.cameraAspect, 0.0f, 5.0f, "aspect = %.3f");
+            ImGui::SliderFloat("near", &guiSettings.cameraNear, 0.0f, 500.0f, "near = %.3f");
+            ImGui::SliderFloat("far", &guiSettings.cameraFar, 0.0f, 500.0f, "far = %.3f");
 
-            ImGui::SetWindowSize(ImVec2(200.0f, 80.0f));
+            ImGui::SetWindowSize(ImVec2(200.0f, 250.0f));
             ImGui::End();
             ImGui::Render();
         }
