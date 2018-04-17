@@ -15,6 +15,11 @@
 #include "../resources/file_resource.h"
 #include "../lib/ini_loader.h"
 #include "../renderer/base_renderer.h"
+#include "systems/physic.h"
+#include "systems/camera.h"
+#include "desc/light_point.h"
+#include "desc/light_directional.h"
+#include "desc/light_spot.h"
 
 namespace game {
     using namespace entityx;
@@ -36,7 +41,7 @@ namespace game {
 
         void setupRenderer(renderer::Renderer *);
 
-        void setupMovement(InputHandler *ih);
+        void setupInput(InputHandler *ih);
 
         void setup();
 
@@ -52,15 +57,36 @@ namespace game {
 
         void remove();
 
+        void addLight(desc::LightPointDesc);
+
+        void addLight(desc::LightDirectionalDesc);
+
+        void addLight(desc::LightSpotDesc);
+
+        void removeLight(entityx::Entity entity);
+
         void update(TimeDelta dt);
 
         void render(TimeDelta dt);
 
+        void setPhysicsDebug(bool value);
+
+        void setLightDebug(bool value);
+
+        void setCameraSettings(float fov, float aspect, float near, float far);
+
+        void setGravity(vec3 dir);
+
+        void cameraLookAt(vec3 target);
+
     private:
         std::string name;
-        uint time;
+        double time;
 
         std::vector<WorldObject<Character>> characters;
+
+        std::shared_ptr<game::systems::Physic> physic = nullptr;
+        std::shared_ptr<game::systems::Camera> camera = nullptr;
     };
 
     struct WorldController {

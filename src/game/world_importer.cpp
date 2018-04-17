@@ -1,7 +1,7 @@
 #include "world_importer.h"
 #include "systems/physic.h"
 #include "../lib/ini_loader.h"
-#include "events/render_setup_geometry.h"
+#include "events/render_setup_mesh.h"
 #include "components/transform.h"
 #include "components/state.h"
 #include "components/renderable.h"
@@ -138,12 +138,10 @@ namespace game {
                     vec3 size;
                     section.getFieldVec<vec3>("Size", size, vec3(1.0f));
 
-                    Material::Phong material;
-//                    material.setWireframe(true);
-                    material.setDiffuse(0.0f, 1.0f, 0.0f);
+                    Mesh *mesh = Mesh::Create();
+                    GeometryPrimitive::Box(mesh->geometry, size.x, size.y, size.z);
+                    mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
 
-                    Geometry geometry = Geometry::Box(size.x, size.y, size.z);
-                    Mesh *mesh = Mesh::Create(geometry, material);
                     entity.assign<components::Model>(mesh);
 
                     if (isInWorld) {
@@ -168,80 +166,41 @@ namespace game {
                 section.getField("Type", type);
 
                 if (type == "point") {
-                    vec3 ambient, diffuse, specular, position;
-                    float constant, linear, quadratic;
+                    desc::LightPointDesc desc;
 
-                    section.getFieldVec<vec3>("Ambient", ambient);
-                    section.getFieldVec<vec3>("Diffuse", diffuse);
-                    section.getFieldVec<vec3>("Specular", specular);
-                    section.getFieldVec<vec3>("Position", position);
-                    section.getField("Constant", constant);
-                    section.getField("Linear", linear);
-                    section.getField("Quadratic", quadratic);
+                    section.getFieldVec<vec3>("Ambient", desc.ambient);
+                    section.getFieldVec<vec3>("Diffuse", desc.diffuse);
+                    section.getFieldVec<vec3>("Specular", desc.specular);
+                    section.getFieldVec<vec3>("Position", desc.position);
+                    section.getField("Constant", desc.constant);
+                    section.getField("Linear", desc.linear);
+                    section.getField("Quadratic", desc.quadratic);
 
-                    components::LightPoint light;
-                    light.setPosition(position);
-                    light.setAmbient(ambient);
-                    light.setDiffuse(diffuse);
-                    light.setSpecular(specular);
-                    light.setAttenuation(constant, linear, quadratic);
-
-                    console::info("ambient: %f, %f, %f", ambient.x, ambient.y, ambient.z);
-                    console::info("diffuse: %f, %f, %f", diffuse.x, diffuse.y, diffuse.z);
-                    console::info("specular: %f, %f, %f", specular.x, specular.y, specular.z);
-                    console::info("position: %f, %f, %f", position.x, position.y, position.z);
-                    console::info("constant: %f", constant);
-                    console::info("linear: %f", linear);
-                    console::info("quadratic: %f", quadratic);
-
-                    entity.assign<components::LightPoint>(light);
-                    entity.assign<components::Transform>(position);
+                    world->addLight(desc);
                 } else if (type == "directional") {
-                    vec3 ambient, diffuse, specular, direction;
+                    desc::LightDirectionalDesc desc;
 
-                    section.getFieldVec<vec3>("Ambient", ambient);
-                    section.getFieldVec<vec3>("Diffuse", diffuse);
-                    section.getFieldVec<vec3>("Specular", specular);
-                    section.getFieldVec<vec3>("Direction", direction);
+                    section.getFieldVec<vec3>("Ambient", desc.ambient);
+                    section.getFieldVec<vec3>("Diffuse", desc.diffuse);
+                    section.getFieldVec<vec3>("Specular", desc.specular);
+                    section.getFieldVec<vec3>("Direction", desc.direction);
 
-                    console::info("ambient: %f, %f, %f", ambient.x, ambient.y, ambient.z);
-                    console::info("diffuse: %f, %f, %f", diffuse.x, diffuse.y, diffuse.z);
-                    console::info("specular: %f, %f, %f", specular.x, specular.y, specular.z);
-                    console::info("direction: %f, %f, %f", direction.x, direction.y, direction.z);
-
-                    components::LightDirectional light;
-                    light.setAmbient(ambient);
-                    light.setDiffuse(diffuse);
-                    light.setSpecular(specular);
-                    light.setDirection(direction);
-
-                    entity.assign<components::LightDirectional>(light);
+                    world->addLight(desc);
                 } else if (type == "spot") {
-                    vec3 ambient, diffuse, specular, position, direction;
-                    float constant, linear, quadratic, cutOff, outerCutOff;
+                    desc::LightSpotDesc desc;
 
-                    section.getFieldVec<vec3>("Ambient", ambient);
-                    section.getFieldVec<vec3>("Diffuse", diffuse);
-                    section.getFieldVec<vec3>("Specular", specular);
-                    section.getFieldVec<vec3>("Position", position);
-                    section.getFieldVec<vec3>("Direction", direction);
-                    section.getField("Constant", constant);
-                    section.getField("Linear", linear);
-                    section.getField("Quadratic", quadratic);
-                    section.getField("CutOff", cutOff);
-                    section.getField("OuterCutOff", outerCutOff);
+                    section.getFieldVec<vec3>("Ambient", desc.ambient);
+                    section.getFieldVec<vec3>("Diffuse", desc.diffuse);
+                    section.getFieldVec<vec3>("Specular", desc.specular);
+                    section.getFieldVec<vec3>("Position", desc.position);
+                    section.getFieldVec<vec3>("Direction", desc.direction);
+                    section.getField("Constant", desc.constant);
+                    section.getField("Linear", desc.linear);
+                    section.getField("Quadratic", desc.quadratic);
+                    section.getField("CutOff", desc.cutOff);
+                    section.getField("OuterCutOff", desc.outerCutOff);
 
-                    components::LightSpot light;
-                    light.setAmbient(ambient);
-                    light.setDiffuse(diffuse);
-                    light.setSpecular(specular);
-                    light.setPosition(position);
-                    light.setDirection(direction);
-                    light.setAttenuation(constant, linear, quadratic);
-                    light.setCutoff(cutOff, outerCutOff);
-
-                    entity.assign<components::LightSpot>(light);
-                    entity.assign<components::Transform>(position);
+                    world->addLight(desc);
                 } else {
                     console::warn("unknown light type");
                 }
@@ -265,9 +224,12 @@ namespace game {
                 cameraSection->getField("Near", near);
                 cameraSection->getField("Far", far);
 
-                entity.assign<components::Camera>(fov, aspect, near, far);
+                entityx::ComponentHandle<components::Camera> camera = entity.assign<components::Camera>(fov, aspect, near, far);
                 entity.assign<components::Transform>(position);
                 entity.assign<components::Target>(target);
+
+                camera->setPosition(position);
+                world->cameraLookAt(vec3(0.0f));
             } else if (type == "ortho") {
                 console::warn("unsupported camera type: %s", "ortho");
             } else {

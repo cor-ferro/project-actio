@@ -2,15 +2,24 @@
 #include <thread>
 #include "world.h"
 #include "systems/physic.h"
-#include "systems/movement.h"
+#include "systems/camera.h"
 #include "systems/render.h"
 #include "systems/ball_shoot.h"
 #include "systems/animations.h"
+#include "systems/character_control.h"
+#include "systems/input.h"
 #include "components/transform.h"
 #include "components/state.h"
 #include "components/renderable.h"
 #include "../math/Box3.h"
 #include "world_importer.h"
+#include "events/camera_look_at.h"
+#include "events/light_add.h"
+#include "events/light_remove.h"
+#include "systems/light_helpers.h"
+#include "components/light_point.h"
+#include "components/light_directional.h"
+#include "desc/light_spot.h"
 
 namespace game {
     World::World()
@@ -19,10 +28,14 @@ namespace game {
     }
 
     void World::update(TimeDelta dt) {
-        systems.update<game::systems::Movement>(dt);
+        time+= dt;
+        systems.update<game::systems::Input>(dt);
+        systems.update<game::systems::Camera>(dt);
+        systems.update<game::systems::CharacterControl>(dt);
         systems.update<game::systems::Physic>(dt);
         systems.update<game::systems::Animations>(dt);
         systems.update<game::systems::BallShoot>(dt);
+        systems.update<game::systems::LightHelpers>(dt);
     }
 
     void World::render(TimeDelta dt) {
@@ -33,15 +46,27 @@ namespace game {
         systems.add<game::systems::Render>(renderer);
     }
 
-    void World::setupMovement(InputHandler *ih) {
-        systems.add<game::systems::Movement>(ih);
+    void World::setupInput(InputHandler *ih) {
+        systems.add<game::systems::Input>(ih);
+        systems.add<game::systems::Camera>(ih);
     }
 
     void World::setup() {
+        systems.add<game::systems::CharacterControl>();
         systems.add<game::systems::Animations>();
         systems.add<game::systems::Physic>();
         systems.add<game::systems::BallShoot>();
+        systems.add<game::systems::LightHelpers>();
+
         systems.configure();
+
+        camera = systems.system<game::systems::Camera>();
+
+        physic = systems.system<game::systems::Physic>();
+        physic->setDrawDebug(true);
+        physic->postConfigure(events);
+
+        console::info("world configure end");
 
         initGroudPlane();
     }
@@ -71,13 +96,68 @@ namespace game {
 
     }
 
-    void World::initGroudPlane() {
-        Material::Phong material;
-        material.setWireframe(true);
-        material.setDiffuse(0.0f, 0.0f, 0.5f);
+    void World::addLight(desc::LightPointDesc lightDescription) {
+        entityx::Entity entity = entities.create();
 
-        Geometry geometry = Geometry::Plane(20, 20, 10, 10);
-        Mesh *mesh = Mesh::Create(geometry, material);
+        components::LightPoint light;
+        light.setAmbient(lightDescription.ambient);
+        light.setDiffuse(lightDescription.diffuse);
+        light.setSpecular(lightDescription.specular);
+        light.setPosition(lightDescription.position);
+        light.setAttenuation(lightDescription.constant, lightDescription.linear, lightDescription.quadratic);
+
+        entity.assign<components::LightPoint>(light);
+        entity.assign<components::Transform>(lightDescription.position);
+
+        events.emit<events::LightAdd>(entity);
+    }
+
+    void World::addLight(desc::LightDirectionalDesc lightDescription) {
+        entityx::Entity entity = entities.create();
+
+        components::LightDirectional light;
+        light.setAmbient(lightDescription.ambient);
+        light.setDiffuse(lightDescription.diffuse);
+        light.setSpecular(lightDescription.specular);
+        light.setDirection(lightDescription.direction);
+
+        entity.assign<components::LightDirectional>(light);
+        entity.assign<components::Transform>(lightDescription.position);
+
+        events.emit<events::LightAdd>(entity);
+    }
+
+    void World::addLight(desc::LightSpotDesc lightDescription) {
+        entityx::Entity entity = entities.create();
+
+        components::LightSpot light;
+        light.setAmbient(lightDescription.ambient);
+        light.setDiffuse(lightDescription.diffuse);
+        light.setSpecular(lightDescription.specular);
+        light.setPosition(lightDescription.position);
+        light.setDirection(lightDescription.direction);
+        light.setAttenuation(lightDescription.constant, lightDescription.linear, lightDescription.quadratic);
+        light.setCutoff(lightDescription.cutOff, lightDescription.outerCutOff);
+
+        entity.assign<components::LightSpot>(light);
+        entity.assign<components::Transform>(lightDescription.position);
+
+        events.emit<events::LightAdd>(entity);
+    }
+
+    void World::removeLight(entityx::Entity entity) {
+        // @todo: check light components
+        events.emit<events::LightRemove>(entity);
+
+        entity.destroy();
+    }
+
+    void World::initGroudPlane() {
+        Mesh *mesh = Mesh::Create();
+
+        GeometryPrimitive::Plane(mesh->geometry, 20, 20, 10, 10);
+//        mesh->material.setWireframe(true);
+        mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
 
         entityx::Entity entity = entities.create();
 
@@ -88,7 +168,7 @@ namespace game {
         );
         entity.assign<components::Model>(mesh);
 
-        events.emit<game::events::RenderSetupMesh>(entity, mesh);
+        events.emit<events::RenderSetupMesh>(entity, mesh);
     }
 
     void World::destroy() {
@@ -102,5 +182,29 @@ namespace game {
         characters.erase(characters.begin(), characters.end());
 
         console::info("world %s destroyed", name);
+    }
+
+    void World::setPhysicsDebug(bool value) {
+        physic->setDrawDebug(value);
+    }
+
+    void World::setLightDebug(bool value) {
+        events.emit<events::LightHelperShow>(value);
+    }
+
+    void World::setCameraSettings(float fov, float aspect, float near, float far) {
+        camera->setSettings(fov, aspect, near, far);
+    }
+
+//    void World::getCameraSettings() {
+//
+//    }
+
+    void World::setGravity(vec3 dir) {
+        physic->setSceneGravity(dir);
+    }
+
+    void World::cameraLookAt(vec3 target) {
+        camera->lookAt(target);
     }
 }
