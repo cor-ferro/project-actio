@@ -23,21 +23,22 @@
 #include "systems/day_time.h"
 
 namespace game {
-    World::World()
-            : name(""), time(0) {
-
-    }
+    World::World() : name("") {}
 
     void World::update(TimeDelta dt) {
-        time+= dt;
+        // pre update
         systems.update<game::systems::Input>(dt);
         systems.update<game::systems::Camera>(dt);
         systems.update<game::systems::CharacterControl>(dt);
         systems.update<game::systems::Physic>(dt);
-        systems.update<game::systems::Animations>(dt);
-        systems.update<game::systems::BallShoot>(dt);
-        systems.update<game::systems::LightHelpers>(dt);
         systems.update<game::systems::DayTime>(dt);
+
+        // main update
+        systems.update<game::systems::BallShoot>(dt);
+
+        // post update
+        systems.update<game::systems::Animations>(dt);
+        systems.update<game::systems::LightHelpers>(dt);
     }
 
     void World::render(TimeDelta dt) {
