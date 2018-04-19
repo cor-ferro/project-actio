@@ -15,6 +15,11 @@
 #include "../events/mouse_press.h"
 #include "../components/model.h"
 #include "../components/controlled.h"
+#include "../../core/geometry_primitive.h"
+#include "../components/renderable.h"
+#include "../events/render_setup_mesh.h"
+#include "../components/base.h"
+#include "../context.h"
 
 namespace game {
     namespace systems {
@@ -22,14 +27,18 @@ namespace game {
 
         class Camera : public entityx::System<Camera>, public entityx::Receiver<Camera> {
         public:
-            explicit Camera(InputHandler *ih) : inputHandler(ih) {}
+            explicit Camera(Context *context, InputHandler *ih)
+                    : inputHandler(ih)
+                    , worldContext(context) {}
 
-            void configure(EntityManager &es, entityx::EventManager &event_manager) {
-                event_manager.subscribe<events::KeyPress>(*this);
-                event_manager.subscribe<events::MousePress>(*this);
+            void configure(EntityManager &es, entityx::EventManager &events) {
+                events.subscribe<events::KeyPress>(*this);
+                events.subscribe<events::MousePress>(*this);
 
                 entityManager = &es;
             }
+
+            void postConfigure(entityx::EventManager &events) {}
 
             void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
                 vec3 characterPosition(0.0f);
@@ -44,11 +53,28 @@ namespace game {
                 ComponentHandle<components::Camera> camera;
                 ComponentHandle<components::Transform> cameraTransform;
                 ComponentHandle<components::Target> cameraTarget;
+
+                ComponentHandle<components::Transform> helperTransform;
+
                 for (Entity entity : es.entities_with_components(camera, cameraTransform, cameraTarget)) {
                     updateCameraSide(camera, characterPosition, dt);
 
+                    cameraTransform->setPosition(newPosition);
+                    cameraTarget->target = newTarget;
+
                     camera->position_ = newPosition;
                     camera->view_ = glm::lookAt(newPosition, newTarget, vec3(0.0f, 1.0f, 0.0f));
+
+                    vec3 original(inputHandler->mouse.x, worldContext->windowHeight - inputHandler->mouse.y, 0.0f);
+                    vec4 viewport(0.0f, 0.0f, worldContext->windowWidth, worldContext->windowHeight);
+                    mat4 frustum = glm::perspective(
+                            glm::radians(camera->getParam(CameraParam::FOV)),
+                            camera->getParam(CameraParam::ASPECT),
+                            glm::abs(camera->position_.x),
+                            glm::abs(camera->position_.x) + 1.0f
+                    );
+
+                    worldContext->mouseWorldPosition = glm::unProject(original, camera->getView(), frustum, viewport);
                 }
             }
 
@@ -153,8 +179,8 @@ namespace game {
                     if (inputHandler->isPress(InputHandler::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
                 }
 
-                newPosition = vec3(-20.0f, 4.0f, sideTarget.z + 10.0f);
-                newTarget = vec3(sideTarget.x, 4.0f, sideTarget.z + 10.0f);
+                newPosition = vec3(-20.0f, 4.0f, sideTarget.z);
+                newTarget = vec3(sideTarget.x, 4.0f, sideTarget.z);
                 setIsChanged(true);
             }
 
@@ -228,6 +254,8 @@ namespace game {
             bool isCameraTranslationEnabled = false;
 
             bool isChanged = false;
+
+            Context *worldContext = nullptr;
         };
     }
 }

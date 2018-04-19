@@ -18,6 +18,7 @@
 #include "../../cameras/camera.h"
 #include "../events/render_setup_mesh.h"
 #include "../events/render_update_mesh.h"
+#include "../context.h"
 
 namespace game {
     namespace systems {
@@ -25,9 +26,9 @@ namespace game {
 
         class Render : public entityx::System<Render>, public Receiver<Render> {
         public:
-            explicit Render(renderer::Renderer *newRenderer) {
-                renderer = newRenderer;
-            }
+            explicit Render(Context *context, renderer::Renderer *newRenderer)
+                    : renderer(newRenderer)
+                    , worldContext(context) {}
 
             void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
                 uploadGeometry();
@@ -38,21 +39,26 @@ namespace game {
             void configure(entityx::EventManager &event_manager) override {
                 event_manager.subscribe<events::RenderSetupMesh>(*this);
                 event_manager.subscribe<events::RenderUpdateMesh>(*this);
+
+                // @todo: handle resize
+                renderer::Params params = renderer->getParams();
+                worldContext->windowHeight = static_cast<float>(params.height);
+                worldContext->windowWidth = static_cast<float>(params.width);
             }
 
             void receive(const events::RenderSetupMesh &event) {
-                setupMesh.push({ event.mesh, event.entity });
+                setupMesh.push({event.mesh, event.entity});
             }
 
             void receive(const events::RenderUpdateMesh &event) {
-                updateMesh.push({ event.mesh, event.entity });
+                updateMesh.push({event.mesh, event.entity});
             }
 
         private:
             void uploadGeometry() {
                 int counter = 0;
                 while (!setupMesh.empty() && counter < 5) {
-                    std::pair<Mesh*, entityx::Entity> pair = setupMesh.top();
+                    std::pair<Mesh *, entityx::Entity> pair = setupMesh.top();
                     setupMesh.pop();
 
                     renderer->setupMesh(pair.first);
@@ -65,7 +71,7 @@ namespace game {
             void updateGeometry() {
                 int counter = 0;
                 while (!updateMesh.empty() && counter < 5) {
-                    std::pair<Mesh*, entityx::Entity> pair = updateMesh.top();
+                    std::pair<Mesh *, entityx::Entity> pair = updateMesh.top();
                     updateMesh.pop();
 
                     renderer->updateMesh(pair.first);
@@ -75,8 +81,9 @@ namespace game {
             }
 
             renderer::Renderer *renderer = nullptr;
-            std::stack<std::pair<Mesh*, entityx::Entity>> setupMesh;
-            std::stack<std::pair<Mesh*, entityx::Entity>> updateMesh;
+            std::stack<std::pair<Mesh *, entityx::Entity>> setupMesh;
+            std::stack<std::pair<Mesh *, entityx::Entity>> updateMesh;
+            Context *worldContext = nullptr;
         };
     }
 }

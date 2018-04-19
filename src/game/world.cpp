@@ -45,12 +45,12 @@ namespace game {
     }
 
     void World::setupRenderer(renderer::Renderer *renderer) {
-        systems.add<game::systems::Render>(renderer);
+        systems.add<game::systems::Render>(&context, renderer);
     }
 
     void World::setupInput(InputHandler *ih) {
-        systems.add<game::systems::Input>(ih);
-        systems.add<game::systems::Camera>(ih);
+        systems.add<game::systems::Input>(&context, ih);
+        systems.add<game::systems::Camera>(&context, ih);
     }
 
     void World::setup() {
@@ -68,6 +68,8 @@ namespace game {
         physic = systems.system<game::systems::Physic>();
         physic->setDrawDebug(true);
         physic->postConfigure(events);
+
+        camera->postConfigure(events);
 
         console::info("world configure end");
 

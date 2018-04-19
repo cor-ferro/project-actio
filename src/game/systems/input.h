@@ -11,6 +11,7 @@
 #include "../../lib/console.h"
 #include "../../lib/input_handler.h"
 #include "../events/mouse_press.h"
+#include "../context.h"
 
 namespace game {
     namespace systems {
@@ -41,7 +42,9 @@ namespace game {
                 MOUSE_BUTTON_RIGHT = InputHandler::MOUSE_BUTTON_RIGHT
             };
 
-            explicit Input(InputHandler *ih) : inputHandler(ih) {}
+            explicit Input(Context *context, InputHandler *ih)
+                    : inputHandler(ih)
+                    , worldContext(context) {}
 
             void configure(entityx::EventManager &event_manager) {
                 inputHandler->subscribeKeyPress([&event_manager](int key, int scancode, int action, int mods) {
@@ -53,10 +56,14 @@ namespace game {
                 });
             }
 
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {}
+            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
+                worldContext->mousePosition.x = inputHandler->mouse.x;
+                worldContext->mousePosition.y = inputHandler->mouse.y;
+            }
 
         private:
             InputHandler *inputHandler;
+            Context *worldContext = nullptr;
         };
     }
 }

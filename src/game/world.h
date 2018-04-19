@@ -20,6 +20,7 @@
 #include "desc/light_point.h"
 #include "desc/light_directional.h"
 #include "desc/light_spot.h"
+#include "context.h"
 
 namespace game {
     using namespace entityx;
@@ -88,6 +89,8 @@ namespace game {
 
         std::shared_ptr<game::systems::Physic> physic = nullptr;
         std::shared_ptr<game::systems::Camera> camera = nullptr;
+
+        Context context;
     };
 
     struct WorldController {
