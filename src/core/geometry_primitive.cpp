@@ -115,7 +115,7 @@ void GeometryPrimitive::Plane(
 
             Vertex vertex;
             vertex.Position = vec3(x, -y, 0.0f);
-            vertex.Normal = vec3(0.0f, 0.0f, 1.0f);
+            vertex.Normal = vec3(0.0f, 0.0f, -1.0f);
 
             geometry.addVertex(vertex);
         }
