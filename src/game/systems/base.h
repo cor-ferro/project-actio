@@ -16,6 +16,7 @@ namespace game {
         public:
             explicit BaseSystem(game::Context *context) : worldContext(context) {}
 
+        protected:
             game::Context *worldContext = nullptr;
         };
     }
