@@ -41,11 +41,17 @@ namespace game {
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 vec3 cameraPosition, cameraTarget;
+                vec3 charPosition, charTarget;
 
                 es.each<components::Camera>(
                         [&cameraPosition, &cameraTarget](ex::Entity entity, components::Camera &camera) {
                             cameraPosition = camera.getPosition();
                             cameraTarget = camera.getTarget();
+                        });
+
+                es.each<components::Controlled, components::Transform>(
+                        [&charPosition](ex::Entity, components::Controlled control, components::Transform transform) {
+                            charPosition = transform.getPosition();
                         });
 
                 while (!newItems.empty()) {
@@ -59,11 +65,13 @@ namespace game {
                     GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
                     mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
 
+                    vec3 target = glm::normalize(worldContext->mouseWorldPosition - charPosition);
+
                     ball.assign<components::Model>(mesh);
-                    ball.assign<components::Transform>(cameraPosition);
+                    ball.assign<components::Transform>(charPosition + (vec3(0.0f, 0.0f, 2.0f) + target));
 
                     events.emit<events::PhysicCreateSphere>(ball, radius);
-                    events.emit<events::PhysicForce>(ball, cameraTarget, 30.0f);
+                    events.emit<events::PhysicForce>(ball, target, 30.0f);
                     events.emit<events::RenderSetupMesh>(ball, mesh);
                 }
             }
