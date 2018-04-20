@@ -46,7 +46,7 @@ namespace game {
 
         void setup();
 
-        void initGroudPlane();
+        void initGroundPlane();
 
         void destroy();
 

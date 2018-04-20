@@ -74,7 +74,7 @@ namespace game {
 
         console::info("world configure end");
 
-        initGroudPlane();
+        initGroundPlane();
     }
 
     inline void World::spawn(Character *character) {
@@ -158,7 +158,7 @@ namespace game {
         entity.destroy();
     }
 
-    void World::initGroudPlane() {
+    void World::initGroundPlane() {
         Mesh *mesh = Mesh::Create();
 
         GeometryPrimitive::Plane(mesh->geometry, 20, 20, 10, 10);
