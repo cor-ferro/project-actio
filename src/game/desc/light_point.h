@@ -5,13 +5,10 @@
 #ifndef ACTIO_LIGHT_POINT_H
 #define ACTIO_LIGHT_POINT_H
 
-#include <entityx/entityx/entityx.h>
 #include "../../lib/types.h"
 
 namespace game {
     namespace desc {
-        using namespace entityx;
-
         struct LightPointDesc {
             vec3 ambient;
             vec3 diffuse;

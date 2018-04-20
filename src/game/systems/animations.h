@@ -13,22 +13,29 @@
 #include "../components/model.h"
 #include "../events/key_press.h"
 #include "../../lib/input_handler.h"
+#include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
-        using namespace entityx;
+        namespace ex = entityx;
 
-        class Animations : public entityx::System<Animations>, public Receiver<Animations> {
+        class Animations
+                : public systems::BaseSystem
+                  , public ex::System<Animations>
+                  , public ex::Receiver<Animations> {
         public:
-            void configure(entityx::EventManager &event_manager) {
+            explicit Animations(Context *context) : systems::BaseSystem(context) {}
+
+            void configure(ex::EventManager &event_manager) {
                 event_manager.subscribe<events::KeyPress>(*this);
             }
 
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
-                ComponentHandle<components::Model> model;
-                ComponentHandle<components::Skin> skin;
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
+                ex::ComponentHandle<components::Model> model;
+                ex::ComponentHandle<components::Skin> skin;
 
-                for (Entity entity : es.entities_with_components(model, skin)) {
+                for (ex::Entity entity : es.entities_with_components(model, skin)) {
                     if (skin->canProcessAnimation()) {
                         skin->processAnimation(dt);
                         skin->animSamplers.update(dt);

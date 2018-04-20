@@ -25,7 +25,7 @@
 namespace game {
     World::World() : name("") {}
 
-    void World::update(TimeDelta dt) {
+    void World::update(ex::TimeDelta dt) {
         // pre update
         systems.update<game::systems::Input>(dt);
         systems.update<game::systems::Camera>(dt);
@@ -41,7 +41,7 @@ namespace game {
         systems.update<game::systems::LightHelpers>(dt);
     }
 
-    void World::render(TimeDelta dt) {
+    void World::render(ex::TimeDelta dt) {
         systems.update<systems::Render>(dt);
     }
 
@@ -55,12 +55,12 @@ namespace game {
     }
 
     void World::setup() {
-        systems.add<game::systems::CharacterControl>();
-        systems.add<game::systems::Animations>();
-        systems.add<game::systems::Physic>();
-        systems.add<game::systems::BallShoot>();
-        systems.add<game::systems::LightHelpers>();
-        systems.add<game::systems::DayTime>();
+        systems.add<game::systems::CharacterControl>(&context);
+        systems.add<game::systems::Animations>(&context);
+        systems.add<game::systems::Physic>(&context);
+        systems.add<game::systems::BallShoot>(&context);
+        systems.add<game::systems::LightHelpers>(&context);
+        systems.add<game::systems::DayTime>(&context);
 
         systems.configure();
 

@@ -23,13 +23,13 @@
 #include "context.h"
 
 namespace game {
-    using namespace entityx;
+    namespace ex = entityx;
 
     typedef glm::vec3 vec3;
     typedef glm::vec2 vec2;
     typedef glm::mat4 mat4;
 
-    struct World : EntityX {
+    struct World : ex::EntityX {
         template<typename Object>
         struct WorldObject {
             Object *object;
@@ -66,9 +66,9 @@ namespace game {
 
         void removeLight(entityx::Entity entity);
 
-        void update(TimeDelta dt);
+        void update(ex::TimeDelta dt);
 
-        void render(TimeDelta dt);
+        void render(ex::TimeDelta dt);
 
         void setPhysicsDebug(bool value);
 

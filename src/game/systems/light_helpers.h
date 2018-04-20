@@ -20,20 +20,27 @@
 #include "../components/renderable.h"
 #include "../events/light_helper_show.h"
 #include "../components/helper.h"
+#include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
-        using namespace entityx;
+        namespace ex = entityx;
 
-        class LightHelpers : public entityx::System<LightHelpers>, public entityx::Receiver<LightHelpers> {
+        class LightHelpers
+                : public systems::BaseSystem
+                  , public entityx::System<LightHelpers>
+                  , public entityx::Receiver<LightHelpers> {
         public:
+            explicit LightHelpers(Context *context) : systems::BaseSystem(context) {}
+
             void configure(entityx::EventManager &event_manager) override {
                 event_manager.subscribe<events::LightAdd>(*this);
                 event_manager.subscribe<events::LightRemove>(*this);
                 event_manager.subscribe<events::LightHelperShow>(*this);
             }
 
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 while (!newEntities.empty()) {
                     entityx::Entity lightEntity = newEntities.top();
 
@@ -46,7 +53,8 @@ namespace game {
                         vec3 position = light->getPosition();
 
                         Mesh *mesh = Mesh::Create();
-                        GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+                        GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f,
+                                                  3.14f);
                         mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
                         mesh->material.setWireframe(true);
 
@@ -104,28 +112,28 @@ namespace game {
             }
 
         private:
-            void showHelpers(EntityManager &es) {
-                ComponentHandle<components::LightHelper> helper;
+            void showHelpers(ex::EntityManager &es) {
+                ex::ComponentHandle<components::LightHelper> helper;
 
-                for (Entity entity : es.entities_with_components(helper)) {
+                for (ex::Entity entity : es.entities_with_components(helper)) {
                     entity.assign<components::Renderable>();
                 }
             }
 
-            void hideHelpers(EntityManager &es) {
-                ComponentHandle<components::LightHelper> helper;
-                ComponentHandle<components::Renderable> renderable;
+            void hideHelpers(ex::EntityManager &es) {
+                ex::ComponentHandle<components::LightHelper> helper;
+                ex::ComponentHandle<components::Renderable> renderable;
 
-                for (Entity entity : es.entities_with_components(helper, renderable)) {
+                for (ex::Entity entity : es.entities_with_components(helper, renderable)) {
                     entity.remove<components::Renderable>();
                 }
             }
 
-            void updateHelperPositions(EntityManager &es) {
-                ComponentHandle<components::LightHelper> helper;
-                ComponentHandle<components::Renderable> renderable;
+            void updateHelperPositions(ex::EntityManager &es) {
+                ex::ComponentHandle<components::LightHelper> helper;
+                ex::ComponentHandle<components::Renderable> renderable;
 
-                for (Entity entity : es.entities_with_components(helper, renderable)) {
+                for (ex::Entity entity : es.entities_with_components(helper, renderable)) {
                     auto lightTransform = components::get<components::Transform>(helper->entity);
                     auto helperTransform = components::get<components::Transform>(helper->entity);
 

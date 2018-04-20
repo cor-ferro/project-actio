@@ -25,27 +25,33 @@
 
 namespace game {
     namespace systems {
-        using namespace entityx;
+        namespace ex = entityx;
 
-        class BallShoot : public entityx::System<BallShoot>, public entityx::Receiver<BallShoot> {
+        class BallShoot
+                : public systems::BaseSystem
+                  , public ex::System<BallShoot>
+                  , public ex::Receiver<BallShoot> {
         public:
-            void configure(EventManager &event_manager) {
+            explicit BallShoot(Context *context) : systems::BaseSystem(context) {}
+
+            void configure(ex::EventManager &event_manager) {
                 event_manager.subscribe<events::KeyPress>(*this);
                 event_manager.subscribe<events::MousePress>(*this);
             }
 
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 vec3 cameraPosition, cameraTarget;
 
-                es.each<components::Camera>([&cameraPosition, &cameraTarget](entityx::Entity entity, components::Camera &camera) {
-                    cameraPosition = camera.getPosition();
-                    cameraTarget = camera.getTarget();
-                });
+                es.each<components::Camera>(
+                        [&cameraPosition, &cameraTarget](ex::Entity entity, components::Camera &camera) {
+                            cameraPosition = camera.getPosition();
+                            cameraTarget = camera.getTarget();
+                        });
 
                 while (!newItems.empty()) {
                     newItems.pop();
 
-                    entityx::Entity ball = es.create();
+                    ex::Entity ball = es.create();
 
                     float radius = 1.0f;
                     Mesh *mesh = Mesh::Create();
@@ -73,6 +79,7 @@ namespace game {
 //                    newItems.push(1);
 //                }
             }
+
         private:
             std::stack<int> newItems;
         };

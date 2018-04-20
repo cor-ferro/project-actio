@@ -12,12 +12,14 @@
 #include "../../lib/input_handler.h"
 #include "../events/mouse_press.h"
 #include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
-        using namespace entityx;
+        namespace ex = entityx;
 
-        class Input : public entityx::System<Input> {
+        class Input : public systems::BaseSystem
+                      , public entityx::System<Input> {
         public:
             enum Key {
                 KEY_SPACE = InputHandler::KEY_SPACE,
@@ -44,7 +46,7 @@ namespace game {
 
             explicit Input(Context *context, InputHandler *ih)
                     : inputHandler(ih)
-                    , worldContext(context) {}
+                    , systems::BaseSystem(context) {}
 
             void configure(entityx::EventManager &event_manager) {
                 inputHandler->subscribeKeyPress([&event_manager](int key, int scancode, int action, int mods) {
@@ -56,14 +58,13 @@ namespace game {
                 });
             }
 
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 worldContext->mousePosition.x = inputHandler->mouse.x;
                 worldContext->mousePosition.y = inputHandler->mouse.y;
             }
 
         private:
             InputHandler *inputHandler;
-            Context *worldContext = nullptr;
         };
     }
 }

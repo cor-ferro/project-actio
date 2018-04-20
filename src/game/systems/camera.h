@@ -20,18 +20,22 @@
 #include "../events/render_setup_mesh.h"
 #include "../components/base.h"
 #include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
-        using namespace entityx;
+        namespace ex = entityx;
 
-        class Camera : public entityx::System<Camera>, public entityx::Receiver<Camera> {
+        class Camera
+                : public systems::BaseSystem
+                  , public entityx::System<Camera>
+                  , public entityx::Receiver<Camera> {
         public:
             explicit Camera(Context *context, InputHandler *ih)
                     : inputHandler(ih)
-                    , worldContext(context) {}
+                    , systems::BaseSystem(context) {}
 
-            void configure(EntityManager &es, entityx::EventManager &events) {
+            void configure(ex::EntityManager &es, entityx::EventManager &events) {
                 events.subscribe<events::KeyPress>(*this);
                 events.subscribe<events::MousePress>(*this);
 
@@ -40,23 +44,23 @@ namespace game {
 
             void postConfigure(entityx::EventManager &events) {}
 
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 vec3 characterPosition(0.0f);
 
-                ComponentHandle<components::Model> model;
-                ComponentHandle<components::Controlled> control;
-                ComponentHandle<components::Transform> characterTransform;
-                for (Entity entity : es.entities_with_components(model, control, characterTransform)) {
+                ex::ComponentHandle<components::Model> model;
+                ex::ComponentHandle<components::Controlled> control;
+                ex::ComponentHandle<components::Transform> characterTransform;
+                for (ex::Entity entity : es.entities_with_components(model, control, characterTransform)) {
                     characterPosition = characterTransform->getPosition();
                 }
 
-                ComponentHandle<components::Camera> camera;
-                ComponentHandle<components::Transform> cameraTransform;
-                ComponentHandle<components::Target> cameraTarget;
+                ex::ComponentHandle<components::Camera> camera;
+                ex::ComponentHandle<components::Transform> cameraTransform;
+                ex::ComponentHandle<components::Target> cameraTarget;
 
-                ComponentHandle<components::Transform> helperTransform;
+                ex::ComponentHandle<components::Transform> helperTransform;
 
-                for (Entity entity : es.entities_with_components(camera, cameraTransform, cameraTarget)) {
+                for (ex::Entity entity : es.entities_with_components(camera, cameraTransform, cameraTarget)) {
                     updateCameraSide(camera, characterPosition, dt);
 
                     cameraTransform->setPosition(newPosition);
@@ -78,22 +82,26 @@ namespace game {
                 }
             }
 
-            void updateCamera1(ComponentHandle<components::Camera> camera) {
+            void updateCamera1(ex::ComponentHandle<components::Camera> camera) {
                 float speedX = glm::abs(inputHandler->mouseMoved.x * inputHandler->sensetivity.speedFactor);
                 float speedY = glm::abs(inputHandler->mouseMoved.y * inputHandler->sensetivity.speedFactor);
 
-                float angleX = inputHandler->mouseMoved.y * 0.03f * -glm::pow(speedX, inputHandler->sensetivity.sensetivity);
-                float angleY = inputHandler->mouseMoved.x * 0.03f * -glm::pow(speedY, inputHandler->sensetivity.sensetivity);
+                float angleX =
+                        inputHandler->mouseMoved.y * 0.03f * -glm::pow(speedX, inputHandler->sensetivity.sensetivity);
+                float angleY =
+                        inputHandler->mouseMoved.x * 0.03f * -glm::pow(speedY, inputHandler->sensetivity.sensetivity);
 
                 if (angleY > 100.0f) {
                     console::info("over angle y %f %i", angleY, inputHandler->mouseMoved.x);
-                    console::info("details %i %i %i", inputHandler->mouseMoved.x, inputHandler->mouseStart.x, inputHandler->mouse.x);
+                    console::info("details %i %i %i", inputHandler->mouseMoved.x, inputHandler->mouseStart.x,
+                                  inputHandler->mouse.x);
                     angleY = 10.0f;
                 }
 
                 if (angleX > 100.0f) {
                     console::info("over angle x %i", angleX);
-                    console::info("details %i %i %i", inputHandler->mouseMoved.y, inputHandler->mouseStart.y, inputHandler->mouse.y);
+                    console::info("details %i %i %i", inputHandler->mouseMoved.y, inputHandler->mouseStart.y,
+                                  inputHandler->mouse.y);
                     angleX = 10.0f;
                 }
 
@@ -127,7 +135,7 @@ namespace game {
 //                setIsChanged(true);
             }
 
-            void updateCameraFree(ComponentHandle<components::Camera> camera, TimeDelta dt) {
+            void updateCameraFree(ex::ComponentHandle<components::Camera> camera, ex::TimeDelta dt) {
                 vec3 cameraPosition = camera->getPosition();
                 const vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
@@ -163,7 +171,7 @@ namespace game {
                 setIsChanged(true);
             }
 
-            void updateCameraSide(ComponentHandle<components::Camera> camera, vec3 &sideTarget, TimeDelta dt) {
+            void updateCameraSide(ex::ComponentHandle<components::Camera> camera, vec3 &sideTarget, ex::TimeDelta dt) {
                 vec3 cameraPosition = camera->getPosition();
                 const vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
@@ -207,9 +215,9 @@ namespace game {
             }
 
             void setSettings(float fov, float aspect, float near, float far) {
-                ComponentHandle<components::Camera> camera;
+                ex::ComponentHandle<components::Camera> camera;
 
-                for (Entity entity : entityManager->entities_with_components(camera)) {
+                for (ex::Entity entity : entityManager->entities_with_components(camera)) {
                     camera->setParam(CameraParam::FOV, fov);
                     camera->setParam(CameraParam::ASPECT, aspect);
                     camera->setParam(CameraParam::NEAR, near);
@@ -239,7 +247,7 @@ namespace game {
             }
 
         private:
-            EntityManager *entityManager = nullptr;
+            ex::EntityManager *entityManager = nullptr;
             InputHandler *inputHandler;
 
             vec3 newPosition;
@@ -254,8 +262,6 @@ namespace game {
             bool isCameraTranslationEnabled = false;
 
             bool isChanged = false;
-
-            Context *worldContext = nullptr;
         };
     }
 }

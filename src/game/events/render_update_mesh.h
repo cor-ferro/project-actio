@@ -10,14 +10,14 @@
 
 namespace game {
     namespace events {
-        using namespace entityx;
+        namespace ex = entityx;
 
         struct RenderUpdateMesh {
-            RenderUpdateMesh(entityx::Entity entity, Mesh *mesh)
+            RenderUpdateMesh(ex::Entity entity, Mesh *mesh)
                     : entity(entity)
                     , mesh(mesh) {}
 
-            entityx::Entity entity;
+            ex::Entity entity;
             Mesh *mesh;
         };
     }

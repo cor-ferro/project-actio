@@ -19,18 +19,22 @@
 #include "../events/render_setup_mesh.h"
 #include "../events/render_update_mesh.h"
 #include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
-        using namespace entityx;
+        namespace ex = entityx;
 
-        class Render : public entityx::System<Render>, public Receiver<Render> {
+        class Render
+                : systems::BaseSystem
+                  , public entityx::System<Render>
+                  , public ex::Receiver<Render> {
         public:
             explicit Render(Context *context, renderer::Renderer *newRenderer)
                     : renderer(newRenderer)
-                    , worldContext(context) {}
+                    , systems::BaseSystem(context) {}
 
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 uploadGeometry();
                 updateGeometry();
                 renderer->draw(es);
@@ -83,7 +87,6 @@ namespace game {
             renderer::Renderer *renderer = nullptr;
             std::stack<std::pair<Mesh *, entityx::Entity>> setupMesh;
             std::stack<std::pair<Mesh *, entityx::Entity>> updateMesh;
-            Context *worldContext = nullptr;
         };
     }
 }

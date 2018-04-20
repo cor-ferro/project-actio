@@ -6,24 +6,31 @@
 #define ACTIO_DAY_TIME_H
 
 #include <entityx/entityx/System.h>
-#include "../components/light_directional.h"
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/constants.hpp>
+#include "../components/light_directional.h"
+#include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
-        using namespace entityx;
+        namespace ex = entityx;
 
-        class DayTime : public entityx::System<DayTime>, public entityx::Receiver<DayTime> {
+        class DayTime
+                : public systems::BaseSystem
+                  , public entityx::System<DayTime>
+                  , public entityx::Receiver<DayTime> {
         public:
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
-                time+= dt;
+            explicit DayTime(Context *context) : systems::BaseSystem(context) {}
+
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
+                time += dt;
                 currentDayTime = glm::mod(time, daySize);
 
                 double delta = currentDayTime / daySize;
                 float angle = glm::radians(359.9f * static_cast<float>(delta));
 
-                ComponentHandle<components::LightDirectional> dirLight;
+                ex::ComponentHandle<components::LightDirectional> dirLight;
 
                 vec3 dir(0.0f, 0.0f, 1.0f);
                 quat q = glm::quat(
@@ -35,7 +42,7 @@ namespace game {
 
                 vec3 newDir = q * vec3(0.0f, 1.0f, 0.0f);
 
-                for (Entity entity : es.entities_with_components(dirLight)) {
+                for (ex::Entity entity : es.entities_with_components(dirLight)) {
                     dirLight->setDirection(newDir);
                 }
             }
@@ -47,8 +54,8 @@ namespace game {
             void setDaySize(double newDaySize) {
                 daySize = newDaySize;
             }
-        private:
 
+        private:
             double time = 0.0;
             double currentDayTime = 0.0;
             double daySize = 60000.0;

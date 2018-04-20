@@ -18,24 +18,31 @@
 #include "../events/setup_controlled.h"
 #include "../components/base.h"
 #include "../../lib/math.h"
+#include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
-        using namespace entityx;
+        namespace ex = entityx;
 
-        class CharacterControl : public entityx::System<CharacterControl>, public entityx::Receiver<CharacterControl> {
+        class CharacterControl
+                : systems::BaseSystem
+                  , public entityx::System<CharacterControl>
+                  , public entityx::Receiver<CharacterControl> {
         public:
-            void configure(EventManager &event_manager) {
+            explicit CharacterControl(Context *context) : systems::BaseSystem(context) {}
+
+            void configure(ex::EventManager &event_manager) {
                 event_manager.subscribe<events::KeyPress>(*this);
                 event_manager.subscribe<events::SetupControlled>(*this);
             }
 
-            void update(EntityManager &es, EventManager &events, TimeDelta dt) override {
-                ComponentHandle<components::Model> model;
-                ComponentHandle<components::Skin> skin;
-                ComponentHandle<components::Controlled> control;
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
+                ex::ComponentHandle<components::Model> model;
+                ex::ComponentHandle<components::Skin> skin;
+                ex::ComponentHandle<components::Controlled> control;
 
-                for (Entity entity : es.entities_with_components(model, skin, control)) {
+                for (ex::Entity entity : es.entities_with_components(model, skin, control)) {
                     const float maxSpeed = 1.5f;
                     const float minSpeed = -0.7f;
                     const float jumpForce = 1.2f;
@@ -58,12 +65,12 @@ namespace game {
                         const float reduceValue = 0.05f;
 
                         control->deltaX.x = control->deltaX.x > 0.0f
-                                ? glm::clamp(control->deltaX.x - reduceValue, 0.0f, maxSpeed)
-                                : glm::clamp(control->deltaX.x + reduceValue, minSpeed, 0.0f);
+                                            ? glm::clamp(control->deltaX.x - reduceValue, 0.0f, maxSpeed)
+                                            : glm::clamp(control->deltaX.x + reduceValue, minSpeed, 0.0f);
 
                         control->deltaX.z = control->deltaX.z > 0.0f
-                                ? glm::clamp(control->deltaX.z - reduceValue, 0.0f, maxSpeed)
-                                : glm::clamp(control->deltaX.z + reduceValue, minSpeed, 0.0f);
+                                            ? glm::clamp(control->deltaX.z - reduceValue, 0.0f, maxSpeed)
+                                            : glm::clamp(control->deltaX.z + reduceValue, minSpeed, 0.0f);
                     }
 
                     float &x = control->deltaX.x;
@@ -102,7 +109,8 @@ namespace game {
                                    event.key == InputHandler::KEY_D;
 
                 if (isMovingKey) {
-                    isMovingKeyPress = event.action == InputHandler::KEY_PRESS || event.action == InputHandler::KEY_REPEAT;
+                    isMovingKeyPress =
+                            event.action == InputHandler::KEY_PRESS || event.action == InputHandler::KEY_REPEAT;
                 }
 
 

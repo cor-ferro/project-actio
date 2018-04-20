@@ -5,12 +5,12 @@
 
 namespace game {
     namespace components {
-        using namespace entityx;
+        namespace ex = entityx;
 
         struct Helper {
-            Helper(entityx::Entity entity) : entity(entity) {}
+            Helper(ex::Entity entity) : entity(entity) {}
 
-            entityx::Entity entity;
+            ex::Entity entity;
         };
     }
 }
