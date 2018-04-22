@@ -227,6 +227,44 @@ namespace game {
             return nodes_.size();
         }
 
+        float Model::height() {
+            float maxHeight = 0.0f;
+
+            for (auto mesh : meshes_) {
+                float geometryHeight = mesh->geometry.height();
+
+                if (geometryHeight > maxHeight) {
+                    maxHeight = geometryHeight;
+                }
+            }
+
+            return maxHeight;
+        }
+
+        float Model::halfHeight() {
+            float maxHeight = height();
+
+            if (maxHeight > 0.0f) {
+                return maxHeight / 2.0f;
+            }
+
+            return 0.0f;
+        }
+
+        Math::Box3 Model::getBoundingBox() {
+            Math::Box3 maxBox;
+
+            for (auto mesh : meshes_) {
+                const Math::Box3 &bBox = mesh->geometry.getBoundingBox();
+
+                maxBox.radius.x = glm::max(bBox.radius.x, maxBox.radius.x);
+                maxBox.radius.y = glm::max(bBox.radius.y, maxBox.radius.y);
+                maxBox.radius.z = glm::max(bBox.radius.z, maxBox.radius.z);
+            }
+
+            return maxBox;
+        }
+
         void Model::reindexMeshBones(std::unordered_map<std::string, uint> &nodeIndexes) {
             // fill mesh node->bone indexes
             for (auto &mesh : meshes_) {

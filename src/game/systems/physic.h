@@ -490,10 +490,16 @@ namespace game {
             void receive(const events::SetupControlled &event) {
                 ex::Entity entity = event.entity;
 
+                auto model = components::get<components::Model>(entity);
+                auto transform = components::get<components::Transform>(entity);
+
+                Math::Box3 boundingBox = model->getBoundingBox();
+                vec3 scaledRadius = boundingBox.radius * transform->getScale();
+
                 px::PxCapsuleControllerDesc cDesc;
 
-                cDesc.height = 3.5f;
-                cDesc.radius = 0.5f;
+                cDesc.height = 1.0f;
+                cDesc.radius = scaledRadius.y;
                 cDesc.upDirection = px::PxVec3(0.0f, 1.0f, 0.0f);
                 cDesc.material = pxMaterials["default"];
                 cDesc.position = px::PxExtendedVec3(0.0f, cDesc.height / 2.0f, 0.0f);

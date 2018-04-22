@@ -42,6 +42,7 @@ namespace game {
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 vec3 cameraPosition, cameraTarget;
                 vec3 charPosition, charTarget;
+                float charHeight = 0.0f;
 
                 es.each<components::Camera>(
                         [&cameraPosition, &cameraTarget](ex::Entity entity, components::Camera &camera) {
@@ -49,9 +50,10 @@ namespace game {
                             cameraTarget = camera.getTarget();
                         });
 
-                es.each<components::Controlled, components::Transform>(
-                        [&charPosition](ex::Entity, components::Controlled control, components::Transform transform) {
+                es.each<components::Model, components::Controlled, components::Transform>(
+                        [&charPosition, &charHeight](ex::Entity, components::Model &model, components::Controlled &control, components::Transform &transform) {
                             charPosition = transform.getPosition();
+                            charHeight = model.height() * transform.getScale().y;
                         });
 
                 while (!newItems.empty()) {
@@ -68,7 +70,7 @@ namespace game {
                     vec3 target = glm::normalize(worldContext->mouseWorldPosition - charPosition);
 
                     ball.assign<components::Model>(mesh);
-                    ball.assign<components::Transform>(charPosition + (vec3(0.0f, 0.0f, 2.0f) + target));
+                    ball.assign<components::Transform>(charPosition + (vec3(0.0f, 3.0f, 2.0f) + target));
 
                     events.emit<events::PhysicCreateSphere>(ball, radius);
                     events.emit<events::PhysicForce>(ball, target, 30.0f);

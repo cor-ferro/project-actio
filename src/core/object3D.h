@@ -15,6 +15,7 @@ struct Object3D {
 	~Object3D();
 
 	vec3 getPosition();
+	vec3 getScale();
 
 	void rotate(quat rotateQuat);
 	void setPosition(vec3 vec);

@@ -61,7 +61,7 @@ namespace game {
         private:
             void uploadGeometry() {
                 int counter = 0;
-                while (!setupMesh.empty() && counter < 5) {
+                while (!setupMesh.empty() && counter < uploadPerTick) {
                     std::pair<Mesh *, entityx::Entity> pair = setupMesh.top();
                     setupMesh.pop();
 
@@ -74,7 +74,7 @@ namespace game {
 
             void updateGeometry() {
                 int counter = 0;
-                while (!updateMesh.empty() && counter < 5) {
+                while (!updateMesh.empty() && counter < updatePerTick) {
                     std::pair<Mesh *, entityx::Entity> pair = updateMesh.top();
                     updateMesh.pop();
 
@@ -83,6 +83,9 @@ namespace game {
                     counter++;
                 }
             }
+
+            int uploadPerTick = 30;
+            int updatePerTick = 30;
 
             renderer::Renderer *renderer = nullptr;
             std::stack<std::pair<Mesh *, entityx::Entity>> setupMesh;

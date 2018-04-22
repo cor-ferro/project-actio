@@ -595,7 +595,7 @@ namespace renderer {
 
     void OpenglRenderer::updateMesh(Mesh *mesh) {
         if (mesh->geometry.VBO == 0) {
-            console::warn("skip update mesh");
+//            console::warn("skip update mesh");
             return;
         }
 

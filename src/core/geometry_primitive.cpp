@@ -83,6 +83,8 @@ void GeometryPrimitive::Box(
 #undef y_axis
 #undef z_axis
 
+    geometry.computeBoundingBox();
+
 }
 
 void GeometryPrimitive::Plane(
@@ -132,6 +134,8 @@ void GeometryPrimitive::Plane(
             geometry.addFace(b, c, d);
         }
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::Sphere(
@@ -201,6 +205,8 @@ void GeometryPrimitive::Sphere(
             }
         }
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::Circle(
@@ -243,6 +249,8 @@ void GeometryPrimitive::Circle(
     for (uint i = 1; i <= segments; i++) {
         geometry.addFace(i, i + 1, 0);
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::CylinderTorso(
@@ -299,6 +307,8 @@ void GeometryPrimitive::CylinderTorso(
             geometry.addFace(b, c, d);
         }
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::CylinderCap(
@@ -354,6 +364,8 @@ void GeometryPrimitive::CylinderCap(
             geometry.addFace(i + 1, i, c);
         }
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::Cylinder(
@@ -384,6 +396,8 @@ void GeometryPrimitive::Cylinder(
         if (radiusTop > 0) CylinderCap(geometry, params, true);
         if (radiusBottom > 0) CylinderCap(geometry, params, false);
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::Cone(
@@ -448,6 +462,8 @@ void GeometryPrimitive::Ring(
             geometry.addFace(b, c, d);
         }
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::Torus(
@@ -495,6 +511,8 @@ void GeometryPrimitive::Torus(
             geometry.addFace(b, c, d);
         }
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::Octahedron(Geometry &geometry, float radius) {
@@ -532,6 +550,8 @@ void GeometryPrimitive::Octahedron(Geometry &geometry, float radius) {
     for (uint i = 0; i < countIndices; i += 3) {
         geometry.addFace(indices[i], indices[i + 1], indices[i + 2]);
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::Quad2d(Geometry &geometry) {
@@ -561,6 +581,8 @@ void GeometryPrimitive::Quad2d(Geometry &geometry) {
     for (uint i = 0; i < countIndices; i += 3) {
         geometry.addFace(indices[i], indices[i + 1], indices[i + 2]);
     }
+
+    geometry.computeBoundingBox();
 }
 
 void GeometryPrimitive::Lines(Geometry &geometry, std::vector<vec3> lines) {
@@ -569,4 +591,6 @@ void GeometryPrimitive::Lines(Geometry &geometry, std::vector<vec3> lines) {
     for (vec3 &point : lines) {
         geometry.addVertex(point);
     }
+
+    geometry.computeBoundingBox();
 }

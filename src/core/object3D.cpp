@@ -106,6 +106,10 @@ vec3 Object3D::getPosition() {
     return position;
 }
 
+vec3 Object3D::getScale() {
+    return scale;
+}
+
 void Object3D::updateModelMatrix(bool force = false) {
     if (true) { // todo@ add logic with needUpdateMatrix and force
         // console::info("update matrix");

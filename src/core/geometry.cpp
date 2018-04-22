@@ -115,6 +115,8 @@ void Geometry::initFromAi(const aiMesh *mesh, const Resource::Assimp *assimpReso
             indices_->push_back(face.mIndices[j]);
         }
     }
+
+    computeBoundingBox();
 }
 
 void Geometry::setup() {
@@ -260,8 +262,8 @@ void Geometry::freeIndices() {
 }
 
 void Geometry::computeBoundingBox() {
-    vec3 min;
-    vec3 max;
+    vec3 min(0.0f);
+    vec3 max(0.0f);
 
     const Vertex &frontVertex = vertices_->front();
 
@@ -287,14 +289,6 @@ void Geometry::computeBoundingBox() {
     boundingBox.radius.x = (max.x - min.x) / 2.0f;
     boundingBox.radius.y = (max.y - min.y) / 2.0f;
     boundingBox.radius.z = (max.z - min.z) / 2.0f;
-
-    vec3 size = vec3(max.x - min.x, max.y - min.y, max.z - min.z);
-    vec3 center = vec3((min.x + max.x) / 2.0f, (min.y + max.y) / 2.0f, (min.z + max.z) / 2.0f);
-    //mat4 transform = glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), size);
-
-    console::info("bounding box");
-    console::info("size: %i %i %i", size.x, size.y, size.z);
-    console::info("center: %i %i %i", center.x, center.y, center.z);
 }
 
 void Geometry::computeBoundingSphere() {
@@ -303,6 +297,14 @@ void Geometry::computeBoundingSphere() {
 
 const Math::Box3 &Geometry::getBoundingBox() {
     return boundingBox;
+}
+
+float Geometry::height() {
+    return boundingBox.radius.y * 2.0f;
+}
+
+float Geometry::halfHeight() {
+    return boundingBox.radius.y;
 }
 
 size_t Geometry::getCountVertices() {
