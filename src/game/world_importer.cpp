@@ -61,11 +61,17 @@ namespace game {
 
         if (models != nullptr) {
             for (const auto &section : *models) {
+                bool isInWorld = std::find(worldModels.begin(), worldModels.end(), section.name) != worldModels.end();
+
+                if (!isInWorld) {
+                    continue;
+                }
+
                 vec3 pos, scale;
                 vec4 rot;
                 quat rotQuat;
                 std::string geometryType, filePath, animation;
-                bool flipUv, player, isInWorld, isPhysic;
+                bool flipUv, player, isPhysic;
 
                 section.getFieldVec<vec3>("Position", pos, vec3(0.0f));
                 section.getFieldVec<vec4>("Rotation", rot);
@@ -79,14 +85,12 @@ namespace game {
                 section.getField("Animation", animation);
                 section.getField("Player", player);
 
-                isInWorld = std::find(worldModels.begin(), worldModels.end(), section.name) != worldModels.end();
-
                 entityx::Entity entity = world->entities.create();
 
                 rotQuat = glm::angleAxis(glm::radians(rot.w), vec3(rot.x, rot.y, rot.z));
                 entity.assign<components::Transform>(pos, rotQuat, scale);
 
-                if (geometryType == "file" && isInWorld) {
+                if (geometryType == "file") {
                     Path p = createPath(std::string(RESOURCE_DIR), filePath); // move RESOURCE_DIR to app
                     components::Model::File modelFile(p.string());
 
@@ -146,12 +150,10 @@ namespace game {
 
                     entity.assign<components::Model>(mesh);
 
-                    if (isInWorld) {
-                        if (isPhysic) {
-                            world->events.emit<events::PhysicCreateBox>(entity, size.x, size.y, size.z);
-                        }
-                        world->events.emit<events::RenderSetupMesh>(entity, mesh);
+                    if (isPhysic) {
+                        world->events.emit<events::PhysicCreateBox>(entity, size.x, size.y, size.z);
                     }
+                    world->events.emit<events::RenderSetupMesh>(entity, mesh);
                 }
 
                 if (player) {
