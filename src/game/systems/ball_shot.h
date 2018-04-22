@@ -2,8 +2,8 @@
 // Created by demitriy on 3/30/18.
 //
 
-#ifndef ACTIO_BALL_SHOOT_H
-#define ACTIO_BALL_SHOOT_H
+#ifndef ACTIO_BALL_SHOT_H
+#define ACTIO_BALL_SHOT_H
 
 #include <entityx/entityx/System.h>
 #include <stack>
@@ -27,12 +27,12 @@ namespace game {
     namespace systems {
         namespace ex = entityx;
 
-        class BallShoot
+        class BallShot
                 : public systems::BaseSystem
-                  , public ex::System<BallShoot>
-                  , public ex::Receiver<BallShoot> {
+                  , public ex::System<BallShot>
+                  , public ex::Receiver<BallShot> {
         public:
-            explicit BallShoot(Context *context) : systems::BaseSystem(context) {}
+            explicit BallShot(Context *context) : systems::BaseSystem(context) {}
 
             void configure(ex::EventManager &event_manager) {
                 event_manager.subscribe<events::KeyPress>(*this);
@@ -99,4 +99,4 @@ namespace game {
     }
 }
 
-#endif //ACTIO_BALL_SHOOT_H
+#endif //ACTIO_BALL_SHOT_H

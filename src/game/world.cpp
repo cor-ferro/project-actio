@@ -4,7 +4,7 @@
 #include "systems/physic.h"
 #include "systems/camera.h"
 #include "systems/render.h"
-#include "systems/ball_shoot.h"
+#include "systems/ball_shot.h"
 #include "systems/animations.h"
 #include "systems/character_control.h"
 #include "systems/input.h"
@@ -34,7 +34,7 @@ namespace game {
         systems.update<game::systems::DayTime>(dt);
 
         // main update
-        systems.update<game::systems::BallShoot>(dt);
+        systems.update<game::systems::BallShot>(dt);
 
         // post update
         systems.update<game::systems::Animations>(dt);
@@ -58,7 +58,7 @@ namespace game {
         systems.add<game::systems::CharacterControl>(&context);
         systems.add<game::systems::Animations>(&context);
         systems.add<game::systems::Physic>(&context);
-        systems.add<game::systems::BallShoot>(&context);
+        systems.add<game::systems::BallShot>(&context);
         systems.add<game::systems::LightHelpers>(&context);
         systems.add<game::systems::DayTime>(&context);
 
