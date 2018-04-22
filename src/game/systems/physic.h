@@ -502,7 +502,7 @@ namespace game {
                 cDesc.radius = scaledRadius.y;
                 cDesc.upDirection = px::PxVec3(0.0f, 1.0f, 0.0f);
                 cDesc.material = pxMaterials["default"];
-                cDesc.position = px::PxExtendedVec3(0.0f, cDesc.height / 2.0f, 0.0f);
+                cDesc.position = px::PxExtendedVec3(0.0f, cDesc.height, 0.0f);
                 cDesc.slopeLimit = 0.1f;
                 cDesc.contactOffset = 0.01f;
                 cDesc.stepOffset = 0.1f;

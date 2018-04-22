@@ -69,8 +69,11 @@ namespace game {
 
                     vec3 target = glm::normalize(worldContext->mouseWorldPosition - charPosition);
 
+                    float yAxis = glm::clamp(glm::abs(worldContext->mouseWorldPosition.y - charPosition.y), 1.0f, 5.0f);
+                    float zAxis = glm::clamp(worldContext->mouseWorldPosition.z - charPosition.z, -3.0f, 3.0f);
+
                     ball.assign<components::Model>(mesh);
-                    ball.assign<components::Transform>(charPosition + (vec3(0.0f, 3.0f, 2.0f) + target));
+                    ball.assign<components::Transform>(charPosition + (vec3(0.0f, 1.0f + yAxis, zAxis) + target));
 
                     events.emit<events::PhysicCreateSphere>(ball, radius);
                     events.emit<events::PhysicForce>(ball, target, 30.0f);

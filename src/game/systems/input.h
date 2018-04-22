@@ -50,6 +50,7 @@ namespace game {
 
             void configure(entityx::EventManager &event_manager) {
                 inputHandler->subscribeKeyPress([&event_manager](int key, int scancode, int action, int mods) {
+                    if (action == InputHandler::KEY_REPEAT) return;
                     event_manager.emit<events::KeyPress>(key, scancode, action, mods);
                 });
 

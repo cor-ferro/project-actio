@@ -16,6 +16,11 @@ namespace game {
         using namespace physx;
 
         struct Controlled {
+            enum Direction {
+                Left,
+                Right
+            };
+
             explicit Controlled(PxController* const mController)
                 : controller(mController)
                 , disp(vec3(0.0f))
@@ -32,6 +37,8 @@ namespace game {
             vec3 delta;
             float jumpForce;
             bool isJump;
+            float angle = 0.0f;
+            Direction sideDirection = Direction::Right;
         };
     }
 }

@@ -20,6 +20,7 @@
 #include "../../lib/math.h"
 #include "../context.h"
 #include "base.h"
+#include "../components/transform.h"
 
 namespace game {
     namespace systems {
@@ -41,28 +42,63 @@ namespace game {
                 ex::ComponentHandle<components::Model> model;
                 ex::ComponentHandle<components::Skin> skin;
                 ex::ComponentHandle<components::Controlled> control;
+                ex::ComponentHandle<components::Transform> transform;
 
-                for (ex::Entity entity : es.entities_with_components(model, skin, control)) {
+//                console::info("press: %i %i", isLeftPress, isRightPress);
+
+                for (ex::Entity entity : es.entities_with_components(model, skin, control, transform)) {
                     const float maxSpeed = 1.5f;
-                    const float minSpeed = -0.7f;
+                    const float minSpeed = -1.5f;
                     const float jumpForce = 1.2f;
                     const float speedFactor = 0.1f;
 
+                    const float minDirectionAngle = 0.0f;
+                    const float maxDirectionAngle = 180.0f;
+                    const float anglePerTick = static_cast<float>(dt);
+                    const float increaseValue = 0.3f;
+                    const float reduceValue = 0.1f;
+
+                    if (!isLeftPress && !isRightPress) {
+                        control->delta.z = 0.0f;
+                    }
+
+                    if (isLeftPress) {
+                        control->deltaX.z = glm::clamp(control->deltaX.z - increaseValue, minSpeed, maxSpeed);
+                        control->sideDirection = components::Controlled::Left;
+                    }
+
+                    if (isRightPress) {
+                        control->deltaX.z = glm::clamp(control->deltaX.z + increaseValue, minSpeed, maxSpeed);
+                        control->sideDirection = components::Controlled::Right;
+                    }
+
+                    switch (control->sideDirection) {
+                        case components::Controlled::Left:
+                            control->angle = glm::clamp(control->angle + anglePerTick, minDirectionAngle, maxDirectionAngle);
+                            break;
+                        case components::Controlled::Right:
+                            control->angle = glm::clamp(control->angle - anglePerTick, minDirectionAngle, maxDirectionAngle);
+                            break;
+                    }
+
+                    if (control->angle != minDirectionAngle || control->angle != maxDirectionAngle) {
+                        transform->setQuaternion(
+                                glm::sin(0.0f),
+                                glm::sin(glm::radians(control->angle) / 2.0f),
+                                glm::sin(0.0f),
+                                glm::cos(glm::radians(control->angle) / 2.0f)
+                        );
+                    }
+
+
                     if (isMovingKeyPress || isJumpPress) {
-                        const float increaseValue = 0.03f;
-
-//                        if (isForwardPress) control->deltaX.x+= increaseValue;
-//                        if (isBackwardPress) control->deltaX.x-= increaseValue;
-                        if (isLeftPress) control->deltaX.z -= increaseValue;
-                        if (isRightPress) control->deltaX.z += increaseValue;
-
                         if (isJumpPress && !control->isJump) {
                             control->jumpForce = jumpForce;
                             control->isJump = true;
                             isJumpPress = false;
                         }
                     } else {
-                        const float reduceValue = 0.05f;
+
 
                         control->deltaX.x = control->deltaX.x > 0.0f
                                             ? glm::clamp(control->deltaX.x - reduceValue, 0.0f, maxSpeed)
@@ -76,8 +112,8 @@ namespace game {
                     float &x = control->deltaX.x;
                     float &z = control->deltaX.z;
 
-                    control->delta.x = (glm::pow(fE, x * 2.5f) - glm::pow(fE, x * -1.5f)) / (glm::pow(fE, x) * 1.0f);
-                    control->delta.z = (glm::pow(fE, z * 2.5f) - glm::pow(fE, z * -1.5f)) / (glm::pow(fE, z) * 1.0f);
+                    control->delta.x = (glm::pow(fE, x * 1.7f) - glm::pow(fE, x * -0.3f)) / (glm::pow(fE, x) * 1.0f);
+                    control->delta.z = (glm::pow(fE, z * 1.7f) - glm::pow(fE, z * -0.3f)) / (glm::pow(fE, z) * 1.0f);
 
                     control->delta.x = glm::clamp(control->delta.x, minSpeed, maxSpeed);
                     control->delta.z = glm::clamp(control->delta.z, minSpeed, maxSpeed);
@@ -125,11 +161,22 @@ namespace game {
                 }
 
                 if (event.key == InputHandler::KEY_A) {
-                    isLeftPress = event.action != InputHandler::KEY_RELEASE;
+                    if (event.action == InputHandler::KEY_PRESS) {
+                        isLeftPress = true;
+                        isRightPress = false;
+                    } else if (event.action == InputHandler::KEY_RELEASE) {
+                        isLeftPress = false;
+                    }
                 }
 
                 if (event.key == InputHandler::KEY_D) {
-                    isRightPress = event.action != InputHandler::KEY_RELEASE;
+
+                    if (event.action == InputHandler::KEY_PRESS) {
+                        isRightPress = true;
+                        isLeftPress = false;
+                    } else if (event.action == InputHandler::KEY_RELEASE) {
+                        isRightPress = false;
+                    }
                 }
 
                 if (isJumpKey && event.action == InputHandler::KEY_PRESS) {
