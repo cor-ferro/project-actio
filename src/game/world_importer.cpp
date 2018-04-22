@@ -52,9 +52,11 @@ namespace game {
         const std::vector<IniLoader::Section> *lights = iniLoader.getSections("light");
 
         std::vector<std::string> worldModels;
+        std::vector<std::string> worldLights;
 
         if (worldSection != nullptr) {
             worldSection->getField("models", worldModels, ' ');
+            worldSection->getField("lights", worldLights, ' ');
         }
 
         if (models != nullptr) {
@@ -160,6 +162,7 @@ namespace game {
 
         if (lights != nullptr) {
             for (const auto &section : *lights) {
+                bool isInWorld = std::find(worldLights.begin(), worldLights.end(), section.name) != worldLights.end();
                 entityx::Entity entity = world->entities.create();
 
                 std::string type;
@@ -176,7 +179,7 @@ namespace game {
                     section.getField("Linear", desc.linear);
                     section.getField("Quadratic", desc.quadratic);
 
-                    world->addLight(desc);
+                    if (isInWorld) world->addLight(desc);
                 } else if (type == "directional") {
                     desc::LightDirectionalDesc desc;
 
@@ -185,7 +188,7 @@ namespace game {
                     section.getFieldVec<vec3>("Specular", desc.specular);
                     section.getFieldVec<vec3>("Direction", desc.direction);
 
-                    world->addLight(desc);
+                    if (isInWorld) world->addLight(desc);
                 } else if (type == "spot") {
                     desc::LightSpotDesc desc;
 
@@ -200,7 +203,7 @@ namespace game {
                     section.getField("CutOff", desc.cutOff);
                     section.getField("OuterCutOff", desc.outerCutOff);
 
-                    world->addLight(desc);
+                    if (isInWorld) world->addLight(desc);
                 } else {
                     console::warn("unknown light type");
                 }
