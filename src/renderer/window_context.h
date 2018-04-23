@@ -11,89 +11,35 @@
 
 
 struct WindowContext {
-    WindowContext()
-            : window(nullptr) {
-    }
+    WindowContext();
 
-    bool init(unsigned int width, unsigned int height) {
-        window = glfwCreateWindow(width, height, "Window", nullptr, nullptr);
+    bool init(unsigned int width, unsigned int height);
 
-        if (window == nullptr) {
-            console::info("Failed to create GLFW window");
-            glfwTerminate();
-            return false;
-        }
+    void setAsCurrent();
 
-        setAsCurrent();
-        gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+    void destroy();
 
-        glfwSetWindowUserPointer(window, this);
-//        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-//        glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
+    void setTitle(const char *text);
 
-        ImGui_ImplGlfwGL3_Init(window, true);
+    void setSize(unsigned int width, unsigned int height);
 
-        // add callbacks
-        glfwSetWindowSizeCallback(window, WindowContext::onResizeCallback);
-        glfwSetKeyCallback(window, WindowContext::onKeyPressCallback);
-        glfwSetCursorPosCallback(window, WindowContext::onMouseMoveCallback);
-        glfwSetMouseButtonCallback(window, WindowContext::onMousePressCallback);
+    void setMousePosition(unsigned int x, unsigned int y);
 
-        return true;
-    }
+    void getMousePosition(double &xpos, double &ypos);
 
-    void setAsCurrent() {
-        glfwMakeContextCurrent(window);
-    }
+    void enableVSync();
 
-    void destroy() {
-        glfwDestroyWindow(window);
-        window = nullptr;
-    }
+    void disableVSync();
 
-    void setTitle(const char *text) {
-        glfwSetWindowTitle(window, text);
-    }
+    GLFWwindow *const getWindow();
 
-    void setSize(unsigned int width, unsigned int height) {
-        glfwSetWindowSize(window, width, height);
-    }
+    static void onResizeCallback(GLFWwindow *window, int width, int height);
 
-    void setMousePosition(unsigned int x, unsigned int y) {
-        glfwSetCursorPos(window, x, y);
-    }
+    static void onKeyPressCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
-    void getMousePosition(double &xpos, double &ypos) {
-        glfwGetCursorPos(window, &xpos, &ypos);
-    }
+    static void onMouseMoveCallback(GLFWwindow *window, double x, double y);
 
-    void enableVSync() {
-        glfwSwapInterval(1);
-    }
-
-    void disableVSync() {
-        glfwSwapInterval(0);
-    }
-
-    GLFWwindow *const getWindow() {
-        return window;
-    }
-
-    static void onResizeCallback(GLFWwindow *window, int width, int height) {
-        ((WindowContext *) glfwGetWindowUserPointer(window))->onResize(width, height);
-    }
-
-    static void onKeyPressCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-        ((WindowContext *) glfwGetWindowUserPointer(window))->onKeyPress(key, scancode, action, mods);
-    }
-
-    static void onMouseMoveCallback(GLFWwindow *window, double x, double y) {
-        ((WindowContext *) glfwGetWindowUserPointer(window))->onMouseMove(x, y);
-    }
-
-    static void onMousePressCallback(GLFWwindow *window, int button, int action, int mods) {
-        ((WindowContext *) glfwGetWindowUserPointer(window))->onMousePress(button, action, mods);
-    }
+    static void onMousePressCallback(GLFWwindow *window, int button, int action, int mods);
 
     boost::signals2::signal<void(int, int)> onResize;
     boost::signals2::signal<void(int, int, int, int)> onKeyPress;

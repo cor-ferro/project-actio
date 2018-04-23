@@ -50,6 +50,8 @@ namespace renderer {
 
         void postRender();
 
+        virtual void regenerateBuffer() = 0;
+
     protected:
         RenderType type;
         Path shadersFolder;

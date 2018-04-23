@@ -69,6 +69,8 @@ namespace renderer {
 
         void destroyMesh(Mesh *mesh) override;
 
+        void regenerateBuffer() override;
+
         GLuint depthMapFBO;
         GLuint depthMap;
 

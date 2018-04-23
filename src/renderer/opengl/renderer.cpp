@@ -299,7 +299,7 @@ namespace renderer {
         gbuffer.finalPass();
 
         glBlitFramebuffer(
-                0, 0, renderParams.width, renderParams.height,
+                0, 0, gbuffer.getWidth(), gbuffer.getHeight(),
                 0, 0, renderParams.width, renderParams.height,
                 GL_COLOR_BUFFER_BIT, GL_LINEAR
         );
@@ -625,5 +625,11 @@ namespace renderer {
         if (mesh->geometry.VAO != 0) glDeleteVertexArrays(1, &mesh->geometry.VAO);
     }
 
+    void OpenglRenderer::regenerateBuffer() {
+        const renderer::Params &renderParams = getParams();
+        gbuffer.setWidth(renderParams.width);
+        gbuffer.setHeight(renderParams.height);
+        gbuffer.generateTextures();
+    }
 
 }

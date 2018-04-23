@@ -20,6 +20,7 @@
 #include "../events/render_update_mesh.h"
 #include "../context.h"
 #include "base.h"
+#include "../events/render_resize.h"
 
 namespace game {
     namespace systems {
@@ -43,6 +44,7 @@ namespace game {
             void configure(entityx::EventManager &event_manager) override {
                 event_manager.subscribe<events::RenderSetupMesh>(*this);
                 event_manager.subscribe<events::RenderUpdateMesh>(*this);
+                event_manager.subscribe<events::RenderResize>(*this);
 
                 // @todo: handle resize
                 renderer::Params params = renderer->getParams();
@@ -56,6 +58,11 @@ namespace game {
 
             void receive(const events::RenderUpdateMesh &event) {
                 updateMesh.push({event.mesh, event.entity});
+            }
+
+            void receive(const events::RenderResize &event) {
+                worldContext->windowWidth = static_cast<float>(event.width);
+                worldContext->windowHeight = static_cast<float>(event.height);
             }
 
         private:

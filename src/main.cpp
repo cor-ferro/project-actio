@@ -70,6 +70,14 @@ int main(int argc, char **argv) {
 
     GLFWwindow *const window = mainContext.getWindow();
 
+    mainContext.onResize.connect([&renderer, &world](int width, int height) {
+        console::info("resize: %i, %i", width, height);
+        renderer->setViewSize(static_cast<renderer::ScreenSize>(width), static_cast<renderer::ScreenSize>(height));
+        renderer->regenerateBuffer();
+
+        world->setRenderSize(width, height);
+    });
+
     mainContext.setAsCurrent();
     mainContext.enableVSync();
 

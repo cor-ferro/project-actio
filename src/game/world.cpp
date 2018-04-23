@@ -213,4 +213,8 @@ namespace game {
     void World::cameraLookAt(vec3 target) {
         camera->lookAt(target);
     }
+
+    void World::setRenderSize(renderer::ScreenSize width, renderer::ScreenSize height) {
+        events.emit<events::RenderResize>(width, height);
+    }
 }

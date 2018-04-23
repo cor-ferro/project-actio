@@ -35,13 +35,24 @@ namespace renderer {
 			void stencilPass();
 			void finalPass();
 
+			void generateTextures();
+
+			renderer::ScreenSize getWidth();
+			renderer::ScreenSize getHeight();
+
+			void setWidth(renderer::ScreenSize newWidth);
+			void setHeight(renderer::ScreenSize newHeight);
+
 			GLuint fbo;
 
 		private:
+			renderer::ScreenSize width;
+			renderer::ScreenSize height;
+
 			std::vector<GLuint> textures;
 			GLuint rboDepth;
-			GLuint depthTexture;
-			GLuint finalTexture;
+			GLuint depthTexture = 0;
+			GLuint finalTexture = 0;
 
 		};
 	}

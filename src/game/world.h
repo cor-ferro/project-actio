@@ -80,6 +80,8 @@ namespace game {
 
         void cameraLookAt(vec3 target);
 
+        void setRenderSize(renderer::ScreenSize width, renderer::ScreenSize height);
+
     private:
         std::string name;
 
