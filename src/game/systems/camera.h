@@ -21,6 +21,7 @@
 #include "../components/base.h"
 #include "../context.h"
 #include "base.h"
+#include "../components/user_control.h"
 
 namespace game {
     namespace systems {
@@ -48,9 +49,9 @@ namespace game {
                 vec3 characterPosition(0.0f);
 
                 ex::ComponentHandle<components::Model> model;
-                ex::ComponentHandle<components::Controlled> control;
+                ex::ComponentHandle<components::UserControl> userControl;
                 ex::ComponentHandle<components::Transform> characterTransform;
-                for (ex::Entity entity : es.entities_with_components(model, control, characterTransform)) {
+                for (ex::Entity entity : es.entities_with_components(model, userControl, characterTransform)) {
                     characterPosition = characterTransform->getPosition();
                 }
 

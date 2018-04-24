@@ -26,11 +26,14 @@
 #include "../components/renderable.h"
 #include "../context.h"
 #include "base.h"
+#include "../components/character.h"
+#include "../components/user_control.h"
 
 namespace game {
     namespace systems {
         namespace ex = entityx;
         namespace px = physx;
+        namespace c = components;
 
         class Physic
                 : systems::BaseSystem
@@ -231,47 +234,69 @@ namespace game {
                         }
                 );
 
-                px::PxVec3 controlDir = this->controlDir;
-                px::PxVec3 gravity = gScene->getGravity();
 
-                es.each<components::Controlled, components::Transform, components::Skin>(
-                        [&elapsedTime, &controlDir, &gravity](
-                                ex::Entity entity,
-                                components::Controlled &control,
-                                components::Transform &transform,
-                                components::Skin &skin
-                        ) {
-                            if (control.isJump) {
-                                control.jumpForce += (gravity.y) * elapsedTime;
-                                control.disp.y += 0.1f * control.jumpForce;
-                            }
 
-                            const px::PxControllerCollisionFlags flags = control.controller->move(
-                                    px::PxVec3(control.disp.x, control.disp.y, control.disp.z), 0.01f, elapsedTime,
-                                    px::PxControllerFilters()
-                            );
+                es.each<c::Character, c::UserControl, c::Transform>([&elapsedTime, this](
+                        ex::Entity entity,
+                        c::Character &character,
+                        c::UserControl &userControl,
+                        c::Transform &transform
+                ) {
+                    px::PxVec3 gravity = gScene->getGravity();
 
-                            if (flags & px::PxControllerCollisionFlag::eCOLLISION_DOWN) {
-                                console::info("eCOLLISION_DOWN");
-                                control.isJump = false;
-                                control.jumpForce = 0.0f;
-                                control.disp.y = 0.0f;
-                            }
+                    if (character.isJump) {
+                        character.jump += (gravity.y) * elapsedTime;
+                        character.motion.y += 0.1f * character.jump;
+                    }
 
-                            if (flags & px::PxControllerCollisionFlag::eCOLLISION_UP)
-                                console::info("eCOLLISION_UP");
-                            if (flags & px::PxControllerCollisionFlag::eCOLLISION_SIDES)
-                                console::info("eCOLLISION_SIDES");
+                    const px::PxControllerCollisionFlags flags = userControl.controller->move(
+                            px::PxVec3(character.motion.x, character.motion.y, character.motion.z), 0.01f, elapsedTime,
+                            px::PxControllerFilters()
+                    );
 
-                            const px::PxExtendedVec3 &pxPos = control.controller->getFootPosition();
+                    if (flags & px::PxControllerCollisionFlag::eCOLLISION_DOWN) {
+                        console::info("eCOLLISION_DOWN");
+                        character.isJump = false;
+                        character.jump = 0.0f;
+                        character.motion.y = 0.0f;
+                    }
 
-                            transform.setPosition(
-                                    static_cast<float>(pxPos.x),
-                                    static_cast<float>(pxPos.y),
-                                    static_cast<float>(pxPos.z)
-                            );
-                        }
-                );
+                    if (flags & px::PxControllerCollisionFlag::eCOLLISION_UP)
+                        console::info("eCOLLISION_UP");
+                    if (flags & px::PxControllerCollisionFlag::eCOLLISION_SIDES)
+                        console::info("eCOLLISION_SIDES");
+
+                    const px::PxExtendedVec3 &pxPos = userControl.controller->getFootPosition();
+
+//                    const px::PxHitFlags outputFlags = px::PxHitFlag::ePOSITION|px::PxHitFlag::eNORMAL|px::PxHitFlag::eDISTANCE;
+//
+//                    px::PxQueryFilterData filterData;
+//                    filterData.flags = px::PxQueryFlag::eSTATIC;
+//
+//                    px::PxRaycastBuffer hit;
+//
+//                    px::PxVec3 rayOrigin(static_cast<float>(pxPos.x), static_cast<float>(pxPos.y), static_cast<float>(pxPos.z));
+//                    px::PxVec3 rayDir(0.0f, -1.0f, 0.0f);
+//                    px::PxReal rayDist = 0.5f;
+//
+//                    bool status = gScene->raycast(rayOrigin, rayDir, rayDist, hit);
+//                    if (status) {
+//                        console::info("has block: %i", hit.hasBlock);
+//                    } else {
+//                        console::info("no hit");
+//                    }
+
+                    if (!character.isJump && pxPos.y > 0.0f) {
+                        character.jump -= (gravity.y) * elapsedTime;
+                        character.motion.y -= 0.1f * character.jump;
+                    }
+
+                    transform.setPosition(
+                            static_cast<float>(pxPos.x),
+                            static_cast<float>(pxPos.y),
+                            static_cast<float>(pxPos.z)
+                    );
+                });
 
                 if (drawDebug) {
                     drawDebugBuffer(events);
@@ -514,7 +539,8 @@ namespace game {
 
                 auto *mController = static_cast<px::PxCapsuleController *>(gControllerManager->createController(cDesc));
 
-                entity.assign<components::Controlled>(mController);
+//                entity.assign<components::Controlled>(mController);
+                entity.assign<components::UserControl>(mController);
             }
 
             void receive(const events::KeyPress &event) {

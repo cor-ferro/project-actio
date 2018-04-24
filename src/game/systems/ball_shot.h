@@ -50,8 +50,13 @@ namespace game {
                             cameraTarget = camera.getTarget();
                         });
 
-                es.each<components::Model, components::Controlled, components::Transform>(
-                        [&charPosition, &charHeight](ex::Entity, components::Model &model, components::Controlled &control, components::Transform &transform) {
+                es.each<components::Model, components::UserControl, components::Transform>(
+                        [&charPosition, &charHeight](
+                                ex::Entity,
+                                components::Model &model,
+                                components::UserControl &userControl,
+                                components::Transform &transform
+                        ) {
                             charPosition = transform.getPosition();
                             charHeight = model.height() * transform.getScale().y;
                         });

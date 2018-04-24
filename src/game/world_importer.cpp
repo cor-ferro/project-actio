@@ -157,6 +157,7 @@ namespace game {
                 }
 
                 if (player) {
+                    entity.assign<components::Character>();
                     world->events.emit<events::SetupControlled>(entity);
                 }
             }

@@ -13,10 +13,12 @@
 #include "../events/mouse_press.h"
 #include "../context.h"
 #include "base.h"
+#include "../components/user_control.h"
 
 namespace game {
     namespace systems {
         namespace ex = entityx;
+        namespace c = components;
 
         class Input : public systems::BaseSystem
                       , public entityx::System<Input> {
@@ -62,6 +64,19 @@ namespace game {
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 worldContext->mousePosition.x = inputHandler->mouse.x;
                 worldContext->mousePosition.y = inputHandler->mouse.y;
+
+                InputHandler *inputHandler = this->inputHandler;
+
+                es.each<c::UserControl>([&inputHandler](
+                        ex::Entity entity,
+                        c::UserControl &userControl
+                ) {
+                    userControl.setLeftPress(inputHandler->isPress(InputHandler::KEY_A));
+                    userControl.setRightPress(inputHandler->isPress(InputHandler::KEY_D));
+                    userControl.setUpPress(inputHandler->isPress(InputHandler::KEY_W));
+                    userControl.setDownPress(inputHandler->isPress(InputHandler::KEY_S));
+                    userControl.setJumpPress(inputHandler->isPress(InputHandler::KEY_SPACE));
+                });
             }
 
         private:

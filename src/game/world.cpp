@@ -8,6 +8,7 @@
 #include "systems/animations.h"
 #include "systems/character_control.h"
 #include "systems/input.h"
+#include "systems/char_control.h"
 #include "components/transform.h"
 #include "components/state.h"
 #include "components/renderable.h"
@@ -29,7 +30,8 @@ namespace game {
         // pre update
         systems.update<game::systems::Input>(dt);
         systems.update<game::systems::Camera>(dt);
-        systems.update<game::systems::CharacterControl>(dt);
+        systems.update<game::systems::CharControl>(dt);
+//        systems.update<game::systems::CharacterControl>(dt);
         systems.update<game::systems::Physic>(dt);
         systems.update<game::systems::DayTime>(dt);
 
@@ -55,7 +57,8 @@ namespace game {
     }
 
     void World::setup() {
-        systems.add<game::systems::CharacterControl>(&context);
+        systems.add<game::systems::CharControl>(&context);
+        systems.add<game::systems::CharacterControl>(&context); // deprecated
         systems.add<game::systems::Animations>(&context);
         systems.add<game::systems::Physic>(&context);
         systems.add<game::systems::BallShot>(&context);
