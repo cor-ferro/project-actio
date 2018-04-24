@@ -268,24 +268,6 @@ namespace game {
 
                     const px::PxExtendedVec3 &pxPos = userControl.controller->getFootPosition();
 
-//                    const px::PxHitFlags outputFlags = px::PxHitFlag::ePOSITION|px::PxHitFlag::eNORMAL|px::PxHitFlag::eDISTANCE;
-//
-//                    px::PxQueryFilterData filterData;
-//                    filterData.flags = px::PxQueryFlag::eSTATIC;
-//
-//                    px::PxRaycastBuffer hit;
-//
-//                    px::PxVec3 rayOrigin(static_cast<float>(pxPos.x), static_cast<float>(pxPos.y), static_cast<float>(pxPos.z));
-//                    px::PxVec3 rayDir(0.0f, -1.0f, 0.0f);
-//                    px::PxReal rayDist = 0.5f;
-//
-//                    bool status = gScene->raycast(rayOrigin, rayDir, rayDist, hit);
-//                    if (status) {
-//                        console::info("has block: %i", hit.hasBlock);
-//                    } else {
-//                        console::info("no hit");
-//                    }
-
                     if (!character.isJump && pxPos.y > 0.0f) {
                         character.jump -= (gravity.y) * elapsedTime;
                         character.motion.y -= 0.1f * character.jump;
