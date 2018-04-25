@@ -22,6 +22,10 @@ namespace game {
 
             bool isJumpPress() { return jumpPress; }
 
+            bool isMainActionPress() { return mainActionPress; }
+
+            bool isSecondaryActionPress() { return secondaryActionPress; }
+
             void setLeftPress(bool value) { leftPress = value; }
 
             void setRightPress(bool value) { rightPress = value; }
@@ -32,6 +36,10 @@ namespace game {
 
             void setJumpPress(bool value) { jumpPress = value; }
 
+            void setIsMainActionPress(bool value) { mainActionPress = value; }
+
+            void setIsSecondaryActionPress(bool value) { secondaryActionPress = value; }
+
             PxController *controller = nullptr;
 
         private:
@@ -40,6 +48,8 @@ namespace game {
             bool upPress = false;
             bool downPress = false;
             bool jumpPress = false;
+            bool mainActionPress = false;
+            bool secondaryActionPress = false;
         };
     }
 }

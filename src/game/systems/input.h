@@ -76,6 +76,8 @@ namespace game {
                     userControl.setUpPress(inputHandler->isPress(InputHandler::KEY_W));
                     userControl.setDownPress(inputHandler->isPress(InputHandler::KEY_S));
                     userControl.setJumpPress(inputHandler->isPress(InputHandler::KEY_SPACE));
+                    userControl.setIsMainActionPress(inputHandler->isPress(InputHandler::MOUSE_BUTTON_LEFT));
+                    userControl.setIsSecondaryActionPress(inputHandler->isPress(InputHandler::MOUSE_BUTTON_RIGHT));
                 });
             }
 

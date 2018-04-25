@@ -10,19 +10,6 @@
 #include "console.h"
 #include "../renderer/window_context.h"
 
-enum KeyboardModifier {
-    KeyboardShift = 1,
-    KeyboardAlt = 2,
-    KeyboardCtrl = 4,
-    KeyboardMeta = 8,
-};
-
-enum MouseModifier {
-    MouseLeft = 1,
-    MouseMiddle = 2,
-    MouseRight = 4,
-};
-
 typedef float ScreenCoord;
 
 struct MousePosition {
@@ -32,10 +19,8 @@ struct MousePosition {
     ScreenCoord y;
 };
 
-typedef short int KeyCode;
-
 struct InputHandler {
-    enum KeyType {
+    enum KeyboardKey {
         KEY_W = GLFW_KEY_W,
         KEY_A = GLFW_KEY_A,
         KEY_S = GLFW_KEY_S,
@@ -84,6 +69,13 @@ struct InputHandler {
         KEY_PAUSE = GLFW_KEY_PAUSE,
     };
 
+    enum KeyboardModifier {
+        MODIFIER_SHIFT = GLFW_MOD_SHIFT,
+        MODIFIER_CONTROL = GLFW_MOD_CONTROL,
+        MODIFIER_ALT = GLFW_MOD_ALT,
+        MODIFIER_SUPER = GLFW_MOD_SUPER
+    };
+
     enum KeyAction {
         KEY_PRESS = GLFW_PRESS,
         KEY_RELEASE = GLFW_RELEASE,
@@ -104,21 +96,13 @@ struct InputHandler {
 
     explicit InputHandler(WindowContext &windowContext);
 
-    bool isPress(KeyCode);
+    bool isPress(KeyboardKey key);
 
-    bool isPress(KeyCode, KeyCode);
+    bool isPress(KeyboardKey key1, KeyboardKey key2);
 
-    bool isPress(KeyboardModifier, KeyCode);
+    bool isPress(KeyboardModifier, KeyboardKey);
 
-    bool isPress(MouseModifier);
-
-    void setKeyDown(KeyCode key);
-
-    void setKeyUp(KeyCode key);
-
-    void setModifierDown(KeyboardModifier modifier);
-
-    void setModifierUp(KeyboardModifier modifier);
+    bool isPress(MouseButton);
 
     void setMousePosition(ScreenCoord x, ScreenCoord y);
 
@@ -126,15 +110,11 @@ struct InputHandler {
 
     void setMouseStartPosition(ScreenCoord x, ScreenCoord y);
 
-    void setModifierDown(MouseModifier modifier);
-
-    void setModifierUp(MouseModifier modifier);
-
     void onKeyPress(int key, int scancode, int action, int mods);
 
     void onMouseMove(double x, double y);
 
-    void onMouseClick(int button, int state, int x, int y);
+    void onMouseClick(int button, int action, int mods);
 
     void onFrame();
 
@@ -153,15 +133,9 @@ struct InputHandler {
     Sensetivity sensetivity;
 
 private:
-    bool isKeyPress(KeyCode);
-
-    bool isModifierPress(KeyboardModifier);
-
-    bool isModifierPress(MouseModifier);
-
-    std::bitset<8> keyboardModifiers_;
-    std::bitset<8> mouseModifiers_;
-    std::map<KeyCode, bool> map_;
+    std::bitset<GLFW_KEY_LAST> keyboardKeys_;
+    std::bitset<GLFW_MOD_SUPER> keyboardModifiers_;
+    std::bitset<GLFW_MOUSE_BUTTON_LAST> mouseKeys_;
 
     WindowContext *window;
 };
