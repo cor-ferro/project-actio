@@ -13,6 +13,7 @@
 #include "components/light_spot.h"
 #include "components/camera.h"
 #include "components/target.h"
+#include "components/char_items.h"
 
 namespace game {
     WorldImporter::WorldImporter(World *world) : world(world) {}
@@ -85,10 +86,7 @@ namespace game {
                 section.getField("Animation", animation);
                 section.getField("Player", player);
 
-                entityx::Entity entity = world->entities.create();
-
                 rotQuat = glm::angleAxis(glm::radians(rot.w), vec3(rot.x, rot.y, rot.z));
-                entity.assign<components::Transform>(pos, rotQuat, scale);
 
                 if (geometryType == "file") {
                     Path p = createPath(std::string(RESOURCE_DIR), filePath); // move RESOURCE_DIR to app
@@ -114,26 +112,21 @@ namespace game {
                     const std::unique_ptr<Resource::Assimp> assimpResource(new Resource::Assimp(scene, pFile));
 
                     if (scene) {
-                        entityx::ComponentHandle<components::Model> model = entity.assign<components::Model>(
-                                assimpResource.get());
+                        World::Character character = world->createCharacter(assimpResource.get());
 
-                        if (isPhysic) {}
+                        World::Weapon characterWeapon = world->createWeapon();
 
-                        if (assimpResource->hasAnimations()) {
-                            entityx::ComponentHandle<components::Skin> skin = entity.assign<components::Skin>(assimpResource.get());
+                        character.transform->setAffineTransform(pos, rotQuat, scale);
+                        character.items->add(characterWeapon.getEntity());
+                        character.items->setActiveItem(characterWeapon.getEntity());
 
-                            auto nodeIndexes = skin->getNodeIndexes();
-                            model->reindexMeshBones(nodeIndexes);
-
-                            if (!animation.empty()) {
-                                skin->setCurrentAnimation(animation);
-                            }
+                        if (!animation.empty()) {
+                            character.skin->setCurrentAnimation(animation);
                         }
 
-                        for (Mesh *mesh : model->getMeshes()) {
-                            world->events.emit<game::events::RenderSetupMesh>(entity, mesh);
+                        if (player) {
+                            world->events.emit<events::SetupControlled>(character.getEntity());
                         }
-
                     } else {
                         console::err("failed model loading %s", importer.GetErrorString());
                     }
@@ -148,17 +141,13 @@ namespace game {
                     GeometryPrimitive::Box(mesh->geometry, size.x, size.y, size.z);
                     mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
 
-                    entity.assign<components::Model>(mesh);
+                    World::StaticObject object = world->createStaticObject(mesh);
+
+                    object.transform->setAffineTransform(pos, rotQuat, scale);
 
                     if (isPhysic) {
-                        world->events.emit<events::PhysicCreateBox>(entity, size.x, size.y, size.z);
+                        world->events.emit<events::PhysicCreateBox>(object.getEntity(), size.x, size.y, size.z);
                     }
-                    world->events.emit<events::RenderSetupMesh>(entity, mesh);
-                }
-
-                if (player) {
-                    entity.assign<components::Character>();
-                    world->events.emit<events::SetupControlled>(entity);
                 }
             }
         }

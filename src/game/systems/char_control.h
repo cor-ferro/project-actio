@@ -22,6 +22,7 @@
 #include "base.h"
 #include "../components/transform.h"
 #include "../components/character.h"
+#include "../components/char_items.h"
 #include "../components/user_control.h"
 #include "../components/ai_control.h"
 
@@ -32,18 +33,22 @@ namespace game {
 
         class CharControl
                 : systems::BaseSystem
-                  , public entityx::System<CharControl> {
+                  , public entityx::System<CharControl>
+                  , public ex::Receiver<CharControl> {
         public:
-            explicit CharControl(Context *context) : systems::BaseSystem(context) {}
+            explicit CharControl(Context *context)
+                    : systems::BaseSystem(context) {}
 
-            void configure() {
-
+            void configure(ex::EntityManager &es, entityx::EventManager &events) {
+                events.subscribe<events::MousePress>(*this);
+                entityManager = &es;
             }
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
-                es.each<c::Character, c::UserControl, c::Transform, c::Skin>([&dt](
+                es.each<c::Character, c::CharItems, c::UserControl, c::Transform, c::Skin>([&dt](
                         ex::Entity entity,
                         c::Character &character,
+                        c::CharItems &charItems,
                         c::UserControl &userControl,
                         c::Transform &transform,
                         c::Skin &skin
@@ -57,6 +62,7 @@ namespace game {
 
                     const float minZAxis = character.walkSpeed * -1.0f;
                     const float maxZAxis = character.walkSpeed;
+
 
                     if (!userControl.isLeftPress() && !userControl.isRightPress()) {
                         character.motionDelta.z = 0.0f;
@@ -76,7 +82,7 @@ namespace game {
 
                     switch (character.viewSide) {
                         case c::Character::ViewSide::Left:
-                            character.viewAngle+= ANGLE_PER_TICK;
+                            character.viewAngle += ANGLE_PER_TICK;
                             break;
                         case c::Character::ViewSide::Right:
                             character.viewAngle -= ANGLE_PER_TICK;
@@ -125,10 +131,27 @@ namespace game {
                 });
             }
 
+            void receive(const events::MousePress &event) {
+                if (event.button == InputHandler::MOUSE_BUTTON_LEFT && event.action == InputHandler::KEY_PRESS) {
+                    vec3 mousePos = worldContext->mouseWorldPosition;
+
+                    entityManager->each<c::Character, c::CharItems, c::UserControl>([&mousePos](
+                            ex::Entity entity,
+                            c::Character &character,
+                            c::CharItems &charItems,
+                            c::UserControl &userControl
+                    ) {
+                        charItems.execActiveItem(mousePos);
+                    });
+                }
+            }
+
         private:
             void handleUserControl() {}
 
             void handleAiControl() {}
+
+            ex::EntityManager *entityManager = nullptr;
         };
     }
 }

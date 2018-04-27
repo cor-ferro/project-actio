@@ -18,6 +18,7 @@ struct Object3D {
 	vec3 getScale();
 
 	void rotate(quat rotateQuat);
+	void setAffineTransform(vec3 &pos, quat &rot, vec3 &scale);
 	void setPosition(vec3 vec);
 	void setScale(vec3 vec);
 	void setScale(float s);

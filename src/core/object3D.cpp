@@ -22,6 +22,12 @@ void Object3D::rotate(quat rotateQuat) {
     modelMatrix = modelMatrix * glm::mat4_cast(rotateQuat);
 }
 
+void Object3D::setAffineTransform(vec3 &pos, quat &rot, vec3 &scale) {
+    setPosition(pos);
+    setQuaternion(rot);
+    setScale(scale);
+}
+
 void Object3D::setPosition(vec3 vector) {
     position = vector;
 

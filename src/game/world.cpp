@@ -22,6 +22,10 @@
 #include "components/light_directional.h"
 #include "desc/light_spot.h"
 #include "systems/day_time.h"
+#include "systems/weapons.h"
+#include "components/char_items.h"
+#include "events/character_create.h"
+#include "events/character_remove.h"
 
 namespace game {
     World::World() : name("") {}
@@ -36,6 +40,7 @@ namespace game {
         systems.update<game::systems::DayTime>(dt);
 
         // main update
+        systems.update<game::systems::Weapons>(dt);
         systems.update<game::systems::BallShot>(dt);
 
         // post update
@@ -64,6 +69,7 @@ namespace game {
         systems.add<game::systems::BallShot>(&context);
         systems.add<game::systems::LightHelpers>(&context);
         systems.add<game::systems::DayTime>(&context);
+        systems.add<game::systems::Weapons>(&context);
 
         systems.configure();
 
@@ -95,6 +101,60 @@ namespace game {
         // object.position = position;
         // object.frozen = false;
         // object.hidden = false;
+    }
+
+    World::Character World::createCharacter(Resource::Assimp* resource) {
+        ex::Entity entity = entities.create();
+
+        World::Character character(entity, resource);
+
+        for (Mesh *mesh : character.model->getMeshes()) {
+            events.emit<game::events::RenderSetupMesh>(entity, mesh);
+        }
+
+//        characters.insert(character);
+
+        events.emit<events::CharacterCreate>();
+
+        return character;
+    }
+
+    void World::removeCharacter(World::Character character) {
+        ex::Entity entity = character.getEntity();
+
+        events.emit<events::CharacterRemove>();
+
+        entity.destroy();
+    }
+
+    World::StaticObject World::createStaticObject(Mesh* mesh) {
+        ex::Entity entity = entities.create();
+
+        World::StaticObject object(entity, mesh);
+
+        for (Mesh *mesh : object.model->getMeshes()) {
+            events.emit<game::events::RenderSetupMesh>(entity, mesh);
+        }
+
+        return object;
+    }
+
+    void World::removeStaticObject(World::StaticObject object) {
+        ex::Entity entity = object.getEntity();
+
+        entity.destroy();
+    }
+
+    World::Weapon World::createWeapon() {
+        ex::Entity entity = entities.create();
+
+        desc::Weapon description;
+        description.name = "rocket launcher";
+        description.fireRate = 0.1f;
+
+        World::Weapon weapon(entity, description);
+
+        return weapon;
     }
 
     void World::add() {
@@ -181,14 +241,14 @@ namespace game {
     }
 
     void World::destroy() {
-        for (WorldObject<Character> &object : characters) {
-            if (object.object != nullptr) {
-                delete object.object;
-                object.object = nullptr;
-            }
-        }
-
-        characters.erase(characters.begin(), characters.end());
+//        for (WorldObject<Character> &object : characters) {
+//            if (object.object != nullptr) {
+//                delete object.object;
+//                object.object = nullptr;
+//            }
+//        }
+//
+//        characters.erase(characters.begin(), characters.end());
 
         console::info("world %s destroyed", name);
     }
