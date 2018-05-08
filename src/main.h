@@ -47,7 +47,7 @@ void printMemoryStatus();
 struct WorldSettings {
     WorldSettings() {}
 
-    WorldSettings(const WorldSettings& other) {
+    WorldSettings(const WorldSettings &other) {
         debugPhysics = other.debugPhysics;
         debugLight = other.debugLight;
         cameraFov = other.cameraFov;
@@ -64,6 +64,6 @@ struct WorldSettings {
     float cameraFar = 500.0f;
 };
 
-memory::FreeListAllocator * imageAllocator = nullptr;
-memory::PoolAllocator * modelsAllocator = nullptr;
-memory::PoolAllocator * meshAllocator = nullptr;
+memory::FreeListAllocator *imageAllocator = nullptr;
+memory::PoolAllocator *modelsAllocator = nullptr;
+memory::PoolAllocator *meshAllocator = nullptr;
