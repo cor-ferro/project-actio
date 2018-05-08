@@ -32,9 +32,7 @@ namespace game {
                   , public entityx::System<Camera>
                   , public entityx::Receiver<Camera> {
         public:
-            explicit Camera(Context *context, InputHandler *ih)
-                    : inputHandler(ih)
-                    , systems::BaseSystem(context) {}
+            explicit Camera(Context *context) : systems::BaseSystem(context) {}
 
             void configure(ex::EntityManager &es, entityx::EventManager &events) {
                 events.subscribe<events::KeyPress>(*this);
@@ -43,9 +41,10 @@ namespace game {
                 entityManager = &es;
             }
 
-            void postConfigure(entityx::EventManager &events) {}
-
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
+                InputHandler *input = worldContext->input;
+                if (input == nullptr) return;
+
                 vec3 characterPosition(0.0f);
 
                 ex::ComponentHandle<components::Model> model;
@@ -70,7 +69,7 @@ namespace game {
                     camera->position_ = newPosition;
                     camera->view_ = glm::lookAt(newPosition, newTarget, vec3(0.0f, 1.0f, 0.0f));
 
-                    vec3 original(inputHandler->mouse.x, worldContext->windowHeight - inputHandler->mouse.y, 0.0f);
+                    vec3 original(worldContext->mousePosition.x, worldContext->windowHeight - input->mouse.y, 0.0f);
                     vec4 viewport(0.0f, 0.0f, worldContext->windowWidth, worldContext->windowHeight);
                     mat4 frustum = glm::perspective(
                             glm::radians(camera->getParam(CameraParam::FOV)),
@@ -84,25 +83,22 @@ namespace game {
             }
 
             void updateCamera1(ex::ComponentHandle<components::Camera> camera) {
-                float speedX = glm::abs(inputHandler->mouseMoved.x * inputHandler->sensetivity.speedFactor);
-                float speedY = glm::abs(inputHandler->mouseMoved.y * inputHandler->sensetivity.speedFactor);
+                InputHandler *input = worldContext->input;
+                if (input == nullptr) return;
+
+                float speedX = glm::abs(input->mouseMoved.x * input->sensetivity.speedFactor);
+                float speedY = glm::abs(input->mouseMoved.y * input->sensetivity.speedFactor);
 
                 float angleX =
-                        inputHandler->mouseMoved.y * 0.03f * -glm::pow(speedX, inputHandler->sensetivity.sensetivity);
+                        input->mouseMoved.y * 0.03f * -glm::pow(speedX, input->sensetivity.sensetivity);
                 float angleY =
-                        inputHandler->mouseMoved.x * 0.03f * -glm::pow(speedY, inputHandler->sensetivity.sensetivity);
+                        input->mouseMoved.x * 0.03f * -glm::pow(speedY, input->sensetivity.sensetivity);
 
                 if (angleY > 100.0f) {
-                    console::info("over angle y %f %i", angleY, inputHandler->mouseMoved.x);
-                    console::info("details %i %i %i", inputHandler->mouseMoved.x, inputHandler->mouseStart.x,
-                                  inputHandler->mouse.x);
                     angleY = 10.0f;
                 }
 
                 if (angleX > 100.0f) {
-                    console::info("over angle x %i", angleX);
-                    console::info("details %i %i %i", inputHandler->mouseMoved.y, inputHandler->mouseStart.y,
-                                  inputHandler->mouse.y);
                     angleX = 10.0f;
                 }
 
@@ -124,25 +120,27 @@ namespace game {
 
                 vec3 left = glm::normalize(glm::cross(front, cameraUp));
 
-                if (inputHandler->isPress(InputHandler::KEY_W)) cameraPosition -= speed * front;
-                if (inputHandler->isPress(InputHandler::KEY_S)) cameraPosition += speed * front;
-                if (inputHandler->isPress(InputHandler::KEY_A)) cameraPosition += left * speed;
-                if (inputHandler->isPress(InputHandler::KEY_D)) cameraPosition -= left * speed;
-                if (inputHandler->isPress(InputHandler::KEY_C)) cameraPosition -= vec3(0.0f, 0.1f, 0.0f);
-                if (inputHandler->isPress(InputHandler::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
+                if (input->isPress(InputHandler::KEY_W)) cameraPosition -= speed * front;
+                if (input->isPress(InputHandler::KEY_S)) cameraPosition += speed * front;
+                if (input->isPress(InputHandler::KEY_A)) cameraPosition += left * speed;
+                if (input->isPress(InputHandler::KEY_D)) cameraPosition -= left * speed;
+                if (input->isPress(InputHandler::KEY_C)) cameraPosition -= vec3(0.0f, 0.1f, 0.0f);
+                if (input->isPress(InputHandler::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
 
                 camera->setRotation(cameraRotation);
                 camera->setPosition(cameraPosition);
-//                setIsChanged(true);
             }
 
             void updateCameraFree(ex::ComponentHandle<components::Camera> camera, ex::TimeDelta dt) {
+                InputHandler *input = worldContext->input;
+                if (input == nullptr) return;
+
                 vec3 cameraPosition = camera->getPosition();
                 const vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
                 if (isCameraRotateEnabled) {
-                    yaw += inputHandler->mouseMoved.x * -0.03f;
-                    pitch += inputHandler->mouseMoved.y * 0.03f;
+                    yaw += input->mouseMoved.x * -0.03f;
+                    pitch += input->mouseMoved.y * 0.03f;
 
                     if (pitch > 89.0f)
                         pitch = 89.0f;
@@ -159,20 +157,22 @@ namespace game {
                     vec3 forwardDirection = camera->target_ * speed;
                     vec3 sideDirection = glm::normalize(glm::cross(camera->target_, cameraUp)) * speed;
 
-                    if (inputHandler->isPress(InputHandler::KEY_W)) cameraPosition += forwardDirection;
-                    if (inputHandler->isPress(InputHandler::KEY_S)) cameraPosition -= forwardDirection;
-                    if (inputHandler->isPress(InputHandler::KEY_A)) cameraPosition -= sideDirection;
-                    if (inputHandler->isPress(InputHandler::KEY_D)) cameraPosition += sideDirection;
-                    if (inputHandler->isPress(InputHandler::KEY_C)) cameraPosition -= vec3(0.0f, 0.1f, 0.0f);
-                    if (inputHandler->isPress(InputHandler::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
+                    if (input->isPress(InputHandler::KEY_W)) cameraPosition += forwardDirection;
+                    if (input->isPress(InputHandler::KEY_S)) cameraPosition -= forwardDirection;
+                    if (input->isPress(InputHandler::KEY_A)) cameraPosition -= sideDirection;
+                    if (input->isPress(InputHandler::KEY_D)) cameraPosition += sideDirection;
+                    if (input->isPress(InputHandler::KEY_C)) cameraPosition -= vec3(0.0f, 0.1f, 0.0f);
+                    if (input->isPress(InputHandler::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
                 }
 
                 newPosition = cameraPosition;
                 newTarget = cameraPosition + camera->target_;
-                setIsChanged(true);
             }
 
             void updateCameraSide(ex::ComponentHandle<components::Camera> camera, vec3 &sideTarget, ex::TimeDelta dt) {
+                InputHandler *input = worldContext->input;
+                if (input == nullptr) return;
+
                 vec3 cameraPosition = camera->getPosition();
                 const vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
@@ -180,17 +180,16 @@ namespace game {
                     vec3 forwardDirection = camera->target_ * speed;
                     vec3 sideDirection = glm::normalize(glm::cross(camera->target_, cameraUp)) * speed;
 
-                    if (inputHandler->isPress(InputHandler::KEY_W)) cameraPosition += forwardDirection;
-                    if (inputHandler->isPress(InputHandler::KEY_S)) cameraPosition -= forwardDirection;
-                    if (inputHandler->isPress(InputHandler::KEY_A)) cameraPosition -= sideDirection;
-                    if (inputHandler->isPress(InputHandler::KEY_D)) cameraPosition += sideDirection;
-                    if (inputHandler->isPress(InputHandler::KEY_C)) cameraPosition -= vec3(0.0f, 0.1f, 0.0f);
-                    if (inputHandler->isPress(InputHandler::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
+                    if (input->isPress(InputHandler::KEY_W)) cameraPosition += forwardDirection;
+                    if (input->isPress(InputHandler::KEY_S)) cameraPosition -= forwardDirection;
+                    if (input->isPress(InputHandler::KEY_A)) cameraPosition -= sideDirection;
+                    if (input->isPress(InputHandler::KEY_D)) cameraPosition += sideDirection;
+                    if (input->isPress(InputHandler::KEY_C)) cameraPosition -= vec3(0.0f, 0.1f, 0.0f);
+                    if (input->isPress(InputHandler::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
                 }
 
                 newPosition = vec3(-20.0f, 4.0f, sideTarget.z);
                 newTarget = vec3(sideTarget.x, 4.0f, sideTarget.z);
-                setIsChanged(true);
             }
 
             void lookAt(vec3 target) {
@@ -243,13 +242,8 @@ namespace game {
                 }
             }
 
-            void setIsChanged(bool value) {
-                isChanged = value;
-            }
-
         private:
             ex::EntityManager *entityManager = nullptr;
-            InputHandler *inputHandler;
 
             vec3 newPosition;
             vec3 newTarget;
@@ -261,8 +255,6 @@ namespace game {
 
             bool isCameraRotateEnabled = false;
             bool isCameraTranslationEnabled = false;
-
-            bool isChanged = false;
         };
     }
 }

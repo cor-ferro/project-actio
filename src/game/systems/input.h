@@ -4,6 +4,7 @@
 #include <entityx/entityx.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <queue>
 #include "../events/key_press.h"
 #include "../components/transform.h"
 #include "../components/camera.h"
@@ -14,6 +15,7 @@
 #include "../context.h"
 #include "base.h"
 #include "../components/user_control.h"
+#include "../events/input.h"
 
 namespace game {
     namespace systems {
@@ -21,8 +23,15 @@ namespace game {
         namespace c = components;
 
         class Input : public systems::BaseSystem
-                      , public entityx::System<Input> {
+                      , public ex::System<Input>
+                      , public ex::Receiver<Input> {
         public:
+            enum InputPlace {
+                Input1 = 1,
+                Input2 = 2,
+                InputAny = 3
+            };
+
             enum Key {
                 KEY_SPACE = InputHandler::KEY_SPACE,
                 KEY_ENTER = InputHandler::KEY_ENTER,
@@ -41,48 +50,121 @@ namespace game {
             };
 
             enum MouseButton {
-                MOUSE_BUTTON_LEFT = InputHandler::MOUSE_BUTTON_LEFT,
-                MOUSE_BUTTON_MIDDLE = InputHandler::MOUSE_BUTTON_MIDDLE,
-                MOUSE_BUTTON_RIGHT = InputHandler::MOUSE_BUTTON_RIGHT
+                MOUSE_LEFT = InputHandler::MOUSE_BUTTON_LEFT,
+                MOUSE_MIDDLE = InputHandler::MOUSE_BUTTON_MIDDLE,
+                MOUSE_RIGHT = InputHandler::MOUSE_BUTTON_RIGHT
             };
 
-            explicit Input(Context *context, InputHandler *ih)
-                    : inputHandler(ih)
-                    , systems::BaseSystem(context) {}
+            explicit Input(Context *context) : systems::BaseSystem(context) {}
 
-            void configure(entityx::EventManager &event_manager) {
-                inputHandler->subscribeKeyPress([&event_manager](int key, int scancode, int action, int mods) {
-                    if (action == InputHandler::KEY_REPEAT) return;
-                    event_manager.emit<events::KeyPress>(key, scancode, action, mods);
-                });
-
-                inputHandler->subscribeMousePress([&event_manager](int button, int action, int mods) {
-                    event_manager.emit<events::MousePress>(button, action, mods);
-                });
+            void configure(entityx::EventManager &events) {
+                events.subscribe<events::InputSetHandler>(*this);
             }
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
-                worldContext->mousePosition.x = inputHandler->mouse.x;
-                worldContext->mousePosition.y = inputHandler->mouse.y;
+                while (!inputMouseQueue.empty()) {
+                    events::MousePress &event = inputMouseQueue.front();
 
-                InputHandler *inputHandler = this->inputHandler;
+                    events.emit<events::MousePress>(event);
 
-                es.each<c::UserControl>([&inputHandler](
-                        ex::Entity entity,
-                        c::UserControl &userControl
-                ) {
-                    userControl.setLeftPress(inputHandler->isPress(InputHandler::KEY_A));
-                    userControl.setRightPress(inputHandler->isPress(InputHandler::KEY_D));
-                    userControl.setUpPress(inputHandler->isPress(InputHandler::KEY_W));
-                    userControl.setDownPress(inputHandler->isPress(InputHandler::KEY_S));
-                    userControl.setJumpPress(inputHandler->isPress(InputHandler::KEY_SPACE));
-                    userControl.setIsMainActionPress(inputHandler->isPress(InputHandler::MOUSE_BUTTON_LEFT));
-                    userControl.setIsSecondaryActionPress(inputHandler->isPress(InputHandler::MOUSE_BUTTON_RIGHT));
+                    inputMouseQueue.pop();
+                }
+
+                while (!inputKeyboardQueue.empty()) {
+                    events::KeyPress &event = inputKeyboardQueue.front();
+
+                    events.emit<events::KeyPress>(event);
+
+                    inputKeyboardQueue.pop();
+                }
+
+                if (input1 != nullptr) {
+                    worldContext->mousePosition.x = input1->mouse.x;
+                    worldContext->mousePosition.y = input1->mouse.y;
+
+                    es.each<c::UserControl>([&](ex::Entity entity, c::UserControl &userControl) {
+                        userControl.setLeftPress(isPress(Input1, KEY_A));
+                        userControl.setRightPress(isPress(Input1, KEY_D));
+                        userControl.setUpPress(isPress(Input1, KEY_W));
+                        userControl.setDownPress(isPress(Input1, KEY_S));
+                        userControl.setJumpPress(isPress(Input1, KEY_SPACE));
+                        userControl.setIsMainActionPress(isPress(Input1, MOUSE_LEFT));
+                        userControl.setIsSecondaryActionPress(isPress(Input1, MOUSE_RIGHT));
+                    });
+                }
+            }
+
+            void receive(const events::InputSetHandler &event) {
+                switch (event.place) {
+                    case 1: input1 = event.inputHandler; break;
+                    case 2: input2 = event.inputHandler; break;
+                    default: console::warn("unknown place");
+                }
+
+                std::queue<events::MousePress> *inputMouseQueue = &this->inputMouseQueue;
+                std::queue<events::KeyPress> *inputKeyboardQueue = &this->inputKeyboardQueue;
+
+                event.inputHandler->subscribeMousePress([inputMouseQueue](int button, int action, int mods) {
+                    inputMouseQueue->push(events::MousePress(button, action, mods));
+                });
+
+                event.inputHandler->subscribeKeyPress([inputKeyboardQueue](int key, int scancode, int action, int mods) {
+                    inputKeyboardQueue->push(events::KeyPress(key, scancode, action, mods));
                 });
             }
 
+            inline bool isPress(InputPlace place, Key key) const {
+                switch (place) {
+                    case Input1:
+                        if (input1 == nullptr) return false;
+                        return input1->isPress(static_cast<InputHandler::KeyboardKey>(key));
+                    case Input2:
+                        if (input2 == nullptr) return false;
+                        return input2->isPress(static_cast<InputHandler::KeyboardKey>(key));
+                    default:
+                        console::warn("unknown input place");
+                }
+            }
+
+            inline bool isPress(InputPlace place, MouseButton key) const {
+                switch (place) {
+                    case Input1:
+                        if (input1 == nullptr) return false;
+                        return input1->isPress(static_cast<InputHandler::MouseButton>(key));
+                    case Input2:
+                        if (input2 == nullptr) return false;
+                        return input2->isPress(static_cast<InputHandler::MouseButton>(key));
+                    default:
+                        console::warn("unknown input place");
+                }
+            }
+
+            InputHandler *getHandler(InputPlace place) {
+                switch (place) {
+                    case Input1: return input1;
+                    case Input2: return input2;
+                    default:
+                        return nullptr;
+                }
+            }
+
         private:
-            InputHandler *inputHandler;
+            void configureInput(InputHandler *inputHandler) {
+//                inputHandler->subscribeKeyPress([&event_manager](int key, int scancode, int action, int mods) {
+//                    if (action == InputHandler::KEY_REPEAT) return;
+//                    event_manager.emit<events::KeyPress>(key, scancode, action, mods);
+//                });
+//
+//                inputHandler->subscribeMousePress([&event_manager](int button, int action, int mods) {
+//                    event_manager.emit<events::MousePress>(button, action, mods);
+//                });
+            }
+
+            std::queue<events::MousePress> inputMouseQueue;
+            std::queue<events::KeyPress> inputKeyboardQueue;
+
+            InputHandler *input1 = nullptr;
+            InputHandler *input2 = nullptr;
         };
     }
 }

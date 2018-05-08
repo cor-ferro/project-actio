@@ -11,6 +11,7 @@
 #include "character.h"
 #include "components/skin.h"
 #include "../lib/console.h"
+#include "../lib/watch.h"
 #include "../lib/input_handler.h"
 #include "../resources/file_resource.h"
 #include "../lib/ini_loader.h"
@@ -24,6 +25,8 @@
 #include "components/char_items.h"
 #include "components/weapon.h"
 #include "desc/weapon.h"
+#include "weapon_handler.h"
+#include "systems/input.h"
 
 namespace game {
     namespace ex = entityx;
@@ -34,28 +37,39 @@ namespace game {
     typedef glm::mat4 mat4;
 
     struct World : ex::EntityX {
+        /**
+         * Base world object
+         */
         class WorldObject {
         public:
+            explicit WorldObject(ex::Entity &fromEntity) {
+                assert(fromEntity.valid());
+                entity_ = fromEntity;
+
+                transform = entity_.assign<c::Transform>();
+            }
+
             ex::Entity getEntity() {
                 return entity_;
             }
 
             ex::ComponentHandle<c::Transform> transform;
         protected:
+            explicit WorldObject() = default;
+
             ex::Entity entity_;
         };
 
+
+        /**
+         * Character of world
+         */
         class Character : public WorldObject {
         public:
-            Character(ex::Entity &fromEntity, Resource::Assimp* resource) {
-                assert(fromEntity.valid());
-
-                entity_ = fromEntity;
-
+            Character(ex::Entity &fromEntity, Resource::Assimp *resource) : WorldObject(fromEntity) {
                 model = entity_.assign<components::Model>(resource);
                 character = entity_.assign<c::Character>();
                 items = entity_.assign<c::CharItems>();
-                transform = entity_.assign<c::Transform>();
 
                 if (resource->hasAnimations()) {
                     skin = entity_.assign<components::Skin>(resource);
@@ -87,18 +101,17 @@ namespace game {
             ex::ComponentHandle<c::Character> character;
             ex::ComponentHandle<c::CharItems> items;
         private:
-            Character() = default;
+            explicit Character() = default;
         };
 
+
+        /**
+         * Static object of world, i.e. tree, wall...
+         */
         class StaticObject : public WorldObject {
         public:
-            StaticObject(ex::Entity &fromEntity, Mesh* mesh) {
-                assert(fromEntity.valid());
-
-                entity_ = fromEntity;
-
+            StaticObject(ex::Entity &fromEntity, Mesh *mesh) : WorldObject(fromEntity) {
                 model = entity_.assign<c::Model>(mesh);
-                transform = entity_.assign<c::Transform>();
             }
 
             StaticObject(const StaticObject &other) = default;
@@ -107,18 +120,17 @@ namespace game {
 
             ex::ComponentHandle<c::Model> model;
         private:
-            StaticObject() = default;
+            explicit StaticObject() = default;
         };
 
+
+        /**
+         * Base weapon of world
+         */
         class Weapon : public WorldObject {
         public:
-            Weapon(ex::Entity &fromEntity, desc::Weapon description) {
-                assert(fromEntity.valid());
-
-                entity_ = fromEntity;
-
-                weapon = entity_.assign<c::Weapon>(description);
-                transform = entity_.assign<c::Transform>();
+            Weapon(ex::Entity &fromEntity, desc::Weapon description, WeaponHandler *handler) : WorldObject(fromEntity) {
+                weapon = entity_.assign<c::Weapon>(description, handler);
             }
 
             Weapon(const Weapon &other) = default;
@@ -127,10 +139,13 @@ namespace game {
 
             ex::ComponentHandle<c::Weapon> weapon;
         private:
-            Weapon() = default;
+            explicit Weapon() = default;
         };
 
 
+        /**
+         * World constructor
+         */
         World();
 
         void setupRenderer(renderer::Renderer *);
@@ -147,11 +162,11 @@ namespace game {
 
         void spawn(Character *character, glm::vec3 pos);
 
-        World::Character createCharacter(Resource::Assimp* resource);
+        World::Character createCharacter(Resource::Assimp *resource);
 
         void removeCharacter(World::Character character);
 
-        World::StaticObject createStaticObject(Mesh* mesh);
+        World::StaticObject createStaticObject(Mesh *mesh);
 
         void removeStaticObject(World::StaticObject object);
 
@@ -185,6 +200,10 @@ namespace game {
 
         void setRenderSize(renderer::ScreenSize width, renderer::ScreenSize height);
 
+        void setInput(int place, InputHandler *ih);
+
+        void removeInput(systems::Input::InputPlace place);
+
     private:
         std::string name;
 
@@ -192,6 +211,9 @@ namespace game {
 
         std::shared_ptr<game::systems::Physic> physic = nullptr;
         std::shared_ptr<game::systems::Camera> camera = nullptr;
+
+        InputHandler *input1 = nullptr;
+        InputHandler *input2 = nullptr;
 
         Context context;
     };

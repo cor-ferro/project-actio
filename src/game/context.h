@@ -15,6 +15,7 @@ namespace game {
         float windowHeight;
         vec2 mousePosition;
         vec3 mouseWorldPosition;
+        InputHandler *input = nullptr;
     };
 }
 

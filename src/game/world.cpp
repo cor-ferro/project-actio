@@ -26,9 +26,12 @@
 #include "components/char_items.h"
 #include "events/character_create.h"
 #include "events/character_remove.h"
+#include "events/input.h"
 
 namespace game {
-    World::World() : name("") {}
+    World::World() : name("") {
+
+    }
 
     void World::update(ex::TimeDelta dt) {
         // pre update
@@ -56,34 +59,30 @@ namespace game {
         systems.add<game::systems::Render>(&context, renderer);
     }
 
-    void World::setupInput(InputHandler *ih) {
-        systems.add<game::systems::Input>(&context, ih);
-        systems.add<game::systems::Camera>(&context, ih);
-    }
-
     void World::setup() {
-        systems.add<game::systems::CharControl>(&context);
-        systems.add<game::systems::CharacterControl>(&context); // deprecated
-        systems.add<game::systems::Animations>(&context);
-        systems.add<game::systems::Physic>(&context);
-        systems.add<game::systems::BallShot>(&context);
-        systems.add<game::systems::LightHelpers>(&context);
-        systems.add<game::systems::DayTime>(&context);
-        systems.add<game::systems::Weapons>(&context);
+//        entities.each<c::Model, c::Skin, c::Character, c::CharItems>([](ex::Entity, c::Model &, c::Skin &, c::Character &, c::CharItems &) {});
+
+        systems.add<systems::Input>(&context);
+        systems.add<systems::Camera>(&context);
+        systems.add<systems::CharControl>(&context);
+        systems.add<systems::CharacterControl>(&context); // deprecated
+        systems.add<systems::Animations>(&context);
+        systems.add<systems::Physic>(&context);
+        systems.add<systems::BallShot>(&context);
+        systems.add<systems::LightHelpers>(&context);
+        systems.add<systems::DayTime>(&context);
+        systems.add<systems::Weapons>(&context);
 
         systems.configure();
 
         camera = systems.system<game::systems::Camera>();
-
         physic = systems.system<game::systems::Physic>();
-        physic->setDrawDebug(true);
+
         physic->postConfigure(events);
 
-        camera->postConfigure(events);
-
-        console::info("world configure end");
-
         initGroundPlane();
+
+        console::info("world configure success");
     }
 
     inline void World::spawn(Character *character) {
@@ -103,7 +102,7 @@ namespace game {
         // object.hidden = false;
     }
 
-    World::Character World::createCharacter(Resource::Assimp* resource) {
+    World::Character World::createCharacter(Resource::Assimp *resource) {
         ex::Entity entity = entities.create();
 
         World::Character character(entity, resource);
@@ -127,7 +126,7 @@ namespace game {
         entity.destroy();
     }
 
-    World::StaticObject World::createStaticObject(Mesh* mesh) {
+    World::StaticObject World::createStaticObject(Mesh *mesh) {
         ex::Entity entity = entities.create();
 
         World::StaticObject object(entity, mesh);
@@ -152,7 +151,11 @@ namespace game {
         description.name = "rocket launcher";
         description.fireRate = 0.1f;
 
-        World::Weapon weapon(entity, description);
+        std::shared_ptr<game::systems::Weapons> weaponSystem = systems.system<game::systems::Weapons>();
+
+        WeaponHandler *weaponHandler = static_cast<WeaponHandler *>(weaponSystem.get());
+
+        World::Weapon weapon(entity, description, weaponHandler);
 
         return weapon;
     }
@@ -279,5 +282,15 @@ namespace game {
 
     void World::setRenderSize(renderer::ScreenSize width, renderer::ScreenSize height) {
         events.emit<events::RenderResize>(width, height);
+    }
+
+    void World::setInput(int place, InputHandler *ih) {
+        console::info(" SET INPUT %i", ih);
+        context.input = ih;
+        events.emit<events::InputSetHandler>(ih, place);
+    }
+
+    void World::removeInput(systems::Input::InputPlace place) {
+
     }
 }
