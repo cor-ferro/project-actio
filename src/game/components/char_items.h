@@ -49,16 +49,6 @@ namespace game {
                 return activeItem;
             }
 
-            void execActiveItem(vec3 mousePos) {
-                if (isSetActiveItem()) {
-                    ex::ComponentHandle<Weapon> weapon = components::get<Weapon>(activeItem);
-
-                    if (weapon) {
-                        weapon->fire(mousePos);
-                    }
-                }
-            }
-
         private:
             std::unordered_set<ex::Entity> items;
             ex::Entity activeItem;

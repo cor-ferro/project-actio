@@ -36,6 +36,10 @@ namespace game {
                   , public entityx::System<CharControl>
                   , public ex::Receiver<CharControl> {
         public:
+            enum ExecType {
+                ExecWeapon
+            };
+
             explicit CharControl(Context *context)
                     : systems::BaseSystem(context) {}
 
@@ -129,21 +133,50 @@ namespace game {
                     skin.animSamplers.setWeight(1, runAnimationWeight);
                     skin.animSamplers.setWeight(2, jumpAnimationWeight);
                 });
+
+                while (!newExec.empty()) {
+                    std::pair<ExecType, ex::Entity> &pair = newExec.top();
+
+                    events.emit<events::Weapon>(events::Weapon::Fire, pair.second);
+
+                    newExec.pop();
+                }
+
             }
 
             void receive(const events::MousePress &event) {
                 if (event.button == InputHandler::MOUSE_BUTTON_LEFT && event.action == InputHandler::KEY_PRESS) {
                     vec3 mousePos = worldContext->mouseWorldPosition;
 
-                    entityManager->each<c::Character, c::CharItems, c::UserControl>([&mousePos](
+                    entityManager->each<c::Character, c::CharItems, c::UserControl>([&](
                             ex::Entity entity,
                             c::Character &character,
                             c::CharItems &charItems,
                             c::UserControl &userControl
                     ) {
-                        charItems.execActiveItem(mousePos);
+                        ex::Entity activeItem = charItems.getActiveItem();
+
+                        execItem(activeItem, mousePos);
                     });
                 }
+            }
+
+            void execItem(ex::Entity activeItem, vec3 mousePos) {
+                newExec.push({ ExecWeapon, activeItem });
+//                // only weapon items
+//                ex::ComponentHandle<c::Weapon> weapon = components::get<c::Weapon>(activeItem);
+//                ex::ComponentHandle<c::WeaponStrategy> strategy = components::get<c::WeaponStrategy>(activeItem);
+//
+//                if (strategy) {
+//                    if (strategy->handler == nullptr) {
+//                        console::warn("cannot exec weapon, system is empty");
+//                        return;
+//                    }
+//
+//                    auto handler = static_cast<WeaponHandler*>(weapon.get());
+//
+//                    strategy->handler->onWeaponFire(handler);
+//                }
             }
 
         private:
@@ -152,6 +185,8 @@ namespace game {
             void handleAiControl() {}
 
             ex::EntityManager *entityManager = nullptr;
+
+            std::stack<std::pair<ExecType, ex::Entity>> newExec;
         };
     }
 }

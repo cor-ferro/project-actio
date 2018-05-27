@@ -27,10 +27,46 @@
 #include "events/character_create.h"
 #include "events/character_remove.h"
 #include "events/input.h"
+#include "strategies/weapons/default.h"
+#include "strategies/weapons/rocket_launcher.h"
 
 namespace game {
     World::World() : name("") {
 
+    }
+
+    void World::setupRenderer(renderer::Renderer *renderer) {
+        systems.add<game::systems::Render>(&context, renderer);
+    }
+
+    void World::setup() {
+//        entities.each<c::Model, c::Skin, c::Character, c::CharItems>([](ex::Entity, c::Model &, c::Skin &, c::Character &, c::CharItems &) {});
+
+        systems.add<systems::Input>(&context);
+        systems.add<systems::Camera>(&context);
+        systems.add<systems::CharControl>(&context);
+        systems.add<systems::CharacterControl>(&context); // deprecated
+        systems.add<systems::Animations>(&context);
+        systems.add<systems::Physic>(&context);
+        systems.add<systems::BallShot>(&context);
+        systems.add<systems::LightHelpers>(&context);
+        systems.add<systems::DayTime>(&context);
+        systems.add<systems::Weapons>(&context, this);
+
+        systems.configure();
+
+        camera = systems.system<game::systems::Camera>();
+        physic = systems.system<game::systems::Physic>();
+        weapons = systems.system<game::systems::Weapons>();
+
+        registerWeapon(new strategy::WeaponsDefault());
+        registerWeapon(new strategy::WeaponsRocketLauncher());
+
+        physic->postConfigure(events);
+
+        initGroundPlane();
+
+        console::info("world configure success");
     }
 
     void World::update(ex::TimeDelta dt) {
@@ -53,36 +89,6 @@ namespace game {
 
     void World::render(ex::TimeDelta dt) {
         systems.update<systems::Render>(dt);
-    }
-
-    void World::setupRenderer(renderer::Renderer *renderer) {
-        systems.add<game::systems::Render>(&context, renderer);
-    }
-
-    void World::setup() {
-//        entities.each<c::Model, c::Skin, c::Character, c::CharItems>([](ex::Entity, c::Model &, c::Skin &, c::Character &, c::CharItems &) {});
-
-        systems.add<systems::Input>(&context);
-        systems.add<systems::Camera>(&context);
-        systems.add<systems::CharControl>(&context);
-        systems.add<systems::CharacterControl>(&context); // deprecated
-        systems.add<systems::Animations>(&context);
-        systems.add<systems::Physic>(&context);
-        systems.add<systems::BallShot>(&context);
-        systems.add<systems::LightHelpers>(&context);
-        systems.add<systems::DayTime>(&context);
-        systems.add<systems::Weapons>(&context);
-
-        systems.configure();
-
-        camera = systems.system<game::systems::Camera>();
-        physic = systems.system<game::systems::Physic>();
-
-        physic->postConfigure(events);
-
-        initGroundPlane();
-
-        console::info("world configure success");
     }
 
     inline void World::spawn(Character *character) {
@@ -144,6 +150,10 @@ namespace game {
         entity.destroy();
     }
 
+    bool World::registerWeapon(strategy::WeaponsBase *system) {
+        return weapons->registerStrategy(system);
+    }
+
     World::Weapon World::createWeapon() {
         ex::Entity entity = entities.create();
 
@@ -151,11 +161,9 @@ namespace game {
         description.name = "rocket launcher";
         description.fireRate = 0.1f;
 
-        std::shared_ptr<game::systems::Weapons> weaponSystem = systems.system<game::systems::Weapons>();
+        strategy::WeaponsBase *strategy = weapons->getWeaponStrategy("RocketLauncher");
 
-        WeaponHandler *weaponHandler = static_cast<WeaponHandler *>(weaponSystem.get());
-
-        World::Weapon weapon(entity, description, weaponHandler);
+        World::Weapon weapon(entity, description, strategy);
 
         return weapon;
     }
@@ -268,10 +276,6 @@ namespace game {
         camera->setSettings(fov, aspect, near, far);
     }
 
-//    void World::getCameraSettings() {
-//
-//    }
-
     void World::setGravity(vec3 dir) {
         physic->setSceneGravity(dir);
     }
@@ -292,5 +296,25 @@ namespace game {
 
     void World::removeInput(systems::Input::InputPlace place) {
 
+    }
+
+    const game::Context &World::getContext() {
+        return context;
+    }
+
+    World::Character World::getUserControlCharacter() {
+        ex::Entity charEntity;
+
+        entities.each<components::UserControl>([&charEntity](ex::Entity entity, components::UserControl &control) {
+            charEntity = entity;
+        });
+
+        World::Character character = World::Character::Restore(charEntity);
+
+        return character;
+    }
+
+    void World::forcePush(ex::Entity entity, vec3 direction, float force) {
+        events.emit<events::PhysicForce>(entity, direction, force);
     }
 }

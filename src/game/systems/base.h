@@ -7,8 +7,11 @@
 
 #include <entityx/entityx/entityx.h>
 #include "../context.h"
+#include "../world.h"
 
 namespace game {
+    struct World;
+
     namespace systems {
         namespace ex = entityx;
 

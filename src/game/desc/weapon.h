@@ -2,8 +2,8 @@
 // Created by demitriy on 4/25/18.
 //
 
-#ifndef ACTIO_WEAPON_H
-#define ACTIO_WEAPON_H
+#ifndef ACTIO_DESC_WEAPON_H
+#define ACTIO_DESC_WEAPON_H
 
 #include <string>
 
@@ -20,4 +20,4 @@ namespace game {
     }
 }
 
-#endif //ACTIO_WEAPON_H
+#endif //ACTIO_DESC_WEAPON_H

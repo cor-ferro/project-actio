@@ -22,6 +22,7 @@ add_definitions(-DRESOURCE_DIR="./resources")
 add_definitions(-DSHADERS_DIR="./shaders")
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 include_directories(vendor)
 include_directories(vendor/glm)

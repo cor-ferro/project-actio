@@ -27,6 +27,8 @@
 #include "desc/weapon.h"
 #include "weapon_handler.h"
 #include "systems/input.h"
+#include "components/weaponStrategy.h"
+#include "systems/weapons.h"
 
 namespace game {
     namespace ex = entityx;
@@ -129,8 +131,10 @@ namespace game {
          */
         class Weapon : public WorldObject {
         public:
-            Weapon(ex::Entity &fromEntity, desc::Weapon description, WeaponHandler *handler) : WorldObject(fromEntity) {
-                weapon = entity_.assign<c::Weapon>(description, handler);
+            Weapon(ex::Entity &fromEntity, desc::Weapon description, strategy::WeaponsBase *weaponStrategy)
+                    : WorldObject(fromEntity) {
+                weapon = entity_.assign<c::Weapon>(description);
+                strategy = entity_.assign<c::WeaponStrategy>(weaponStrategy);
             }
 
             Weapon(const Weapon &other) = default;
@@ -138,6 +142,7 @@ namespace game {
             Weapon &operator=(const Weapon &other) = default;
 
             ex::ComponentHandle<c::Weapon> weapon;
+            ex::ComponentHandle<c::WeaponStrategy> strategy;
         private:
             explicit Weapon() = default;
         };
@@ -169,6 +174,8 @@ namespace game {
         World::StaticObject createStaticObject(Mesh *mesh);
 
         void removeStaticObject(World::StaticObject object);
+
+        bool registerWeapon(strategy::WeaponsBase *system);
 
         World::Weapon createWeapon();
 
@@ -204,6 +211,12 @@ namespace game {
 
         void removeInput(systems::Input::InputPlace place);
 
+        void forcePush(ex::Entity entity, vec3 direction, float force);
+
+        Character getUserControlCharacter();
+
+        const game::Context &getContext();
+
     private:
         std::string name;
 
@@ -211,6 +224,7 @@ namespace game {
 
         std::shared_ptr<game::systems::Physic> physic = nullptr;
         std::shared_ptr<game::systems::Camera> camera = nullptr;
+        std::shared_ptr<game::systems::Weapons> weapons = nullptr;
 
         InputHandler *input1 = nullptr;
         InputHandler *input2 = nullptr;

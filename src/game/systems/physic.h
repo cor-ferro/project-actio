@@ -2,10 +2,11 @@
 // Created by demitriy on 3/24/18.
 //
 
-#ifndef ACTIO_PHYSIC_H
-#define ACTIO_PHYSIC_H
+#ifndef ACTIO_SYSTEMS_PHYSIC_H
+#define ACTIO_SYSTEMS_PHYSIC_H
 
 #include <entityx/entityx/entityx.h>
+#include <stack>
 #include "PxPhysics.h"
 #include "PxScene.h"
 #include "PxRigidDynamic.h"
@@ -28,6 +29,9 @@
 #include "base.h"
 #include "../components/character.h"
 #include "../components/user_control.h"
+#include "../events/physic_contact.h"
+
+#define PX_REST_VEC(vec) px::PxVec3(vec.x, vec.y, vec.z)
 
 namespace game {
     namespace systems {
@@ -35,10 +39,39 @@ namespace game {
         namespace px = physx;
         namespace c = components;
 
+        static px::PxFilterFlags PhysicFilterShader(
+                px::PxFilterObjectAttributes attributes0, px::PxFilterData filterData0,
+                px::PxFilterObjectAttributes attributes1, px::PxFilterData filterData1,
+                px::PxPairFlags& pairFlags, const void* constantBlock, physx::PxU32 constantBlockSize)
+        {
+//            console::info("PhysicFilterShader");
+            // let triggers through
+            if(px::PxFilterObjectIsTrigger(attributes0) || px::PxFilterObjectIsTrigger(attributes1))
+            {
+//                pairFlags = px::PxPairFlag::eTRIGGER_DEFAULT;
+//                return px::PxFilterFlag::eDEFAULT;
+            }
+//             generate contacts for all that were not filtered above
+//            pairFlags = px::PxPairFlag::eCONTACT_DEFAULT;
+
+//            // trigger the contact callback for pairs (A,B) where
+//            // the filtermask of A contains the ID of B and vice versa.
+//            if((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
+//                pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
+//
+//            pairFlags |= px::PxPairFlag::eCONTACT_DEFAULT | px::PxPairFlag::eNOTIFY_TOUCH_FOUND | px::PxPairFlag::eNOTIFY_TOUCH_LOST;
+//            pairFlags = px::PxPairFlag::eCONTACT_DEFAULT;
+
+            pairFlags |= px::PxPairFlag::eCONTACT_DEFAULT | px::PxPairFlag::eNOTIFY_TOUCH_FOUND | px::PxPairFlag::eNOTIFY_TOUCH_LOST;
+
+            return px::PxFilterFlags();
+        }
+
         class Physic
                 : systems::BaseSystem
                   , public entityx::System<Physic>
-                  , public ex::Receiver<Physic> {
+                  , public ex::Receiver<Physic>
+                  , public px::PxSimulationEventCallback {
         public:
             enum SceneParam {
                 Scene_Gravity
@@ -57,13 +90,15 @@ namespace game {
                 px::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
                 sceneDesc.gravity = px::PxVec3(0.0f, -9.8f, 0.0f);
                 sceneDesc.cpuDispatcher = cpuDispatcher;
-//                sceneDesc.gpuDispatcher = cudaContextManager->getGpuDispatcher();
-                sceneDesc.filterShader = px::PxDefaultSimulationFilterShader;
+//                sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
 //                sceneDesc.flags |= px::PxSceneFlag::eENABLE_GPU_DYNAMICS;
+//                sceneDesc.gpuDispatcher = cudaContextManager->getGpuDispatcher();
+//                sceneDesc.filterShader = px::PxDefaultSimulationFilterShader;
+                sceneDesc.filterShader = PhysicFilterShader;
                 sceneDesc.flags |= px::PxSceneFlag::eENABLE_PCM;
                 sceneDesc.flags |= px::PxSceneFlag::eENABLE_STABILIZATION;
-//                sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
                 sceneDesc.gpuMaxNumPartitions = 8;
+                sceneDesc.simulationEventCallback = this;
 
                 gScene = gPhysics->createScene(sceneDesc);
                 gScene->setVisualizationParameter(px::PxVisualizationParameter::eSCALE, 1.0f);
@@ -88,7 +123,7 @@ namespace game {
 
                 gControllerManager = PxCreateControllerManager(*gScene);
 
-                pxMaterials.insert({"default", gPhysics->createMaterial(0.5f, 0.5f, 0.6f)});
+                pxMaterials.insert({"default", gPhysics->createMaterial(0.2f, 0.1f, 0.2f)});
 
                 px::PxRigidStatic *groundPlane = PxCreatePlane(*gPhysics, px::PxPlane(0, 1, 0, 0),
                                                                *(pxMaterials["default"]));
@@ -213,10 +248,20 @@ namespace game {
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
                 PX_UNUSED(false);
 
-                px::PxF32 elapsedTime = static_cast<px::PxReal>(dt / 1000.0);
+                auto elapsedTime = static_cast<px::PxReal>(dt / 1000.0);
 
-                gScene->simulate(elapsedTime);
+                gScene->collide(elapsedTime);
+                gScene->fetchCollision(true);
+                gScene->advance();
                 gScene->fetchResults(true);
+
+                while (!contactedActors.empty()) {
+                    const std::pair<px::PxActor*, px::PxActor*> &pair = contactedActors.top();
+
+                    events.emit<events::PhysicContact>(pair.first, pair.second);
+
+                    contactedActors.pop();
+                }
 
                 es.each<components::Physic, components::Transform>(
                         [](
@@ -250,7 +295,7 @@ namespace game {
                     }
 
                     const px::PxControllerCollisionFlags flags = userControl.controller->move(
-                            px::PxVec3(character.motion.x, character.motion.y, character.motion.z), 0.01f, elapsedTime,
+                            PX_REST_VEC(character.motion), 0.01f, elapsedTime,
                             px::PxControllerFilters()
                     );
 
@@ -422,11 +467,10 @@ namespace game {
             }
 
             void setSceneGravity(vec3 value) {
-                gScene->setGravity(px::PxVec3(value.x, value.y, value.z));
+                gScene->setGravity(PX_REST_VEC(value));
             };
 
-            px::PxRigidDynamic *
-            createDynamic(const px::PxTransform &t, const px::PxGeometry &geometry, const px::PxVec3 &velocity) {
+            px::PxRigidDynamic *createDynamic(const px::PxTransform &t, const px::PxGeometry &geometry, const px::PxVec3 &velocity) {
                 px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
 
                 px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
@@ -451,14 +495,13 @@ namespace game {
                 ex::ComponentHandle<components::Transform> transform = entity.component<components::Transform>();
 
                 px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
-                const px::PxTransform pxTransform(
-                        px::PxVec3(transform->position.x, transform->position.y, transform->position.z));
+                const px::PxTransform pxTransform(PX_REST_VEC(transform->position));
                 const px::PxSphereGeometry pxGeometry(event.radius);
 
                 px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 100.0f);
                 dynamic->setAngularDamping(10.5f);
                 dynamic->setLinearVelocity(px::PxVec3(0, 0, 0));
-                px::PxRigidBodyExt::updateMassAndInertia(*dynamic, 1000.0f);
+                px::PxRigidBodyExt::updateMassAndInertia(*dynamic, 100.0f);
 
                 gScene->addActor(*dynamic);
 
@@ -471,8 +514,7 @@ namespace game {
                 ex::ComponentHandle<components::Transform> transform = entity.component<components::Transform>();
 
                 px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
-                const px::PxTransform pxTransform(
-                        px::PxVec3(transform->position.x, transform->position.y, transform->position.z));
+                const px::PxTransform pxTransform(PX_REST_VEC(transform->position));
                 const px::PxBoxGeometry pxGeometry(event.hx / 2.0f, event.hy / 2.0f, event.hz / 2.0f);
 
                 px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 1.0f);
@@ -491,6 +533,7 @@ namespace game {
                 ex::ComponentHandle<components::Physic> physic = entity.component<components::Physic>();
 
                 px::PxVec3 dir(event.direction.x, event.direction.y, event.direction.z);
+//                physic->dynamic->setLinearVelocity(dir * 1.0f);
                 physic->dynamic->addForce(dir, px::PxForceMode::eVELOCITY_CHANGE);
             }
 
@@ -551,6 +594,30 @@ namespace game {
                 }
             }
 
+            virtual void onContact(const px::PxContactPairHeader& pairHeader, const px::PxContactPair* pairs, px::PxU32 nbPairs) {
+                contactedActors.push({pairHeader.actors[0], pairHeader.actors[1]});
+            }
+
+            virtual void onTrigger(px::PxTriggerPair* pairs, px::PxU32 count) {
+                console::info("onTrigger");
+            }
+
+            virtual void onConstraintBreak(px::PxConstraintInfo*, px::PxU32) {
+                console::info("onConstraintBreak");
+            }
+
+            virtual void onWake(px::PxActor** , px::PxU32 ) {
+                console::info("onWake");
+            }
+
+            virtual void onSleep(px::PxActor** , px::PxU32 ){
+                console::info("onSleep");
+            }
+
+            virtual void onAdvance(const px::PxRigidBody*const*, const px::PxTransform*, const px::PxU32) {
+                console::info("onAdvance");
+            }
+
         private:
             px::PxDefaultAllocator gAllocator;
             px::PxDefaultErrorCallback gErrorCallback;
@@ -569,9 +636,12 @@ namespace game {
             entityx::Entity debugTrianglesEntity;
             entityx::Entity debugPointsEntity;
 
+            std::stack<std::pair<px::PxActor*, px::PxActor*>> contactedActors;
+
             bool drawDebug = false;
+            bool isFirstFrame = true;
         };
     }
 }
 
-#endif //ACTIO_PHYSIC_H
+#endif //ACTIO_SYSTEMS_PHYSIC_H
