@@ -147,7 +147,6 @@ namespace game {
             explicit Weapon() = default;
         };
 
-
         /**
          * World constructor
          */

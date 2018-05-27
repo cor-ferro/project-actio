@@ -89,7 +89,7 @@ namespace game {
                         c::Weapon &weapon,
                         c::WeaponStrategy &strategy
                 ) {
-                    auto handler = static_cast<WeaponHandler*>(&weapon);
+                    auto handler = static_cast<WeaponHandler *>(&weapon);
 
                     if (strategy.handler == nullptr) {
                         console::warn("empty weapon system1");
@@ -115,7 +115,8 @@ namespace game {
                         float radius = 0.3f;
                         Mesh *mesh = Mesh::Create();
 
-                        GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+                        GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f,
+                                                  3.14f);
                         mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
 
                         ex::Entity projectile = es.create();
@@ -125,7 +126,9 @@ namespace game {
                         projectile.assign<c::WeaponProjectile>(projectileDesc.target);
                         projectile.assign<c::WeaponStrategy>(strategy);
 
-                        events.emit<events::PhysicCreateSphere>(projectile, radius);
+                        auto physicEntity = projectile.assign<c::PhysicEntity>(c::PhysicEntity::WeaponProjectile, projectile);
+
+                        events.emit<events::PhysicCreateSphere>(projectile, radius, physicEntity.get());
 
                         newProjectiles.pop();
                     }
@@ -159,7 +162,7 @@ namespace game {
 
                 console::info("register weapon: %s", strategy->getName());
 
-                strategies.insert({ strategy->getName(), strategy });
+                strategies.insert({strategy->getName(), strategy});
 
                 return true;
             }
@@ -183,6 +186,13 @@ namespace game {
             }
 
             void receive(const events::PhysicContact &event) {
+                if (event.actor1->userData != nullptr) {
+                    handlePhysicContactData(event.actor1->userData);
+                }
+
+                if (event.actor2->userData != nullptr) {
+                    handlePhysicContactData(event.actor2->userData);
+                }
 
             }
 
@@ -190,6 +200,20 @@ namespace game {
                 switch (event.type) {
                     case events::Weapon::Fire:
                         firedWeapons.push(event.entity);
+                        break;
+                }
+            }
+
+            void handlePhysicContactData(void *data) {
+                auto *physicEntity = static_cast<c::PhysicEntity *>(data);
+
+                switch (physicEntity->type) {
+                    case c::PhysicEntity::WeaponProjectile:
+                        auto projectile = components::get<c::WeaponProjectile>(physicEntity->entity);
+                        auto strategy = components::get<c::WeaponStrategy>(physicEntity->entity);
+
+                        strategy->handler->onProjectileCollision(world, physicEntity->entity, *projectile);
+
                         break;
                 }
             }

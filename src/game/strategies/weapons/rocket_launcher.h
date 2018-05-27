@@ -84,6 +84,7 @@ namespace game {
             };
 
             void onProjectileCollision(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) override {
+                console::info("rocket launcher projectile collision");
                 projectile.health-= 0.9f;
 
                 if (projectile.health < 0.0f) {

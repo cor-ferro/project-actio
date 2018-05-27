@@ -6,6 +6,7 @@
 #define ACTIO_PHYSIC_CREATE_H
 
 #include <entityx/entityx/Entity.h>
+#include "../components/physic_entity.h"
 
 namespace game {
     namespace events {
@@ -16,22 +17,28 @@ namespace game {
         };
 
         struct PhysicCreateSphere {
-            PhysicCreateSphere(entityx::Entity entity, float radius)
+            PhysicCreateSphere(entityx::Entity entity, float radius, game::components::PhysicEntity *physicEntity = nullptr)
                     : entity(entity)
+                    , physicEntity(physicEntity)
                     , radius(radius) {}
 
             entityx::Entity entity;
+            game::components::PhysicEntity *physicEntity = nullptr;
+
             float radius;
         };
 
         struct PhysicCreateBox {
-            PhysicCreateBox(entityx::Entity entity, float hx, float hy, float hz)
+            PhysicCreateBox(entityx::Entity entity, float hx, float hy, float hz, game::components::PhysicEntity *physicEntity = nullptr)
                 : entity(entity)
+                , physicEntity(physicEntity)
                 , hx(hx)
                 , hy(hy)
                 , hz(hz) {}
 
             entityx::Entity entity;
+            game::components::PhysicEntity *physicEntity = nullptr;
+
             float hx, hy, hz;
         };
     }

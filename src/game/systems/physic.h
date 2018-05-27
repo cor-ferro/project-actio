@@ -30,6 +30,8 @@
 #include "../components/character.h"
 #include "../components/user_control.h"
 #include "../events/physic_contact.h"
+#include "../world.h"
+#include "../components/physic_entity.h"
 
 #define PX_REST_VEC(vec) px::PxVec3(vec.x, vec.y, vec.z)
 
@@ -501,6 +503,8 @@ namespace game {
                 px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 100.0f);
                 dynamic->setAngularDamping(10.5f);
                 dynamic->setLinearVelocity(px::PxVec3(0, 0, 0));
+                dynamic->userData = event.physicEntity;
+
                 px::PxRigidBodyExt::updateMassAndInertia(*dynamic, 100.0f);
 
                 gScene->addActor(*dynamic);
