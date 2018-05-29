@@ -106,29 +106,37 @@ namespace game {
                 for (auto &it : strategies) {
                     it.second->update(es, events, dt);
 
-                    std::stack<game::desc::Projectile> &newProjectiles = it.second->getNewProjectiles();
+                    std::stack<ex::Entity> &destroyProjectiles = it.second->getDestroyProjectiles();
+
+                    while (!destroyProjectiles.empty()) {
+                        ex::Entity &entity = destroyProjectiles.top();
+
+                        entity.destroy();
+
+                        destroyProjectiles.pop();
+                    }
+
+                    std::stack<game::desc::WeaponProjectile> &newProjectiles = it.second->getNewProjectiles();
 
                     while (!newProjectiles.empty()) {
                         strategy::WeaponsBase *strategy = it.second;
-                        game::desc::Projectile &projectileDesc = newProjectiles.top();
+                        game::desc::WeaponProjectile &projectileDesc = newProjectiles.top();
 
                         float radius = 0.3f;
                         Mesh *mesh = Mesh::Create();
 
-                        GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f,
-                                                  3.14f);
+                        GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
                         mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
 
                         ex::Entity projectile = es.create();
 
                         projectile.assign<c::Model>(mesh);
                         projectile.assign<c::Transform>(projectileDesc.position);
-                        projectile.assign<c::WeaponProjectile>(projectileDesc.target);
+                        projectile.assign<c::WeaponProjectile>(projectileDesc);
                         projectile.assign<c::WeaponStrategy>(strategy);
+                        projectile.assign<c::PhysicEntity>(c::PhysicEntity::WeaponProjectile, projectile);
 
-                        auto physicEntity = projectile.assign<c::PhysicEntity>(c::PhysicEntity::WeaponProjectile, projectile);
-
-                        events.emit<events::PhysicCreateSphere>(projectile, radius, physicEntity.get());
+                        events.emit<events::PhysicCreateSphere>(projectile, radius);
 
                         newProjectiles.pop();
                     }
@@ -185,6 +193,10 @@ namespace game {
 
             }
 
+            /**
+             * Проверяет все возможные события. Необходимо логику проверки типа вынести в систему физики
+             * @param event
+             */
             void receive(const events::PhysicContact &event) {
                 if (event.actor1->userData != nullptr) {
                     handlePhysicContactData(event.actor1->userData);
@@ -216,6 +228,11 @@ namespace game {
 
                         break;
                 }
+            }
+
+        protected:
+            void createProjectile(game::desc::WeaponProjectile &projectileDesc) {
+
             }
 
         private:

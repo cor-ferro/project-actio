@@ -252,14 +252,7 @@ namespace game {
     }
 
     void World::destroy() {
-//        for (WorldObject<Character> &object : characters) {
-//            if (object.object != nullptr) {
-//                delete object.object;
-//                object.object = nullptr;
-//            }
-//        }
-//
-//        characters.erase(characters.begin(), characters.end());
+        entities.reset();
 
         console::info("world %s destroyed", name);
     }

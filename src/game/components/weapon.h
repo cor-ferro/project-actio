@@ -12,11 +12,23 @@
 #include "../../lib/types.h"
 #include "../desc/weapon.h"
 #include "../weapon_handler.h"
+#include "../desc/projectile.h"
 
 namespace game {
     namespace components {
         struct WeaponProjectile {
             WeaponProjectile(vec3 target) : target(target) {}
+
+            WeaponProjectile(game::desc::WeaponProjectile &description)
+                    : maxDamage(description.maxDamage)
+                    , weight(description.weight)
+                    , impactRadius(description.impactRadius)
+                    , damage(description.damage)
+                    , speed(description.speed)
+                    , health(description.health)
+                    , detonationTime(description.detonationTime)
+                    , target(description.target)
+            {}
 
             const float maxDamage = 0.0f;
             const float weight = 0.0f;

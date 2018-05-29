@@ -7,6 +7,9 @@
 
 #include <entityx/entityx/entityx.h>
 #include <stack>
+#include <entityx/entityx/Event.h>
+#include <entityx/entityx/config.h>
+#include <entityx/entityx/System.h>
 #include "PxPhysics.h"
 #include "PxScene.h"
 #include "PxRigidDynamic.h"
@@ -503,7 +506,12 @@ namespace game {
                 px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 100.0f);
                 dynamic->setAngularDamping(10.5f);
                 dynamic->setLinearVelocity(px::PxVec3(0, 0, 0));
-                dynamic->userData = event.physicEntity;
+
+                if (entity.has_component<c::PhysicEntity>()) {
+                    auto physicEntityHandle = components::get<c::PhysicEntity>(entity);
+
+                    dynamic->userData = static_cast<void *>(physicEntityHandle.get());
+                }
 
                 px::PxRigidBodyExt::updateMassAndInertia(*dynamic, 100.0f);
 

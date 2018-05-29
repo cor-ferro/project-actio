@@ -48,23 +48,28 @@ namespace game {
                 return name;
             }
 
-            std::stack<game::desc::Projectile> &getNewProjectiles() {
+            std::stack<game::desc::WeaponProjectile> &getNewProjectiles() {
                 return newProjectiles;
+            };
+
+            std::stack<ex::Entity> &getDestroyProjectiles() {
+                return destroyProjectiles;
             };
 
         protected:
             std::string name;
 
-            void createProjectile(game::desc::Projectile &description) {
+            void createProjectile(game::desc::WeaponProjectile &description) {
                 newProjectiles.push(description);
             }
 
-            void destroyProjectile() {
-
+            void destroyProjectile(ex::Entity &entity) {
+                destroyProjectiles.push(entity);
             }
 
         private:
-            std::stack<game::desc::Projectile> newProjectiles;
+            std::stack<game::desc::WeaponProjectile> newProjectiles;
+            std::stack<ex::Entity> destroyProjectiles;
         };
     }
 }

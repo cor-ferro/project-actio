@@ -2,11 +2,11 @@
 // Created by demitriy on 5/9/18.
 //
 
-#include "base.h"
-#include "../../../lib/types.h"
-
 #ifndef ACTIO_ROCKET_LAUNCHER_H
 #define ACTIO_ROCKET_LAUNCHER_H
+
+#include "base.h"
+#include "../../../lib/types.h"
 
 namespace game {
     namespace strategy {
@@ -67,7 +67,7 @@ namespace game {
 //                weapon->increaseOverheat();
 //                weapon->increaseFireRate();
 
-                game::desc::Projectile projectileDescription;
+                game::desc::WeaponProjectile projectileDescription = getProjectileDescription();
                 projectileDescription.position = position;
                 projectileDescription.target = target;
                 projectileDescription.direction = direction;
@@ -80,17 +80,43 @@ namespace game {
             void onProjectileCreate() override {};
 
             void onProjectileUpdate(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) override {
-                world->forcePush(entity, projectile.target, 1.0f);
+                world->forcePush(entity, projectile.target, 1.0f * projectile.speed);
             };
 
             void onProjectileCollision(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) override {
-                console::info("rocket launcher projectile collision");
-                projectile.health-= 0.9f;
+                projectile.health-= 0.5f;
 
                 if (projectile.health < 0.0f) {
-                    // destroy projectile
+                    console::info("destroy projectile");
+                    destroyProjectile(entity);
                 }
             };
+        private:
+            game::desc::Weapon getWeaponDescription() {
+                game::desc::Weapon description;
+
+                description.name = "Rocket launcher";
+                description.maxOverheat = 1.0f;
+                description.overheatPerShot = 0.3f;
+                description.weight = 1.0f;
+                description.fireRate = 1.0f;
+
+                return description;
+            }
+
+            game::desc::WeaponProjectile getProjectileDescription() {
+                game::desc::WeaponProjectile description;
+
+                description.maxDamage = 1.0f;
+                description.weight = 1.0f;
+                description.impactRadius = 1.0f;
+                description.damage = 1.0f;
+                description.speed = 1.0f;
+                description.health = 1.0f;
+                description.detonationTime = 0.0f;
+
+                return description;
+            }
         };
     }
 }

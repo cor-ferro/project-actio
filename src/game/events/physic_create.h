@@ -17,27 +17,23 @@ namespace game {
         };
 
         struct PhysicCreateSphere {
-            PhysicCreateSphere(entityx::Entity entity, float radius, game::components::PhysicEntity *physicEntity = nullptr)
+            PhysicCreateSphere(entityx::Entity entity, float radius)
                     : entity(entity)
-                    , physicEntity(physicEntity)
                     , radius(radius) {}
 
             entityx::Entity entity;
-            game::components::PhysicEntity *physicEntity = nullptr;
 
             float radius;
         };
 
         struct PhysicCreateBox {
-            PhysicCreateBox(entityx::Entity entity, float hx, float hy, float hz, game::components::PhysicEntity *physicEntity = nullptr)
+            PhysicCreateBox(entityx::Entity entity, float hx, float hy, float hz)
                 : entity(entity)
-                , physicEntity(physicEntity)
                 , hx(hx)
                 , hy(hy)
                 , hz(hz) {}
 
             entityx::Entity entity;
-            game::components::PhysicEntity *physicEntity = nullptr;
 
             float hx, hy, hz;
         };

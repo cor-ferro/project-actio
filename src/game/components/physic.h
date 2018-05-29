@@ -12,7 +12,19 @@ namespace game {
         struct Physic {
             Physic(PxRigidDynamic *dynamic) :  dynamic(dynamic) {};
 
-            PxRigidDynamic *dynamic;
+            ~Physic() {
+                if (dynamic != nullptr) {
+                    dynamic->userData = nullptr;
+
+                    auto *scene = dynamic->getScene();
+
+                    if (scene == nullptr) return;
+
+                    scene->removeActor(*dynamic);
+                }
+            }
+
+            PxRigidDynamic *dynamic = nullptr;
         };
     }
 }
