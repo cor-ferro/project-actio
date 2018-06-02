@@ -70,21 +70,22 @@ namespace game {
     }
 
     void World::update(ex::TimeDelta dt) {
+        profiling::Mark m = profiling::mark(systemProfiler, "WorldUpdate");
+
         // pre update
-        systems.update<game::systems::Input>(dt);
-        systems.update<game::systems::Camera>(dt);
-        systems.update<game::systems::CharControl>(dt);
-//        systems.update<game::systems::CharacterControl>(dt);
-        systems.update<game::systems::Physic>(dt);
-        systems.update<game::systems::DayTime>(dt);
+        PROFILE(systemProfiler, "Input", systems.update<game::systems::Input>(dt));
+        PROFILE(systemProfiler, "Camera", systems.update<game::systems::Camera>(dt));
+        PROFILE(systemProfiler, "CharControl", systems.update<game::systems::CharControl>(dt));
+        PROFILE(systemProfiler, "Physic", systems.update<game::systems::Physic>(dt));
+        PROFILE(systemProfiler, "DayTime", systems.update<game::systems::DayTime>(dt));
 
         // main update
-        systems.update<game::systems::Weapons>(dt);
-        systems.update<game::systems::BallShot>(dt);
+        PROFILE(systemProfiler, "Weapons", systems.update<game::systems::Weapons>(dt));
+        PROFILE(systemProfiler, "BallShot", systems.update<game::systems::BallShot>(dt));
 
         // post update
-        systems.update<game::systems::Animations>(dt);
-        systems.update<game::systems::LightHelpers>(dt);
+        PROFILE(systemProfiler, "Animations", systems.update<game::systems::Animations>(dt));
+        PROFILE(systemProfiler, "LightHelpers", systems.update<game::systems::LightHelpers>(dt));
     }
 
     void World::render(ex::TimeDelta dt) {

@@ -29,6 +29,7 @@
 #include "systems/input.h"
 #include "components/weaponStrategy.h"
 #include "systems/weapons.h"
+#include "../lib/profiling.h"
 
 namespace game {
     namespace ex = entityx;
@@ -229,6 +230,8 @@ namespace game {
         InputHandler *input2 = nullptr;
 
         Context context;
+
+        profiling::ProfileTimings systemProfiler;
     };
 
     struct WorldController {

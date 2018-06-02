@@ -14,6 +14,7 @@ set(PROJECT_INSTALL "${CMAKE_SOURCE_DIR}/build")
 
 option(COPY_LIBS "Copy all libs" OFF)
 
+add_definitions(-DPROFILE_ENABLED)
 add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
 add_definitions(-DGRAPHIC_API=${GRAPHIC_API})
 add_definitions(-DGRAPHIC_API_OPENGL)
