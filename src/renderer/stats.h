@@ -1,10 +1,3 @@
-/*
- * stats.h
- *
- *  Created on: Oct 8, 2017
- *      Author: demitriy
- */
-
 #ifndef STATS_H_
 #define STATS_H_
 
@@ -15,23 +8,34 @@
 
 namespace renderer {
 
-	typedef boost::chrono::system_clock SystemClock;
+    typedef boost::chrono::system_clock SystemClock;
 
-	struct Stats {
-		Stats();
+    struct Stats {
+        Stats();
 
-		void startTime();
-		void updateTime();
+        void resetFrame();
 
-		double fps;
-		double msFrame;
+        void startTime();
 
-	private:
-		SystemClock::time_point timeTick1_;
-		SystemClock::time_point timeTick2_;
-		SystemClock::time_point timeFrame_;
-		double fpsCounter;
-	};
+        void updateTime();
+
+        void increaseDrawCall();
+
+        size_t getDrawCalls() const;
+
+        double getFps() const;
+        double getMsFrame() const;
+
+        double fps = 0.0;
+        double msFrame = 0.0;
+
+    private:
+        SystemClock::time_point timeTick1_;
+        SystemClock::time_point timeTick2_;
+        SystemClock::time_point timeFrame_;
+        double fpsCounter;
+        size_t drawCalls = 0;
+    };
 
 }
 

@@ -52,6 +52,8 @@ namespace renderer {
 
         virtual void regenerateBuffer() = 0;
 
+        const Stats& getStats() const;
+
     protected:
         RenderType type;
         Path shadersFolder;

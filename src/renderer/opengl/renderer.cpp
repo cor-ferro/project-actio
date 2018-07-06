@@ -503,6 +503,8 @@ namespace renderer {
 
                 modelPipeline.setTransform(transform); // todo: pass pointer instead of copy
                 modelPipeline.draw(*mesh, renderFlags);
+
+                stats.increaseDrawCall();
             }
         });
     }

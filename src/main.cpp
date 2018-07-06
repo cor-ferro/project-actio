@@ -91,6 +91,8 @@ int main(int argc, char **argv) {
 
             world->render(elapsedTime);
 
+            const renderer::Stats& renderStats = renderer->getStats();
+
             {
                 if (guiSettings.debugPhysics != settings.debugPhysics) {
                     settings = guiSettings;
@@ -120,7 +122,8 @@ int main(int argc, char **argv) {
                                          | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
                 ImGui::Begin("Metrics", nullptr, flags);
-//            ImGui::Text("%.3f ms, %.1f fps", renderer->stats.msFrame, renderer->stats.fps);
+                ImGui::Text("%.3f ms, %.1f fps", renderStats.getMsFrame(), renderStats.getFps());
+                ImGui::Text("draw calls: %i", renderStats.getDrawCalls());
                 ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
                 ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
                 ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());

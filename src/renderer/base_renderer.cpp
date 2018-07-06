@@ -29,6 +29,7 @@ namespace renderer {
     }
 
     void Renderer::preRender() {
+        stats.resetFrame();
         stats.startTime();
 
         double newTime = glfwGetTime();
@@ -42,5 +43,10 @@ namespace renderer {
     void Renderer::postRender() {
         onPostRender();
         stats.updateTime();
+
+    }
+
+    const Stats& Renderer::getStats() const {
+        return stats;
     }
 }
