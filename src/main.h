@@ -21,6 +21,7 @@
 #include "lib/input_handler.h"
 #include "lib/console.h"
 #include "lib/utils.h"
+#include "lib/value_handler.h"
 #include "cameras/camera.h"
 #include "cameras/camera_control.h"
 #include "lights/direction_light.h"
@@ -45,7 +46,14 @@ int main(int argc, char **argv);
 void printMemoryStatus();
 
 struct WorldSettings {
-    WorldSettings() {}
+    WorldSettings() {
+        debugPhysics = true;
+        debugLight = true;
+        cameraFov = 45.0f;
+        cameraAspect = 1.77f;
+        cameraNear = 0.1f;
+        cameraFar = 500.0f;
+    }
 
     WorldSettings(const WorldSettings &other) {
         debugPhysics = other.debugPhysics;
@@ -56,12 +64,12 @@ struct WorldSettings {
         cameraFar = other.cameraFar;
     }
 
-    bool debugPhysics;
-    bool debugLight;
-    float cameraFov = 45.0f;
-    float cameraAspect = 1.77f;
-    float cameraNear = 0.1f;
-    float cameraFar = 500.0f;
+    ValueHandler<bool> debugPhysics;
+    ValueHandler<bool> debugLight;
+    ValueHandler<float> cameraFov;
+    ValueHandler<float> cameraAspect;
+    ValueHandler<float> cameraNear;
+    ValueHandler<float> cameraFar;
 };
 
 memory::FreeListAllocator *imageAllocator = nullptr;

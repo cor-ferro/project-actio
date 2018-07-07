@@ -42,16 +42,13 @@ int main(int argc, char **argv) {
 
     const Resource::File testWorldFile = app.resource("testScene.ini");
 
-    WorldSettings settings;
-    settings.debugPhysics = true;
-    settings.debugLight = true;
+    WorldSettings guiSettings;
 
-    WorldSettings guiSettings = settings;
 
     game::World *world = game::createWorld();
     world->setupRenderer(renderer);
     world->setup();
-    world->setLightDebug(guiSettings.debugLight);
+    world->setLightDebug(guiSettings.debugLight.getRef());
 
     auto worldImporter = new game::WorldImporter(world);
     worldImporter->import(testWorldFile);
@@ -94,23 +91,19 @@ int main(int argc, char **argv) {
             const renderer::Stats& renderStats = renderer->getStats();
 
             {
-                if (guiSettings.debugPhysics != settings.debugPhysics) {
-                    settings = guiSettings;
-                    world->setPhysicsDebug(settings.debugPhysics);
-                }
-
-                if (guiSettings.debugLight != settings.debugLight) {
-                    settings = guiSettings;
-                    world->setLightDebug(settings.debugLight);
-                }
-
-                if (guiSettings.cameraFov != settings.cameraFov ||
-                    guiSettings.cameraAspect != settings.cameraAspect ||
-                    guiSettings.cameraNear != settings.cameraNear ||
-                    guiSettings.cameraFar != settings.cameraFar
-                ) {
-                    settings = guiSettings;
-                    world->setCameraSettings(guiSettings.cameraFov, guiSettings.cameraAspect, guiSettings.cameraNear, guiSettings.cameraFar);
+                if (guiSettings.debugLight.isChanged(true)) world->setLightDebug(guiSettings.debugLight.getRef());
+                if (guiSettings.debugPhysics.isChanged(true)) world->setPhysicsDebug(guiSettings.debugPhysics.getRef());
+                if (guiSettings.cameraFov.isChanged(true) ||
+                    guiSettings.cameraAspect.isChanged(true) ||
+                    guiSettings.cameraNear.isChanged(true) ||
+                    guiSettings.cameraFar.isChanged(true)) {
+                    console::info("camera change");
+                    world->setCameraSettings(
+                            guiSettings.cameraFov.getRef(),
+                            guiSettings.cameraAspect.getRef(),
+                            guiSettings.cameraNear.getRef(),
+                            guiSettings.cameraFar.getRef()
+                    );
                 }
 
                 ImGui_ImplGlfwGL3_NewFrame();
@@ -128,13 +121,13 @@ int main(int argc, char **argv) {
                 ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
                 ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
                 ImGui::Separator();
-                ImGui::Checkbox("Debug physics", &guiSettings.debugPhysics);
-                ImGui::Checkbox("Debug light", &guiSettings.debugLight);
+                ImGui::Checkbox("Debug physics", guiSettings.debugPhysics.get());
+                ImGui::Checkbox("Debug light", guiSettings.debugLight.get());
                 ImGui::Separator();
-                ImGui::SliderFloat("fow", &guiSettings.cameraFov, 0.0f, 180.0f, "fow = %.3f");
-                ImGui::SliderFloat("aspect", &guiSettings.cameraAspect, 0.0f, 5.0f, "aspect = %.3f");
-                ImGui::SliderFloat("near", &guiSettings.cameraNear, 0.0f, 500.0f, "near = %.3f");
-                ImGui::SliderFloat("far", &guiSettings.cameraFar, 0.0f, 500.0f, "far = %.3f");
+                ImGui::SliderFloat("fow", guiSettings.cameraFov.get(), 0.0f, 180.0f, "fow = %.3f");
+                ImGui::SliderFloat("aspect", guiSettings.cameraAspect.get(), 0.0f, 5.0f, "aspect = %.3f");
+                ImGui::SliderFloat("near", guiSettings.cameraNear.get(), 0.0f, 500.0f, "near = %.3f");
+                ImGui::SliderFloat("far", guiSettings.cameraFar.get(), 0.0f, 500.0f, "far = %.3f");
 
                 ImGui::SetWindowSize(ImVec2(200.0f, 250.0f));
                 ImGui::End();
@@ -156,6 +149,9 @@ int main(int argc, char **argv) {
     });
 
     auto appThread = std::thread([&]() {
+//        world->setLightDebug(guiSettings.debugLight2.getRef());
+//        world->setPhysicsDebug(guiSettings.debugPhysics2.getRef());
+
         while (renderExec) {
             const float elapsedTime = 16.6f;
 
