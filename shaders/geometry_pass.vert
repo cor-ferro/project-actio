@@ -20,7 +20,15 @@ uniform mat4 boneOffsets[MAX_BONES];
 
 subroutine mat4 BoneTransform();
 
-subroutine (BoneTransform) mat4 BoneTransformEnabled() {
+subroutine uniform BoneTransform getBoneTransform;
+
+subroutine (BoneTransform)
+mat4 BoneTransformDisabled() {
+	return mat4(1.0);
+}
+
+subroutine (BoneTransform)
+mat4 BoneTransformEnabled() {
 	mat4 boneTransform = (boneTransforms[BoneIDs[0]] * boneOffsets[BoneIDs[0]]) * Weights[0];
 	boneTransform+= (boneTransforms[BoneIDs[1]] * boneOffsets[BoneIDs[1]]) * Weights[1];
 	boneTransform+= (boneTransforms[BoneIDs[2]] * boneOffsets[BoneIDs[2]]) * Weights[2];
@@ -28,12 +36,6 @@ subroutine (BoneTransform) mat4 BoneTransformEnabled() {
 
 	return boneTransform;
 }
-
-subroutine (BoneTransform) mat4 BoneTransformDisabled() {
-	return mat4(1.0);
-}
-
-subroutine uniform BoneTransform getBoneTransform;
 
 out VertexData {
 	vec3 position;

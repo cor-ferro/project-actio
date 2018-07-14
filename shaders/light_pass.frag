@@ -49,6 +49,11 @@ subroutine vec3 LightType(vec3, vec3, vec3, vec4);
 subroutine uniform LightType getLightColor;
 
 subroutine (LightType)
+vec3 UnknownLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
+    return albedo.xyz * vec3(0.0, 1.0, 0.0);
+}
+
+subroutine (LightType)
 vec3 DirLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
 	vec3 lightDir = normalize(-dirLight.direction);
 	vec3 reflectDir = normalize(reflect(-lightDir, worldNormal));
