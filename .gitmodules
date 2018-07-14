@@ -31,3 +31,9 @@
 [submodule "vendor/jasper"]
 	path = vendor/jasper
 	url = https://github.com/mdadams/jasper
+[submodule "vendor/luabridge"]
+	path = vendor/luabridge
+	url = https://github.com/vinniefalco/LuaBridge
+[submodule "vendor/yaml-cpp"]
+	path = vendor/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp

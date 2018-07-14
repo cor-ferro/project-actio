@@ -12,6 +12,7 @@
 #include "stats.h"
 #include "renderer_types.h"
 #include "entityx/entityx.h"
+#include "shader_description.h"
 
 namespace renderer {
     enum RenderType {
@@ -20,6 +21,9 @@ namespace renderer {
     };
 
     struct Renderer {
+        typedef size_t RenderGeometryId;
+        typedef size_t RenderTextureId;
+
         Renderer();
 
         Renderer(renderer::Params);
@@ -50,9 +54,23 @@ namespace renderer {
 
         void postRender();
 
+        virtual void setRequiredShaders(std::vector<ShaderDescription> list) = 0;
+
+        virtual void setShaders(std::vector<ShaderDescription> list) = 0;
+
+        virtual void addShaders(std::vector<ShaderDescription> list) = 0;
+
+        virtual void registerShader(std::string name) = 0;
+
+        virtual void unregisterShader(size_t id) = 0;
+
         virtual void regenerateBuffer() = 0;
 
-        const Stats& getStats() const;
+        const Stats &getStats() const;
+
+        virtual RenderGeometryId createGeometry(Mesh *mesh) = 0;
+
+        virtual RenderTextureId createTexture(Texture *texture) = 0;
 
     protected:
         RenderType type;

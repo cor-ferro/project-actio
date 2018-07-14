@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "../base_renderer.h"
+#include "../shader_content.h"
 #include "../../lib/console.h"
 #include "../../scenes/scene.h"
 #include "../../cameras/camera.h"
@@ -34,7 +35,33 @@ namespace renderer {
     using namespace game;
     namespace ex = entityx;
 
+    static void GLAPIENTRY MessageCallback( GLenum source,
+                     GLenum type,
+                     GLuint id,
+                     GLenum severity,
+                     GLsizei length,
+                     const GLchar* message,
+                     const void* userParam );
+
     struct OpenglRenderer : Renderer {
+        struct RenderGeometry {
+            enum GeometryType {
+                Geometry_Static = 1,
+                Geometry_Dynamic = 2,
+            };
+
+            GLuint VAO = 0;
+            GLuint VBO = 0;
+            GLuint EBO = 0;
+
+            GeometryType type = Geometry_Static;
+        };
+
+        struct RenderTexture {
+            GLuint id;
+            GLenum target;
+        };
+
         OpenglRenderer(renderer::Params);
 
         ~OpenglRenderer();
@@ -69,7 +96,21 @@ namespace renderer {
 
         void destroyMesh(Mesh *mesh) override;
 
+        void registerShader(std::string name) override;
+
+        void unregisterShader(size_t id) override;
+
         void regenerateBuffer() override;
+
+        void setRequiredShaders(std::vector<ShaderDescription> list) override;
+
+        void setShaders(std::vector<ShaderDescription> list) override;
+
+        void addShaders(std::vector<ShaderDescription> list) override;
+
+        Renderer::RenderGeometryId createGeometry(Mesh *mesh) override;
+
+        Renderer::RenderTextureId createTexture(Texture *texture)override;
 
         GLuint depthMapFBO;
         GLuint depthMap;
@@ -80,12 +121,16 @@ namespace renderer {
     private:
         void initMatricesBuffer();
 
-        Opengl::Program forwardProgram;
-        Opengl::Program skyboxProgram;
-        Opengl::Program skyboxDeferredProgram;
-        Opengl::Program geometryPassProgram;
-        Opengl::Program lightPassProgram;
-        Opengl::Program nullProgram;
+        void initRequiredShaders();
+
+        Opengl::Program* forwardProgram;
+        Opengl::Program* skyboxProgram;
+        Opengl::Program* skyboxDeferredProgram;
+        Opengl::Program* geometryPassProgram;
+        Opengl::Program* lightPassProgram;
+        Opengl::Program* nullProgram;
+
+        std::unordered_map<size_t, Opengl::Program> programs;
 
         renderer::Opengl::MeshDrawPipeline modelPipeline;
         renderer::Opengl::MeshDrawPipeline skyboxPipeline;
@@ -94,6 +139,15 @@ namespace renderer {
         Mesh *lightQuad;
         Mesh *lightSphere;
         Mesh *lightCylinder;
+
+        std::unordered_map<std::string, Opengl::Program> requiredPrograms;
+        std::unordered_map<std::string, Opengl::Program> optionalPrograms;
+
+        std::map<Renderer::RenderGeometryId, RenderGeometry> geometries;
+        std::map<Renderer::RenderTextureId, RenderTexture> textures;
+
+        RenderGeometryId geometryId = 0;
+        RenderTextureId textureId = 0;
     };
 
 }

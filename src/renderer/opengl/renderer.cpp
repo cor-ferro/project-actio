@@ -3,57 +3,80 @@
 #include "../../game/components/skin.h"
 #include "../../game/components/transform.h"
 #include "../../core/geometry_primitive.h"
+#include "../shader_description.h"
 
 #define UBO_MATRICES_POINT_INDEX 0
 #define DEFAULT_FRAME_BUFFER 0
 
 namespace renderer {
+    void MessageCallback(GLenum source,
+                         GLenum type,
+                         GLuint id,
+                         GLenum severity,
+                         GLsizei length,
+                         const GLchar *message,
+                         const void *userParam) {
+        const char *strType = type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "";
+
+        console::err("GL ERROR: %s type = 0x%x, severity = 0x%x, message = %s", strType, type, severity, message);
+    }
+
+
     GLint maxTextureUnits;
 
     OpenglRenderer::OpenglRenderer(renderer::Params params)
             : Renderer(params)
-            , skyboxPipeline(&skyboxDeferredProgram)
-            , modelPipeline(&geometryPassProgram)
-            , nullPipeline(&nullProgram) {}
+            , skyboxDeferredProgram(nullptr)
+            , geometryPassProgram(nullptr)
+            , forwardProgram(nullptr)
+            , skyboxProgram(nullptr)
+            , lightPassProgram(nullptr)
+            , nullProgram(nullptr) {}
 
     bool OpenglRenderer::init() {
         const renderer::Params &renderParams = getParams();
 
         gbuffer.init(renderParams.width, renderParams.height);
 
-        forwardProgram.init("forward", shadersFolder);
-        forwardProgram.initUniformCache({"model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]"});
-        forwardProgram.initUniformCache(Opengl::Uniform::Map);
-        forwardProgram.bindBlock("Matrices", 0);
+        initMatricesBuffer();
+        initRequiredShaders();
 
-        geometryPassProgram.init("geometry_pass", shadersFolder);
-        geometryPassProgram.defineVertexSubroutines("getBoneTransform",
-                                                    {"BoneTransformEnabled", "BoneTransformDisabled"});
-        geometryPassProgram.initUniformCache(
-                {"projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture",
-                 "boneTransforms[]", "boneOffsets[]"});
-        geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
-        geometryPassProgram.bindBlock("Matrices", 0);
-        OpenglCheckErrors();
+//        glEnable              ( GL_DEBUG_OUTPUT );
+//        glDebugMessageCallback( MessageCallback, nullptr );
 
-        lightPassProgram.init("light_pass", shadersFolder);
-        lightPassProgram.defineFragmentSubroutines("getLightColor",
-                                                   {"DirLightType", "PointLightType", "SpotLightType"});
-        //	lightPassProgram.bindBlock("Matrices", 0);
-        // lightPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
-        OpenglCheckErrors();
-
-        nullProgram.init("null", shadersFolder);
-        nullProgram.bindBlock("Matrices", 0);
-        OpenglCheckErrors();
-
-        skyboxProgram.init("skybox", shadersFolder);
-        skyboxProgram.bindBlock("Matrices", 0);
-        OpenglCheckErrors();
-
-        skyboxDeferredProgram.init("skybox-deferred", shadersFolder);
-        skyboxDeferredProgram.bindBlock("Matrices", 0);
-        OpenglCheckErrors();
+//        forwardProgram.init("forward", shadersFolder);
+//        forwardProgram.initUniformCache({"model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]"});
+//        forwardProgram.initUniformCache(Opengl::Uniform::Map);
+//        forwardProgram.bindBlock("Matrices", 0);
+//
+//        geometryPassProgram.init("geometry_pass", shadersFolder);
+//        geometryPassProgram.defineVertexSubroutines("getBoneTransform",
+//                                                    {"BoneTransformEnabled", "BoneTransformDisabled"});
+//        geometryPassProgram.initUniformCache(
+//                {"projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture",
+//                 "boneTransforms[]", "boneOffsets[]"});
+//        geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
+//        geometryPassProgram.bindBlock("Matrices", 0);
+//        OpenglCheckErrors();
+//
+//        lightPassProgram.init("light_pass", shadersFolder);
+//        lightPassProgram.defineFragmentSubroutines("getLightColor",
+//                                                   {"DirLightType", "PointLightType", "SpotLightType"});
+//        //	lightPassProgram.bindBlock("Matrices", 0);
+//        // lightPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
+//        OpenglCheckErrors();
+//
+//        nullProgram.init("null", shadersFolder);
+//        nullProgram.bindBlock("Matrices", 0);
+//        OpenglCheckErrors();
+//
+//        skyboxProgram.init("skybox", shadersFolder);
+//        skyboxProgram.bindBlock("Matrices", 0);
+//        OpenglCheckErrors();
+//
+//        skyboxDeferredProgram.init("skybox-deferred", shadersFolder);
+//        skyboxDeferredProgram.bindBlock("Matrices", 0);
+//        OpenglCheckErrors();
 
         lightQuad = Mesh::Create();
         lightSphere = Mesh::Create();
@@ -61,15 +84,14 @@ namespace renderer {
 
         GeometryPrimitive::Quad2d(lightQuad->geometry);
         GeometryPrimitive::Sphere(lightSphere->geometry, 1.0f, 64, 64, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
-        GeometryPrimitive::Cylinder(lightCylinder->geometry, 4.0f, 1.0f, 10.0f, 16, 16, false, 0.0f, glm::two_pi<float>());
+        GeometryPrimitive::Cylinder(lightCylinder->geometry, 4.0f, 1.0f, 10.0f, 16, 16, false, 0.0f,
+                                    glm::two_pi<float>());
 
         lightQuad->setup();
         lightSphere->setup();
         lightCylinder->setup();
 
         OpenglCheckErrors();
-
-        initMatricesBuffer();
 
         return true;
     }
@@ -96,7 +118,7 @@ namespace renderer {
     }
 
     void OpenglRenderer::forwardRender(Scene *scene) {
-        forwardProgram.checkShadersUpdate();
+//        forwardProgram.checkShadersUpdate();
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -123,9 +145,9 @@ namespace renderer {
         matricesBuffer.set(1, glm::value_ptr(view));
         // matricesBuffer.nouse();
 
-        forwardProgram.use();
-        forwardProgram.setFloat("time", time / 1000.0f);
-        forwardProgram.setVec("viewPos", camera->getPosition());
+        forwardProgram->use();
+        forwardProgram->setFloat("time", time / 1000.0f);
+        forwardProgram->setVec("viewPos", camera->getPosition());
 
         bool isHasSkybox = scene->hasSkybox();
 
@@ -135,7 +157,7 @@ namespace renderer {
             Texture texture = mesh->material.getTextures().at(0);
 
             OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, texture);
-            forwardProgram.setInt("cubeTexture", maxTextureUnits - 1);
+            forwardProgram->setInt("cubeTexture", maxTextureUnits - 1);
         }
 
         const std::vector<Light::Directional *> &dirLights = scene->getDirectionalLights();
@@ -145,10 +167,10 @@ namespace renderer {
         int dirLightIndex = 0;
         for (auto dirLight = dirLights.begin(); dirLight != dirLights.end(); ++dirLight) {
             std::string sIndex = std::to_string(dirLightIndex);
-            forwardProgram.setVec("dirLights[" + sIndex + "].ambient", (*dirLight)->ambient);
-            forwardProgram.setVec("dirLights[" + sIndex + "].diffuse", (*dirLight)->diffuse);
-            forwardProgram.setVec("dirLights[" + sIndex + "].specular", (*dirLight)->specular);
-            forwardProgram.setVec("dirLights[" + sIndex + "].direction", (*dirLight)->direction);
+            forwardProgram->setVec("dirLights[" + sIndex + "].ambient", (*dirLight)->ambient);
+            forwardProgram->setVec("dirLights[" + sIndex + "].diffuse", (*dirLight)->diffuse);
+            forwardProgram->setVec("dirLights[" + sIndex + "].specular", (*dirLight)->specular);
+            forwardProgram->setVec("dirLights[" + sIndex + "].direction", (*dirLight)->direction);
 
             dirLightIndex++;
         }
@@ -156,13 +178,13 @@ namespace renderer {
         int pointLightIndex = 0;
         for (auto pointLight = pointLights.begin(); pointLight != pointLights.end(); ++pointLight) {
             std::string sIndex = std::to_string(pointLightIndex);
-            forwardProgram.setVec("pointLights[" + sIndex + "].ambient", (*pointLight)->ambient);
-            forwardProgram.setVec("pointLights[" + sIndex + "].diffuse", (*pointLight)->diffuse);
-            forwardProgram.setVec("pointLights[" + sIndex + "].specular", (*pointLight)->specular);
-            forwardProgram.setVec("pointLights[" + sIndex + "].position", (*pointLight)->position);
-            forwardProgram.setFloat("pointLights[" + sIndex + "].constant", (*pointLight)->constant);
-            forwardProgram.setFloat("pointLights[" + sIndex + "].linear", (*pointLight)->linear);
-            forwardProgram.setFloat("pointLights[" + sIndex + "].quadratic", (*pointLight)->quadratic);
+            forwardProgram->setVec("pointLights[" + sIndex + "].ambient", (*pointLight)->ambient);
+            forwardProgram->setVec("pointLights[" + sIndex + "].diffuse", (*pointLight)->diffuse);
+            forwardProgram->setVec("pointLights[" + sIndex + "].specular", (*pointLight)->specular);
+            forwardProgram->setVec("pointLights[" + sIndex + "].position", (*pointLight)->position);
+            forwardProgram->setFloat("pointLights[" + sIndex + "].constant", (*pointLight)->constant);
+            forwardProgram->setFloat("pointLights[" + sIndex + "].linear", (*pointLight)->linear);
+            forwardProgram->setFloat("pointLights[" + sIndex + "].quadratic", (*pointLight)->quadratic);
 
             pointLightIndex++;
         }
@@ -170,36 +192,36 @@ namespace renderer {
         int spotLightIndex = 0;
         for (auto spotLight = spotLights.begin(); spotLight != spotLights.end(); ++spotLight) {
             std::string sIndex = std::to_string(spotLightIndex);
-            forwardProgram.setVec("spotLights[" + sIndex + "].ambient", (*spotLight)->ambient);
-            forwardProgram.setVec("spotLights[" + sIndex + "].diffuse", (*spotLight)->diffuse);
-            forwardProgram.setVec("spotLights[" + sIndex + "].specular", (*spotLight)->specular);
-            forwardProgram.setVec("spotLights[" + sIndex + "].position", (*spotLight)->position);
-            forwardProgram.setVec("spotLights[" + sIndex + "].direction", (*spotLight)->direction);
-            forwardProgram.setFloat("spotLights[" + sIndex + "].constant", (*spotLight)->constant);
-            forwardProgram.setFloat("spotLights[" + sIndex + "].linear", (*spotLight)->linear);
-            forwardProgram.setFloat("spotLights[" + sIndex + "].quadratic", (*spotLight)->quadratic);
-            forwardProgram.setFloat("spotLights[" + sIndex + "].cutOff", (*spotLight)->cutOff);
-            forwardProgram.setFloat("spotLights[" + sIndex + "].outerCutOff", (*spotLight)->outerCutOff);
+            forwardProgram->setVec("spotLights[" + sIndex + "].ambient", (*spotLight)->ambient);
+            forwardProgram->setVec("spotLights[" + sIndex + "].diffuse", (*spotLight)->diffuse);
+            forwardProgram->setVec("spotLights[" + sIndex + "].specular", (*spotLight)->specular);
+            forwardProgram->setVec("spotLights[" + sIndex + "].position", (*spotLight)->position);
+            forwardProgram->setVec("spotLights[" + sIndex + "].direction", (*spotLight)->direction);
+            forwardProgram->setFloat("spotLights[" + sIndex + "].constant", (*spotLight)->constant);
+            forwardProgram->setFloat("spotLights[" + sIndex + "].linear", (*spotLight)->linear);
+            forwardProgram->setFloat("spotLights[" + sIndex + "].quadratic", (*spotLight)->quadratic);
+            forwardProgram->setFloat("spotLights[" + sIndex + "].cutOff", (*spotLight)->cutOff);
+            forwardProgram->setFloat("spotLights[" + sIndex + "].outerCutOff", (*spotLight)->outerCutOff);
             spotLightIndex++;
         }
 
-        forwardProgram.setInt("countDirLights", dirLights.size());
-        forwardProgram.setInt("countPointLights", pointLights.size());
-        forwardProgram.setInt("countSpotLights", spotLights.size());
+        forwardProgram->setInt("countDirLights", dirLights.size());
+        forwardProgram->setInt("countPointLights", pointLights.size());
+        forwardProgram->setInt("countSpotLights", spotLights.size());
 
         glViewport(0, 0, renderParams.width, renderParams.height);
         glBindTexture(GL_TEXTURE_2D, depthMap);
-        drawModels(scene, forwardProgram);
+        drawModels(scene, *forwardProgram);
 
         if (isHasSkybox) {
             glDepthFunc(GL_LEQUAL);
-            skyboxProgram.use();
+            skyboxProgram->use();
 
             Model *skyboxModel = scene->getSkybox();
             const ModelMeshes &meshes = skyboxModel->getMeshes();
 
             for (auto mesh = meshes.begin(); mesh != meshes.end(); mesh++) {
-                (*mesh)->draw(skyboxProgram);
+                (*mesh)->draw(*skyboxProgram);
             }
 
             glDepthFunc(GL_LESS);
@@ -268,12 +290,12 @@ namespace renderer {
         // Light pass
         vec3 screenSize = vec3(static_cast<float>(renderParams.width), static_cast<float>(renderParams.height), 0.0f);
 
-        lightPassProgram.use();
-        lightPassProgram.setInt("gPositionMap", 0);
-        lightPassProgram.setInt("gNormalMap", 1);
-        lightPassProgram.setInt("gAlbedoMap", 2);
-        lightPassProgram.setVec("gScreenSize", screenSize); // fix to vec2
-        lightPassProgram.setVec("viewDir", cameraPosition);
+        lightPassProgram->use();
+        lightPassProgram->setInt("gPositionMap", 0);
+        lightPassProgram->setInt("gNormalMap", 1);
+        lightPassProgram->setInt("gAlbedoMap", 2);
+        lightPassProgram->setVec("gScreenSize", screenSize); // fix to vec2
+//        lightPassProgram->setVec("viewDir", cameraPosition);
 
         glStencilFunc(GL_ALWAYS, 0, 0);
         glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
@@ -281,9 +303,9 @@ namespace renderer {
 
         // Point light
         gbuffer.lightPass();
-        lightPassProgram.use();
-        lightPassProgram.setMat("projection", projection);
-        lightPassProgram.setMat("view", view);
+        lightPassProgram->use();
+        lightPassProgram->setMat("projection", projection);
+        lightPassProgram->setMat("view", view);
 
         const std::vector<GLuint> &bufferTextures = gbuffer.getTextures();
         for (uint i = 0; i < bufferTextures.size(); i++) {
@@ -321,7 +343,7 @@ namespace renderer {
             transform->setScale(radius);
 
             // Stencil
-            nullProgram.use();
+            nullProgram->use();
             gbuffer.stencilPass();
 
             glEnable(GL_DEPTH_TEST);
@@ -334,12 +356,12 @@ namespace renderer {
             OpenglCheckErrors();
 
             modelPipeline.setInitialTransform();
-            modelPipeline.draw(&nullProgram, *lightSphere, Mesh_Draw_Base);
+            modelPipeline.draw(nullProgram, *lightSphere, Mesh_Draw_Base);
             OpenglCheckErrorsSilent();
 
             // Light
             gbuffer.lightPass();
-            lightPassProgram.use();
+            lightPassProgram->use();
 
             glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
             glDisable(GL_DEPTH_TEST);
@@ -350,18 +372,18 @@ namespace renderer {
             glCullFace(GL_FRONT);
             OpenglCheckErrors();
 
-            lightPassProgram.setVec("gEyePosition", cameraPosition);
-            lightPassProgram.setVec("pointLight.ambient", light->ambient);
-            lightPassProgram.setVec("pointLight.diffuse", light->diffuse);
-            lightPassProgram.setVec("pointLight.specular", light->specular);
-            lightPassProgram.setVec("pointLight.position", transform->getPosition());
-            lightPassProgram.setFloat("pointLight.constant", light->constant);
-            lightPassProgram.setFloat("pointLight.linear", light->linear);
-            lightPassProgram.setFloat("pointLight.quadratic", light->quadratic);
-            lightPassProgram.enableFragmentSubroutine("getLightColor", "PointLightType");
+            lightPassProgram->setVec("gEyePosition", cameraPosition);
+            lightPassProgram->setVec("pointLight.ambient", light->ambient);
+            lightPassProgram->setVec("pointLight.diffuse", light->diffuse);
+            lightPassProgram->setVec("pointLight.specular", light->specular);
+            lightPassProgram->setVec("pointLight.position", transform->getPosition());
+            lightPassProgram->setFloat("pointLight.constant", light->constant);
+            lightPassProgram->setFloat("pointLight.linear", light->linear);
+            lightPassProgram->setFloat("pointLight.quadratic", light->quadratic);
+            lightPassProgram->enableFragmentSubroutine("getLightColor", "PointLightType");
             OpenglCheckErrors();
             modelPipeline.setTransform(*transform);
-            modelPipeline.draw(&lightPassProgram, *lightSphere, Mesh_Draw_Base);
+            modelPipeline.draw(lightPassProgram, *lightSphere, Mesh_Draw_Base);
             OpenglCheckErrorsSilent();
 
             glDisable(GL_BLEND);
@@ -396,7 +418,7 @@ namespace renderer {
 
             // Light
             gbuffer.lightPass();
-            lightPassProgram.use();
+            lightPassProgram->use();
             glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
             glDisable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);
@@ -406,21 +428,21 @@ namespace renderer {
             //		glCullFace(GL_FRONT);
             OpenglCheckErrors();
 
-            lightPassProgram.enableFragmentSubroutine("getLightColor", "SpotLightType");
+            lightPassProgram->enableFragmentSubroutine("getLightColor", "SpotLightType");
             OpenglCheckErrors();
-            lightPassProgram.setVec("spotLight.ambient", light->ambient);
-            lightPassProgram.setVec("spotLight.diffuse", light->diffuse);
-            lightPassProgram.setVec("spotLight.specular", light->specular);
-            lightPassProgram.setVec("spotLight.position", light->position);
-            lightPassProgram.setVec("spotLight.direction", light->direction);
-            lightPassProgram.setFloat("spotLight.constant", light->constant);
-            lightPassProgram.setFloat("spotLight.linear", light->linear);
-            lightPassProgram.setFloat("spotLight.quadratic", light->quadratic);
-            lightPassProgram.setFloat("spotLight.cutOff", light->cutOff);
-            lightPassProgram.setFloat("spotLight.outerCutOff", light->outerCutOff);
+            lightPassProgram->setVec("spotLight.ambient", light->ambient);
+            lightPassProgram->setVec("spotLight.diffuse", light->diffuse);
+            lightPassProgram->setVec("spotLight.specular", light->specular);
+            lightPassProgram->setVec("spotLight.position", light->position);
+            lightPassProgram->setVec("spotLight.direction", light->direction);
+            lightPassProgram->setFloat("spotLight.constant", light->constant);
+            lightPassProgram->setFloat("spotLight.linear", light->linear);
+            lightPassProgram->setFloat("spotLight.quadratic", light->quadratic);
+            lightPassProgram->setFloat("spotLight.cutOff", light->cutOff);
+            lightPassProgram->setFloat("spotLight.outerCutOff", light->outerCutOff);
             OpenglCheckErrors();
             modelPipeline.setTransform(*transform);
-            modelPipeline.draw(&lightPassProgram, *lightCylinder, Mesh_Draw_Base);
+            modelPipeline.draw(lightPassProgram, *lightCylinder, Mesh_Draw_Base);
             OpenglCheckErrorsSilent();
 
             glDisable(GL_BLEND);
@@ -435,10 +457,10 @@ namespace renderer {
 
         gbuffer.lightPass();
 
-        lightPassProgram.use();
-        lightPassProgram.setMat("projection", mat4(1.0f));
-        lightPassProgram.setMat("view", mat4(1.0f));
-        lightPassProgram.enableFragmentSubroutine("getLightColor", "DirLightType");
+        lightPassProgram->use();
+        lightPassProgram->setMat("projection", mat4(1.0f));
+        lightPassProgram->setMat("view", mat4(1.0f));
+        lightPassProgram->enableFragmentSubroutine("getLightColor", "DirLightType");
 
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -450,14 +472,14 @@ namespace renderer {
         ex::ComponentHandle<components::LightDirectional> light;
 
         for (ex::Entity entity : es.entities_with_components(light)) {
-            lightPassProgram.setVec("dirLight.ambient", light->ambient);
-            lightPassProgram.setVec("dirLight.diffuse", light->diffuse);
-            lightPassProgram.setVec("dirLight.specular", light->specular);
-            lightPassProgram.setVec("dirLight.direction", light->direction);
+            lightPassProgram->setVec("dirLight.ambient", light->ambient);
+            lightPassProgram->setVec("dirLight.diffuse", light->diffuse);
+            lightPassProgram->setVec("dirLight.specular", light->specular);
+            lightPassProgram->setVec("dirLight.direction", light->direction);
             OpenglCheckErrors();
 
             modelPipeline.setInitialTransform();
-            modelPipeline.draw(&lightPassProgram, *lightQuad, Mesh_Draw_Base);
+            modelPipeline.draw(lightPassProgram, *lightQuad, Mesh_Draw_Base);
             OpenglCheckErrorsSilent();
         }
 
@@ -540,6 +562,8 @@ namespace renderer {
     }
 
     void OpenglRenderer::setupMesh(Mesh *mesh) {
+        createGeometry(mesh);
+
         glGenVertexArrays(1, &mesh->geometry.VAO);
         glGenBuffers(1, &mesh->geometry.VBO);
 
@@ -627,6 +651,10 @@ namespace renderer {
         if (mesh->geometry.VAO != 0) glDeleteVertexArrays(1, &mesh->geometry.VAO);
     }
 
+    void OpenglRenderer::registerShader(std::string name) {}
+
+    void OpenglRenderer::unregisterShader(size_t id) {}
+
     void OpenglRenderer::regenerateBuffer() {
         const renderer::Params &renderParams = getParams();
         gbuffer.setWidth(renderParams.width);
@@ -634,4 +662,134 @@ namespace renderer {
         gbuffer.generateTextures();
     }
 
+    void OpenglRenderer::setRequiredShaders(std::vector<ShaderDescription> list) {
+        for (auto &shaderDescription : list) {
+            requiredPrograms.emplace(
+                    std::piecewise_construct,
+                    std::forward_as_tuple(shaderDescription.getName()),
+                    std::forward_as_tuple(shaderDescription)
+            );
+        }
+    }
+
+    void OpenglRenderer::setShaders(std::vector<ShaderDescription> list) {
+
+    }
+
+    void OpenglRenderer::addShaders(std::vector<ShaderDescription> list) {
+
+    }
+
+    void OpenglRenderer::initRequiredShaders() {
+        for (auto &it : requiredPrograms) {
+            Opengl::Program &program = it.second;
+            program.init();
+            program.bindBlock("Matrices", 0);
+            program.initUniformCache();
+            OpenglCheckErrors();
+        }
+
+        skyboxDeferredProgram = &requiredPrograms["skybox_deferred"];
+        geometryPassProgram = &requiredPrograms["geometry_pass"];
+        forwardProgram = &requiredPrograms["forward"];
+        skyboxProgram = &requiredPrograms["skybox"];
+        lightPassProgram = &requiredPrograms["light_pass"];
+        nullProgram = &requiredPrograms["null"];
+
+        skyboxPipeline.setProgram(skyboxDeferredProgram);
+        modelPipeline.setProgram(geometryPassProgram);
+        nullPipeline.setProgram(nullProgram);
+
+        console::info("geometryPass success: %i", geometryPassProgram->isSuccess());
+        console::info("lightPass success: %i", lightPassProgram->isSuccess());
+        console::info("null success: %i", nullProgram->isSuccess());
+
+        console::info("piplines inited");
+    }
+
+    Renderer::RenderGeometryId OpenglRenderer::createGeometry(Mesh *mesh) {
+        RenderGeometry renderGeometry;
+
+        glGenVertexArrays(1, &renderGeometry.VAO);
+        glGenBuffers(1, &renderGeometry.VBO);
+
+        glBindVertexArray(renderGeometry.VAO);
+
+        GeometryVertices *vertices = mesh->geometry.getVertices();
+
+        GLenum geometryType;
+
+        switch (mesh->geometry.getType()) {
+            case Geometry::Geometry_Static:
+                geometryType = GL_STATIC_DRAW;
+                break;
+            case Geometry::Geometry_Dynamic:
+                geometryType = GL_DYNAMIC_DRAW;
+                break;
+            default:
+                console::warn("Unknown draw type");
+                geometryType = GL_STATIC_DRAW;
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, renderGeometry.VBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), geometryType);
+
+        glGenBuffers(1, &renderGeometry.EBO);
+        GeometryIndices *indices = mesh->geometry.getIndices();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderGeometry.EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), geometryType);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Normal));
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, TexCoords));
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Tangent));
+
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Bitangent));
+
+        glEnableVertexAttribArray(5);
+        glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void *) offsetof(Vertex, BonedIDs));
+
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Weights));
+
+        glBindVertexArray(0);
+
+        geometryId++;
+        geometries.insert({ geometryId, renderGeometry });
+
+        return geometryId;
+    }
+
+    Renderer::RenderTextureId OpenglRenderer::createTexture(Texture *texture) {
+        RenderTexture renderTexture;
+
+        glGenTextures(1, &renderTexture.id);
+
+        glBindTexture(GL_TEXTURE_2D, renderTexture.id);
+
+        const TextureImages &images = texture->getImages();
+        const ImageLoader::Data imageData = images.find(0)->second;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageData.width, imageData.height, 0, imageData.format, GL_UNSIGNED_BYTE, imageData.get());
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        textureId++;
+        textures.insert({ textureId, renderTexture });
+
+        return textureId;
+    }
 }

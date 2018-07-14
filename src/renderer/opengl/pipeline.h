@@ -21,7 +21,7 @@ namespace renderer {
 
             explicit Pipeline(Program *newProgram);
 
-            void setProgram(Program *newProgram);
+            virtual void setProgram(Program *newProgram);
 
             Program *getProgram();
 
@@ -41,7 +41,9 @@ namespace renderer {
         private:
             FixedPipeline() = default;
 
-            void setProgram(Program *newProgram) {};
+            void setProgram(Program *newProgram) override {
+                program = newProgram;
+            };
         };
 
         struct MeshDrawPipeline : Pipeline {
@@ -49,7 +51,7 @@ namespace renderer {
 
             explicit MeshDrawPipeline(Program *newProgram);
 
-            ~MeshDrawPipeline() = default;
+            ~MeshDrawPipeline() override = default;
 
             void use();
 

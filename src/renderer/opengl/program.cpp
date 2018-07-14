@@ -1,4 +1,5 @@
 #include "program.h"
+#include "utils.h"
 
 namespace renderer {
     namespace gl {
@@ -53,67 +54,59 @@ namespace renderer {
 
     namespace Opengl {
         Program::Program()
-                : handle(-1)
+                : handle(0)
                 , success(false)
-                , isUsed(false)
-                , fragmentShader(nullptr)
-                , vertexShader(nullptr)
-                , geometryShader(nullptr)
-                , watcher(nullptr) {}
+                , isUsed(false) {}
 
-        Program::Program(std::string name) : Program() {
-            init(name);
-        }
+        Program::Program(renderer::ShaderDescription &shaderDescription) : Program() {
+            name = shaderDescription.getName();
 
-        void Program::init(std::string name, uint flags) {
-            init(name, ".", flags);
-        }
+            const renderer::ShaderContent &vertexContent = shaderDescription.getVertexContent();
+            const renderer::ShaderContent &fragmentContent = shaderDescription.getFragmentContent();
+            const renderer::ShaderContent &geometryContent = shaderDescription.getGeometryContent();
 
-        void Program::init(std::string name, Path path, uint flags) {
-            this->name = name;
-            isUsed = false;
+            vertexShader.reset();
+            fragmentShader.reset();
+            geometryShader.reset();
 
-            this->vertexShader = new Shader(Shader::VERTEX);
-            this->fragmentShader = new Shader(Shader::FRAGMENT);
-            this->geometryShader = nullptr;
-
-            Path vertexShaderPath = createPath(path, name + ".vert");
-            Path fragmentShaderPath = createPath(path, name + ".frag");
-            Path geometryShaderPath = createPath(path, name + ".geom");
-
-            this->vertexShader->loadFromFile(vertexShaderPath.string());
-            this->vertexShader->compile();
-
-            this->fragmentShader->loadFromFile(fragmentShaderPath.string());
-            this->fragmentShader->compile();
-
-            if (Shader::Exists(geometryShaderPath.string())) {
-                this->geometryShader = new Shader(Shader::GEOMETRY);
-                this->geometryShader->loadFromFile(geometryShaderPath.string());
-                this->geometryShader->compile();
+            if (!vertexContent.empty()) {
+                vertexShader.reset(new Shader(Shader::VERTEX, vertexContent));
             }
+
+            if (!fragmentContent.empty()) {
+                fragmentShader.reset(new Shader(Shader::FRAGMENT, fragmentContent));
+            }
+
+            if (!geometryContent.empty()) {
+                geometryShader.reset(new Shader(Shader::GEOMETRY, geometryContent));
+            }
+        }
+
+        void Program::init() {
+            isUsed = false;
 
             handle = glCreateProgram();
 
-            glAttachShader(handle, this->vertexShader->handle);
-            glAttachShader(handle, this->fragmentShader->handle);
-            if (this->geometryShader != nullptr) {
-                glAttachShader(handle, this->geometryShader->handle);
+            if (vertexShader) {
+                vertexShader->create();
+                vertexShader->compile();
+                glAttachShader(handle, vertexShader->getHandle());
+            }
+
+            if (fragmentShader) {
+                fragmentShader->create();
+                fragmentShader->compile();
+                glAttachShader(handle, fragmentShader->getHandle());
+            }
+
+            if (geometryShader) {
+                geometryShader->create();
+                geometryShader->compile();
+                glAttachShader(handle, geometryShader->getHandle());
             }
 
             if (compile()) {
-                glGetProgramStageiv(handle, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &numActiveVertexUniforms);
-                glGetProgramStageiv(handle, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &numActiveFragmentUniforms);
-
-                //			this->vertexShader->freeSources();
-                //			this->fragmentShader->freeSources();
-                //			if (this->geometryShader != nullptr) {
-                //				this->geometryShader->freeSources();
-                //			}
-            }
-
-            if ((flags & Watch_Changes) != 0) {
-                setupWatch();
+                success = true;
             }
         }
 
@@ -137,13 +130,8 @@ namespace renderer {
             return success;
         }
 
-        void Program::initShader() {
-
-        }
-
         Program::~Program() {
             console::info("destroy shader program %s", name);
-            removeWatch();
         }
 
         const GLuint Program::getHandle() const {
@@ -155,7 +143,7 @@ namespace renderer {
         }
 
         void Program::use() {
-            if (isUsed) return;
+//            if (isUsed) return;
             glUseProgram(handle);
         }
 
@@ -168,74 +156,100 @@ namespace renderer {
             }
         }
 
-        void Program::initUniformCache(std::vector<std::string> locations) {
-            uniformIndexCache.reserve(locations.size());
-
-            for (std::string locationName : locations) {
-                GLint index = getUniformLoc(locationName.c_str());
-
-                if (index == -1) {
-                    console::warn("uniform %s cache failed.", locationName);
-                }
-
-                uniformIndexCache.insert({locationName, index});
-            }
+        void Program::initUniformCache() {
+            collectUniforms();
+            collectSubroutines();
         }
 
-        void Program::initUniformCache(std::map<Opengl::Uniform::Common, std::string> locations) {
-            for (auto it = locations.begin(); it != locations.end(); it++) {
-                std::string &locationName = it->second;
+        void Program::enableVertexSubroutine(std::string uniformName, std::string subroutineName) {
+            auto itUniform = vertexSubroutineUniforms.find(uniformName);
+            auto itSubroutine = vertexSubroutines.find(subroutineName);
 
-                GLint index = getUniformLoc(locationName.c_str());
-
-                if (index == -1) {
-                    console::warn("uniform %s cache2 failed.", locationName);
-                } else {
-                    uniformIndexCache2.insert({it->first, index});
-                }
-            }
-        }
-
-        void Program::enableSubroutine(unsigned int shaderType, std::string &subroutineName) {
-
-        }
-
-        void Program::enableVertexSubroutine(std::string f, std::string subroutineName) {
-            GLint locationOfFunction = glGetSubroutineUniformLocation(handle, GL_VERTEX_SHADER, f.c_str());
-
-            auto it = vertexSubroutines.find(subroutineName);
-
-            if (it != vertexSubroutines.end()) {
-                std::unique_ptr<GLuint> indices (new GLuint(numActiveVertexUniforms));
-                indices.get()[locationOfFunction] = it->second;
-                glUniformSubroutinesuiv(GL_VERTEX_SHADER, numActiveVertexUniforms, indices.get());
-            }
-        }
-
-        void Program::enableFragmentSubroutine(std::string f, std::string subroutineName) {
-            GLint locationOfFunction = glGetSubroutineUniformLocation(handle, GL_FRAGMENT_SHADER, f.c_str());
-
-            if (locationOfFunction == -1) {
+            if (itUniform == vertexSubroutineUniforms.end()) {
+                console::warn("unknown vertex uniform subroutine: %s, %s", name, uniformName);
                 return;
             }
 
-            auto it = fragmentSubroutines.find(subroutineName);
-
-            if (it != fragmentSubroutines.end()) {
-                std::unique_ptr<GLuint> indices (new GLuint(numActiveFragmentUniforms));
-                indices.get()[locationOfFunction] = it->second;
-                glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, numActiveFragmentUniforms, indices.get());
+            if (itSubroutine == vertexSubroutines.end()) {
+                console::warn("unknown vertex subroutine: %s, %s", name, subroutineName);
+                return;
             }
+
+            GLint locationOfFunction = itUniform->second;
+            GLuint indexFunc1 = itSubroutine->second;
+
+            auto numActiveUniforms = static_cast<GLsizei>(vertexSubroutineUniforms.size());
+
+            std::string name = getName();
+
+            assert(locationOfFunction < numActiveUniforms);
+
+            std::unique_ptr<GLuint> indices(new GLuint[numActiveUniforms]);
+            indices.get()[locationOfFunction] = indexFunc1;
+            glUniformSubroutinesuiv(GL_VERTEX_SHADER, numActiveUniforms, indices.get());
         }
 
-        void Program::bindBlock(const char *blockName, int point) {
+        void Program::enableFragmentSubroutine(std::string uniformName, std::string subroutineName) {
+            auto itUniform = fragmentSubroutineUniforms.find(uniformName);
+            auto itSubroutine = fragmentSubroutines.find(subroutineName);
+
+            if (itUniform == fragmentSubroutineUniforms.end()) {
+                console::warn("unknown fragment uniform subroutine: %s, %s", name, uniformName);
+                return;
+            }
+
+            if (itSubroutine == fragmentSubroutines.end()) {
+                console::warn("unknown fragment subroutine: %s, %s", name, subroutineName);
+                return;
+            }
+
+            GLint locationOfFunction = itUniform->second;
+            GLuint indexFunc1 = itSubroutine->second;
+
+            auto numActiveUniforms = static_cast<GLsizei>(fragmentSubroutineUniforms.size());
+
+            assert(locationOfFunction < numActiveUniforms);
+
+            std::unique_ptr<GLuint> indices(new GLuint[numActiveUniforms]);
+            indices.get()[locationOfFunction] = indexFunc1;
+            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, numActiveUniforms, indices.get());
+        }
+
+        void Program::bindBlock(const char *blockName, GLuint point) {
             GLuint uniformBlockIndex = glGetUniformBlockIndex(handle, blockName);
+            std::string n = getName();
 
             if (uniformBlockIndex == GL_INVALID_INDEX) {
-                console::warn("failed bind block %s at point %i", blockName, point);
+                console::warn("%s: failed bind block %s at point %i", name, blockName, point);
             }
 
             glUniformBlockBinding(handle, uniformBlockIndex, point);
+
+            GLint active_uniforms = 0;
+            glGetActiveUniformBlockiv(handle, uniformBlockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &active_uniforms);
+
+            std::vector<GLuint> uniform_indices(active_uniforms, 0);
+            glGetActiveUniformBlockiv(handle, uniformBlockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, reinterpret_cast<GLint*>(&uniform_indices[0]));
+
+            std::vector<GLint> name_lengths(uniform_indices.size(), 0);
+            glGetActiveUniformsiv(handle, uniform_indices.size(), &uniform_indices[0], GL_UNIFORM_NAME_LENGTH, &name_lengths[0]);
+
+            if (getName() == "geometry_pass") {
+                for(std::size_t i = 0; i < uniform_indices.size(); ++i) {
+                    GLuint const uniform_index = uniform_indices[i];
+
+                    std::string name(name_lengths[i], 0);
+                    glGetActiveUniformName(handle, uniform_index, name_lengths[i], nullptr, &name[0]);
+                    std::string name2(name, 0);
+//                    name2.pop_back();
+                    GLint uniform_index2 = glGetUniformLocation(handle, name2.c_str());
+
+                    console::info("named block %s, uniform: %s %i %i %s", blockName, name, uniform_index, uniform_index2, name2);
+
+                    uniformIndexCache.insert({name, uniform_index});
+                }
+            }
+
         }
 
         GLint Program::getUniformLoc(const char *locationName) const {
@@ -243,6 +257,16 @@ namespace renderer {
         }
 
         GLint Program::getUniformCacheLoc(std::string locationName) const {
+            GLint loc = glGetUniformLocation(handle, locationName.c_str());
+
+            if (loc < 0) {
+                if (locationName != "normalTexture" && locationName != "heightTexture") {
+                    console::info("loc: %s %s, %i", name.c_str(), locationName, loc);
+                }
+            }
+
+            return loc;
+
             std::unordered_map<std::string, GLint>::const_iterator got = uniformIndexCache.find(locationName);
 
 #ifndef OPENGL_PROGRAM_UNIFORM_CACHE
@@ -258,57 +282,13 @@ namespace renderer {
 #endif
         }
 
-        GLint Program::getUniformCacheLoc(Opengl::Uniform::Common &uniform) const {
-            return uniformIndexCache2.find(uniform)->second;
-        }
-
-        GLuint Program::getSubroutineIndex(unsigned int &shaderType, std::string soubroutineName) {
-            return glGetSubroutineIndex(handle, shaderType, soubroutineName.c_str());
-        }
-
-        GLuint Program::getSubroutineCacheIndex(unsigned int &shaderType, std::string soubroutineName) {
-            std::unordered_map<std::string, GLuint> *subroutineIndexCache = nullptr;
-
-            if (shaderType == GL_VERTEX_SHADER) {
-                subroutineIndexCache = &subroutineVertexIndexCache;
-            } else if (shaderType == GL_FRAGMENT_SHADER) {
-                subroutineIndexCache = &subroutineFragmentIndexCache;
-            } else {
-                assert(false);
-            }
-
-            auto it = subroutineIndexCache->find(soubroutineName);
-
-            if (it == subroutineIndexCache->end()) {
-                GLuint index = getSubroutineIndex(shaderType, soubroutineName);
-
-                if (index == GL_INVALID_INDEX) {
-                    console::warn("GL_INVALID_INDEX: %s, %s", name, soubroutineName);
-                }
-
-                subroutineIndexCache->insert({soubroutineName, index});
-                return -1;
-            }
-
-            return it->second;
-        }
-
         template<typename T>
         void Program::set(const std::string &name, const T &ref) {
             gl::uniform<T>(getUniformCacheLoc(name), 1, ref);
         }
 
-        template<typename T>
-        void Program::set(Opengl::Uniform::Common uniform, const T &ref) {
-            gl::uniform<T>(getUniformCacheLoc(uniform), 1, ref);
-        }
-
         void Program::setInt(const std::string &name, const int &value) const {
             glUniform1i(getUniformCacheLoc(name), value);
-        }
-
-        void Program::setFloat(Opengl::Uniform::Common uniform, const float &value) const {
-            glUniform1f(getUniformCacheLoc(uniform), value);
         }
 
         void Program::setFloat(const std::string &name, const float &value) const {
@@ -326,19 +306,12 @@ namespace renderer {
         }
 
         /* Mat 4x4 */
-        void Program::setMat(Opengl::Uniform::Common uniform, const glm::mat4 &mat) const {
-            glUniformMatrix4fv(getUniformCacheLoc(uniform), 1, GL_FALSE, &mat[0][0]);
-        }
 
         void Program::setMat(const std::string &name, const glm::mat4 &mat) const {
             glUniformMatrix4fv(getUniformCacheLoc(name), 1, GL_FALSE, &mat[0][0]);
         }
 
         /* Mat 4x4 vector */
-        void Program::setMat(Opengl::Uniform::Common uniform, const std::vector<glm::mat4> *mats) const {
-            glUniformMatrix4fv(getUniformCacheLoc(uniform), mats->size(), GL_FALSE, &mats->front()[0][0]);
-        }
-
         void Program::setMat(const std::string &name, const std::vector<glm::mat4> *mats) const {
             glUniformMatrix4fv(getUniformCacheLoc(name), mats->size(), GL_FALSE, &mats->front()[0][0]);
         }
@@ -356,17 +329,9 @@ namespace renderer {
             glUniform3fv(getUniformCacheLoc(name), 1, glm::value_ptr(vec));
         }
 
-        void Program::setVec(Opengl::Uniform::Common uniform, const glm::vec2 &vec) const {
-            glUniform3fv(getUniformCacheLoc(uniform), 1, glm::value_ptr(vec));
-        }
-
         /* Vec3 */
         void Program::setVec(const std::string &name, const glm::vec3 &vec) const {
             glUniform3fv(getUniformCacheLoc(name), 1, glm::value_ptr(vec));
-        }
-
-        void Program::setVec(Opengl::Uniform::Common uniform, const glm::vec3 &vec) const {
-            glUniform3fv(getUniformCacheLoc(uniform), 1, glm::value_ptr(vec));
         }
 
         /* Vec4 */
@@ -374,117 +339,85 @@ namespace renderer {
             glUniform3fv(getUniformCacheLoc(name), 1, glm::value_ptr(vec));
         }
 
-        void Program::setVec(Opengl::Uniform::Common uniform, const glm::vec4 &vec) const {
-            glUniform3fv(getUniformCacheLoc(uniform), 1, glm::value_ptr(vec));
+        const std::string Program::getName() {
+            return name;
         }
 
-        void Program::checkShadersUpdate() {
-            if (watcher == nullptr) return;
+        void Program::collectUniforms() {
+            GLint i = 0;
+            GLint count = 0;
 
-            const int EVENT_SIZE = (sizeof(struct inotify_event));
-            const int EVENT_BUF_LEN = (1024 * (EVENT_SIZE + 16));
+            GLint size = 0;
+            GLenum type;
 
-            char buffer[EVENT_BUF_LEN];
+            const GLsizei bufSize = 128;
+            GLchar name[bufSize];
+            GLsizei length;
+            std::string programName = getName();
 
-            int length = read(watcher->fd, buffer, EVENT_BUF_LEN);
+            glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &count);
 
-            if (length == 0) {
-                return;
-            }
+            uniformIndexCache.reserve(static_cast<unsigned long int>(count));
 
-            int i = 0;
-            while (i < length) {
-                struct inotify_event *event = (struct inotify_event *) &buffer[i];
+            for (i = 0; i < count; i++)
+            {
+                glGetActiveUniform(handle, (GLuint)i, bufSize, &length, &size, &type, name);
 
-                glDetachShader(handle, this->vertexShader->handle);
-                glDetachShader(handle, this->fragmentShader->handle);
+                GLint index = glGetUniformLocation(handle, name);
 
-                this->vertexShader->freeSources();
-                this->fragmentShader->freeSources();
-
-                glDeleteProgram(handle);
-
-                handle = glCreateProgram();
-
-                this->vertexShader->create();
-                this->fragmentShader->create();
-
-                this->vertexShader->reloadSources();
-                this->fragmentShader->reloadSources();
-
-                glAttachShader(handle, this->vertexShader->handle);
-                glAttachShader(handle, this->fragmentShader->handle);
-
-                bool isCompiledVShader = this->vertexShader->compile();
-                bool isCompiledFShader = this->fragmentShader->compile();
-
-                if (isCompiledVShader && isCompiledFShader) {
-                    this->compile();
-                    console::info("compile new program");
+                if (index == -1) {
+                    console::warn("!!! program %s: uniform %s cache failed.", getName(), name);
                 }
 
-                i += EVENT_SIZE + event->len;
+                uniformIndexCache.insert({name, index});
             }
         }
 
-        void Program::setupWatch() {
-            console::info("setup watch");
-            removeWatch();
-
-            watcher = new WatchDescriptor();
-            watcher->fd = inotify_init1(IN_NONBLOCK);
-
-            if (watcher->fd < 0) {
-                console::warn("failed init inotify");
-            }
-
-            if (this->vertexShader != nullptr) {
-                watcher->vertexFd = inotify_add_watch(watcher->fd, this->vertexShader->filePath.c_str(), IN_MODIFY);
-            }
-
-            if (this->fragmentShader != nullptr) {
-                watcher->fragmentFd = inotify_add_watch(watcher->fd, this->fragmentShader->filePath.c_str(), IN_MODIFY);
-            }
-
-            if (this->geometryShader != nullptr) {
-                watcher->geometryFd = inotify_add_watch(watcher->fd, this->geometryShader->filePath.c_str(), IN_MODIFY);
-            }
-
+        void Program::collectSubroutines() {
+            collectSubroutinesInformation(GL_VERTEX_SHADER, &vertexSubroutineUniforms, &vertexSubroutines);
+            collectSubroutinesInformation(GL_FRAGMENT_SHADER, &fragmentSubroutineUniforms, &fragmentSubroutines);
+            collectSubroutinesInformation(GL_GEOMETRY_SHADER, &geometrySubroutineUniforms, &geometrySubroutines);
         }
 
-        void Program::removeWatch() {
-            if (watcher != nullptr) {
-                if (watcher->vertexFd >= 0) inotify_rm_watch(watcher->fd, watcher->vertexFd);
-                if (watcher->fragmentFd >= 0) inotify_rm_watch(watcher->fd, watcher->fragmentFd);
-                if (watcher->geometryFd >= 0) inotify_rm_watch(watcher->fd, watcher->geometryFd);
-                close(watcher->fd);
-                delete watcher;
-                watcher = nullptr;
+        void Program::collectSubroutinesInformation(
+                GLenum shaderType,
+                ProgramUniformSubroutines *uniforms,
+                ProgramSubroutines *subroutines
+        ) {
+            GLsizei numActiveUniforms = 0;
+            uint bufferSize = 128;
+
+            glGetProgramStageiv(handle, shaderType, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &numActiveUniforms);
+
+            for (GLuint i = 0; i < numActiveUniforms; i++) {
+                GLint value;
+                GLchar uniformName[bufferSize];
+
+                GLsizei length;
+                glGetActiveSubroutineUniformiv(handle, shaderType, i, GL_ACTIVE_SUBROUTINE_UNIFORMS, &value);
+                glGetActiveSubroutineUniformName(handle, shaderType, i, bufferSize, &length, uniformName);
+
+                uniforms->insert({ uniformName, i });
             }
-        }
 
-        void Program::defineFragmentSubroutines(std::string uniform, std::vector<std::string> functions)
-        {
-            GLint locationOfFunction = glGetSubroutineUniformLocation(handle, GL_FRAGMENT_SHADER, uniform.c_str());
+            GLsizei length = 0;
+            GLchar subroutineName[bufferSize];
+            GLuint i = 0;
 
-            for (const std::string &functionName : functions)
-            {
-                GLuint indexFunc = glGetSubroutineIndex(handle, GL_FRAGMENT_SHADER, functionName.c_str());
+            do {
+                length = 0;
+                subroutineName[0] = '\0';
 
-                fragmentSubroutines.insert({ functionName, indexFunc });
-            }
-        }
+                glGetActiveSubroutineName(handle, shaderType, i, bufferSize, &length, subroutineName);
 
-        void Program::defineVertexSubroutines(std::string uniform, std::vector<std::string> functions)
-        {
-            GLint locationOfFunction = glGetSubroutineUniformLocation(handle, GL_VERTEX_SHADER, uniform.c_str());
+                if (length > 0) {
+                    GLuint subroutineIndex = glGetSubroutineIndex(handle, shaderType, subroutineName);
 
-            for (const std::string &functionName : functions)
-            {
-                GLuint indexFunc = glGetSubroutineIndex(handle, GL_VERTEX_SHADER, functionName.c_str());
+                    subroutines->insert({ subroutineName, subroutineIndex });
+                }
 
-                vertexSubroutines.insert({ functionName, indexFunc });
-            }
+                i++;
+            } while (length > 0);
         }
     }
 }

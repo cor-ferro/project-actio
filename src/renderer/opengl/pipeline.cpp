@@ -40,7 +40,7 @@ namespace renderer {
         }
 
         void MeshDrawPipeline::draw(Program *drawProgram, Mesh &mesh, uint flags) {
-            assert(!drawProgram->isSuccess() && "cannot set program");
+            assert(drawProgram->isSuccess() && "cannot set program");
 
             if ((flags & Mesh_Draw_Textures) != 0) {
                 unsigned int textureIndex = 0;
@@ -53,10 +53,10 @@ namespace renderer {
             }
 
             if ((flags & Mesh_Draw_Material) != 0) {
-                drawProgram->setVec(renderer::Opengl::Uniform::MaterialAmbient, mesh.material.ambient);
-                drawProgram->setVec(renderer::Opengl::Uniform::MaterialDiffuse, mesh.material.diffuse);
-                drawProgram->setVec(renderer::Opengl::Uniform::MaterialSpecular, mesh.material.specular);
-                drawProgram->setFloat(renderer::Opengl::Uniform::MaterialShininess, mesh.material.shininess);
+                drawProgram->setVec("material.ambient", mesh.material.ambient);
+                drawProgram->setVec("material.diffuse", mesh.material.diffuse);
+                drawProgram->setVec("material.specular", mesh.material.specular);
+                drawProgram->setFloat("material.shininess", mesh.material.shininess);
             }
 
             if ((flags & Mesh_Draw_Bones) != 0) {

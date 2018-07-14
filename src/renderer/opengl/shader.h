@@ -9,53 +9,41 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "../../lib/console.h"
+#include "../shader_content.h"
 
 namespace renderer {
-	namespace Opengl {
-		struct Shader {
-			enum ShaderType {
-				VERTEX = 1,
-				FRAGMENT = 2,
-				GEOMETRY = 3
-			};
+    namespace Opengl {
+        struct Shader {
+            enum ShaderType {
+                VERTEX = 1,
+                FRAGMENT = 2,
+                GEOMETRY = 3
+            };
 
-			Shader(ShaderType type);
-			void create();
-			void reloadSources();
-			void loadFromFile(std::string filePath);
-			void setSource(const char * source);
-			bool compile();
-			void freeSources();
+            explicit Shader(ShaderType type);
 
-			static bool Exists(std::string filePath);
+            Shader(ShaderType type, renderer::ShaderContent content);
 
-			ShaderType type;
-			GLuint handle;
-			bool success;
-			std::string filePath;
-		};
+            ~Shader() = default;
 
-		static std::string loadFile(const char * file_path) {
-			std::string content;
-			std::ifstream fileStream(file_path, std::ios::in);
+            void create();
 
-			if (!fileStream.is_open()) {
-				std::cerr << "Could not open file " << file_path << std::endl;
-				return "";
-			}
+            bool compile();
 
-			std::string line = "";
+            void freeSources();
 
-			while (!fileStream.eof()) {
-				std::getline(fileStream, line);
-				content.append(line + "\n");
-			}
+            GLuint getHandle();
 
-			fileStream.close();
+        private:
+            renderer::ShaderContent content;
 
-			return content;
-		}
-	}
+            void setSource();
+
+            ShaderType type;
+            GLuint handle;
+            bool success;
+        };
+    }
 }
 
 #endif
