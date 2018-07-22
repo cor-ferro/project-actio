@@ -20,9 +20,11 @@ const double dE = glm::e<double>();
 struct alignas(16) vec3_16 {};
 
 namespace color {
-    typedef glm::vec2 rg;
-    typedef glm::vec3 rgb;
-    typedef glm::vec3 hsv;
+    typedef glm::vec2 Rg;
+    typedef glm::vec3 Rgb;
+    typedef glm::vec3 Hsv;
+
+    typedef float Val;
 }
 
 #endif /* TYPES_H_ */

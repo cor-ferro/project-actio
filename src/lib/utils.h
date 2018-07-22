@@ -6,17 +6,27 @@
 #include <vector>
 #include <iostream>
 #include "types.h"
+#include <fstream>
+#include <streambuf>
+#include <string>
+#include <cerrno>
+#include "path.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 namespace utils {
-	std::string formatMemorySize(std::size_t size);
-	const std::vector<std::string> parseVec(const std::string& strVec);
+    std::string formatMemorySize(std::size_t size);
 
-	template<class T>
-	const T stovec(const std::string& strVec);
+    const std::vector<std::string> parseVec(const std::string &strVec);
 
-	std::vector<std::string> split(std::string str, const char separator);
+    template<class T>
+    const T stovec(const std::string &strVec);
+
+    std::vector<std::string> split(std::string str, char separator);
+
+    std::string getFileContents(Path path);
+
+    void getFileContents(Path path, char *data, size_t *size);
 }
 
 
