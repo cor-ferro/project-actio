@@ -23,16 +23,16 @@ namespace game {
             content = nullptr;
         };
 
-        void Script::setContent(char *newContent) {
-            content.reset(newContent, std::default_delete<char[]>());
+        void Script::setContent(Resource::Content newContent) {
+            content = newContent;
         }
 
-        const char *Script::getContent() {
+        Resource::Content Script::getContent() {
             if (!content) {
                 setContent(resource->get());
             }
 
-            return content.get();
+            return content;
         }
 
 
@@ -58,16 +58,16 @@ namespace game {
          * -------------------- Texture --------------------
          */
         Texture::Texture(assets::Resource *resource) : BaseAsset(resource) {
-            ImageParser parser;
-
-            image.reset(new ImageData());
-
-            char *imageResourceData = resource->get();
-
-            if (imageResourceData != nullptr) {
-                ImageData *ptr = image.get();
-                *ptr = parser.parse(resource->get(), resource->getSize());
-            }
+//            ImageParser parser;
+//
+//            image.reset(new ImageData());
+//
+//            char *imageResourceData = resource->get();
+//
+//            if (imageResourceData != nullptr) {
+//                ImageData *ptr = image.get();
+//                *ptr = parser.parse(resource->get(), resource->getSize());
+//            }
         };
 
 

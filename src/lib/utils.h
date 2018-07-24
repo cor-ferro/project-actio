@@ -26,7 +26,7 @@ namespace utils {
 
     std::string getFileContents(Path path);
 
-    void getFileContents(Path path, char *data, size_t *size);
+    void getFileContents(Path path, std::shared_ptr<std::string> &data, size_t *size);
 }
 
 

@@ -29,12 +29,12 @@ namespace game {
         public:
             explicit Script(assets::Resource *resource);
 
-            void setContent(char *newContent);
+            void setContent(Resource::Content newContent);
 
-            const char *getContent();
+            Resource::Content getContent();
 
         private:
-            std::shared_ptr<char> content;
+            Resource::Content content;
         };
 
 

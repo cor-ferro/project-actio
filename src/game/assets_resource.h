@@ -5,19 +5,22 @@
 #ifndef ACTIO_ASSETS_RESOURCE_H
 #define ACTIO_ASSETS_RESOURCE_H
 
+#include <memory>
 #include "../lib/path.h"
 
 namespace game {
     namespace assets {
         class Resource {
         public:
+            typedef std::shared_ptr<std::string> Content;
+
             explicit Resource(Path path);
 
             virtual ~Resource() = default;
 
             void reset();
 
-            char *get();
+            Content get();
 
             const size_t getSize();
 
@@ -28,7 +31,7 @@ namespace game {
         protected:
             Path path;
             bool loaded = false;
-            char *data = nullptr;
+            std::shared_ptr<std::string> data;
             size_t size = 0;
         };
 

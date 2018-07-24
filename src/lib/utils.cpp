@@ -105,22 +105,17 @@ namespace utils {
         throw(errno);
     }
 
-    void getFileContents(Path path, char *data, size_t *size) {
-        if (data != nullptr) {
-            delete[] data;
-            data = nullptr;
-        }
+    void getFileContents(Path path, std::shared_ptr<std::string> &data, size_t *size) {
+        std::ifstream in(path.string());
 
-        std::ifstream in(path.string(), std::ios::in | std::ios::binary);
-        if (in)
-        {
+        if (in) {
+            std::string *str = data.get();
+
             in.seekg(0, std::ios::end);
-            *size = in.tellg();
-            data = new char[*size];
+            str->reserve(in.tellg());
             in.seekg(0, std::ios::beg);
-            in.read(data, *size);
-            in.close();
+
+            str->assign((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         }
-        throw(errno);
     }
 }

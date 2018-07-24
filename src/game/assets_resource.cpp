@@ -3,7 +3,9 @@
 
 namespace game {
     namespace assets {
-        Resource::Resource(const Path path) : path(path) {}
+        Resource::Resource(const Path path) : path(path) {
+            data = std::make_shared<std::string>("");
+        }
 
         bool Resource::isLoaded() {
             return loaded;
@@ -13,7 +15,7 @@ namespace game {
             return size;
         }
 
-        char* Resource::get() {
+        Resource::Content Resource::get() {
             if (!loaded) {
                 load();
             }
@@ -22,11 +24,7 @@ namespace game {
         }
 
         void Resource::reset() {
-            if (data != nullptr) {
-                delete[] data;
-                data = nullptr;
-                loaded = false;
-            }
+            data.reset();
         }
 
 

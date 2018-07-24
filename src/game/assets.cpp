@@ -22,7 +22,7 @@ namespace game {
         );
     }
 
-    const std::map<Assets::Id, assets::Script> &Assets::getScripts() {
+    std::map<Assets::Id, assets::Script> &Assets::getScripts() {
         return scripts;
     };
 

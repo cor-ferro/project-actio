@@ -22,7 +22,7 @@ namespace game {
 
         ~Assets();
 
-        const std::map<Id, assets::Script> &getScripts();
+        std::map<Id, assets::Script> &getScripts();
 
         const std::map<Id, assets::Shader> &getShaders();
 
