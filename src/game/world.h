@@ -30,6 +30,8 @@
 #include "components/weaponStrategy.h"
 #include "systems/weapons.h"
 #include "../lib/profiling.h"
+#include "script.h"
+#include "assets.h"
 
 namespace game {
     namespace ex = entityx;
@@ -191,6 +193,8 @@ namespace game {
 
         void removeLight(entityx::Entity entity);
 
+        void start(ex::TimeDelta dt);
+
         void update(ex::TimeDelta dt);
 
         void render(ex::TimeDelta dt);
@@ -213,14 +217,20 @@ namespace game {
 
         void forcePush(ex::Entity entity, vec3 direction, float force);
 
+        void impactWave(vec3 position, vec3 direction);
+
         Character getUserControlCharacter();
 
         const game::Context &getContext();
 
+        void importAssets(std::shared_ptr<Assets> &newAssets);
+
+        void load();
+
+        void unload();
+
     private:
         std::string name;
-
-//        std::unordered_set<Character> characters;
 
         std::shared_ptr<game::systems::Physic> physic = nullptr;
         std::shared_ptr<game::systems::Camera> camera = nullptr;
@@ -232,10 +242,16 @@ namespace game {
         Context context;
 
         profiling::ProfileTimings systemProfiler;
-    };
 
-    struct WorldController {
-        static void move(World *world, Character *character);
+        std::vector<game::Script*> scripts;
+
+        std::shared_ptr<Assets> assets;
+
+        void reloadAssetsScripts();
+
+        void reloadRenderAssets();
+
+        void unloadScripts();
     };
 }
 

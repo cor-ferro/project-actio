@@ -29,6 +29,7 @@
 #include "events/input.h"
 #include "strategies/weapons/default.h"
 #include "strategies/weapons/rocket_launcher.h"
+#include "systems/sky.h"
 
 namespace game {
     World::World() : name("") {
@@ -51,6 +52,7 @@ namespace game {
         systems.add<systems::BallShot>(&context);
         systems.add<systems::LightHelpers>(&context);
         systems.add<systems::DayTime>(&context);
+        systems.add<systems::Sky>(&context);
         systems.add<systems::Weapons>(&context, this);
 
         systems.configure();
@@ -78,10 +80,15 @@ namespace game {
         PROFILE(systemProfiler, "CharControl", systems.update<game::systems::CharControl>(dt));
         PROFILE(systemProfiler, "Physic", systems.update<game::systems::Physic>(dt));
         PROFILE(systemProfiler, "DayTime", systems.update<game::systems::DayTime>(dt));
+        PROFILE(systemProfiler, "DayTime", systems.update<game::systems::Sky>(dt));
 
         // main update
         PROFILE(systemProfiler, "Weapons", systems.update<game::systems::Weapons>(dt));
         PROFILE(systemProfiler, "BallShot", systems.update<game::systems::BallShot>(dt));
+
+        for (auto &script : scripts) {
+            PROFILE(systemProfiler, script->getName(), script->evalUpdate());
+        }
 
         // post update
         PROFILE(systemProfiler, "Animations", systems.update<game::systems::Animations>(dt));
@@ -115,7 +122,7 @@ namespace game {
         World::Character character(entity, resource);
 
         for (Mesh *mesh : character.model->getMeshes()) {
-            events.emit<game::events::RenderSetupMesh>(entity, mesh);
+            events.emit<game::events::RenderCreateMesh>(entity, mesh);
         }
 
 //        characters.insert(character);
@@ -139,7 +146,7 @@ namespace game {
         World::StaticObject object(entity, mesh);
 
         for (Mesh *mesh : object.model->getMeshes()) {
-            events.emit<game::events::RenderSetupMesh>(entity, mesh);
+            events.emit<game::events::RenderCreateMesh>(entity, mesh);
         }
 
         return object;
@@ -176,6 +183,84 @@ namespace game {
     void World::remove() {
 
     }
+
+    void World::initGroundPlane() {
+        Mesh *mesh = Mesh::Create();
+
+        GeometryPrimitive::Plane(mesh->geometry, 20, 20, 10, 10);
+//        mesh->material.setWireframe(true);
+        mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
+
+        entityx::Entity entity = entities.create();
+
+        entity.assign<components::Transform>(
+                vec3(0.0f),
+                glm::angleAxis(glm::radians(90.f), glm::vec3(1.0f, 0.0f, 0.0f)),
+                vec3(1.0f)
+        );
+        entity.assign<components::Model>(mesh);
+
+        events.emit<events::RenderCreateMesh>(entity, mesh);
+    }
+
+    void World::destroy() {
+        unloadScripts();
+
+        entities.reset();
+
+        console::info("world %s destroyed", name);
+    }
+
+    void World::setRenderSize(renderer::ScreenSize width, renderer::ScreenSize height) {
+        events.emit<events::RenderResize>(width, height);
+    }
+
+    void World::setInput(int place, InputHandler *ih) {
+        console::info(" SET INPUT %i", ih);
+        context.input = ih;
+        events.emit<events::InputSetHandler>(ih, place);
+    }
+
+    void World::removeInput(systems::Input::InputPlace place) {
+
+    }
+
+    const game::Context &World::getContext() {
+        return context;
+    }
+
+    World::Character World::getUserControlCharacter() {
+        ex::Entity charEntity;
+
+        entities.each<components::UserControl>([&charEntity](ex::Entity entity, components::UserControl &control) {
+            charEntity = entity;
+        });
+
+        World::Character character = World::Character::Restore(charEntity);
+
+        return character;
+    }
+
+    /**
+     * --------------------------------------------------
+     * Camera methods
+     * --------------------------------------------------
+     */
+
+    void World::setCameraSettings(float fov, float aspect, float near, float far) {
+        camera->setSettings(fov, aspect, near, far);
+    }
+
+    void World::cameraLookAt(vec3 target) {
+        camera->lookAt(target);
+    }
+
+
+    /**
+     * --------------------------------------------------
+     * Light methods
+     * --------------------------------------------------
+     */
 
     void World::addLight(desc::LightPointDesc lightDescription) {
         entityx::Entity entity = entities.create();
@@ -233,82 +318,82 @@ namespace game {
         entity.destroy();
     }
 
-    void World::initGroundPlane() {
-        Mesh *mesh = Mesh::Create();
-
-        GeometryPrimitive::Plane(mesh->geometry, 20, 20, 10, 10);
-//        mesh->material.setWireframe(true);
-        mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-        entityx::Entity entity = entities.create();
-
-        entity.assign<components::Transform>(
-                vec3(0.0f),
-                glm::angleAxis(glm::radians(90.f), glm::vec3(1.0f, 0.0f, 0.0f)),
-                vec3(1.0f)
-        );
-        entity.assign<components::Model>(mesh);
-
-        events.emit<events::RenderSetupMesh>(entity, mesh);
+    void World::setLightDebug(bool value) {
+        events.emit<events::LightHelperShow>(value);
     }
 
-    void World::destroy() {
-        entities.reset();
 
-        console::info("world %s destroyed", name);
+    /**
+     * --------------------------------------------------
+     * Physic methods
+     * --------------------------------------------------
+     */
+
+    void World::forcePush(ex::Entity entity, vec3 direction, float force) {
+        events.emit<events::PhysicForce>(entity, direction, force);
+    }
+
+    void World::impactWave(vec3 position, vec3 direction) {
+        physic->wave(position, direction);
     }
 
     void World::setPhysicsDebug(bool value) {
         physic->setDrawDebug(value);
     }
 
-    void World::setLightDebug(bool value) {
-        events.emit<events::LightHelperShow>(value);
-    }
-
-    void World::setCameraSettings(float fov, float aspect, float near, float far) {
-        camera->setSettings(fov, aspect, near, far);
-    }
-
     void World::setGravity(vec3 dir) {
         physic->setSceneGravity(dir);
     }
 
-    void World::cameraLookAt(vec3 target) {
-        camera->lookAt(target);
+    void World::importAssets(std::shared_ptr<Assets> &newAssets) {
+        // @todo: cleanup world items
+        assets.reset();
+        assets = newAssets;
     }
 
-    void World::setRenderSize(renderer::ScreenSize width, renderer::ScreenSize height) {
-        events.emit<events::RenderResize>(width, height);
+    void World::reloadAssetsScripts() {
+        unloadScripts();
+
+        for (auto &it : assets->getScripts()) {
+            assets::Script *assetScript = &it.second;
+            auto script = new game::Script(assetScript);
+
+            Script::INIT_STATUS status = script->init(this);
+
+            if (status == Script::INIT_STATUS::SUCCESS) {
+                scripts.push_back(script);
+            }
+        }
     }
 
-    void World::setInput(int place, InputHandler *ih) {
-        console::info(" SET INPUT %i", ih);
-        context.input = ih;
-        events.emit<events::InputSetHandler>(ih, place);
+    void World::reloadRenderAssets() {
+        const std::map<Assets::Id, assets::Shader> &shaders = assets->getShaders();
+
+        for (const auto &it: shaders) {
+            const assets::Shader &shader = it.second;
+
+            events.emit<events::RenderSetupShader>(
+                    shader.getVertexContent(),
+                    shader.getFragmentContent(),
+                    shader.getGeometryContent()
+            );
+        }
     }
 
-    void World::removeInput(systems::Input::InputPlace place) {
-
+    void World::load() {
+        reloadAssetsScripts();
+        reloadRenderAssets();
     }
 
-    const game::Context &World::getContext() {
-        return context;
-    }
+    void World::unload() {
+        unloadScripts();
+    };
 
-    World::Character World::getUserControlCharacter() {
-        ex::Entity charEntity;
+    void World::unloadScripts() {
+        for (auto &script : scripts) {
+            delete script;
+        }
 
-        entities.each<components::UserControl>([&charEntity](ex::Entity entity, components::UserControl &control) {
-            charEntity = entity;
-        });
-
-        World::Character character = World::Character::Restore(charEntity);
-
-        return character;
-    }
-
-    void World::forcePush(ex::Entity entity, vec3 direction, float force) {
-        events.emit<events::PhysicForce>(entity, direction, force);
+        scripts.erase(scripts.begin(), scripts.end());
     }
 }
