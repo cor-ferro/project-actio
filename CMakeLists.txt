@@ -38,6 +38,9 @@ include_directories(vendor/PhysX-3.4/PhysX_3.4/Include)
 include_directories(vendor/PhysX-3.4/PxShared/include)
 include_directories(vendor/ozz-animation/include)
 include_directories(vendor/entityx)
+include_directories(vendor/yaml-cpp/include)
+include_directories(vendor/luabridge/Source)
+include_directories(include/lua/include)
 
 file(GLOB actio_src
         src/*.cpp
@@ -89,7 +92,7 @@ SET(CMAKE_SKIP_BUILD_RPATH FALSE)
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 SET(CMAKE_INSTALL_RPATH ${CMAKE_SOURCE_DIR}/libs/linux64)
 
-foreach (lib glfw jasper entityx assimp IL ILU ILUT)
+foreach (lib glfw jasper entityx assimp IL ILU ILUT yaml-cpp lua53)
     add_library(${lib} SHARED IMPORTED)
     set_property(TARGET ${lib} PROPERTY IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/libs/linux64/lib${lib}.so")
 endforeach (lib)
@@ -115,6 +118,8 @@ target_link_libraries(actio
         ILUT
         entityx
         assimp
+        yaml-cpp
+        lua53
         boost_thread
         boost_system
         boost_timer

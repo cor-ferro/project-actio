@@ -33,6 +33,7 @@ build_dependencies()
 	build_soil
 	build_devIL
 	build_jasper
+	build_luabridge
 }
 
 create_libs_dir()
@@ -300,6 +301,29 @@ build_jasper()
 	rm -rf ./install
 }
 
+build_luabridge()
+{
+    init_git_module "vendor/luabridge"
+
+    cd $CURRENT_DIR/vendor/luabridge
+
+
+}
+
+build_yamlcpp()
+{
+    init_git_module "vendor/yamlcpp"
+
+    cd $CURRENT_DIR/vendor/yaml-cpp
+    rm -rf ./build
+    mkdir build
+    cd build
+    cmake -DBUILD_SHARED_LIBS=ON ..
+    make -j$COUNT_THREADS
+    copy_to_libs "./libyaml-cpp.so*"
+    cd ..
+    rm -rf ./build
+}
 build_dependencies
 
 echo ""
