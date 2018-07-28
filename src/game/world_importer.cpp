@@ -111,7 +111,7 @@ namespace game {
                     const std::unique_ptr<Resource::Assimp> assimpResource(new Resource::Assimp(scene, pFile));
 
                     if (scene) {
-                        World::Character character = world->createCharacter(assimpResource.get());
+                        World::Character character = world->createCharacter(section.name, assimpResource.get());
 
                         World::Weapon characterWeapon = world->createWeapon();
 

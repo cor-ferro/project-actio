@@ -123,9 +123,15 @@ namespace game {
     }
 
     World::Character World::createCharacter(Resource::Assimp *resource) {
+        return createCharacter("", resource);
+    }
+
+    World::Character World::createCharacter(std::string name, Resource::Assimp *resource) {
         ex::Entity entity = entities.create();
 
-        World::Character character(entity, resource, assets.get());
+        World::Character character(entity, name);
+
+        character.setup(resource, assets.get());
 
         events.emit<game::events::RenderSetupModel>(entity);
         events.emit<events::CharacterCreate>();

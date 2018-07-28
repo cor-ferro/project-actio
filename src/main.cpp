@@ -64,10 +64,13 @@ int main(int argc, char **argv) {
     world->setup();
     world->setLightDebug(guiSettings.debugLight.getRef());
 
+    std::shared_ptr<Assets> worldAssets(new Assets());
+    world->importAssets(worldAssets);
+
     auto worldImporter = new game::WorldImporter(world);
     worldImporter->import(testWorldFile);
 
-    std::shared_ptr<Assets> worldAssets(new Assets());
+
 
     bool statusChapterLoad = storyImporter.loadChapterAssets(story, chapterName, worldAssets.get());
 
@@ -77,7 +80,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    world->importAssets(worldAssets);
     world->load();
 
     bool renderExec = true;

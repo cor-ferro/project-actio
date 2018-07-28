@@ -73,19 +73,12 @@ namespace game {
          */
         class Character : public WorldObject {
         public:
-            Character(ex::Entity &fromEntity, Resource::Assimp *resource, Assets *assets) : WorldObject(fromEntity) {
+            Character(ex::Entity &fromEntity, const std::string name = "") : WorldObject(fromEntity) {
                 model = entity_.assign<components::Model>();
                 character = entity_.assign<c::Character>();
                 items = entity_.assign<c::CharItems>();
 
-                ModelBuilder::FromAi(model.get(), resource, assets);
-
-                if (resource->hasAnimations()) {
-                    skin = entity_.assign<components::Skin>(resource);
-
-                    auto nodeIndexes = skin->getNodeIndexes();
-                    model->reindexMeshBones(nodeIndexes);
-                }
+                model->setName(name);
             };
 
             Character(const Character &other) = default;
@@ -103,6 +96,17 @@ namespace game {
                 character.transform = components::get<c::Transform>(character.entity_);
 
                 return character;
+            }
+
+            void setup(Resource::Assimp *resource, Assets *assets) {
+                ModelBuilder::FromAi(model.get(), resource, assets);
+
+                if (resource->hasAnimations()) {
+                    skin = entity_.assign<components::Skin>(resource);
+
+                    auto nodeIndexes = skin->getNodeIndexes();
+                    model->reindexMeshBones(nodeIndexes);
+                }
             }
 
             ex::ComponentHandle<c::Model> model;
@@ -176,6 +180,7 @@ namespace game {
         void spawn(Character *character, glm::vec3 pos);
 
         World::Character createCharacter(Resource::Assimp *resource);
+        World::Character createCharacter(std::string name, Resource::Assimp *resource);
 
         void removeCharacter(World::Character character);
 
