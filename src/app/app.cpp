@@ -57,7 +57,7 @@ Path App::getPath()
 
 Path App::resourcePath()
 {
-	return createPath(path_, "/resources");
+	return createPath(path_, RESOURCE_DIR);
 }
 
 Path App::resourcePath(std::string fromPath)

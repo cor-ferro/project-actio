@@ -75,7 +75,8 @@ void Assets::free() {
 void Assets::loadDefaultResources() {
     assets::Loader assetsLoader(App::instance().resourcePath());
 
-    assets::Resource *defaultTextureResource = assetsLoader.load(App::instance().resourcePath("default2.png"));
+    Path defaultTexturePath("default2.png");
+    assets::Resource *defaultTextureResource = assetsLoader.load(defaultTexturePath);
 
     if (defaultTextureResource != nullptr) {
         addTexture("DefaultTexture", defaultTextureResource);

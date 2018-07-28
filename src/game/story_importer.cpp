@@ -145,8 +145,6 @@ namespace game {
     void StoryImporter::loadMaterials() {}
 
     bool StoryImporter::loadChapterAssets(Story &story, const std::string &chapterName, Assets *assets) {
-        assets->loadDefaultResources();
-
         Chapter *chapter = story.getChapter(chapterName);
 
         if (chapter == nullptr) {

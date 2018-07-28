@@ -19,7 +19,7 @@ add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
 add_definitions(-DGRAPHIC_API=${GRAPHIC_API})
 add_definitions(-DGRAPHIC_API_OPENGL)
 add_definitions(-DGLFW_INCLUDE_NONE)
-add_definitions(-DRESOURCE_DIR="./resources")
+add_definitions(-DRESOURCE_DIR="resources")
 add_definitions(-DSHADERS_DIR="./shaders")
 
 set(CMAKE_CXX_STANDARD 11)

@@ -65,12 +65,11 @@ int main(int argc, char **argv) {
     world->setLightDebug(guiSettings.debugLight.getRef());
 
     std::shared_ptr<Assets> worldAssets(new Assets());
+    worldAssets->loadDefaultResources();
     world->importAssets(worldAssets);
 
     auto worldImporter = new game::WorldImporter(world);
     worldImporter->import(testWorldFile);
-
-
 
     bool statusChapterLoad = storyImporter.loadChapterAssets(story, chapterName, worldAssets.get());
 
