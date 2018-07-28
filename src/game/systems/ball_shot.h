@@ -8,24 +8,28 @@
 #include <entityx/entityx/System.h>
 #include <stack>
 #include <glm/glm/gtc/random.inl>
-#include "../events/key_press.h"
-#include "../../lib/console.h"
-#include "../../lib/types.h"
 #include "../components/physic.h"
 #include "../components/transform.h"
 #include "../components/camera.h"
-#include "../events/physic_create.h"
-#include "../../core/mesh.h"
 #include "../components/model.h"
 #include "../components/renderable.h"
-#include "../events/render_create_mesh.h"
+#include "../components/user_control.h"
+#include "../events/key_press.h"
+#include "../events/physic_create.h"
+#include "../events/render_setup_model.h"
 #include "../events/mouse_press.h"
 #include "../events/physic_force.h"
+#include "../../lib/console.h"
+#include "../../lib/types.h"
+#include "../../core/mesh.h"
 #include "../../core/geometry_primitive.h"
+#include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
         namespace ex = entityx;
+        namespace c = components;
 
         class BallShot
                 : public systems::BaseSystem
@@ -50,12 +54,12 @@ namespace game {
                             cameraTarget = camera.getTarget();
                         });
 
-                es.each<components::Model, components::UserControl, components::Transform>(
+                es.each<components::Model, c::UserControl, components::Transform>(
                         [&charPosition, &charHeight](
                                 ex::Entity,
-                                components::Model &model,
-                                components::UserControl &userControl,
-                                components::Transform &transform
+                                c::Model &model,
+                                c::UserControl &userControl,
+                                c::Transform &transform
                         ) {
                             charPosition = transform.getPosition();
                             charHeight = model.height() * transform.getScale().y;
@@ -82,8 +86,7 @@ namespace game {
 
                     events.emit<events::PhysicCreateSphere>(ball, radius);
                     events.emit<events::PhysicForce>(ball, target, 5.0f);
-                    events.emit<events::RenderCreateMesh>(ball, mesh);
-//                    events.emit<events::RenderSetupModel>(ball);
+                    events.emit<events::RenderSetupModel>(ball);
                 }
             }
 

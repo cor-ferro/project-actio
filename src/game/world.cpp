@@ -22,6 +22,7 @@
 #include "events/input.h"
 #include "events/light_add.h"
 #include "events/light_remove.h"
+#include "events/render_setup_model.h"
 #include "components/light_point.h"
 #include "components/light_directional.h"
 #include "components/char_items.h"
@@ -126,12 +127,7 @@ namespace game {
 
         World::Character character(entity, resource, assets.get());
 
-        for (Mesh *mesh : character.model->getMeshes()) {
-            events.emit<game::events::RenderCreateMesh>(entity, mesh);
-        }
-
-//        characters.insert(character);
-
+        events.emit<game::events::RenderSetupModel>(entity);
         events.emit<events::CharacterCreate>();
 
         return character;
@@ -150,9 +146,7 @@ namespace game {
 
         World::StaticObject object(entity, mesh);
 
-        for (Mesh *mesh : object.model->getMeshes()) {
-            events.emit<game::events::RenderCreateMesh>(entity, mesh);
-        }
+        events.emit<game::events::RenderSetupModel>(entity);
 
         return object;
     }
@@ -205,7 +199,7 @@ namespace game {
         );
         entity.assign<components::Model>(mesh);
 
-        events.emit<events::RenderCreateMesh>(entity, mesh);
+        events.emit<events::RenderSetupModel>(entity);
     }
 
     void World::destroy() {

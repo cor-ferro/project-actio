@@ -6,12 +6,18 @@
 #define ACTIO_GAME_SYSTEMS_SKY_H
 
 #include <entityx/entityx/System.h>
-#include "base.h"
+#include "../components/model.h"
+#include "../components/transform.h"
+#include "../events/render_setup_model.h"
+#include "../../core/mesh.h"
+#include "../../core/geometry_primitive.h"
 #include "../../lib/console.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
         namespace ex = entityx;
+        namespace c = components;
 
         class Sky
                 : public systems::BaseSystem
@@ -30,10 +36,10 @@ namespace game {
                     GeometryPrimitive::Circle(mesh->geometry, radius, 16, .0f, glm::two_pi<float>());
                     mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
-                    sun.assign<components::Model>(mesh);
-                    sun.assign<components::Transform>(vec3(0.0f));
+                    sun.assign<c::Model>(mesh);
+                    sun.assign<c::Transform>(vec3(0.0f));
 
-                    events.emit<events::RenderCreateMesh>(sun, mesh);
+                    events.emit<events::RenderSetupModel>(sun);
 
                     isFirstCall = true;
                 }

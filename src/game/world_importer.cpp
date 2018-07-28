@@ -1,7 +1,6 @@
 #include "world_importer.h"
 #include "systems/physic.h"
 #include "../lib/ini_loader.h"
-#include "events/render_create_mesh.h"
 #include "components/transform.h"
 #include "components/state.h"
 #include "components/renderable.h"

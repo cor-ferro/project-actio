@@ -17,7 +17,6 @@
 #include "../components/controlled.h"
 #include "../../core/geometry_primitive.h"
 #include "../components/renderable.h"
-#include "../events/render_create_mesh.h"
 #include "../components/base.h"
 #include "../context.h"
 #include "base.h"

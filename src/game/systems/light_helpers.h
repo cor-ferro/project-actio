@@ -9,17 +9,17 @@
 #include <stack>
 #include "../events/light_add.h"
 #include "../events/light_remove.h"
+#include "../events/light_helper_show.h"
+#include "../events/render_setup_model.h"
 #include "../components/light_point.h"
-#include "../../core/geometry_primitive.h"
-#include "../../core/mesh.h"
 #include "../components/model.h"
 #include "../components/base.h"
-#include "../events/render_create_mesh.h"
 #include "../components/transform.h"
 #include "../components/light_helper.h"
 #include "../components/renderable.h"
-#include "../events/light_helper_show.h"
 #include "../components/helper.h"
+#include "../../core/geometry_primitive.h"
+#include "../../core/mesh.h"
 #include "../context.h"
 #include "base.h"
 
@@ -70,7 +70,7 @@ namespace game {
 
                         lightEntity.assign<components::Helper>(helper);
 
-                        events.emit<events::RenderCreateMesh>(helper, mesh);
+                        events.emit<events::RenderSetupModel>(helper);
                     }
                 }
 

@@ -18,12 +18,12 @@
 #include "../components/physic.h"
 #include "../components/transform.h"
 #include "../components/controlled.h"
+#include "../components/model.h"
 #include "../events/physic_create.h"
 #include "../events/physic_force.h"
 #include "../events/setup_controlled.h"
 #include "../events/key_press.h"
-#include "../events/render_create_mesh.h"
-#include "../events/render_update_mesh.h"
+#include "../events/render_setup_model.h"
 #include "../events/physic_contact.h"
 #include "../components/base.h"
 #include "../components/renderable.h"
@@ -234,14 +234,14 @@ namespace game {
                 }
             }
 
-            void postConfigure(entityx::EventManager &event_manager) {
+            void postConfigure(entityx::EventManager &events) {
                 auto modelLines = components::get<components::Model>(debugLinesEntity);
                 auto modelTriangles = components::get<components::Model>(debugTrianglesEntity);
                 auto modelPoints = components::get<components::Model>(debugPointsEntity);
 
-                event_manager.emit<events::RenderCreateMesh>(debugLinesEntity, modelLines->getMesh());
-                event_manager.emit<events::RenderCreateMesh>(debugTrianglesEntity, modelTriangles->getMesh());
-                event_manager.emit<events::RenderCreateMesh>(debugPointsEntity, modelPoints->getMesh());
+                events.emit<events::RenderSetupModel>(debugLinesEntity);
+                events.emit<events::RenderSetupModel>(debugTrianglesEntity);
+                events.emit<events::RenderSetupModel>(debugPointsEntity);
             }
 
             void destroy() {
@@ -462,9 +462,9 @@ namespace game {
                     }
                 }
 
-                events.emit<events::RenderUpdateMesh>(debugLinesEntity, linesMesh);
-                events.emit<events::RenderUpdateMesh>(debugTrianglesEntity, trianglesMesh);
-                events.emit<events::RenderUpdateMesh>(debugPointsEntity, pointsMesh);
+                events.emit<events::RenderSetupModel>(debugLinesEntity, events::RenderSetupModel::Action::Update);
+                events.emit<events::RenderSetupModel>(debugTrianglesEntity, events::RenderSetupModel::Action::Update);
+                events.emit<events::RenderSetupModel>(debugPointsEntity, events::RenderSetupModel::Action::Update);
             }
 
             void setSceneGravity(vec3 value) {
