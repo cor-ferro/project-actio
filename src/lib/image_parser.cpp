@@ -4,12 +4,12 @@
 #include <IL/ilu.h>
 #include "../lib/console.h"
 
-ImageData ImageParser::parse(char *data, size_t size) {
-    parseByIl(data, size);
+std::shared_ptr<ImageData> ImageParser::parse(const char *data, size_t size) {
+    return parseByIl(data, size);
 }
 
-ImageData ImageParser::parseByIl(char *data, size_t size) {
-    ImageData imageData;
+std::shared_ptr<ImageData> ImageParser::parseByIl(const char *data, size_t size) {
+    std::shared_ptr<ImageData> imageData(new ImageData());
 
     imageParserMutex.lock();
 
@@ -19,7 +19,7 @@ ImageData ImageParser::parseByIl(char *data, size_t size) {
     ILuint id;
     ilGenImages(1, &id);
     ilBindImage(id);
-    ILboolean isImageLoad = ilLoadL(IL_TYPE_UNKNOWN, reinterpret_cast<ILubyte*>(data), static_cast<ILuint>(size));
+    ILboolean isImageLoad = ilLoadL(IL_TYPE_UNKNOWN, reinterpret_cast<const ILubyte*>(data), static_cast<ILuint>(size));
     if (!isImageLoad) {
         ILenum Error;
         while ((Error = ilGetError()) != IL_NO_ERROR) {
@@ -56,14 +56,15 @@ ImageData ImageParser::parseByIl(char *data, size_t size) {
         return imageData;
     }
 
-    imageData.initData(
-            ilGetInteger(IL_IMAGE_WIDTH),
-            ilGetInteger(IL_IMAGE_HEIGHT),
-            ilGetInteger(IL_IMAGE_FORMAT)
-    );
+    ILint width = ilGetInteger(IL_IMAGE_WIDTH);
+    ILint height = ilGetInteger(IL_IMAGE_HEIGHT);
+    ILint format = ilGetInteger(IL_IMAGE_FORMAT);
+    size_t dataSize = static_cast<size_t>(width) * static_cast<size_t>(height) * ImageData::componentSize(format);
 
-    imageData.set(ilGetData(), imageData.getWidth() * imageData.getHeight() * ImageData::componentSize(imageData.getFormat()));
-    imageData.calcSize();
+    imageData->initData(width, height, format);
+
+    imageData->set(ilGetData(), dataSize);
+    imageData->calcSize();
 
     ilBindImage(0);
     ilDeleteImage(id);

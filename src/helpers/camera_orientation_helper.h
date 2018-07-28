@@ -16,7 +16,7 @@
 #include "../core/model.h"
 #include "../core/mesh.h"
 #include "../core/vertex.h"
-#include "../materials/material.h"
+#include "../core/material.h"
 #include "../core/model.h"
 #include "../core/mesh.h"
 #include "../core/vertex.h"

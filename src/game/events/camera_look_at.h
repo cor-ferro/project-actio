@@ -2,8 +2,8 @@
 // Created by demitriy on 3/31/18.
 //
 
-#ifndef ACTIO_KEY_PRESS_H
-#define ACTIO_KEY_PRESS_H
+#ifndef ACTIO_CAMERA_LOOK_AT
+#define ACTIO_CAMERA_LOOK_AT
 
 #include "../../lib/types.h"
 
@@ -17,4 +17,4 @@ namespace game {
     }
 }
 
-#endif //ACTIO_KEY_PRESS_H
+#endif //ACTIO_CAMERA_LOOK_AT

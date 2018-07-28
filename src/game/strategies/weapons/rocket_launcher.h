@@ -84,10 +84,17 @@ namespace game {
             };
 
             void onProjectileCollision(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) override {
-                projectile.health-= 0.5f;
+                projectile.health-= 1.0f;
 
-                if (projectile.health < 0.0f) {
+                if (projectile.health <= 0.0f) {
                     console::info("destroy projectile");
+
+                    auto transform = components::get<c::Transform>(entity);
+
+                    console::geom("projectile pos: %s", transform->getPosition());
+
+                    world->impactWave(transform->getPosition(), vec3(1.0f));
+
                     destroyProjectile(entity);
                 }
             };

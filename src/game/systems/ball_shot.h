@@ -18,7 +18,7 @@
 #include "../../core/mesh.h"
 #include "../components/model.h"
 #include "../components/renderable.h"
-#include "../events/render_setup_mesh.h"
+#include "../events/render_create_mesh.h"
 #include "../events/mouse_press.h"
 #include "../events/physic_force.h"
 #include "../../core/geometry_primitive.h"
@@ -70,7 +70,7 @@ namespace game {
                     Mesh *mesh = Mesh::Create();
 
                     GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
-                    mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
+                    mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
                     vec3 target = glm::normalize(worldContext->mouseWorldPosition - charPosition);
 
@@ -81,8 +81,9 @@ namespace game {
                     ball.assign<components::Transform>(charPosition + (vec3(0.0f, 1.0f + yAxis, zAxis) + target));
 
                     events.emit<events::PhysicCreateSphere>(ball, radius);
-                    events.emit<events::PhysicForce>(ball, target, 30.0f);
-                    events.emit<events::RenderSetupMesh>(ball, mesh);
+                    events.emit<events::PhysicForce>(ball, target, 5.0f);
+                    events.emit<events::RenderCreateMesh>(ball, mesh);
+//                    events.emit<events::RenderSetupModel>(ball);
                 }
             }
 

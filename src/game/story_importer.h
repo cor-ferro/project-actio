@@ -7,7 +7,7 @@
 #include <fstream>
 #include <streambuf>
 #include "story.h"
-#include "assets_loader.h"
+#include "../lib/assets_loader.h"
 #include "../resources/file_resource.h"
 #include "../lib/data_loader.h"
 #include "../lib/console.h"

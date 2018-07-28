@@ -5,6 +5,8 @@
 #ifndef ACTIO_EVENTS_INPUT_H
 #define ACTIO_EVENTS_INPUT_H
 
+#include "../../lib/input_handler.h"
+
 namespace game {
     namespace events {
         struct InputSetHandler {

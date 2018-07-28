@@ -14,7 +14,7 @@
 #include "../../core/mesh.h"
 #include "../components/model.h"
 #include "../components/base.h"
-#include "../events/render_setup_mesh.h"
+#include "../events/render_create_mesh.h"
 #include "../components/transform.h"
 #include "../components/light_helper.h"
 #include "../components/renderable.h"
@@ -55,8 +55,8 @@ namespace game {
                         Mesh *mesh = Mesh::Create();
                         GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f,
                                                   3.14f);
-                        mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
-                        mesh->material.setWireframe(true);
+                        mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
+                        mesh->material->setWireframe(true);
 
                         entityx::Entity helper = es.create();
 
@@ -70,7 +70,7 @@ namespace game {
 
                         lightEntity.assign<components::Helper>(helper);
 
-                        events.emit<events::RenderSetupMesh>(helper, mesh);
+                        events.emit<events::RenderCreateMesh>(helper, mesh);
                     }
                 }
 

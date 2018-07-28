@@ -7,31 +7,33 @@
 #include <vector>
 #include <unordered_map>
 #include <glm/glm.hpp>
-#include "entityx/entityx.h"
+#include <entityx/entityx.h>
+#include "context.h"
 #include "character.h"
-#include "components/skin.h"
+#include "script.h"
 #include "../lib/console.h"
 #include "../lib/watch.h"
 #include "../lib/input_handler.h"
-#include "../resources/file_resource.h"
 #include "../lib/ini_loader.h"
+#include "../lib/profiling.h"
+#include "../lib/assets.h"
+#include "../resources/file_resource.h"
 #include "../renderer/base_renderer.h"
+#include "../core/model_builder.h"
 #include "systems/physic.h"
 #include "systems/camera.h"
+#include "systems/input.h"
+#include "systems/weapons.h"
+#include "systems/render.h"
+#include "components/char_items.h"
+#include "components/weapon.h"
+#include "components/skin.h"
+#include "components/weaponStrategy.h"
 #include "desc/light_point.h"
 #include "desc/light_directional.h"
 #include "desc/light_spot.h"
-#include "context.h"
-#include "components/char_items.h"
-#include "components/weapon.h"
 #include "desc/weapon.h"
 #include "weapon_handler.h"
-#include "systems/input.h"
-#include "components/weaponStrategy.h"
-#include "systems/weapons.h"
-#include "../lib/profiling.h"
-#include "script.h"
-#include "assets.h"
 
 namespace game {
     namespace ex = entityx;
@@ -71,10 +73,12 @@ namespace game {
          */
         class Character : public WorldObject {
         public:
-            Character(ex::Entity &fromEntity, Resource::Assimp *resource) : WorldObject(fromEntity) {
-                model = entity_.assign<components::Model>(resource);
+            Character(ex::Entity &fromEntity, Resource::Assimp *resource, Assets *assets) : WorldObject(fromEntity) {
+                model = entity_.assign<components::Model>();
                 character = entity_.assign<c::Character>();
                 items = entity_.assign<c::CharItems>();
+
+                ModelBuilder::FromAi(model.get(), resource, assets);
 
                 if (resource->hasAnimations()) {
                     skin = entity_.assign<components::Skin>(resource);
@@ -157,6 +161,8 @@ namespace game {
 
         void setupRenderer(renderer::Renderer *);
 
+        void destroyRenderer();
+
         void setupInput(InputHandler *ih);
 
         void setup();
@@ -235,6 +241,7 @@ namespace game {
         std::shared_ptr<game::systems::Physic> physic = nullptr;
         std::shared_ptr<game::systems::Camera> camera = nullptr;
         std::shared_ptr<game::systems::Weapons> weapons = nullptr;
+        std::shared_ptr<game::systems::Render> renderer = nullptr;
 
         InputHandler *input1 = nullptr;
         InputHandler *input2 = nullptr;
@@ -252,6 +259,8 @@ namespace game {
         void reloadRenderAssets();
 
         void unloadScripts();
+
+        void unloadTextures();
     };
 }
 

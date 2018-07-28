@@ -17,4 +17,4 @@ namespace game {
     }
 }
 
-#endif //ACTIO_KEY_PRESS_H
+#endif //ACTIO_LIGHT_REMOVE_H

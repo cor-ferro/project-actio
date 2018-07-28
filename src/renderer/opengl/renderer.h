@@ -14,7 +14,7 @@
 #include "../../lib/types.h"
 #include "../../core/geometry.h"
 #include "../../core/mesh.h"
-#include "../../materials/material.h"
+#include "../../core/material.h"
 #include "shader.h"
 #include "program.h"
 #include "g-buffer.h"
@@ -31,17 +31,19 @@
 #include "../../game/components/light_point.h"
 #include "../../game/components/light_spot.h"
 
+#include "handle.h"
+
 namespace renderer {
     using namespace game;
     namespace ex = entityx;
 
-    static void GLAPIENTRY MessageCallback( GLenum source,
-                     GLenum type,
-                     GLuint id,
-                     GLenum severity,
-                     GLsizei length,
-                     const GLchar* message,
-                     const void* userParam );
+    static void GLAPIENTRY MessageCallback(GLenum source,
+                                           GLenum type,
+                                           GLuint id,
+                                           GLenum severity,
+                                           GLsizei length,
+                                           const GLchar *message,
+                                           const void *userParam);
 
     struct OpenglRenderer : Renderer {
         struct RenderGeometry {
@@ -72,7 +74,11 @@ namespace renderer {
 
         void draw(entityx::EntityManager &es);
 
-        void drawModels(Scene *scene, Opengl::Program &program);
+        void destroy();
+
+        void destroyGeometryHandle(renderer::Opengl::GeometryHandle *handle);
+
+        void destroyTextureHandle(renderer::Opengl::TextureHandle *handle);
 
         void drawModels(entityx::EntityManager &es);
 
@@ -88,11 +94,7 @@ namespace renderer {
 
         void renderDirLights(ex::EntityManager &es);
 
-        void setupMesh(Mesh *mesh) override;
-
         void updateMesh(Mesh *mesh) override;
-
-        void setupMaterial(Material::Phong *material);
 
         void destroyMesh(Mesh *mesh) override;
 
@@ -108,9 +110,19 @@ namespace renderer {
 
         void addShaders(std::vector<ShaderDescription> list) override;
 
-        Renderer::RenderGeometryId createGeometry(Mesh *mesh) override;
+        void setupMesh(Mesh *mesh) override;
 
-        Renderer::RenderTextureId createTexture(Texture *texture)override;
+        void setupGeometry(Geometry *geometry) override;
+
+        void setupMaterial(Material *material) override;
+
+        void setupTexture(::Texture *texture) override;
+
+        void setupTexture2d(::Texture *texture);
+
+        void setupTextureCube(::Texture *texture);
+
+        void destroyTexture(TextureId textureId) override;
 
         GLuint depthMapFBO;
         GLuint depthMap;
@@ -123,12 +135,16 @@ namespace renderer {
 
         void initRequiredShaders();
 
-        Opengl::Program* forwardProgram;
-        Opengl::Program* skyboxProgram;
-        Opengl::Program* skyboxDeferredProgram;
-        Opengl::Program* geometryPassProgram;
-        Opengl::Program* lightPassProgram;
-        Opengl::Program* nullProgram;
+        Opengl::GeometryHandle* createGeometryHandle();
+
+        Opengl::TextureHandle* createTextureHandle();
+
+        Opengl::Program *forwardProgram;
+        Opengl::Program *skyboxProgram;
+        Opengl::Program *skyboxDeferredProgram;
+        Opengl::Program *geometryPassProgram;
+        Opengl::Program *lightPassProgram;
+        Opengl::Program *nullProgram;
 
         std::unordered_map<size_t, Opengl::Program> programs;
 
@@ -136,18 +152,15 @@ namespace renderer {
         renderer::Opengl::MeshDrawPipeline skyboxPipeline;
         renderer::Opengl::MeshDrawPipeline nullPipeline;
 
-        Mesh *lightQuad;
-        Mesh *lightSphere;
-        Mesh *lightCylinder;
+        Mesh *lightQuad = nullptr;
+        Mesh *lightSphere = nullptr;
+        Mesh *lightCylinder = nullptr;
 
         std::unordered_map<std::string, Opengl::Program> requiredPrograms;
         std::unordered_map<std::string, Opengl::Program> optionalPrograms;
 
-        std::map<Renderer::RenderGeometryId, RenderGeometry> geometries;
-        std::map<Renderer::RenderTextureId, RenderTexture> textures;
-
-        RenderGeometryId geometryId = 0;
-        RenderTextureId textureId = 0;
+        std::vector<Opengl::GeometryHandle*> geometryHandles;
+        std::vector<Opengl::TextureHandle*> textureHandles;
     };
 
 }

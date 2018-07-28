@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include "chapter.h"
-#include "assets.h"
+#include "../lib/assets.h"
 
 namespace game {
     class Story;

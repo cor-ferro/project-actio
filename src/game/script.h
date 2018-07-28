@@ -13,7 +13,7 @@ extern "C" {
 
 #include <string>
 #include "LuaBridge/LuaBridge.h"
-#include "assets_types.h"
+#include "../lib/assets_types.h"
 #include "../lib/console.h"
 #include "context.h"
 #include "desc/light_directional.h"

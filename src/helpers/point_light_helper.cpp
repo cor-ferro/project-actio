@@ -10,10 +10,8 @@ namespace Helpers
         meshHelper = Mesh::Create();
 
         GeometryPrimitive::Octahedron(meshHelper->geometry, 1.0f);
-        meshHelper->material.setWireframe(true);
-        meshHelper->material.setDiffuse(0.0f, 1.0f, 0.0f);
-
-        meshHelper->setup();
+        meshHelper->material->setWireframe(true);
+        meshHelper->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
         addMesh(meshHelper);
     }

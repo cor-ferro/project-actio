@@ -1,7 +1,3 @@
-//
-// Created by demitriy on 4/25/18.
-//
-
 #ifndef ACTIO_SYSTEMS_WEAPONS_H
 #define ACTIO_SYSTEMS_WEAPONS_H
 
@@ -9,11 +5,18 @@
 #include <entityx/entityx/Event.h>
 #include "base.h"
 #include "../desc/weapon.h"
+#include "../components/base.h"
 #include "../components/transform.h"
 #include "../components/weapon.h"
+#include "../components/model.h"
+#include "../components/user_control.h"
+#include "../components/weaponStrategy.h"
 #include "../events/weapon_action.h"
 #include "../events/physic_create.h"
 #include "../events/physic_force.h"
+#include "../events/physic_contact.h"
+#include "../strategies/weapons/base.h"
+#include "../../core/geometry_primitive.h"
 
 namespace game {
     struct World;
@@ -126,7 +129,7 @@ namespace game {
                         Mesh *mesh = Mesh::Create();
 
                         GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
-                        mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
+                        mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
                         ex::Entity projectile = es.create();
 

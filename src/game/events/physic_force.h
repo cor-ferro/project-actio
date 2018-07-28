@@ -6,7 +6,7 @@
 #define ACTIO_PHYSIC_FORCE_H
 
 #include <entityx/entityx/Entity.h>
-#include "../world.h"
+#include "../../lib/types.h"
 
 namespace game {
     namespace events {

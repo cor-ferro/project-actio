@@ -6,7 +6,7 @@
 namespace game {
     namespace components {
         struct Renderable {
-            Renderable() {};
+            Renderable() = default;
         };
     }
 }

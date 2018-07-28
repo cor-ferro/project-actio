@@ -4,11 +4,12 @@
 
 #include <glad/glad.h>
 #include "../../core/texture.h"
+#include "handle.h"
 
 namespace OpenglUtils {
-	GLenum textureTarget(const Texture& texture);
-	void bindTexture(const Texture& texture);
-	void bindTexture(GLenum targetUnit, const Texture& texture);
+	GLenum textureTarget(renderer::Opengl::TextureHandle *handle);
+	void bindTexture(const renderer::Opengl::TextureHandle *handle);
+	void bindTexture(GLenum targetUnit, const renderer::Opengl::TextureHandle *handle);
 	void checkErrors(const char * file, int line, bool silent = false);
 }
 

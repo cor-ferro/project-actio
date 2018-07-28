@@ -12,11 +12,13 @@
 #include "../../../lib/console.h"
 #include "../../weapon_handler.h"
 #include "../../desc/projectile.h"
-#include "../../components/weaponStrategy.h"
-#include "../../world.h"
 
 namespace game {
     struct World;
+
+    namespace components {
+        class WeaponProjectile;
+    }
 
     namespace strategy {
         namespace ex = entityx;

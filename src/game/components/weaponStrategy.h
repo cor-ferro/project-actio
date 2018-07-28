@@ -1,7 +1,3 @@
-//
-// Created by demitriy on 4/25/18.
-//
-
 #ifndef ACTIO_COMPONENTS_WEAPON_STRATEGY_H
 #define ACTIO_COMPONENTS_WEAPON_STRATEGY_H
 

@@ -9,27 +9,27 @@
 #include "systems/character_control.h"
 #include "systems/input.h"
 #include "systems/char_control.h"
+#include "systems/light_helpers.h"
+#include "systems/day_time.h"
+#include "systems/weapons.h"
+#include "systems/sky.h"
 #include "components/transform.h"
 #include "components/state.h"
 #include "components/renderable.h"
-#include "../math/Box3.h"
-#include "world_importer.h"
 #include "events/camera_look_at.h"
-#include "events/light_add.h"
-#include "events/light_remove.h"
-#include "systems/light_helpers.h"
-#include "components/light_point.h"
-#include "components/light_directional.h"
-#include "desc/light_spot.h"
-#include "systems/day_time.h"
-#include "systems/weapons.h"
-#include "components/char_items.h"
 #include "events/character_create.h"
 #include "events/character_remove.h"
 #include "events/input.h"
+#include "events/light_add.h"
+#include "events/light_remove.h"
+#include "components/light_point.h"
+#include "components/light_directional.h"
+#include "components/char_items.h"
+#include "desc/light_spot.h"
 #include "strategies/weapons/default.h"
 #include "strategies/weapons/rocket_launcher.h"
-#include "systems/sky.h"
+#include "world_importer.h"
+#include "../math/Box3.h"
 
 namespace game {
     World::World() : name("") {
@@ -38,6 +38,10 @@ namespace game {
 
     void World::setupRenderer(renderer::Renderer *renderer) {
         systems.add<game::systems::Render>(&context, renderer);
+    }
+
+    void World::destroyRenderer() {
+        renderer->destroy();
     }
 
     void World::setup() {
@@ -60,6 +64,7 @@ namespace game {
         camera = systems.system<game::systems::Camera>();
         physic = systems.system<game::systems::Physic>();
         weapons = systems.system<game::systems::Weapons>();
+        renderer = systems.system<game::systems::Render>();
 
         registerWeapon(new strategy::WeaponsDefault());
         registerWeapon(new strategy::WeaponsRocketLauncher());
@@ -119,7 +124,7 @@ namespace game {
     World::Character World::createCharacter(Resource::Assimp *resource) {
         ex::Entity entity = entities.create();
 
-        World::Character character(entity, resource);
+        World::Character character(entity, resource, assets.get());
 
         for (Mesh *mesh : character.model->getMeshes()) {
             events.emit<game::events::RenderCreateMesh>(entity, mesh);
@@ -189,7 +194,7 @@ namespace game {
 
         GeometryPrimitive::Plane(mesh->geometry, 20, 20, 10, 10);
 //        mesh->material.setWireframe(true);
-        mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
+        mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
         entityx::Entity entity = entities.create();
 
@@ -352,7 +357,7 @@ namespace game {
     }
 
     void World::reloadAssetsScripts() {
-        unloadScripts();
+//        unloadScripts();
 
         for (auto &it : assets->getScripts()) {
             assets::Script *assetScript = &it.second;
@@ -364,19 +369,25 @@ namespace game {
                 scripts.push_back(script);
             }
         }
+
+        for (auto &it : assets->getModels()) {
+            auto &assetModel = it.second;
+        }
     }
 
     void World::reloadRenderAssets() {
-        const std::map<Assets::Id, assets::Shader> &shaders = assets->getShaders();
+//        unloadTextures();
 
-        for (const auto &it: shaders) {
-            const assets::Shader &shader = it.second;
+        for (auto &it : assets->getTextures()) {
+            renderer->addTexture(&it.second);
+        }
 
-            events.emit<events::RenderSetupShader>(
-                    shader.getVertexContent(),
-                    shader.getFragmentContent(),
-                    shader.getGeometryContent()
-            );
+        for (auto &it : assets->getShaders()) {
+            renderer->addShader(&it.second);
+        }
+
+        for (auto &it : assets->getMaterials()) {
+            renderer->addMaterial(&it.second);
         }
     }
 
@@ -395,5 +406,11 @@ namespace game {
         }
 
         scripts.erase(scripts.begin(), scripts.end());
+    }
+
+    void World::unloadTextures() {
+        for (auto &it : assets->getTextures()) {
+            renderer->removeTexture(&it.second);
+        }
     }
 }

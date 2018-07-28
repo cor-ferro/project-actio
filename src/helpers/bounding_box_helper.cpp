@@ -26,8 +26,8 @@ namespace Helpers
 		mesh->setDrawType(Mesh_Draw_Line);
 		mesh->setPosition(boundingBox.center);
 
-		mesh->material.setWireframe(true);
-		mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
+		mesh->material->setWireframe(true);
+		mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
 		vec3 btlCorner = vec3(-1.0f, 1.0f, -1.0f);
 		vec3 btrCorner = vec3(1.0f, 1.0f, -1.0f);
@@ -102,7 +102,6 @@ namespace Helpers
 		};
 
 		mesh->geometry.addVertex(vertices);
-		mesh->setup();
 
 		return mesh;
 	}

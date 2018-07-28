@@ -2,8 +2,10 @@
 #include "main.h"
 #include "renderer/renderer_types.h"
 #include "renderer/renderer.h"
+#include "renderer/shader_description.h"
 #include "game/world_importer.h"
 #include "lib/tweaker.h"
+#include "game/story_importer.h"
 
 int main(int argc, char **argv) {
     App &app = App::instance();
@@ -11,6 +13,14 @@ int main(int argc, char **argv) {
     app.init(argc, argv);
 
     console::info("start %s", app.getName());
+
+    std::string storyName = "story1";
+    std::string chapterName = "chapter1";
+
+    const Resource::File storyFile = app.resource(storyName + "/story.yaml");
+
+    game::StoryImporter storyImporter;
+    game::Story story = storyImporter.import(storyFile);
 
     const size_t maxModels = 10000;
     const size_t maxMeshes = 50000;
@@ -33,10 +43,14 @@ int main(int argc, char **argv) {
     rendererParams.height = windowHeight;
     rendererParams.calcAspectRatio();
 
+    std::vector<renderer::ShaderDescription> requiredShaderDescriptions;
+    loadRequiredShaders(&requiredShaderDescriptions);
+
     // init renderer before scene loading
     renderer::Renderer *renderer = new renderer::OpenglRenderer(rendererParams);
     renderer->setShadersFolder(app.shadersPath());
     renderer->setType(renderer::RenderDeferred);
+    renderer->setRequiredShaders(requiredShaderDescriptions);
 
     printMemoryStatus();
 
@@ -52,6 +66,19 @@ int main(int argc, char **argv) {
 
     auto worldImporter = new game::WorldImporter(world);
     worldImporter->import(testWorldFile);
+
+    std::shared_ptr<Assets> worldAssets(new Assets());
+
+    bool statusChapterLoad = storyImporter.loadChapterAssets(story, chapterName, worldAssets.get());
+
+    if (!statusChapterLoad) {
+        console::err("failed load chapter: %s", chapterName);
+
+        return -1;
+    }
+
+    world->importAssets(worldAssets);
+    world->load();
 
     bool renderExec = true;
 
@@ -97,7 +124,6 @@ int main(int argc, char **argv) {
                     guiSettings.cameraAspect.isChanged(true) ||
                     guiSettings.cameraNear.isChanged(true) ||
                     guiSettings.cameraFar.isChanged(true)) {
-                    console::info("camera change");
                     world->setCameraSettings(
                             guiSettings.cameraFov.getRef(),
                             guiSettings.cameraAspect.getRef(),
@@ -140,7 +166,9 @@ int main(int argc, char **argv) {
             glfwPollEvents();
 
             if (inputHandler->isPress(InputHandler::KEY_ESC)) {
+                world->destroyRenderer();
                 mainContext.destroy();
+                delete renderer;
                 break;
             }
         }
@@ -149,15 +177,12 @@ int main(int argc, char **argv) {
     });
 
     auto appThread = std::thread([&]() {
-//        world->setLightDebug(guiSettings.debugLight2.getRef());
-//        world->setPhysicsDebug(guiSettings.debugPhysics2.getRef());
+        const float elapsedTime = 16.6f;
 
         while (renderExec) {
-            const float elapsedTime = 16.6f;
-
             world->update(elapsedTime);
 
-            std::this_thread::sleep_for(std::chrono::microseconds(16600));
+            std::this_thread::sleep_for(std::chrono::microseconds(static_cast<int>(1000.0f * elapsedTime)));
         }
     });
 
@@ -167,7 +192,6 @@ int main(int argc, char **argv) {
 
     world->destroy();
     delete world;
-    delete renderer;
 
     // cleanupScene(scene);
     printMemoryStatus();
@@ -195,6 +219,6 @@ void printMemoryStatus() {
     console::info("-------memory-------");
     console::info("images: %s", utils::formatMemorySize(imageAllocator->getUsed()));
     console::info("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()));
-    console::info("mesh: %s", utils::formatMemorySize(meshAllocator->getUsed()));
+    console::info("mesh:   %s", utils::formatMemorySize(meshAllocator->getUsed()));
     console::info("--------------------");
 }

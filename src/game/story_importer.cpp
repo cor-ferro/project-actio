@@ -1,4 +1,9 @@
+#include <assimp/include/assimp/scene.h>
+#include <assimp/include/assimp/postprocess.h>
+#include <assimp/include/assimp/Importer.hpp>
 #include "story_importer.h"
+#include "../app/app.h"
+#include "../resources/resources.h"
 
 namespace game {
     game::Story StoryImporter::import(const Resource::File &file) {
@@ -140,6 +145,8 @@ namespace game {
     void StoryImporter::loadMaterials() {}
 
     bool StoryImporter::loadChapterAssets(Story &story, const std::string &chapterName, Assets *assets) {
+        assets->loadDefaultResources();
+
         Chapter *chapter = story.getChapter(chapterName);
 
         if (chapter == nullptr) {
@@ -149,7 +156,7 @@ namespace game {
         boost::filesystem::path chapterPath = rootPath;
         chapterPath /= chapterName;
 
-        game::assets::Loader assetsLoader(chapterPath.string());
+        assets::Loader assetsLoader(chapterPath.string());
 
         const std::vector<std::string> &scriptNames = chapter->getScripts();
         for (const auto &scriptPath : scriptNames) {
@@ -166,6 +173,32 @@ namespace game {
 
             if (resource != nullptr) {
                 assets->addTexture(resource);
+            }
+        }
+
+        const std::vector<Chapter::ResourceModel> &models = chapter->getModels();
+        for (const auto &modelResource : models) {
+            assets::Resource *resource = assetsLoader.load(modelResource.path);
+
+            if (resource != nullptr) {
+                unsigned int flags = aiProcessPreset_TargetRealtime_Quality
+                                     | aiProcess_GenSmoothNormals
+                                     | aiProcess_Triangulate
+                                     | aiProcess_CalcTangentSpace;
+
+                bool flipUv = modelResource.getOption("flipUv") == "true";
+
+                if (flipUv) {
+                    flags |= aiProcess_FlipUVs;
+                }
+
+                Assimp::Importer importer;
+                const aiScene *scene = importer.ReadFile(modelResource.path, flags);
+                const std::unique_ptr<Resource::Assimp> assimpResource(new Resource::Assimp(scene, modelResource.path));
+
+                if (scene) {
+
+                }
             }
         }
 

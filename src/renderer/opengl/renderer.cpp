@@ -4,6 +4,7 @@
 #include "../../game/components/transform.h"
 #include "../../core/geometry_primitive.h"
 #include "../shader_description.h"
+#include "../texture.h"
 
 #define UBO_MATRICES_POINT_INDEX 0
 #define DEFAULT_FRAME_BUFFER 0
@@ -87,20 +88,21 @@ namespace renderer {
         GeometryPrimitive::Cylinder(lightCylinder->geometry, 4.0f, 1.0f, 10.0f, 16, 16, false, 0.0f,
                                     glm::two_pi<float>());
 
-        lightQuad->setup();
-        lightSphere->setup();
-        lightCylinder->setup();
+        setupMesh(lightQuad);
+        setupMesh(lightSphere);
+        setupMesh(lightCylinder);
+//        lightQuad->setup();
+//        lightSphere->setup();
+//        lightCylinder->setup();
 
         OpenglCheckErrors();
 
         return true;
     }
 
+
     OpenglRenderer::~OpenglRenderer() {
-        Mesh::Destroy(lightQuad);
-        Mesh::Destroy(lightSphere);
-        Mesh::Destroy(lightCylinder);
-        console::info("opengl renderer destroyed");
+        destroy();
     }
 
     void OpenglRenderer::initMatricesBuffer() {
@@ -118,114 +120,115 @@ namespace renderer {
     }
 
     void OpenglRenderer::forwardRender(Scene *scene) {
-//        forwardProgram.checkShadersUpdate();
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        Camera *camera = scene->getActiveCamera();
-
-        const renderer::Params &renderParams = getParams();
-
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_MULTISAMPLE);
-        mat4 view = glm::translate(view, vec3(0.0f, 0.0f, -5.0f));
-        mat4 projection = glm::perspective(glm::radians(45.0f),
-                                           (float) renderParams.height / (float) renderParams.width, 0.1f, 100.0f);
-
-        vec2 resolution = vec2((float) renderParams.width, (float) renderParams.height);
-
-        if (camera != nullptr) {
-            view = camera->getView();
-            projection = camera->getProjection();
-        }
-
-        matricesBuffer.use();
-        matricesBuffer.set(0, glm::value_ptr(projection));
-        matricesBuffer.set(1, glm::value_ptr(view));
-        // matricesBuffer.nouse();
-
-        forwardProgram->use();
-        forwardProgram->setFloat("time", time / 1000.0f);
-        forwardProgram->setVec("viewPos", camera->getPosition());
-
-        bool isHasSkybox = scene->hasSkybox();
-
-        if (isHasSkybox) {
-            Model *skyboxModel = scene->getSkybox();
-            Mesh *mesh = skyboxModel->getFirstMesh();
-            Texture texture = mesh->material.getTextures().at(0);
-
-            OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, texture);
-            forwardProgram->setInt("cubeTexture", maxTextureUnits - 1);
-        }
-
-        const std::vector<Light::Directional *> &dirLights = scene->getDirectionalLights();
-        const std::vector<Light::Point *> &pointLights = scene->getPointLights();
-        const std::vector<Light::Spot *> &spotLights = scene->getSpotLights();
-
-        int dirLightIndex = 0;
-        for (auto dirLight = dirLights.begin(); dirLight != dirLights.end(); ++dirLight) {
-            std::string sIndex = std::to_string(dirLightIndex);
-            forwardProgram->setVec("dirLights[" + sIndex + "].ambient", (*dirLight)->ambient);
-            forwardProgram->setVec("dirLights[" + sIndex + "].diffuse", (*dirLight)->diffuse);
-            forwardProgram->setVec("dirLights[" + sIndex + "].specular", (*dirLight)->specular);
-            forwardProgram->setVec("dirLights[" + sIndex + "].direction", (*dirLight)->direction);
-
-            dirLightIndex++;
-        }
-
-        int pointLightIndex = 0;
-        for (auto pointLight = pointLights.begin(); pointLight != pointLights.end(); ++pointLight) {
-            std::string sIndex = std::to_string(pointLightIndex);
-            forwardProgram->setVec("pointLights[" + sIndex + "].ambient", (*pointLight)->ambient);
-            forwardProgram->setVec("pointLights[" + sIndex + "].diffuse", (*pointLight)->diffuse);
-            forwardProgram->setVec("pointLights[" + sIndex + "].specular", (*pointLight)->specular);
-            forwardProgram->setVec("pointLights[" + sIndex + "].position", (*pointLight)->position);
-            forwardProgram->setFloat("pointLights[" + sIndex + "].constant", (*pointLight)->constant);
-            forwardProgram->setFloat("pointLights[" + sIndex + "].linear", (*pointLight)->linear);
-            forwardProgram->setFloat("pointLights[" + sIndex + "].quadratic", (*pointLight)->quadratic);
-
-            pointLightIndex++;
-        }
-
-        int spotLightIndex = 0;
-        for (auto spotLight = spotLights.begin(); spotLight != spotLights.end(); ++spotLight) {
-            std::string sIndex = std::to_string(spotLightIndex);
-            forwardProgram->setVec("spotLights[" + sIndex + "].ambient", (*spotLight)->ambient);
-            forwardProgram->setVec("spotLights[" + sIndex + "].diffuse", (*spotLight)->diffuse);
-            forwardProgram->setVec("spotLights[" + sIndex + "].specular", (*spotLight)->specular);
-            forwardProgram->setVec("spotLights[" + sIndex + "].position", (*spotLight)->position);
-            forwardProgram->setVec("spotLights[" + sIndex + "].direction", (*spotLight)->direction);
-            forwardProgram->setFloat("spotLights[" + sIndex + "].constant", (*spotLight)->constant);
-            forwardProgram->setFloat("spotLights[" + sIndex + "].linear", (*spotLight)->linear);
-            forwardProgram->setFloat("spotLights[" + sIndex + "].quadratic", (*spotLight)->quadratic);
-            forwardProgram->setFloat("spotLights[" + sIndex + "].cutOff", (*spotLight)->cutOff);
-            forwardProgram->setFloat("spotLights[" + sIndex + "].outerCutOff", (*spotLight)->outerCutOff);
-            spotLightIndex++;
-        }
-
-        forwardProgram->setInt("countDirLights", dirLights.size());
-        forwardProgram->setInt("countPointLights", pointLights.size());
-        forwardProgram->setInt("countSpotLights", spotLights.size());
-
-        glViewport(0, 0, renderParams.width, renderParams.height);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        drawModels(scene, *forwardProgram);
-
-        if (isHasSkybox) {
-            glDepthFunc(GL_LEQUAL);
-            skyboxProgram->use();
-
-            Model *skyboxModel = scene->getSkybox();
-            const ModelMeshes &meshes = skyboxModel->getMeshes();
-
-            for (auto mesh = meshes.begin(); mesh != meshes.end(); mesh++) {
-                (*mesh)->draw(*skyboxProgram);
-            }
-
-            glDepthFunc(GL_LESS);
-        }
+////        forwardProgram.checkShadersUpdate();
+//
+//        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//        Camera *camera = scene->getActiveCamera();
+//
+//        const renderer::Params &renderParams = getParams();
+//
+//        glEnable(GL_DEPTH_TEST);
+//        glEnable(GL_MULTISAMPLE);
+//        mat4 view = glm::translate(view, vec3(0.0f, 0.0f, -5.0f));
+//        mat4 projection = glm::perspective(glm::radians(45.0f),
+//                                           (float) renderParams.height / (float) renderParams.width, 0.1f, 100.0f);
+//
+//        vec2 resolution = vec2((float) renderParams.width, (float) renderParams.height);
+//
+//        if (camera != nullptr) {
+//            view = camera->getView();
+//            projection = camera->getProjection();
+//        }
+//
+//        matricesBuffer.use();
+//        matricesBuffer.set(0, glm::value_ptr(projection));
+//        matricesBuffer.set(1, glm::value_ptr(view));
+//        // matricesBuffer.nouse();
+//
+//        forwardProgram->use();
+//        forwardProgram->setFloat("time", time / 1000.0f);
+//        forwardProgram->setVec("viewPos", camera->getPosition());
+//
+//        bool isHasSkybox = scene->hasSkybox();
+//
+//        if (isHasSkybox) {
+//            Model *skyboxModel = scene->getSkybox();
+//            Mesh *mesh = skyboxModel->getFirstMesh();
+//            const std::shared_ptr<::Texture> &texture = mesh->material->getDiffuseMap();
+//
+//            OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, *texture);
+//            forwardProgram->setInt("cubeTexture", maxTextureUnits - 1);
+//        }
+//
+//        const std::vector<Light::Directional *> &dirLights = scene->getDirectionalLights();
+//        const std::vector<Light::Point *> &pointLights = scene->getPointLights();
+//        const std::vector<Light::Spot *> &spotLights = scene->getSpotLights();
+//
+//        int dirLightIndex = 0;
+//        for (auto dirLight = dirLights.begin(); dirLight != dirLights.end(); ++dirLight) {
+//            std::string sIndex = std::to_string(dirLightIndex);
+//            forwardProgram->setVec("dirLights[" + sIndex + "].ambient", (*dirLight)->ambient);
+//            forwardProgram->setVec("dirLights[" + sIndex + "].diffuse", (*dirLight)->diffuse);
+//            forwardProgram->setVec("dirLights[" + sIndex + "].specular", (*dirLight)->specular);
+//            forwardProgram->setVec("dirLights[" + sIndex + "].direction", (*dirLight)->direction);
+//
+//            dirLightIndex++;
+//        }
+//
+//        int pointLightIndex = 0;
+//        for (auto pointLight = pointLights.begin(); pointLight != pointLights.end(); ++pointLight) {
+//            std::string sIndex = std::to_string(pointLightIndex);
+//            forwardProgram->setVec("pointLights[" + sIndex + "].ambient", (*pointLight)->ambient);
+//            forwardProgram->setVec("pointLights[" + sIndex + "].diffuse", (*pointLight)->diffuse);
+//            forwardProgram->setVec("pointLights[" + sIndex + "].specular", (*pointLight)->specular);
+//            forwardProgram->setVec("pointLights[" + sIndex + "].position", (*pointLight)->position);
+//            forwardProgram->setFloat("pointLights[" + sIndex + "].constant", (*pointLight)->constant);
+//            forwardProgram->setFloat("pointLights[" + sIndex + "].linear", (*pointLight)->linear);
+//            forwardProgram->setFloat("pointLights[" + sIndex + "].quadratic", (*pointLight)->quadratic);
+//
+//            pointLightIndex++;
+//        }
+//
+//        int spotLightIndex = 0;
+//        for (auto spotLight = spotLights.begin(); spotLight != spotLights.end(); ++spotLight) {
+//            std::string sIndex = std::to_string(spotLightIndex);
+//            forwardProgram->setVec("spotLights[" + sIndex + "].ambient", (*spotLight)->ambient);
+//            forwardProgram->setVec("spotLights[" + sIndex + "].diffuse", (*spotLight)->diffuse);
+//            forwardProgram->setVec("spotLights[" + sIndex + "].specular", (*spotLight)->specular);
+//            forwardProgram->setVec("spotLights[" + sIndex + "].position", (*spotLight)->position);
+//            forwardProgram->setVec("spotLights[" + sIndex + "].direction", (*spotLight)->direction);
+//            forwardProgram->setFloat("spotLights[" + sIndex + "].constant", (*spotLight)->constant);
+//            forwardProgram->setFloat("spotLights[" + sIndex + "].linear", (*spotLight)->linear);
+//            forwardProgram->setFloat("spotLights[" + sIndex + "].quadratic", (*spotLight)->quadratic);
+//            forwardProgram->setFloat("spotLights[" + sIndex + "].cutOff", (*spotLight)->cutOff);
+//            forwardProgram->setFloat("spotLights[" + sIndex + "].outerCutOff", (*spotLight)->outerCutOff);
+//            spotLightIndex++;
+//        }
+//
+//        forwardProgram->setInt("countDirLights", dirLights.size());
+//        forwardProgram->setInt("countPointLights", pointLights.size());
+//        forwardProgram->setInt("countSpotLights", spotLights.size());
+//
+//        glViewport(0, 0, renderParams.width, renderParams.height);
+//        glBindTexture(GL_TEXTURE_2D, depthMap);
+//        drawModels(scene, *forwardProgram);
+//
+//        if (isHasSkybox) {
+//            glDepthFunc(GL_LEQUAL);
+//            skyboxProgram->use();
+//
+//            Model *skyboxModel = scene->getSkybox();
+//            const ModelMeshes &meshes = skyboxModel->getMeshes();
+//
+//            for (auto mesh = meshes.begin(); mesh != meshes.end(); mesh++) {
+////                (*mesh)->draw(*skyboxProgram);
+//                console::warn("deprecated draw");
+//            }
+//
+//            glDepthFunc(GL_LESS);
+//        }
     }
 
     void OpenglRenderer::deferredRender(Scene *scene) {
@@ -486,25 +489,6 @@ namespace renderer {
         glDisable(GL_BLEND);
     }
 
-    void OpenglRenderer::drawModels(Scene *scene, Opengl::Program &program) {
-        const std::vector<Model *> &models = scene->getModels();
-
-        for (auto modelIt = models.begin(); modelIt != models.end(); modelIt++) {
-            Model *model = *modelIt;
-
-            uint renderFlags = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Material;
-
-            if (model->isAnimationProgress()) {
-                renderFlags |= Mesh_Draw_Bones;
-            }
-
-            const ModelMeshes &meshes = model->getMeshes();
-            for (auto mesh = meshes.begin(); mesh != meshes.end(); mesh++) {
-                (*mesh)->draw(program, renderFlags);
-            }
-        }
-    }
-
     void OpenglRenderer::drawModels(entityx::EntityManager &es) {
         modelPipeline.use();
         es.each<components::Renderable, components::Transform, components::Model>([this](
@@ -561,75 +545,53 @@ namespace renderer {
         postRender();
     }
 
-    void OpenglRenderer::setupMesh(Mesh *mesh) {
-        createGeometry(mesh);
-
-        glGenVertexArrays(1, &mesh->geometry.VAO);
-        glGenBuffers(1, &mesh->geometry.VBO);
-
-        glBindVertexArray(mesh->geometry.VAO);
-
-        GeometryVertices *vertices = mesh->geometry.getVertices();
-
-        GLenum geometryType;
-
-        switch (mesh->geometry.getType()) {
-            case Geometry::Geometry_Static:
-                geometryType = GL_STATIC_DRAW;
-                break;
-            case Geometry::Geometry_Dynamic:
-                geometryType = GL_DYNAMIC_DRAW;
-                break;
-            default:
-                console::warn("Unknown draw type");
-                geometryType = GL_STATIC_DRAW;
+    void OpenglRenderer::destroy() {
+        for (auto &handle : geometryHandles) {
+            destroyGeometryHandle(handle);
         }
 
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->geometry.VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), geometryType);
+        geometryHandles.erase(geometryHandles.begin(), geometryHandles.end());
 
-        glGenBuffers(1, &mesh->geometry.EBO);
-        GeometryIndices *indices = mesh->geometry.getIndices();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->geometry.EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), geometryType);
+        for (auto &handle : textureHandles) {
+            destroyTextureHandle(handle);
+        }
 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
+        textureHandles.erase(textureHandles.begin(), textureHandles.end());
 
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Normal));
+        if (lightQuad != nullptr) {
+            Mesh::Destroy(lightQuad);
+            lightQuad = nullptr;
+        }
 
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, TexCoords));
+        if (lightSphere != nullptr) {
+            Mesh::Destroy(lightSphere);
+            lightSphere = nullptr;
+        }
 
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Tangent));
+        if (lightCylinder != nullptr) {
+            Mesh::Destroy(lightCylinder);
+            lightCylinder = nullptr;
+        }
 
-        glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Bitangent));
-
-        glEnableVertexAttribArray(5);
-        glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void *) offsetof(Vertex, BonedIDs));
-
-        glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Weights));
-
-        glBindVertexArray(0);
-
-        setupMaterial(&mesh->material);
+        console::info("opengl renderer destroyed");
     }
 
     void OpenglRenderer::updateMesh(Mesh *mesh) {
-        if (mesh->geometry.VBO == 0) {
-//            console::warn("skip update mesh");
+        if (mesh->geometry.renderHandle == nullptr) {
+            return;
+        }
+
+        const auto *handle = dynamic_cast<renderer::Opengl::GeometryHandle *>(mesh->geometry.renderHandle);
+
+        if (handle->vbo == 0) {
             return;
         }
 
         GeometryVertices *vertices = mesh->geometry.getVertices();
 
-        glBindVertexArray(mesh->geometry.VAO);
+        glBindVertexArray(handle->vao);
 
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->geometry.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, handle->vbo);
         if (mesh->geometry.isNeedUpdateVertices()) {
             glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_DYNAMIC_DRAW);
             mesh->geometry.setNeedUpdateVertices(false);
@@ -641,14 +603,16 @@ namespace renderer {
         OpenglCheckErrors();
     };
 
-    void OpenglRenderer::setupMaterial(Material::Phong *material) {
-        material->setupTextures();
-    }
-
     void OpenglRenderer::destroyMesh(Mesh *mesh) {
-        if (mesh->geometry.VBO != 0) glDeleteBuffers(1, &mesh->geometry.VBO);
-        if (mesh->geometry.EBO != 0) glDeleteBuffers(1, &mesh->geometry.EBO);
-        if (mesh->geometry.VAO != 0) glDeleteVertexArrays(1, &mesh->geometry.VAO);
+        if (mesh->geometry.renderHandle == nullptr) {
+            return;
+        }
+
+        const auto *handle = dynamic_cast<renderer::Opengl::GeometryHandle *>(mesh->geometry.renderHandle);
+
+        if (handle->vbo != 0) glDeleteBuffers(1, &handle->vbo);
+        if (handle->ebo != 0) glDeleteBuffers(1, &handle->ebo);
+        if (handle->vao != 0) glDeleteVertexArrays(1, &handle->vao);
     }
 
     void OpenglRenderer::registerShader(std::string name) {}
@@ -707,37 +671,45 @@ namespace renderer {
         console::info("piplines inited");
     }
 
-    Renderer::RenderGeometryId OpenglRenderer::createGeometry(Mesh *mesh) {
-        RenderGeometry renderGeometry;
+    void OpenglRenderer::setupMesh(Mesh *mesh) {
+        if (mesh == nullptr) return;
 
-        glGenVertexArrays(1, &renderGeometry.VAO);
-        glGenBuffers(1, &renderGeometry.VBO);
+        setupGeometry(&mesh->geometry);
+        setupMaterial(mesh->material.get());
+    }
 
-        glBindVertexArray(renderGeometry.VAO);
+    void OpenglRenderer::setupGeometry(Geometry *geometry) {
+        if (geometry == nullptr) return;
 
-        GeometryVertices *vertices = mesh->geometry.getVertices();
+        auto *handle = createGeometryHandle();
 
-        GLenum geometryType;
+        glGenVertexArrays(1, &handle->vao);
+        glGenBuffers(1, &handle->vbo);
 
-        switch (mesh->geometry.getType()) {
+        glBindVertexArray(handle->vao);
+
+        GeometryVertices *vertices = geometry->getVertices();
+
+        switch (geometry->getType()) {
             case Geometry::Geometry_Static:
-                geometryType = GL_STATIC_DRAW;
+                handle->draw = GL_STATIC_DRAW;
                 break;
             case Geometry::Geometry_Dynamic:
-                geometryType = GL_DYNAMIC_DRAW;
+                handle->draw = GL_DYNAMIC_DRAW;
                 break;
             default:
                 console::warn("Unknown draw type");
-                geometryType = GL_STATIC_DRAW;
+                handle->draw = GL_STATIC_DRAW;
         }
 
-        glBindBuffer(GL_ARRAY_BUFFER, renderGeometry.VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), geometryType);
+        glBindBuffer(GL_ARRAY_BUFFER, handle->vbo);
+        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), handle->draw);
 
-        glGenBuffers(1, &renderGeometry.EBO);
-        GeometryIndices *indices = mesh->geometry.getIndices();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderGeometry.EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), geometryType);
+        GeometryIndices *indices = geometry->getIndices();
+
+        glGenBuffers(1, &handle->ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), handle->draw);
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
@@ -762,24 +734,61 @@ namespace renderer {
 
         glBindVertexArray(0);
 
-        geometryId++;
-        geometries.insert({ geometryId, renderGeometry });
-
-        return geometryId;
+        geometry->renderHandle = handle;
+        handle->ready = true;
     }
 
-    Renderer::RenderTextureId OpenglRenderer::createTexture(Texture *texture) {
-        RenderTexture renderTexture;
+    void OpenglRenderer::setupMaterial(Material *material) {
+        if (material == nullptr) return;
 
-        glGenTextures(1, &renderTexture.id);
+        const std::shared_ptr<::Texture> &diffuseMap = material->getDiffuseMap();
+        if (diffuseMap) {
+            setupTexture(diffuseMap.get());
+        }
 
-        glBindTexture(GL_TEXTURE_2D, renderTexture.id);
+        const std::shared_ptr<::Texture> &normalMap = material->getNormalMap();
+        if (normalMap) {
+            setupTexture(normalMap.get());
+        }
 
-        const TextureImages &images = texture->getImages();
-        const ImageLoader::Data imageData = images.find(0)->second;
+        const std::shared_ptr<::Texture> &specularMap = material->getSpecularMap();
+        if (specularMap) {
+            setupTexture(specularMap.get());
+        }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageData.width, imageData.height, 0, imageData.format, GL_UNSIGNED_BYTE, imageData.get());
+        const std::shared_ptr<::Texture> &heightMap = material->getHeightMap();
+        if (heightMap) {
+            setupTexture(specularMap.get());
+        }
+    }
 
+    void OpenglRenderer::setupTexture(::Texture *texture) {
+        switch (texture->getType()) {
+            case ::Texture::Type::Diffuse:
+            case ::Texture::Type::Specular:
+            case ::Texture::Type::Height:
+            case ::Texture::Type::Normal:
+                setupTexture2d(texture);
+                break;
+            case ::Texture::Type::Cube:
+                setupTextureCube(texture);
+                break;
+            default:
+                console::warn("unknown texture type");
+        }
+    }
+
+    void OpenglRenderer::setupTexture2d(::Texture *texture) {
+        std::shared_ptr<ImageData> imageData = texture->getData();
+        auto *handle = createTextureHandle();
+
+        int width = imageData->getWidth();
+        int height = imageData->getHeight();
+        auto format = static_cast<GLenum>(imageData->getFormat());
+
+        glGenTextures(1, &handle->textureId);
+        glBindTexture(GL_TEXTURE_2D, handle->textureId);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, format, GL_UNSIGNED_BYTE, imageData->get());
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -787,9 +796,77 @@ namespace renderer {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        textureId++;
-        textures.insert({ textureId, renderTexture });
+        handle->target = GL_TEXTURE_2D;
+        handle->ready = true;
+        texture->renderHandle = handle;
+    }
 
-        return textureId;
+    void OpenglRenderer::setupTextureCube(::Texture *texture) {
+        auto *handle = createTextureHandle();
+
+        glGenTextures(1, &handle->textureId);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, handle->textureId);
+
+        auto images = texture->getImages();
+
+        int i = 0;
+        for (auto &it : images) {
+            std::shared_ptr<ImageData> image = it.second;
+            int width = image->getWidth();
+            int height = image->getHeight();
+            int format = image->getFormat();
+
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, format, GL_UNSIGNED_BYTE, image.get());
+
+            i++;
+        }
+
+        assert(i == 5);
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        handle->target = GL_TEXTURE_CUBE_MAP;
+        handle->ready = true;
+        texture->renderHandle = handle;
+    }
+
+    void OpenglRenderer::destroyTexture(renderer::Renderer::TextureId textureId) {
+
+    }
+
+    Opengl::GeometryHandle *OpenglRenderer::createGeometryHandle() {
+        auto *handle = new Opengl::GeometryHandle();
+
+        geometryHandles.push_back(handle);
+
+        return handle;
+    }
+
+    Opengl::TextureHandle *OpenglRenderer::createTextureHandle() {
+        auto *handle = new Opengl::TextureHandle();
+
+        textureHandles.push_back(handle);
+
+        return handle;
+    }
+
+    void OpenglRenderer::destroyGeometryHandle(renderer::Opengl::GeometryHandle *handle) {
+        if (handle->vbo != 0) glDeleteBuffers(1, &handle->vbo);
+        if (handle->ebo != 0) glDeleteBuffers(1, &handle->ebo);
+        if (handle->vao != 0) glDeleteVertexArrays(1, &handle->vao);
+
+        handle->ready = false;
+    }
+
+    void OpenglRenderer::destroyTextureHandle(renderer::Opengl::TextureHandle *handle) {
+        if (handle->textureId != 0) {
+            glDeleteTextures(1, &handle->textureId);
+        }
+
+        handle->ready = false;
     }
 }

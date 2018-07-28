@@ -115,4 +115,12 @@ namespace Resource {
 	bool Assimp::hasAnimations() const {
 	    return scene->mNumAnimations > 0;
 	}
+
+	const Path Assimp::getBasePath() const {
+		return createPath(basePath_);
+	};
+
+	const Path Assimp::getResourcePath() const {
+		return createPath(resourcePath_);
+	};
 }

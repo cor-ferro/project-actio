@@ -17,24 +17,23 @@
 #include "PxPhysicsAPI.h"
 #include "../components/physic.h"
 #include "../components/transform.h"
-#include "../../lib/console.h"
 #include "../components/controlled.h"
 #include "../events/physic_create.h"
 #include "../events/physic_force.h"
 #include "../events/setup_controlled.h"
 #include "../events/key_press.h"
-#include "../events/render_setup_mesh.h"
+#include "../events/render_create_mesh.h"
 #include "../events/render_update_mesh.h"
-#include "../../core/geometry_primitive.h"
+#include "../events/physic_contact.h"
 #include "../components/base.h"
 #include "../components/renderable.h"
-#include "../context.h"
-#include "base.h"
 #include "../components/character.h"
 #include "../components/user_control.h"
-#include "../events/physic_contact.h"
-#include "../world.h"
 #include "../components/physic_entity.h"
+#include "../../core/geometry_primitive.h"
+#include "../../lib/console.h"
+#include "../context.h"
+#include "base.h"
 
 #define PX_REST_VEC(vec) px::PxVec3(vec.x, vec.y, vec.z)
 
@@ -47,12 +46,10 @@ namespace game {
         static px::PxFilterFlags PhysicFilterShader(
                 px::PxFilterObjectAttributes attributes0, px::PxFilterData filterData0,
                 px::PxFilterObjectAttributes attributes1, px::PxFilterData filterData1,
-                px::PxPairFlags& pairFlags, const void* constantBlock, physx::PxU32 constantBlockSize)
-        {
+                px::PxPairFlags &pairFlags, const void *constantBlock, physx::PxU32 constantBlockSize) {
 //            console::info("PhysicFilterShader");
             // let triggers through
-            if(px::PxFilterObjectIsTrigger(attributes0) || px::PxFilterObjectIsTrigger(attributes1))
-            {
+            if (px::PxFilterObjectIsTrigger(attributes0) || px::PxFilterObjectIsTrigger(attributes1)) {
 //                pairFlags = px::PxPairFlag::eTRIGGER_DEFAULT;
 //                return px::PxFilterFlag::eDEFAULT;
             }
@@ -67,7 +64,8 @@ namespace game {
 //            pairFlags |= px::PxPairFlag::eCONTACT_DEFAULT | px::PxPairFlag::eNOTIFY_TOUCH_FOUND | px::PxPairFlag::eNOTIFY_TOUCH_LOST;
 //            pairFlags = px::PxPairFlag::eCONTACT_DEFAULT;
 
-            pairFlags |= px::PxPairFlag::eCONTACT_DEFAULT | px::PxPairFlag::eNOTIFY_TOUCH_FOUND | px::PxPairFlag::eNOTIFY_TOUCH_LOST;
+            pairFlags |= px::PxPairFlag::eCONTACT_DEFAULT | px::PxPairFlag::eNOTIFY_TOUCH_FOUND |
+                         px::PxPairFlag::eNOTIFY_TOUCH_LOST;
 
             return px::PxFilterFlags();
         }
@@ -199,7 +197,7 @@ namespace game {
 
                     GeometryPrimitive::Lines(mesh->geometry, {});
                     mesh->geometry.setType(Geometry::Geometry_Dynamic);
-                    mesh->material.setDiffuse(vec3(0.0f, 1.0f, 0.0f));
+                    mesh->material->setDiffuse(vec3(0.0f, 1.0f, 0.0f));
 
                     mesh->setDrawType(Mesh_Draw_Line);
 
@@ -213,7 +211,7 @@ namespace game {
                     Mesh *mesh = Mesh::Create();
 
                     mesh->geometry.setType(Geometry::Geometry_Dynamic);
-                    mesh->material.setDiffuse(vec3(0.0f, 0.0f, 1.0f));
+                    mesh->material->setDiffuse(vec3(0.0f, 0.0f, 1.0f));
 
                     mesh->setDrawType(Mesh_Draw_Triangle);
 
@@ -227,7 +225,7 @@ namespace game {
                     Mesh *mesh = Mesh::Create();
 
                     mesh->geometry.setType(Geometry::Geometry_Dynamic);
-                    mesh->material.setDiffuse(vec3(1.0f, 0.0f, 0.0f));
+                    mesh->material->setDiffuse(vec3(1.0f, 0.0f, 0.0f));
 
                     mesh->setDrawType(Mesh_Draw_Point);
 
@@ -241,9 +239,9 @@ namespace game {
                 auto modelTriangles = components::get<components::Model>(debugTrianglesEntity);
                 auto modelPoints = components::get<components::Model>(debugPointsEntity);
 
-                event_manager.emit<events::RenderSetupMesh>(debugLinesEntity, modelLines->getMesh());
-                event_manager.emit<events::RenderSetupMesh>(debugTrianglesEntity, modelTriangles->getMesh());
-                event_manager.emit<events::RenderSetupMesh>(debugPointsEntity, modelPoints->getMesh());
+                event_manager.emit<events::RenderCreateMesh>(debugLinesEntity, modelLines->getMesh());
+                event_manager.emit<events::RenderCreateMesh>(debugTrianglesEntity, modelTriangles->getMesh());
+                event_manager.emit<events::RenderCreateMesh>(debugPointsEntity, modelPoints->getMesh());
             }
 
             void destroy() {
@@ -261,7 +259,7 @@ namespace game {
                 gScene->fetchResults(true);
 
                 while (!contactedActors.empty()) {
-                    const std::pair<px::PxActor*, px::PxActor*> &pair = contactedActors.top();
+                    const std::pair<px::PxActor *, px::PxActor *> &pair = contactedActors.top();
 
                     events.emit<events::PhysicContact>(pair.first, pair.second);
 
@@ -285,7 +283,6 @@ namespace game {
                 );
 
 
-
                 es.each<c::Character, c::UserControl, c::Transform>([&elapsedTime, this](
                         ex::Entity entity,
                         c::Character &character,
@@ -305,16 +302,15 @@ namespace game {
                     );
 
                     if (flags & px::PxControllerCollisionFlag::eCOLLISION_DOWN) {
-                        console::info("eCOLLISION_DOWN");
                         character.isJump = false;
                         character.jump = 0.0f;
                         character.motion.y = 0.0f;
                     }
 
-                    if (flags & px::PxControllerCollisionFlag::eCOLLISION_UP)
-                        console::info("eCOLLISION_UP");
-                    if (flags & px::PxControllerCollisionFlag::eCOLLISION_SIDES)
-                        console::info("eCOLLISION_SIDES");
+//                    if (flags & px::PxControllerCollisionFlag::eCOLLISION_UP)
+//                        console::info("eCOLLISION_UP");
+//                    if (flags & px::PxControllerCollisionFlag::eCOLLISION_SIDES)
+//                        console::info("eCOLLISION_SIDES");
 
                     const px::PxExtendedVec3 &pxPos = userControl.controller->getFootPosition();
 
@@ -475,7 +471,8 @@ namespace game {
                 gScene->setGravity(PX_REST_VEC(value));
             };
 
-            px::PxRigidDynamic *createDynamic(const px::PxTransform &t, const px::PxGeometry &geometry, const px::PxVec3 &velocity) {
+            px::PxRigidDynamic *
+            createDynamic(const px::PxTransform &t, const px::PxGeometry &geometry, const px::PxVec3 &velocity) {
                 px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
 
                 px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
@@ -483,6 +480,82 @@ namespace game {
                 dynamic->setLinearVelocity(velocity);
 
                 return dynamic;
+            }
+
+            void wave(vec3 position, vec3 direction) {
+                float radius = 1.0f;
+
+                px::PxSphereGeometry geometry(5.0f);
+                px::PxTransform pose(PX_REST_VEC(position));
+//                px::PxOverlapBuffer buf;
+
+                px::PxOverlapHit hitBuffer[5];
+                px::PxMemZero(&hitBuffer, sizeof(hitBuffer));
+                px::PxFilterData fd(0, 0, 0, 0);
+                px::PxOverlapBuffer buf(hitBuffer, 5);
+
+                bool status = gScene->overlap(geometry, pose, buf, px::PxQueryFilterData(fd, px::PxQueryFlag::eDYNAMIC));
+
+                console::info("hits: %i", buf.getNbAnyHits());
+                console::info("touch: %i", buf.getNbTouches());
+                console::info("buf.hasBlock: %i", buf.hasBlock);
+
+                if (status) {
+                    const px::PxU32 countHits = buf.getNbAnyHits();
+
+                    for (px::PxU32 i = 0; i < countHits; i++) {
+                        const px::PxOverlapHit &hit = buf.getAnyHit(i);
+
+//                        px::PxU32 flags = hit.actor->getActorFlags();
+//                        if (flags & px::PxRigidBodyFlag::eKINEMATIC) {
+//                            console::info("skip");
+////                            continue;
+//                        }
+//
+//                        auto* body = static_cast<px::PxRigidDynamic*>(hit.actor);
+//
+//                        px::PxVec3 dir = pose.p - hit.shape->;
+//
+//                        body->addForce(px::PxVec3(0.0f, 15.0f, 0.0f), px::PxForceMode::eVELOCITY_CHANGE);
+//                        console::info("add force!");
+                    }
+
+                }
+
+
+//                px::PxSweepBuffer hit;
+//                px::PxGeometry sweepShape = px::PxCreate //px::PxSphereGeometry(static_cast<px::PxReal>(radius));
+//                px::PxTransform initialPose(PX_REST_VEC(position));
+//                px::PxVec3 sweepDirection = PX_REST_VEC(direction);
+//
+//                px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
+//                px::PxRigidStatic *actor = px::PxCreateStatic(*gPhysics, initialPose, sweepShape, *gMaterial);
+
+
+
+//                const px::PxSphereGeometry &sphereGeom = static_cast<const px::PxSphereGeometry &>(sweepShape);
+//
+//                gScene->removeActor(*actor);
+
+//                PxRigidDynamic* actor = mActor->getController()->getActor();
+//                PxShape* capsuleShape = getShape( *actor );
+//                px::PxCapsuleGeometry capGeom(capsuleShape->getGeometry().capsule());
+//
+//                bool status = gScene->sweep(sweepShape, initialPose, sweepDirection, distance, hit);
+
+//                if (status) {
+//                    px::PxU32 countHits = hit.getNbTouches();
+//
+//                    for (px::PxU32 i = 0; i < countHits; i++) {
+//                        const px::PxSweepHit &h = hit.getTouch(i);
+//                        const px::PxType actorType = h.actor->getConcreteType();
+//
+//                        if (actorType == px::PxConcreteType::eRIGID_DYNAMIC) {
+//                            auto* body = reinterpret_cast<px::PxRigidDynamic*>(h.actor);
+//                            body->addForce(px::PxVec3(0.0f, 1.0f, 0.0f), px::PxForceMode::eVELOCITY_CHANGE);
+//                        }
+//                    }
+//                }
             }
 
             void receive(const ex::EntityCreatedEvent &event) {
@@ -606,27 +679,28 @@ namespace game {
                 }
             }
 
-            virtual void onContact(const px::PxContactPairHeader& pairHeader, const px::PxContactPair* pairs, px::PxU32 nbPairs) {
+            virtual void
+            onContact(const px::PxContactPairHeader &pairHeader, const px::PxContactPair *pairs, px::PxU32 nbPairs) {
                 contactedActors.push({pairHeader.actors[0], pairHeader.actors[1]});
             }
 
-            virtual void onTrigger(px::PxTriggerPair* pairs, px::PxU32 count) {
+            virtual void onTrigger(px::PxTriggerPair *pairs, px::PxU32 count) {
                 console::info("onTrigger");
             }
 
-            virtual void onConstraintBreak(px::PxConstraintInfo*, px::PxU32) {
+            virtual void onConstraintBreak(px::PxConstraintInfo *, px::PxU32) {
                 console::info("onConstraintBreak");
             }
 
-            virtual void onWake(px::PxActor** , px::PxU32 ) {
+            virtual void onWake(px::PxActor **, px::PxU32) {
                 console::info("onWake");
             }
 
-            virtual void onSleep(px::PxActor** , px::PxU32 ){
+            virtual void onSleep(px::PxActor **, px::PxU32) {
                 console::info("onSleep");
             }
 
-            virtual void onAdvance(const px::PxRigidBody*const*, const px::PxTransform*, const px::PxU32) {
+            virtual void onAdvance(const px::PxRigidBody *const *, const px::PxTransform *, const px::PxU32) {
                 console::info("onAdvance");
             }
 
@@ -648,7 +722,7 @@ namespace game {
             entityx::Entity debugTrianglesEntity;
             entityx::Entity debugPointsEntity;
 
-            std::stack<std::pair<px::PxActor*, px::PxActor*>> contactedActors;
+            std::stack<std::pair<px::PxActor *, px::PxActor *>> contactedActors;
 
             bool drawDebug = false;
             bool isFirstFrame = true;

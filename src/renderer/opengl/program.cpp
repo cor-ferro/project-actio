@@ -131,6 +131,11 @@ namespace renderer {
         }
 
         Program::~Program() {
+            if (handle != 0) {
+                glDeleteProgram(handle);
+                handle = 0;
+            }
+
             console::info("destroy shader program %s", name);
         }
 
@@ -166,7 +171,7 @@ namespace renderer {
             auto itSubroutine = vertexSubroutines.find(subroutineName);
 
             if (itUniform == vertexSubroutineUniforms.end()) {
-                console::warn("unknown vertex uniform subroutine: %s, %s", name, uniformName);
+//                console::warn("unknown vertex uniform subroutine: %s, %s", name, uniformName);
                 return;
             }
 
@@ -261,7 +266,7 @@ namespace renderer {
 
             if (loc < 0) {
                 if (locationName != "normalTexture" && locationName != "heightTexture") {
-                    console::info("loc: %s %s, %i", name.c_str(), locationName, loc);
+//                    console::info("loc: %s %s, %i", name.c_str(), locationName, loc);
                 }
             }
 

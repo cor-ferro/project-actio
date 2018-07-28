@@ -6,7 +6,6 @@
 #define ACTIO_MAKE_CONTROLLED_H
 
 #include <entityx/entityx/Entity.h>
-#include "../components/controlled.h"
 
 namespace game {
     namespace events {

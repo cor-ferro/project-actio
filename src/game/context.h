@@ -6,6 +6,7 @@
 #define ACTIO_CONTEXT_H
 
 #include "../lib/types.h"
+#include "../lib/input_handler.h"
 
 namespace game {
     struct Context {

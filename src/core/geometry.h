@@ -1,5 +1,5 @@
-#ifndef GEOMETRY_H_
-#define GEOMETRY_H_
+#ifndef ACTIO_CORE_GEOMETRY_H_
+#define ACTIO_CORE_GEOMETRY_H_
 
 #include <glad/glad.h>
 
@@ -17,13 +17,6 @@
 #include "../math/Box3.h"
 #include "../math/Sphere.h"
 #include "vertex.h"
-
-#ifdef GRAPHIC_API_OPENGL
-
-#include "../renderer/opengl/program.h"
-#include "../renderer/opengl/uniforms.h"
-
-#endif
 
 typedef unsigned int MeshIndex;
 typedef std::vector<Vertex> GeometryVertices;
@@ -90,10 +83,6 @@ struct Geometry {
 
     void addFace(unsigned int i1, unsigned int i2, unsigned int i3);
 
-    void setup();
-
-    void setupVertex(Vertex &v);
-
     void computeBoundingBox();
 
     void computeBoundingSphere();
@@ -124,9 +113,7 @@ struct Geometry {
 
     bool isNeedUpdateIndices();
 
-    GLuint VAO = 0;
-    GLuint VBO = 0;
-    GLuint EBO = 0;
+    renderer::GeometryHandle *renderHandle;
 
 protected:
 

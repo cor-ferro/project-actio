@@ -5,6 +5,8 @@
 #ifndef ACTIO_EVENTS_PHYSIC_CONTACT_H
 #define ACTIO_EVENTS_PHYSIC_CONTACT_H
 
+#include "PxPhysics.h"
+
 namespace game {
     namespace events {
         namespace px = physx;

@@ -26,13 +26,13 @@ namespace Helpers
 		std::vector<float> lineVerticesForward { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f };
 
 		lineUp->geometry.addVertex(lineVerticesUp);
-		lineUp->material.setColor(0.0f, 1.0f, 0.0f);
+		lineUp->material->setColor(0.0f, 1.0f, 0.0f);
 
 		lineLeft->geometry.addVertex(lineVerticesLeft);
-		lineLeft->material.setColor(0.0f, 1.0f, 0.0f);
+		lineLeft->material->setColor(0.0f, 1.0f, 0.0f);
 
 		lineForward->geometry.addVertex(lineVerticesForward);
-		lineForward->material.setColor(0.0f, 1.0f, 0.0f);
+		lineForward->material->setColor(0.0f, 1.0f, 0.0f);
 
 		setLength(length_);
 		setPosition(origin_);

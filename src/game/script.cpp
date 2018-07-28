@@ -1,7 +1,8 @@
 #include <glm/glm.hpp>
 #include "script.h"
 #include "world.h"
-#include "assets_resource.h"
+#include "../lib/assets_resource.h"
+#include "../lib/assets_types.h"
 #include "../core/geometry_primitive.h"
 
 namespace game {
@@ -115,7 +116,7 @@ namespace game {
     };
 
 
-    Script::Script(game::assets::Script *asset) : asset(asset) {
+    Script::Script(assets::Script *asset) : asset(asset) {
         console::info("create script");
     }
 

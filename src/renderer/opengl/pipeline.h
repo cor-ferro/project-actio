@@ -7,7 +7,7 @@
 
 #include "../../core/mesh.h"
 #include "../../core/object3D.h"
-#include "../../materials/material.h"
+#include "../../core/material.h"
 #include "program.h"
 #include "shader.h"
 #include "utils.h"

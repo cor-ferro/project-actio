@@ -20,9 +20,6 @@ Geometry::Geometry(aiMesh *mesh, const Resource::Assimp *assimpResource) {
 Geometry::Geometry(const Geometry &other) {
     vertices_ = other.vertices_;
     indices_ = other.indices_;
-    VAO = other.VAO;
-    VBO = other.VBO;
-    EBO = other.EBO;
     type = other.type;
     console::info("copy geometry %i %i", other.type, type);
 }
@@ -31,10 +28,6 @@ Geometry::~Geometry() {
 }
 
 void Geometry::destroy() {
-    if (VBO != 0) glDeleteBuffers(1, &VBO);
-    if (EBO != 0) glDeleteBuffers(1, &EBO);
-    if (VAO != 0) glDeleteVertexArrays(1, &VAO);
-
     freeVerties();
     freeIndices();
 }
@@ -117,50 +110,6 @@ void Geometry::initFromAi(const aiMesh *mesh, const Resource::Assimp *assimpReso
     }
 
     computeBoundingBox();
-}
-
-void Geometry::setup() {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-
-    GeometryVertices *vertices = getVertices();
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), GL_STATIC_DRAW);
-
-    glGenBuffers(1, &EBO);
-    GeometryIndices *indices = getIndices();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), GL_STATIC_DRAW);
-
-    setupVertex(vertices->front());
-
-    glBindVertexArray(0);
-}
-
-void Geometry::setupVertex(Vertex &v) {
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
-
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Normal));
-
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, TexCoords));
-
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Tangent));
-
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Bitangent));
-
-    glEnableVertexAttribArray(5);
-    glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void *) offsetof(Vertex, BonedIDs));
-
-    glEnableVertexAttribArray(6);
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Weights));
 }
 
 GeometryVertices *Geometry::getVertices() {

@@ -5,8 +5,12 @@
 #ifndef ACTIO_WEAPON_FIRE_H
 #define ACTIO_WEAPON_FIRE_H
 
+#include <entityx/entityx/Entity.h>
+
 namespace game {
     namespace events {
+        namespace ex = entityx;
+
         struct Weapon {
             enum Type {
                 Fire,

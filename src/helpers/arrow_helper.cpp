@@ -40,10 +40,10 @@ namespace Helpers
 		};
 
 		line->geometry.addVertex(lineVertices);
-		line->material.setColor(0.0f, 1.0f, 0.0f);
+		line->material->setColor(0.0f, 1.0f, 0.0f);
 
 		cone->geometry.addVertex(coneVertices);
-		cone->material.setColor(0.0f, 0.0f, 1.0f);
+		cone->material->setColor(0.0f, 0.0f, 1.0f);
 
 		setLength(length_);
 		setOrigin(origin_);

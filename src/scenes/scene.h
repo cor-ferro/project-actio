@@ -9,7 +9,6 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "../ag.h"
 #include "../resources/resources.h"
 #include "../core/model.h"
 #include "../cameras/camera.h"

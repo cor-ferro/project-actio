@@ -1,140 +1,128 @@
+#ifndef ACTIO_CORE_TEXTURE
+#define ACTIO_CORE_TEXTURE
+
 #include "texture.h"
 
-Texture::Texture(Texture_Type type)
-	: type(type)
-	, name(std::string(Texture::nameByType(type)))
-{}
+Texture::Texture(Texture::Type type)
+        : type(type)
+        , name(std::string(Texture::nameByType(type))) {}
 
 Texture::Texture(aiTextureType type)
-	: type(getType(type))
-	, name("")
+        : type(getType(type))
+        , name("") {}
+
+Texture::Texture(Texture && otherTexture) noexcept {
+    std::swap(type, otherTexture.type);
+    std::swap(name, otherTexture.name);
+    std::swap(renderHandle, otherTexture.renderHandle);
+    std::swap(images_, otherTexture.images_);
+}
+
+Texture::Texture(const Texture &other)
+        : type(other.type)
+        , name(other.name)
+        , images_(other.images_) // @todo: проверить удаление ресурсов. Потенциальная утечка памяти.
 {}
 
-Texture::Texture(const Texture& other)
-	: type(other.type)
-	, name(other.name)
-	, gTexture(other.gTexture)
-	, images_(other.images_) // @todo: проверить удаление ресурсов. Потенциальная утечка памяти.
-{}
+Texture::~Texture() = default;
 
-Texture::~Texture() {}
+void Texture::destroy() {}
 
-void Texture::destroy()
-{
-	gTexture.destroy();
-//	console::info("destroy texture");
-	// imageData_->free();
-	// delete imageData_;// @todo: not safe data remove
+Texture Texture::Empty(Texture::Type type = Texture::Type::Diffuse, unsigned char color = 0) {
+    auto *image = new ImageLoader::RawData[3]{color, color, color};
+    std::shared_ptr<ImageData> imageData(new ImageData(image, 1, 1, GL_RGB));
 
-//	TextureImages::iterator it;
-//
-//	for (it = images_.begin(); it != images_.end(); it++) {
-//		ImageLoader::Data& imageData = it->second;
-//
-//		imageData.free();
-//	}
-//
-//	images_.clear();
+    Texture texture(type);
+    texture.setData(imageData);
+
+    return texture;
 }
 
-Texture Texture::Empty(Texture_Type type = Texture_Diffuse, unsigned char color = 0)
-{
-	ImageLoader::RawData * image = new ImageLoader::RawData[3]{color, color, color};
-	ImageLoader::Data imageData(image, 1, 1, GL_RGB);
-
-	Texture texture(type);
-	texture.setData(imageData);
-
-	return texture;
+Texture Texture::White(Texture::Type type) {
+    return Texture::Empty(type, 255);
 }
 
-Texture Texture::White(Texture_Type type)
-{
-	return Texture::Empty(type, 255);
-}
+Texture Texture::Cube() {
+    Texture texture(Texture::Type::Cube);
 
-Texture Texture::Cube()
-{
-	Texture texture(Texture_Cube);
-
-	return texture;
-}
-
-Texture Texture::loadFromMaterial(aiMaterial * mat, aiTextureType type, const Resource::Assimp * assimpResource)
-{
-	unsigned int countTextures = mat->GetTextureCount(type);
-
-	Texture texture(type);
-
-	if (countTextures > 0) {
-		std::string path = assimpResource->getTexturePath(mat, type, 0);
-
-		ImageLoader::Data imageData = ImageLoader::load(path);
-
-		if (!imageData.isReady()) {
-			imageData = ImageLoader::load(assimpResource->getDefaultTexturePath());
-		}
-
-		texture.setData(imageData);
-	} else {
-//		console::warn("texture %s not exist, create empty", Texture::charType(type));
-		Texture_Type textureType = Texture::getType(type);
-		switch (textureType) {
-		case Texture_Specular:
-			texture = Texture::Empty(textureType, 0); break;
-		default:
-			texture = Texture::White(textureType);
-		}
-	}
-
-	return texture;
-}
-
-#ifdef GRAPHIC_API_OPENGL
-void Texture::initTexture()
-{
-	// boost::mutex::scoped_lock lock(textureInitMutex);
+    return texture;
 }
 
 // @todo: осторожно добавлять данные, могут потеряться уже существующие данные
-void Texture::setData(ImageLoader::Data imageData)
-{
-	TextureImages::iterator it = images_.find(0);
-	if (it != images_.end()) {
-		images_.erase(it);
-	}
-
-	images_.insert(std::pair<char, ImageLoader::Data>(0, imageData));
+void Texture::setData(std::shared_ptr<ImageData> &imageData) {
+    setData(imageData, 0);
 }
 
-void Texture::setData(ImageLoader::Data imageData, char index)
-{
-	TextureImages::iterator it = images_.find(index);
-	if (it != images_.end()) {
-		images_.erase(it);
-	}
+void Texture::setData(std::shared_ptr<ImageData> &imageData, char index) {
+    auto it = images_.find(index);
+    if (it != images_.end()) {
+        images_.erase(it);
+    }
 
-	images_.insert(std::pair<char, ImageLoader::Data>(index, imageData));
+    images_.insert(std::pair<char, std::shared_ptr<ImageData>>(index, imageData));
 }
 
-void Texture::setup()
-{
-	TextureImages::const_iterator got = images_.find(0);
+std::shared_ptr<ImageData> Texture::getData() {
+    return images_[0];
+}
 
-	if (got == images_.end()) {
-		console::warn("texture images map is empty %s", name);
-		return;
-	}
+std::shared_ptr<ImageData> Texture::getData(char index) {
+    return images_[index];
+}
 
-	switch (type) {
-	case Texture_Diffuse:
-	case Texture_Specular:
-	case Texture_Height:
-	case Texture_Normal:
-		gTexture.setup2d(got->second); break;
-	case Texture_Cube:
-		gTexture.setupCube(images_); break;
-	}
+const Texture::TextureImages &Texture::getImages() {
+    return images_;
+}
+
+Texture::Type Texture::getType()  {
+    return type;
+}
+
+Texture::Type Texture::getType(aiTextureType type)  {
+    switch (type) {
+        case aiTextureType_DIFFUSE:
+            return Texture::Type::Diffuse;
+        case aiTextureType_SPECULAR:
+            return Texture::Type::Specular;
+        case aiTextureType_HEIGHT:
+            return Texture::Type::Height;
+        case aiTextureType_NORMALS:
+            return Texture::Type::Normal;
+        default:
+            return Texture::Type::Diffuse;
+    }
+}
+
+const char* Texture::charType(aiTextureType type)  {
+    switch (type) {
+        case aiTextureType_DIFFUSE:
+            return "diffuse";
+        case aiTextureType_SPECULAR:
+            return "specular";
+        case aiTextureType_HEIGHT:
+            return "height";
+        case aiTextureType_NORMALS:
+            return "normal";
+        default:
+            return "diffuse";
+    }
+}
+
+const char* Texture::nameByType(Texture::Type type)  {
+    switch (type) {
+        case Texture::Type::Diffuse:
+            return "diffuseTexture";
+        case Texture::Type::Specular:
+            return "specularTexture";
+        case Texture::Type::Height:
+            return "heightTexture";
+        case Texture::Type::Normal:
+            return "normalTexture";
+        case Texture::Type::Cube:
+            return "cubeTexture";
+        default:
+            return "diffuseTexture";
+    }
 }
 
 #endif

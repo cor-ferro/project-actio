@@ -13,6 +13,8 @@
 #include "renderer_types.h"
 #include "entityx/entityx.h"
 #include "shader_description.h"
+#include "../lib/image_data.h"
+#include "handler.h"
 
 namespace renderer {
     enum RenderType {
@@ -21,8 +23,9 @@ namespace renderer {
     };
 
     struct Renderer {
-        typedef size_t RenderGeometryId;
-        typedef size_t RenderTextureId;
+        typedef size_t GeometryId;
+        typedef size_t TextureId;
+
 
         Renderer();
 
@@ -36,11 +39,7 @@ namespace renderer {
 
         virtual void draw(entityx::EntityManager &es) = 0;
 
-        virtual void setupMesh(Mesh *mesh) = 0;
-
-        virtual void updateMesh(Mesh *mesh) = 0;
-
-        virtual void destroyMesh(Mesh *mesh) = 0;
+        virtual void destroy() = 0;
 
         const renderer::Params &getParams();
 
@@ -68,9 +67,19 @@ namespace renderer {
 
         const Stats &getStats() const;
 
-        virtual RenderGeometryId createGeometry(Mesh *mesh) = 0;
+        virtual void setupMesh(Mesh *mesh) = 0;
 
-        virtual RenderTextureId createTexture(Texture *texture) = 0;
+        virtual void updateMesh(Mesh *mesh) = 0;
+
+        virtual void destroyMesh(Mesh *mesh) = 0;
+
+        virtual void setupGeometry(Geometry *geometry) = 0;
+
+        virtual void setupMaterial(Material *material) = 0;
+
+        virtual void setupTexture(::Texture *texture) = 0;
+
+        virtual void destroyTexture(TextureId textureId) = 0;
 
     protected:
         RenderType type;

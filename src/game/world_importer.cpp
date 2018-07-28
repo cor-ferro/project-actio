@@ -1,7 +1,7 @@
 #include "world_importer.h"
 #include "systems/physic.h"
 #include "../lib/ini_loader.h"
-#include "events/render_setup_mesh.h"
+#include "events/render_create_mesh.h"
 #include "components/transform.h"
 #include "components/state.h"
 #include "components/renderable.h"
@@ -139,7 +139,7 @@ namespace game {
 
                     Mesh *mesh = Mesh::Create();
                     GeometryPrimitive::Box(mesh->geometry, size.x, size.y, size.z);
-                    mesh->material.setDiffuse(0.0f, 1.0f, 0.0f);
+                    mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
                     World::StaticObject object = world->createStaticObject(mesh);
 

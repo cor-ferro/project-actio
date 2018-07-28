@@ -1,10 +1,10 @@
-#ifndef MESH_H_
-#define MESH_H_
+#ifndef ACTIO_CORE_MESH_H_
+#define ACTIO_CORE_MESH_H_
 
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include "../materials/material.h"
+#include "material.h"
 #include "../resources/resources.h"
 #include "../memory/poolallocator.h"
 #include "geometry.h"
@@ -12,12 +12,6 @@
 #include "mesh_bone.h"
 #include "object3D.h"
 #include "vertex.h"
-
-#ifdef GRAPHIC_API_OPENGL
-#include "../renderer/opengl/program.h"
-#include "../renderer/opengl/uniforms.h"
-#include "../renderer/opengl/utils.h"
-#endif
 
 extern memory::PoolAllocator *meshAllocator;
 
@@ -68,9 +62,7 @@ struct Mesh : Object3D {
 
     static Mesh *Create();
 
-//    static Mesh *Create(Geometry geometry);
-//
-//    static Mesh *Create(Geometry geometry, Material::Phong material);
+    static Mesh *Create(std::shared_ptr<Material> &material);
 
     static void Destroy(Mesh *mesh);
 
@@ -84,34 +76,15 @@ struct Mesh : Object3D {
 
     void setName(const char *newName);
 
-    void draw();
-
-    void freeGeometry();
-
-    void freeMaterial();
-
     void setDrawType(MeshDrawType type);
 
     MeshDrawType getDrawType();
 
-    void setDrawStride(unsigned int value);
-    unsigned int getDrawStride();
-
-#ifdef GRAPHIC_API_OPENGL
-    void draw(renderer::Opengl::Program &program, uint flags = Mesh_Draw_All);
-    void setup();
-#endif
-
-    Material::Phong material;
+    std::shared_ptr<Material> material;
     Geometry geometry;
-
     BonesMap bones;
 private:
     Mesh();
-
-//    Mesh(Geometry geometry);
-//
-//    Mesh(Geometry geometry, Material::Phong material);
 
     Mesh(const Mesh &mesh);
 
@@ -120,8 +93,6 @@ private:
     std::size_t id;
     std::string name;
     MeshDrawType drawType;
-    unsigned int drawStride = 0;
-
 };
 
 #endif
