@@ -119,25 +119,34 @@ namespace libAi {
             aiString tex;
             assimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &tex);
 
-            std::string texturePath = assimpResource->getTexturePath(assimpMaterial, aiTextureType_DIFFUSE, 0);
+            std::string texturePath(tex.C_Str());
             texturesToLoad.push_back({ texturePath, &diffuseMap });
             diffuseColor = aiColor3D(0.f, 0.f, 0.f);
             ambientColor = aiColor3D(0.f, 0.f, 0.f);
         }
 
         if (countSpecularTextures > 0) {
-            std::string texturePath = assimpResource->getTexturePath(assimpMaterial, aiTextureType_SPECULAR, 0);
+            aiString tex;
+            assimpMaterial->GetTexture(aiTextureType_SPECULAR, 0, &tex);
+
+            std::string texturePath(tex.C_Str());
             texturesToLoad.push_back({ texturePath, &specularMap });
             specularColor = aiColor3D(0.f, 0.f, 0.f);
         }
 
         if (countHeightTextures > 0) {
-            std::string texturePath = assimpResource->getTexturePath(assimpMaterial, aiTextureType_HEIGHT, 0);
+            aiString tex;
+            assimpMaterial->GetTexture(aiTextureType_HEIGHT, 0, &tex);
+
+            std::string texturePath(tex.C_Str());
             texturesToLoad.push_back({ texturePath, &heightMap });
         }
 
         if (countNormalTextures > 0) {
-            std::string texturePath = assimpResource->getTexturePath(assimpMaterial, aiTextureType_NORMALS, 0);
+            aiString tex;
+            assimpMaterial->GetTexture(aiTextureType_NORMALS, 0, &tex);
+
+            std::string texturePath(tex.C_Str());
             texturesToLoad.push_back({ texturePath, &normalMap });
         }
 
