@@ -35,8 +35,6 @@ namespace renderer {
 
         virtual bool init() = 0;
 
-        virtual void draw(Scene *scene) = 0;
-
         virtual void draw(entityx::EntityManager &es) = 0;
 
         virtual void destroy() = 0;

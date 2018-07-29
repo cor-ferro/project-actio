@@ -70,8 +70,6 @@ namespace renderer {
 
         bool init();
 
-        void draw(Scene *scene);
-
         void draw(entityx::EntityManager &es);
 
         void destroy();
@@ -83,8 +81,6 @@ namespace renderer {
         void drawModels(entityx::EntityManager &es);
 
         void forwardRender(Scene *scene);
-
-        void deferredRender(Scene *scene);
 
         void deferredRender(entityx::EntityManager &es);
 

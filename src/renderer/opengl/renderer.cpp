@@ -22,9 +22,6 @@ namespace renderer {
         console::err("GL ERROR: %s type = 0x%x, severity = 0x%x, message = %s", strType, type, severity, message);
     }
 
-
-    GLint maxTextureUnits;
-
     OpenglRenderer::OpenglRenderer(renderer::Params params)
             : Renderer(params)
             , skyboxDeferredProgram(nullptr)
@@ -189,10 +186,6 @@ namespace renderer {
 //
 //            glDepthFunc(GL_LESS);
 //        }
-    }
-
-    void OpenglRenderer::deferredRender(Scene *scene) {
-        console::info("todo deferred scene render");
     }
 
     void OpenglRenderer::deferredRender(entityx::EntityManager &es) {
@@ -473,21 +466,6 @@ namespace renderer {
                 stats.increaseDrawCall();
             }
         });
-    }
-
-    void OpenglRenderer::draw(Scene *scene) {
-        preRender();
-
-        switch (type) {
-            case RenderForward:
-                forwardRender(scene);
-                break;
-            case RenderDeferred:
-                deferredRender(scene);
-                break;
-        }
-
-        postRender();
     }
 
     void OpenglRenderer::draw(entityx::EntityManager &es) {
