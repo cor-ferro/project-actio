@@ -225,7 +225,7 @@ namespace renderer {
             std::string n = getName();
 
             if (uniformBlockIndex == GL_INVALID_INDEX) {
-                console::warn("%s: failed bind block %s at point %i", name, blockName, point);
+                return;
             }
 
             glUniformBlockBinding(handle, uniformBlockIndex, point);
@@ -238,23 +238,6 @@ namespace renderer {
 
             std::vector<GLint> name_lengths(uniform_indices.size(), 0);
             glGetActiveUniformsiv(handle, uniform_indices.size(), &uniform_indices[0], GL_UNIFORM_NAME_LENGTH, &name_lengths[0]);
-
-            if (getName() == "geometry_pass") {
-                for(std::size_t i = 0; i < uniform_indices.size(); ++i) {
-                    GLuint const uniform_index = uniform_indices[i];
-
-                    std::string name(name_lengths[i], 0);
-                    glGetActiveUniformName(handle, uniform_index, name_lengths[i], nullptr, &name[0]);
-                    std::string name2(name, 0);
-//                    name2.pop_back();
-                    GLint uniform_index2 = glGetUniformLocation(handle, name2.c_str());
-
-                    console::info("named block %s, uniform: %s %i %i %s", blockName, name, uniform_index, uniform_index2, name2);
-
-                    uniformIndexCache.insert({name, uniform_index});
-                }
-            }
-
         }
 
         GLint Program::getUniformLoc(const char *locationName) const {
@@ -371,7 +354,7 @@ namespace renderer {
                 GLint index = glGetUniformLocation(handle, name);
 
                 if (index == -1) {
-                    console::warn("!!! program %s: uniform %s cache failed.", getName(), name);
+                    return; // named uniform block or optimized variable
                 }
 
                 uniformIndexCache.insert({name, index});
@@ -395,11 +378,9 @@ namespace renderer {
             glGetProgramStageiv(handle, shaderType, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &numActiveUniforms);
 
             for (GLuint i = 0; i < numActiveUniforms; i++) {
-                GLint value;
                 GLchar uniformName[bufferSize];
-
                 GLsizei length;
-                glGetActiveSubroutineUniformiv(handle, shaderType, i, GL_ACTIVE_SUBROUTINE_UNIFORMS, &value);
+
                 glGetActiveSubroutineUniformName(handle, shaderType, i, bufferSize, &length, uniformName);
 
                 uniforms->insert({ uniformName, i });
@@ -408,6 +389,12 @@ namespace renderer {
             GLsizei length = 0;
             GLchar subroutineName[bufferSize];
             GLuint i = 0;
+
+            GLint numActiveSubroutines = 0;
+            glGetProgramStageiv(handle, shaderType, GL_ACTIVE_SUBROUTINES, &numActiveSubroutines);
+            if (numActiveSubroutines == 0) {
+                return;
+            }
 
             do {
                 length = 0;
@@ -422,7 +409,7 @@ namespace renderer {
                 }
 
                 i++;
-            } while (length > 0);
+            } while (i < numActiveSubroutines);
         }
     }
 }

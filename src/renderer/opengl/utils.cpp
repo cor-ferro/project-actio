@@ -30,11 +30,11 @@ namespace OpenglUtils {
         bindTexture(handle);
     }
 
-    void checkErrors(const char *file, int line, bool silent) {
+    bool checkErrors(const char *file, int line, bool silent) {
         GLenum err = glGetError();
 
-        if (silent == true) return;
-        if (err == GL_NO_ERROR) return;
+        if (err == GL_NO_ERROR) return false;
+        if (silent == true) return true;
 
         std::string error;
 
@@ -61,5 +61,7 @@ namespace OpenglUtils {
         if (error.size() != 0) {
             console::err("GL: %s [%s:%i]", error, file, line);
         }
+
+        return true;
     }
 }

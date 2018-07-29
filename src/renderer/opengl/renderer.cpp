@@ -42,43 +42,6 @@ namespace renderer {
         initMatricesBuffer();
         initRequiredShaders();
 
-//        glEnable              ( GL_DEBUG_OUTPUT );
-//        glDebugMessageCallback( MessageCallback, nullptr );
-
-//        forwardProgram.init("forward", shadersFolder);
-//        forwardProgram.initUniformCache({"model", "diffuseTexture", "heightTexture", "specularTexture", "bones[]"});
-//        forwardProgram.initUniformCache(Opengl::Uniform::Map);
-//        forwardProgram.bindBlock("Matrices", 0);
-//
-//        geometryPassProgram.init("geometry_pass", shadersFolder);
-//        geometryPassProgram.defineVertexSubroutines("getBoneTransform",
-//                                                    {"BoneTransformEnabled", "BoneTransformDisabled"});
-//        geometryPassProgram.initUniformCache(
-//                {"projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture",
-//                 "boneTransforms[]", "boneOffsets[]"});
-//        geometryPassProgram.initUniformCache(Opengl::Uniform::Map);
-//        geometryPassProgram.bindBlock("Matrices", 0);
-//        OpenglCheckErrors();
-//
-//        lightPassProgram.init("light_pass", shadersFolder);
-//        lightPassProgram.defineFragmentSubroutines("getLightColor",
-//                                                   {"DirLightType", "PointLightType", "SpotLightType"});
-//        //	lightPassProgram.bindBlock("Matrices", 0);
-//        // lightPassProgram.initUniformCache({ "projection", "view", "model", "diffuseTexture", "heightTexture", "specularTexture" });
-//        OpenglCheckErrors();
-//
-//        nullProgram.init("null", shadersFolder);
-//        nullProgram.bindBlock("Matrices", 0);
-//        OpenglCheckErrors();
-//
-//        skyboxProgram.init("skybox", shadersFolder);
-//        skyboxProgram.bindBlock("Matrices", 0);
-//        OpenglCheckErrors();
-//
-//        skyboxDeferredProgram.init("skybox-deferred", shadersFolder);
-//        skyboxDeferredProgram.bindBlock("Matrices", 0);
-//        OpenglCheckErrors();
-
         lightQuad = Mesh::Create();
         lightSphere = Mesh::Create();
         lightCylinder = Mesh::Create();
@@ -91,9 +54,6 @@ namespace renderer {
         setupMesh(lightQuad);
         setupMesh(lightSphere);
         setupMesh(lightCylinder);
-//        lightQuad->setup();
-//        lightSphere->setup();
-//        lightCylinder->setup();
 
         OpenglCheckErrors();
 

@@ -67,7 +67,7 @@ void ModelBuilder::FromAi(Model *model, Resource::Assimp *assimpResource, Assets
         }
     };
 
-    const uint countThreads = 4;
+    const uint countThreads = 1;
     std::vector<std::thread> nodeThreads;
 
     console::info("start init meshes");
