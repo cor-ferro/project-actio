@@ -12,19 +12,20 @@
 #include <stack>
 #include "../events/mouse_press.h"
 #include "../events/key_press.h"
-#include "../../lib/input_handler.h"
+#include "../events/setup_controlled.h"
+#include "../events/weapon_action.h"
 #include "../components/skin.h"
 #include "../components/model.h"
-#include "../events/setup_controlled.h"
 #include "../components/base.h"
-#include "../../lib/math.h"
-#include "../context.h"
-#include "base.h"
 #include "../components/transform.h"
 #include "../components/character.h"
 #include "../components/char_items.h"
 #include "../components/user_control.h"
 #include "../components/ai_control.h"
+#include "../../lib/math.h"
+#include "../../lib/input_handler.h"
+#include "../context.h"
+#include "base.h"
 
 namespace game {
     namespace systems {
@@ -49,13 +50,12 @@ namespace game {
             }
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
-                es.each<c::Character, c::CharItems, c::UserControl, c::Transform, c::Skin>([&dt](
+                es.each<c::Character, c::CharItems, c::UserControl, c::Transform>([&dt](
                         ex::Entity entity,
                         c::Character &character,
                         c::CharItems &charItems,
                         c::UserControl &userControl,
-                        c::Transform &transform,
-                        c::Skin &skin
+                        c::Transform &transform
                 ) {
                     const float speedFactor = 0.1f;
                     const float MIN_DIRECTION_ANGLE = 0.0f;
@@ -125,13 +125,17 @@ namespace game {
                     float speed = (glm::abs(character.motionDelta.x) + glm::abs(character.motionDelta.z));
                     float scaleSpeed = math::scale(0.0f, maxZAxis, speed);
 
-                    float idleAnimationWeight = 1.0f - scaleSpeed;
-                    float runAnimationWeight = scaleSpeed;
-                    float jumpAnimationWeight = 0.0f;
+                    auto skin = components::get<c::Skin>(entity);
 
-                    skin.animSamplers.setWeight(0, idleAnimationWeight);
-                    skin.animSamplers.setWeight(1, runAnimationWeight);
-                    skin.animSamplers.setWeight(2, jumpAnimationWeight);
+                    if (skin) {
+                        float idleAnimationWeight = 1.0f - scaleSpeed;
+                        float runAnimationWeight = scaleSpeed;
+                        float jumpAnimationWeight = 0.0f;
+
+                        skin->animSamplers.setWeight(0, idleAnimationWeight);
+                        skin->animSamplers.setWeight(1, runAnimationWeight);
+                        skin->animSamplers.setWeight(2, jumpAnimationWeight);
+                    }
                 });
 
                 while (!newExec.empty()) {

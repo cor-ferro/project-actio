@@ -12,15 +12,16 @@
 #include <stack>
 #include "../events/mouse_press.h"
 #include "../events/key_press.h"
-#include "../../lib/input_handler.h"
+#include "../events/setup_controlled.h"
 #include "../components/skin.h"
 #include "../components/model.h"
-#include "../events/setup_controlled.h"
+#include "../components/transform.h"
+#include "../components/controlled.h"
 #include "../components/base.h"
+#include "../../lib/input_handler.h"
 #include "../../lib/math.h"
 #include "../context.h"
 #include "base.h"
-#include "../components/transform.h"
 
 namespace game {
     namespace systems {

@@ -35,7 +35,7 @@ namespace game {
                 "CutOff", "OuterCutOff"
         };
         std::vector<std::string> modelFields = {
-                "Geometry", "Size", "File", "FlipUv", "Animation", "Position", "Rotation", "Scale", "Player", "Physic"
+                "Geometry", "Size", "File", "FlipUv", "Animation", "Position", "Rotation", "Scale", "Control", "Physic"
         };
 
         iniLoader.defineSection("world", worldFields);
@@ -71,7 +71,7 @@ namespace game {
                 vec4 rot;
                 quat rotQuat;
                 std::string geometryType, filePath, animation;
-                bool flipUv, player, isPhysic;
+                bool flipUv, control, isPhysic;
 
                 section.getFieldVec<vec3>("Position", pos, vec3(0.0f));
                 section.getFieldVec<vec4>("Rotation", rot);
@@ -83,7 +83,7 @@ namespace game {
                 section.getField("File", filePath);
                 section.getField("FlipUv", flipUv);
                 section.getField("Animation", animation);
-                section.getField("Player", player);
+                section.getField("Control", control);
 
                 rotQuat = glm::angleAxis(glm::radians(rot.w), vec3(rot.x, rot.y, rot.z));
 
@@ -123,7 +123,7 @@ namespace game {
                             character.skin->setCurrentAnimation(animation);
                         }
 
-                        if (player) {
+                        if (control) {
                             world->events.emit<events::SetupControlled>(character.getEntity());
                         }
                     } else {
