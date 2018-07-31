@@ -80,6 +80,10 @@ struct Mesh : Object3D {
 
     MeshDrawType getDrawType();
 
+    const Geometry &getGeometry() const;
+
+    Geometry &getGeometry();
+
     std::shared_ptr<Material> material;
     Geometry geometry;
     BonesMap bones;

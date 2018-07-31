@@ -11,17 +11,27 @@ extern "C" {
 # include "lualib.h"
 }
 
+#include <entityx/entityx.h>
 #include <string>
 #include "LuaBridge/LuaBridge.h"
-#include "../lib/assets_types.h"
-#include "../lib/console.h"
-#include "context.h"
+#include "components/base.h"
+#include "components/transform.h"
 #include "desc/light_directional.h"
 #include "desc/light_point.h"
 #include "desc/light_spot.h"
+#include "../core/material.h"
+#include "../lib/assets_types.h"
+#include "../lib/console.h"
+#include "../core/geometry_primitive.h"
+#include "../core/mesh.h"
+#include "world_object.h"
+#include "context.h"
 
 
 namespace game {
+    namespace ex = entityx;
+    namespace c = components;
+
     class World;
 
     class Script {
@@ -56,13 +66,24 @@ namespace game {
 
             void addSpotLight(desc::LightSpotDesc &description);
 
-            void addGeometry();
+            Mesh *createMesh();
+
+            ex::Entity createModelEntity(Mesh *mesh);
+
+            WorldObject createObject(ex::Entity &entity);
+
+            void spawnObject(WorldObject &object, vec3 position);
+
+            Material createMaterial();
+
+            Material *findMaterial(const std::string &name);
 
             World *world = nullptr;
         };
 
         struct Math1Lib {
             static float clamp(const float &v, const float &a, const float &b);
+
             static float PI;
             static float TWO_PI;
             static float HALF_PI;
@@ -72,17 +93,56 @@ namespace game {
 
         struct Math3Lib {
             glm::vec3 static clamp(const glm::vec3 &vec, const float &a, const float &b);
+
             glm::vec3 static normalize(const glm::vec3 &vec);
+
             glm::vec3 static cross(const glm::vec3 &vec1, const glm::vec3 &vec2);
+
             float static distance(const glm::vec3 &vec1, const glm::vec3 &vec2);
+
             float static dot(const glm::vec3 &vec1, const glm::vec3 &vec2);
+
             float static length(const glm::vec3 &vec);
+
             glm::vec3 static reflect(const glm::vec3 &vec1, const glm::vec3 &vec2);
+
             glm::vec3 static refract(const glm::vec3 &vec1, const glm::vec3 &vec2);
+
             glm::vec3 static mul(const glm::vec3 &vec1, const glm::vec3 &vec2);
+
             glm::vec3 static div(const glm::vec3 &vec1, const glm::vec3 &vec2);
+
             glm::vec3 static add(const glm::vec3 &vec1, const glm::vec3 &vec2);
+
             glm::vec3 static sub(const glm::vec3 &vec1, const glm::vec3 &vec2);
+        };
+
+        struct GeometryLib {
+            static void createBox(Mesh *mesh, float width, float height);
+
+            static void createPlane(Mesh *mesh, uint width, uint height);
+
+            static void createSphere(Mesh *mesh, float radius, uint widthSegments, uint heightSegments);
+
+            static void createCircle(Mesh *mesh, float radius, uint segments);
+
+            static void createCone(Mesh *mesh, float radius, float height, uint radialSegments, uint heightSegments);
+
+            static void createCylinder(Mesh *mesh, float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments);
+
+            static void createRing(Mesh *mesh, float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments);
+
+            static void createTorus(Mesh *mesh, float radius, float tube, uint radialSegments, uint tubularSegments, float arc);
+
+            static void createOctahedron(Mesh *mesh, float radius);
+
+            static void createQuad2d(Mesh *mesh);
+
+            static void createLines(Mesh *mesh, std::vector<vec3> &lines);
+        };
+
+        struct EntityLib {
+
         };
 
     private:
@@ -97,7 +157,9 @@ namespace game {
         Math1Lib math;
 
         int createLuaState();
+
         int destroyLuaState();
+
         void link();
     };
 }

@@ -342,6 +342,24 @@ namespace game {
         physic->wave(position, direction);
     }
 
+    ex::Entity World::createEntity(Mesh *mesh) {
+        ex::Entity entity = entities.create();
+
+        entity.assign<c::Model>(mesh);
+
+        return entity;
+    }
+
+    void World::spawn(game::WorldObject &object) {
+        vec3 position = vec3(0.0f);
+        spawn(object, position);
+    }
+
+    void World::spawn(game::WorldObject &object, vec3 &position) {
+        object.transform->setPosition(position);
+        events.emit<events::RenderSetupModel>(object.getEntity());
+    }
+
     void World::setPhysicsDebug(bool value) {
         physic->setDrawDebug(value);
     }

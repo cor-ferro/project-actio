@@ -103,13 +103,15 @@ private:
     color::Rgb ambient = colors::green();
     color::Rgb diffuse = colors::green();
     color::Rgb specular = colors::green();
-    std::shared_ptr<Texture> diffuseMap;
-    std::shared_ptr<Texture> normalMap;
-    std::shared_ptr<Texture> specularMap;
-    std::shared_ptr<Texture> heightMap;
+    std::shared_ptr<Texture> diffuseMap = nullptr;
+    std::shared_ptr<Texture> normalMap = nullptr;
+    std::shared_ptr<Texture> specularMap = nullptr;
+    std::shared_ptr<Texture> heightMap = nullptr;
 
     vec2 tilling = vec2(0.0f);
     vec2 offset = vec2(0.0f);
+
+    std::unordered_map<std::string, float> options;
 };
 
 #endif

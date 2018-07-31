@@ -74,3 +74,11 @@ void Mesh::setDrawType(MeshDrawType type) {
 MeshDrawType Mesh::getDrawType() {
     return drawType;
 }
+
+const Geometry &Mesh::getGeometry() const {
+    return geometry;
+}
+
+Geometry &Mesh::getGeometry() {
+    return geometry;
+}

@@ -45,6 +45,8 @@ struct Geometry {
 
     Geometry(aiMesh *mesh, const Resource::Assimp *assimpResource);
 
+    Geometry(const Geometry &geometry);
+
     ~Geometry();
 
     void destroy();
@@ -123,7 +125,7 @@ protected:
     GeometryType type = Geometry_Static;
 
 private:
-    Geometry(const Geometry &geometry);
+
 
     bool needUpdateVertices = false;
     bool needUpdateIndices = false;

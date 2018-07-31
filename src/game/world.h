@@ -34,6 +34,7 @@
 #include "desc/light_spot.h"
 #include "desc/weapon.h"
 #include "weapon_handler.h"
+#include "world_object.h"
 
 namespace game {
     namespace ex = entityx;
@@ -229,6 +230,12 @@ namespace game {
         void forcePush(ex::Entity entity, vec3 direction, float force);
 
         void impactWave(vec3 position, vec3 direction);
+
+        ex::Entity createEntity(Mesh *mesh);
+
+        void spawn(game::WorldObject &object);
+
+        void spawn(game::WorldObject &object, vec3 &position);
 
         Character getUserControlCharacter();
 

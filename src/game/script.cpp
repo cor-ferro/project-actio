@@ -3,7 +3,7 @@
 #include "world.h"
 #include "../lib/assets_resource.h"
 #include "../lib/assets_types.h"
-#include "../core/geometry_primitive.h"
+
 
 namespace game {
     struct ScriptApi {
@@ -24,8 +24,32 @@ namespace game {
         world->addLight(description);
     }
 
-    void Script::WorldLib::addGeometry() {
+    Mesh *Script::WorldLib::createMesh() {
+        return Mesh::Create(); // @todo: create from factory
+    }
 
+    ex::Entity Script::WorldLib::createModelEntity(Mesh *mesh) {
+        return world->createEntity(mesh);
+    }
+
+    WorldObject Script::WorldLib::createObject(ex::Entity &entity) {
+        WorldObject object(entity);
+
+        return object;
+    }
+
+    void Script::WorldLib::spawnObject(WorldObject &object, vec3 position) {
+        world->spawn(object, position);
+    }
+
+    Material Script::WorldLib::createMaterial() {
+        Material mat;
+
+        return mat;
+    }
+
+    Material *Script::WorldLib::findMaterial(const std::string &name) {
+        return nullptr;
     }
 
 
@@ -91,6 +115,61 @@ namespace game {
         return vec1 - vec2;
     }
 
+    void Script::GeometryLib::createBox(Mesh *mesh, float width, float height) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Box(geometry, width, height, 1, 1, 1);
+    }
+
+    void Script::GeometryLib::createPlane(Mesh *mesh, uint width, uint height) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Plane(geometry, width, height, 1, 1);
+    }
+
+    void Script::GeometryLib::createSphere(Mesh *mesh, float radius, uint widthSegments, uint heightSegments) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Sphere(geometry, radius, widthSegments, heightSegments, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+    }
+
+    void Script::GeometryLib::createCircle(Mesh *mesh, float radius, uint segments) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Circle(geometry, radius, segments, 0.0f, glm::two_pi<float>());
+    }
+
+    void Script::GeometryLib::createCone(Mesh *mesh, float radius, float height, uint radialSegments, uint heightSegments) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Cone(geometry, radius, height, radialSegments, heightSegments, true, 0.0f, glm::two_pi<float>());
+    }
+
+    void Script::GeometryLib::createCylinder(Mesh *mesh, float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Cylinder(geometry, radiusTop, radiusBottom, height, radialSegments, heightSegments, false, 0.0f, glm::two_pi<float>());
+    }
+
+    void Script::GeometryLib::createRing(Mesh *mesh, float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Ring(geometry, innerRadius, outerRadius, thetaSegments, phiSegments, 0.0f, glm::two_pi<float>());
+    }
+
+    void Script::GeometryLib::createTorus(Mesh *mesh, float radius, float tube, uint radialSegments, uint tubularSegments, float arc) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Torus(geometry, radius, tube, radialSegments, tubularSegments, arc);
+    }
+
+    void Script::GeometryLib::createOctahedron(Mesh *mesh, float radius) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Octahedron(geometry, radius);
+    }
+
+    void Script::GeometryLib::createQuad2d(Mesh *mesh) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Quad2d(geometry);
+    }
+
+    void Script::GeometryLib::createLines(Mesh *mesh, std::vector<vec3> &lines) {
+        Geometry &geometry = mesh->getGeometry();
+        GeometryPrimitive::Lines(geometry, lines);
+    }
+
     struct Vec2Helper {
         template<unsigned index>
         static float get(glm::vec2 const *vec) {
@@ -112,6 +191,18 @@ namespace game {
         template<unsigned index>
         static void set(glm::vec3 *vec, float value) {
             vec->operator[](index) = value;
+        }
+    };
+
+    struct QuatHelper {
+        template <unsigned index>
+        static float get(glm::quat const *quat) {
+            return quat->operator[](index);
+        }
+
+        template<unsigned index>
+        static void set(glm::quat *quat, float value) {
+            quat->operator[](index) = value;
         }
     };
 
@@ -238,15 +329,40 @@ namespace game {
                 .addProperty("x", &Vec2Helper::get<0>, &Vec2Helper::set<0>)
                 .addProperty("y", &Vec2Helper::get<1>, &Vec2Helper::set<1>)
             .endClass()
-        ;
-
-        luabridge::getGlobalNamespace(L)
             .beginClass<glm::vec3>("vec3")
                 .addConstructor<void (*) (float)>()
                 .addConstructor<void (*) (float, float, float)>()
                 .addProperty("x", &Vec3Helper::get<0>, &Vec3Helper::set<0>)
                 .addProperty("y", &Vec3Helper::get<1>, &Vec3Helper::set<1>)
                 .addProperty("z", &Vec3Helper::get<2>, &Vec3Helper::set<2>)
+            .endClass()
+            .beginClass<glm::quat>("quat")
+                .addConstructor<void (*) (float, float, float, float)>()
+                .addProperty("w", &QuatHelper::get<3>, &QuatHelper::set<3>)
+                .addProperty("x", &QuatHelper::get<0>, &QuatHelper::set<0>)
+                .addProperty("y", &QuatHelper::get<1>, &QuatHelper::set<1>)
+                .addProperty("z", &QuatHelper::get<2>, &QuatHelper::set<2>)
+            .endClass()
+            .beginClass<Material>("Material")
+                .addConstructor<void (*) ()>()
+                .addProperty("ambient", &Material::getAmbient, &Material::setAmbient)
+                .addProperty("diffuse", &Material::getDiffuse, &Material::setDiffuse)
+                .addProperty("specular", &Material::getSpecular, &Material::setSpecular)
+                .addProperty("shininess", &Material::getShininess, &Material::setShininess)
+            .endClass()
+            .beginClass<WorldObject>("WorldObject")
+                .addFunction("rotate", &WorldObject::rotate)
+                .addFunction("setPosition", &WorldObject::setPosition)
+                .addFunction("setRotation", &WorldObject::setRotation)
+                .addFunction("setScale", &WorldObject::setScale)
+                .addFunction("setQuaternion", &WorldObject::setQuaternion)
+            .endClass()
+            .beginClass<ex::Entity>("Entity")
+            .endClass()
+            .beginClass<Geometry>("Geometry")
+            .endClass()
+            .beginClass<Mesh>("Mesh")
+                .addProperty("geometry", &Mesh::getGeometry)
             .endClass()
         ;
 
@@ -286,13 +402,6 @@ namespace game {
                 .endClass()
             .endNamespace();
 
-//            luabridge::getGlobalNamespace(L)
-//                    .beginNamespace("geometry")
-////                            .addFunction("Box", GeometryPrimitive::Box)
-////                            .addFunction("Circle", GeometryPrimitive::Sphere)
-//                    .endNamespace();
-
-
         const game::Context worldContext = worldApi->world->getContext();
 
         luabridge::getGlobalNamespace(L)
@@ -309,7 +418,12 @@ namespace game {
                     .addFunction("addDirectionalLight", &Script::WorldLib::addDirectionalLight)
                     .addFunction("addPointLight", &Script::WorldLib::addPointLight)
                     .addFunction("addSpotLight", &Script::WorldLib::addSpotLight)
-                    .addFunction("addGeometry", &Script::WorldLib::addGeometry)
+                    .addFunction("createModelEntity", &Script::WorldLib::createModelEntity)
+                    .addFunction("createMaterial", &Script::WorldLib::createMaterial)
+                    .addFunction("createMesh", &Script::WorldLib::createMesh)
+                    .addFunction("spawnObject", &Script::WorldLib::spawnObject)
+                    .addFunction("createObject", &Script::WorldLib::createObject)
+                    .addFunction("findMaterial", &Script::WorldLib::findMaterial)
                 .endClass()
                 .addVariable("world", worldApi)
             .endNamespace()
@@ -337,6 +451,19 @@ namespace game {
                 .addFunction("div", &Script::Math3Lib::div)
                 .addFunction("add", &Script::Math3Lib::add)
                 .addFunction("sub", &Script::Math3Lib::sub)
+            .endNamespace()
+            .beginNamespace("geometry")
+                .addFunction("createBox", &Script::GeometryLib::createBox)
+                .addFunction("createPlane", &Script::GeometryLib::createPlane)
+                .addFunction("createSphere", &Script::GeometryLib::createSphere)
+                .addFunction("createCircle", &Script::GeometryLib::createCircle)
+                .addFunction("createCone", &Script::GeometryLib::createCone)
+                .addFunction("createCylinder", &Script::GeometryLib::createCylinder)
+                .addFunction("createRing", &Script::GeometryLib::createRing)
+                .addFunction("createTorus", &Script::GeometryLib::createTorus)
+                .addFunction("createOctahedron", &Script::GeometryLib::createOctahedron)
+                .addFunction("createQuad2d", &Script::GeometryLib::createQuad2d)
+                .addFunction("createLines", &Script::GeometryLib::createLines)
             .endNamespace()
         ;
 
