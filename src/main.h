@@ -87,6 +87,14 @@ void loadRequiredShaders(std::vector<renderer::ShaderDescription> *list) {
     fs::directory_iterator itr_end;
     std::map<std::string, std::vector<std::string>> shaders;
 
+//    shaders.insert({ "edge", {"frag", "vert"} });
+//    shaders.insert({ "forward", {"frag", "geom1", "vert"} });
+//    shaders.insert({ "geometry_pass", {"frag", "vert"} });
+//    shaders.insert({ "light_pass", {"frag", "vert"} });
+//    shaders.insert({ "null", {"frag", "vert"} });
+//    shaders.insert({ "skybox", {"frag", "vert"} });
+//    shaders.insert({ "skybox-deferred", {"frag", "vert"} });
+
     for (fs::directory_iterator itr(folder); itr != itr_end; ++itr) {
         if (fs::is_regular_file(itr->path())) {
             std::string shaderName = itr->path().stem().string();
@@ -113,9 +121,11 @@ void loadRequiredShaders(std::vector<renderer::ShaderDescription> *list) {
             Path shaderFilePath = createPath(folder, name);
             shaderFilePath.replace_extension(type.c_str());
 
-            std::string content = utils::getFileContents(shaderFilePath);
+            renderer::ShaderContent shaderContent;
+            std::shared_ptr<std::string> &content = shaderContent.getContent();
 
-            renderer::ShaderContent shaderContent(content);
+            size_t s = 0;
+            utils::getFileContents(shaderFilePath, content, &s);
 
             shaderDescription.setByType(type, shaderContent);
         }

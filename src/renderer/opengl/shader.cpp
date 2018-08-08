@@ -30,7 +30,9 @@ namespace renderer {
         }
 
         void Shader::setSource() {
-            const char *ptr = content.get();
+            std::shared_ptr<std::string> str = content.getContent();
+            const char *ptr = str->c_str();
+
             glShaderSource(handle, 1, &ptr, nullptr);
         }
 

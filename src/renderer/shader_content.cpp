@@ -2,31 +2,13 @@
 #include <cstring>
 
 namespace renderer {
-    ShaderContent::ShaderContent() : content(nullptr) {}
-
-    ShaderContent::ShaderContent(std::string newContent) {
-        set(newContent);
-    }
-
-    ShaderContent::ShaderContent(const ShaderContent &other) {
-        content = other.content;
-    }
+    ShaderContent::ShaderContent() : content(std::make_shared<std::string>("")) {}
 
     bool ShaderContent::empty() const {
-        return content == nullptr;
+        return !content || content->empty();
     }
 
-    void ShaderContent::set(size_t size, const char *newContent) {
-        content.reset(new char[size]);
-        strcpy(content.get(), newContent);
-    }
-
-    void ShaderContent::set(const std::string &newContent) {
-        content.reset(new char[newContent.length()]);
-        strcpy(content.get(), newContent.c_str());
-    }
-
-    const char *const ShaderContent::get() {
-        return content.get();
+    std::shared_ptr<std::string> &ShaderContent::getContent() {
+        return content;
     }
 }

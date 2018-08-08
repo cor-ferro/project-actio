@@ -13,20 +13,12 @@ namespace renderer {
     struct ShaderContent {
         ShaderContent();
 
-        explicit ShaderContent(std::string);
+        bool empty() const;
 
-        ShaderContent(const ShaderContent &other);
-
-        bool empty() const ;
-
-        void set(size_t size, const char *newContent);
-
-        void set(const std::string &newContent);
-
-        const char *const get();
+        std::shared_ptr<std::string> &getContent();
 
     private:
-        std::shared_ptr<char> content;
+        std::shared_ptr<std::string> content;
     };
 }
 
