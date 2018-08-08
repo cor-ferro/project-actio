@@ -73,7 +73,7 @@ namespace profiling {
 
     private:
         ProfileTimings &profiler;
-        std::string &label;
+        std::string label;
     };
 
     Mark mark(ProfileTimings &profiler, std::string label);

@@ -83,6 +83,7 @@ target_link_libraries(actio
 find_package(X11 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(Threads)
 
 link_libraries(${X11_LIBRARIES})
 link_libraries(${OPENGL_LIBRARIES})
@@ -126,6 +127,7 @@ target_link_libraries(actio
         boost_chrono
         boost_date_time
         boost_filesystem
-        boost_regex)
+        boost_regex
+        -lpthread -lm)
 
 install(TARGETS actio DESTINATION ${PROJECT_INSTALL})

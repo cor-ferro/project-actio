@@ -1,8 +1,13 @@
 #!/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DEST_LIBS_DIR=$CURRENT_DIR/libs/linux64
 DEST_BIN_DIR=$CURRENT_DIR/bin/linux64
+BUILD_DIR=$CURRENT_DIR/build
 COUNT_THREADS=5
 PHYSX_BUILD_TYPE=checked
 
@@ -18,27 +23,81 @@ init_git_module()
 
 build_dependencies()
 {
-	create_libs_dir	
+	create_libs_dir
+	create_build_dir
 
-	build_physx
-	build_boost
-	build_assimp
-	build_entityx
-	build_glm
-	build_glfw
-	build_glad
-	build_imgui
-	build_iniparser
-	build_ozz_animation
-	build_soil
-	build_devIL
-	build_jasper
-	build_luabridge
+    local code_build_physx=build_physx
+    local code_build_boost=build_boost
+	local code_build_boost=build_boost
+	local code_build_assimp=build_assimp
+	local code_build_entityx=build_entityx
+	local code_build_glm=build_glm
+	local code_build_glfw=build_glfw
+	local code_build_glad=build_glad
+	local code_build_imgui=build_imgui
+	local code_build_iniparser=build_iniparser
+	local code_build_ozz_animation=build_ozz_animation
+	local code_build_soil=build_soil
+	local code_build_devIL=build_devIL
+	local code_build_jasper=build_jasper
+	local code_build_luabridge=build_luabridge
+	local code_build_yamlcpp=build_yamlcpp
+
+    local final_status=$code_build_physx &&
+                        $code_build_boost &&
+                        $code_build_boost &&
+                        $code_build_assimp &&
+                        $code_build_entityx &&
+                        $code_build_glm &&
+                        $code_build_glfw &&
+                        $code_build_glad &&
+                        $code_build_imgui &&
+                        $code_build_iniparser &&
+                        $code_build_ozz_animation &&
+                        $code_build_soil &&
+                        $code_build_devIL &&
+                        $code_build_jasper &&
+                        $code_build_luabridge &&
+                        $code_build_yamlcpp
+
+    echo 'status:'
+	echo '--------------------'
+
+	echo 'build physx:' $code_build_physx
+    echo 'build boost:' $code_build_boost
+    echo 'build boost:' $code_build_boost
+    echo 'build assimp:' $code_build_assimp
+    echo 'build entityx:' $code_build_entityx
+    echo 'build glm:' $code_build_glm
+    echo 'build glfw:' $code_build_glfw
+    echo 'build glad:' $code_build_glad
+    echo 'build imgui:' $code_build_imgui
+    echo 'build iniparser:' $code_build_iniparser
+    echo 'build ozz_animation:' $code_build_ozz_animation
+    echo 'build soil:' $code_build_soil
+    echo 'build devIL:' $code_build_devIL
+    echo 'build jasper:' $code_build_jasper
+    echo 'build luabridge:' $code_build_luabridge
+    echo 'build yamlcpp:' $code_build_yamlcpp
+
+	echo '--------------------'
+
+	if [ $final_status = 0 ]; then
+	    printf "${GREEN}build success $NC"
+    else
+        printf "${RED}build failed $NC"
+	fi
 }
 
 create_libs_dir()
 {
 	mkdir -p $DEST_LIBS_DIR
+}
+
+create_build_dir()
+{
+    mkdir -p $BUILD_DIR
+    ln -sfT $CURRENT_DIR/resources $CURRENT_DIR/build/resources
 }
 
 copy_to_libs()
@@ -55,50 +114,51 @@ copy_to_bin()
 
 build_assimp()
 {
-	init_git_module "vendor/assimp"
+	init_git_module "vendor/assimp" &&
 
-	cd $CURRENT_DIR/vendor/assimp
-	rm -rf ./build
-	mkdir -p build
-	cd build
-	cmake .. -G 'Unix Makefiles' -U=* -DASSIMP_LIB_INSTALL_DIR=$DEST_LIBS_DIR -DASSIMP_NO_EXPORT=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_OBJ_IMPORTER=ON -DASSIMP_BUILD_TESTS=OFF
-	make -j$COUNT_THREADS
-	copy_to_libs "./code/libassimp*.so*"
-	copy_to_bin "./contrib/irrXML/libIrrXML.a"
-	cd ..
+	cd $CURRENT_DIR/vendor/assimp &&
+	rm -rf ./build &&
+	mkdir -p build &&
+	cd build &&
+	cmake .. -G 'Unix Makefiles' -U=* -DASSIMP_LIB_INSTALL_DIR=$DEST_LIBS_DIR -DASSIMP_NO_EXPORT=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_OBJ_IMPORTER=ON -DASSIMP_BUILD_TESTS=OFF &&
+	make -j$COUNT_THREADS &&
+	copy_to_libs "./code/libassimp*.so*" &&
+	copy_to_bin "./contrib/irrXML/libIrrXML.a" &&
+	cp include/assimp/config.h ../include/assimp/config.h && #fix generated file
+	cd .. &&
 	rm -rf ./build
 }
 
 build_entityx()
 {
-	init_git_module "vendor/entityx"
+	init_git_module "vendor/entityx" &&
 
-	cd $CURRENT_DIR/vendor/entityx
-	mkdir -p build
-	cd build
-	cmake .. -G 'Unix Makefiles' -U=* -DENTITYX_BUILD_SHARED=1 -DENTITYX_BUILD_TESTING=0
-	make -j$COUNT_THREADS
-	copy_to_libs "./*.so*"
-	cd ..
+	cd $CURRENT_DIR/vendor/entityx &&
+	mkdir -p build &&
+	cd build &&
+	cmake .. -G 'Unix Makefiles' -U=* -DENTITYX_BUILD_SHARED=1 -DENTITYX_BUILD_TESTING=0 &&
+	make -j$COUNT_THREADS &&
+	copy_to_libs "./*.so*" &&
+	cd .. &&
 	rm -rf ./build
 }
 
 build_physx()
 {
-	init_git_module "vendor/PhysX-3.4"
+	init_git_module "vendor/PhysX-3.4" &&
 
-	cd $CURRENT_DIR/vendor/PhysX-3.4/PhysX_3.4/Source/compiler/linux64
-	make clean
-	make $PHYSX_BUILD_TYPE -j$COUNT_THREADS
+	cd $CURRENT_DIR/vendor/PhysX-3.4/PhysX_3.4/Source/compiler/linux64 &&
+	make clean &&
+	make $PHYSX_BUILD_TYPE -j$COUNT_THREADS &&
 
-	cd $CURRENT_DIR/vendor/PhysX-3.4
+	cd $CURRENT_DIR/vendor/PhysX-3.4 &&
 
-	copy_to_bin "./PhysX_3.4/Lib/linux64/*.a"
-	copy_to_libs "./PhysX_3.4/Bin/linux64/*.so"
-	copy_to_bin "./PxShared/lib/linux64/*.a"
-	copy_to_libs "./PxShared/bin/linux64/*.so"
+	copy_to_bin "./PhysX_3.4/Lib/linux64/*.a" &&
+	copy_to_libs "./PhysX_3.4/Bin/linux64/*.so" &&
+	copy_to_bin "./PxShared/lib/linux64/*.a" &&
+	copy_to_libs "./PxShared/bin/linux64/*.so" &&
 
-	cd $CURRENT_DIR/vendor/PhysX-3.4/PhysX_3.4/Source/compiler/linux64
+	cd $CURRENT_DIR/vendor/PhysX-3.4/PhysX_3.4/Source/compiler/linux64 &&
 	make clean
 }
 
@@ -113,8 +173,8 @@ build_boost()
 
 	if [ ! -d ./"$file_name" ]; then
 		if [ ! -f ./"$file_name.zip" ]; then
-			echo "download"
-			#build_boost_download $version $file_name
+			#echo "download"
+			build_boost_download $version $file_name
 		else
 			build_boost_validate_zip $version $file_name
 		fi
@@ -177,20 +237,21 @@ build_boost_libs()
 
 build_glm()
 {
+    init_git_module "vendor/glm"
 	echo "glm done"
 }
 
 build_glfw()
 {
-	init_git_module "vendor/glfw"
+	init_git_module "vendor/glfw" &&
 
-	cd $CURRENT_DIR/vendor/glfw
-	mkdir -p build
-	cd build
-	cmake .. -G 'Unix Makefiles' -U=* -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_DOCS=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_INSTALL=OFF
-	make -j$COUNT_THREADS
-	copy_to_libs "./src/libglfw*.so*"
-	cd ..
+	cd $CURRENT_DIR/vendor/glfw &&
+	mkdir -p build &&
+	cd build &&
+	cmake .. -G 'Unix Makefiles' -U=* -DBUILD_SHARED_LIBS=ON -DGLFW_BUILD_DOCS=OFF -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_INSTALL=OFF &&
+	make -j$COUNT_THREADS &&
+	copy_to_libs "./src/libglfw*.so*" &&
+	cd .. &&
 	rm -rf ./build
 }
 
@@ -202,10 +263,10 @@ build_glad()
 #must be called after build glfw
 build_imgui()
 {
-	init_git_module "vendor/imgui"
+	init_git_module "vendor/imgui" &&
 
-	cd $CURRENT_DIR
-	mkdir -p tmp_imgui
+	cd $CURRENT_DIR &&
+	mkdir -p tmp_imgui &&
 	export LD_LIBRARY_PATH="$DEST_LIBS_DIR"
 
 	g++ -I$CURRENT_DIR/vendor/glad/include \
@@ -214,96 +275,96 @@ build_imgui()
 		-L$DEST_LIBS_DIR \
 		-c $CURRENT_DIR/vendor/imgui/imgui.cpp  \
 		-o tmp_imgui/imgui.o \
-		-lglfw
+		-lglfw &&
 
 	g++ -I$CURRENT_DIR/vendor/glad/include \
 		-I$CURRENT_DIR/vendor \
 		-I$CURRENT_DIR/src \
 		-L$DEST_LIBS_DIR \
 		-c $CURRENT_DIR/vendor/imgui/imgui_draw.cpp  \
-		-o tmp_imgui/imgui_draw.o
+		-o tmp_imgui/imgui_draw.o &&
 
-	ar rcs tmp_imgui/libimgui.a tmp_imgui/imgui.o tmp_imgui/imgui_draw.o
-	copy_to_bin "tmp_imgui/libimgui.a"
+	ar rcs tmp_imgui/libimgui.a tmp_imgui/imgui.o tmp_imgui/imgui_draw.o &&
+	copy_to_bin "tmp_imgui/libimgui.a" &&
 	rm -rf tmp_imgui
 }
 
 build_iniparser()
 {
-	init_git_module "vendor/iniparser"
+	init_git_module "vendor/iniparser" &&
 
-	cd $CURRENT_DIR/vendor/iniparser
-	make clean
-	make -j$COUNT_THREADS
+	cd $CURRENT_DIR/vendor/iniparser &&
+	make clean &&
+	make -j$COUNT_THREADS &&
 	copy_to_bin "libiniparser.a"
 }
 
 build_ozz_animation()
 {
-	init_git_module "vendor/ozz-animation"
+	init_git_module "vendor/ozz-animation" &&
 
-	cd $CURRENT_DIR/vendor/ozz-animation
-	rm -rf ./build
-	mkdir -p build
-	cd build
-	cmake .. -G 'Unix Makefiles' -U=* -Dozz_build_cpp11=ON -Dozz_build_fbx=OFF -Dozz_build_howtos=OFF -Dozz_build_msvc_rt_dll=OFF -Dozz_build_samples=OFF -Dozz_build_simd_ref=ON -Dozz_run_tests_headless=OFF
-	cmake --build ./
-	find . -type f -name "*.a" -exec cp -fva {} $DEST_BIN_DIR \;
-	cd ..
+	cd $CURRENT_DIR/vendor/ozz-animation &&
+	rm -rf ./build &&
+	mkdir -p build &&
+	cd build &&
+	cmake .. -G 'Unix Makefiles' -U=* -Dozz_build_cpp11=ON -Dozz_build_fbx=OFF -Dozz_build_howtos=OFF -Dozz_build_msvc_rt_dll=OFF -Dozz_build_samples=OFF -Dozz_build_simd_ref=ON -Dozz_run_tests_headless=OFF &&
+	cmake --build ./ &&
+	find . -type f -name "*.a" -exec cp -fva {} $DEST_BIN_DIR \; &&
+	cd .. &&
 	rm -rf ./build
 }
 
 build_soil()
 {
-	init_git_module "vendor/soil"
+	init_git_module "vendor/soil" &&
 
-	cd $CURRENT_DIR/vendor/soil
-	rm -rf ./build
-	mkdir -p build
-	cd build
-	cmake .. -G 'Unix Makefiles' -U=*
-	make -j$COUNT_THREADS
-	copy_to_bin "libSOIL.a"
-	cd ..
+	cd $CURRENT_DIR/vendor/soil &&
+	rm -rf ./build &&
+	mkdir -p build &&
+	cd build &&
+	cmake .. -G 'Unix Makefiles' -U=* &&
+	make -j$COUNT_THREADS &&
+	copy_to_bin "libSOIL.a" &&
+	cd .. &&
 	rm -rf ./build
 }
 
 build_devIL()
 {
-	init_git_module "vendor/DevIL"
+	init_git_module "vendor/DevIL" &&
 
-	cd $CURRENT_DIR/vendor/DevIL/DevIL
-	rm -rf ./build
-	mkdir -p build
-	cd build
-	cmake .. -G 'Unix Makefiles' -U=*
-	make -j$COUNT_THREADS
-	copy_to_libs "./lib/x64/lib*.so*"
-	cd ..
+	cd $CURRENT_DIR/vendor/DevIL/DevIL &&
+	rm -rf ./build &&
+	mkdir -p build &&
+	cd build &&
+	cmake .. -G 'Unix Makefiles' -U=* &&
+	make -j$COUNT_THREADS &&
+	copy_to_libs "./lib/x64/lib*.so*" &&
+	cd .. &&
 	rm -rf ./build
 }
 
 build_jasper()
 {
-	init_git_module "vendor/jasper"
+	init_git_module "vendor/jasper" &&
 
-	cd $CURRENT_DIR/vendor/jasper
+	cd $CURRENT_DIR/vendor/jasper &&
 
-	rm -rf ./buildlib
-	rm -rf ./install
-	cmake -G "Unix Makefiles" -U=* -H./ -B./buildlib -DCMAKE_INSTALL_PREFIX=./install -DJAS_ENABLE_DOC=false
-	cd buildlib
-	make install -j$COUNT_THREADS
-	cd ..
-	copy_to_libs "./install/lib/*.so*"
-	copy_to_libs "./install/lib64/*.so*"
-	rm -rf ./buildlib
+	rm -rf ./buildlib &&
+	rm -rf ./install &&
+	cmake -G "Unix Makefiles" -U=* -H./ -B./buildlib -DCMAKE_INSTALL_PREFIX=./install -DJAS_ENABLE_DOC=false &&
+	cd buildlib &&
+	make install -j$COUNT_THREADS &&
+	cd .. &&
+	copy_to_libs "./install/lib/*.so*" &&
+	copy_to_libs "./install/lib64/*.so*" &&
+	rm -rf ./buildlib &&
 	rm -rf ./install
 }
 
 build_luabridge()
 {
-    init_git_module "vendor/luabridge"
+    init_git_module "vendor/luabridge" &&
 
     cd $CURRENT_DIR/vendor/luabridge
 
@@ -312,16 +373,16 @@ build_luabridge()
 
 build_yamlcpp()
 {
-    init_git_module "vendor/yamlcpp"
+    init_git_module "vendor/yaml-cpp" &&
 
-    cd $CURRENT_DIR/vendor/yaml-cpp
-    rm -rf ./build
-    mkdir build
-    cd build
-    cmake -DBUILD_SHARED_LIBS=ON ..
-    make -j$COUNT_THREADS
-    copy_to_libs "./libyaml-cpp.so*"
-    cd ..
+    cd $CURRENT_DIR/vendor/yaml-cpp &&
+    rm -rf ./build &&
+    mkdir build &&
+    cd build &&
+    cmake -DBUILD_SHARED_LIBS=ON .. &&
+    make -j$COUNT_THREADS &&
+    copy_to_libs "./libyaml-cpp.so*" &&
+    cd .. &&
     rm -rf ./build
 }
 build_dependencies
