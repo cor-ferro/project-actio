@@ -43,9 +43,7 @@ void Mesh::Destroy(Mesh *mesh) {
     meshAllocator->Free((void *) mesh);
 }
 
-Mesh::~Mesh() {
-	console::info("free mesh %i", id);
-}
+Mesh::~Mesh() {}
 
 void Mesh::destroy() {
     geometry.destroy(); // @todo: удаление ресурсов не работает корректно, из за переноса логики setup в рендер

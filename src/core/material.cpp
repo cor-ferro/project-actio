@@ -37,9 +37,7 @@ Material::Material(color::Rgb diffuse, color::Rgb ambient, color::Rgb specular)
         , ambient(ambient)
         , specular(specular) {}
 
-Material::~Material() {
-    console::info("destroy material");
-}
+Material::~Material() {}
 
 void Material::initEmptyTextures() {
     std::shared_ptr<Texture> diffuseMap = std::make_shared<Texture>(Texture::White(Texture::Type::Diffuse));
