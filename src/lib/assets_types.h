@@ -74,13 +74,9 @@ namespace assets {
 
     class Material : BaseAsset {
     public:
-        explicit Material();
+        explicit Material(::Material *material);
 
         const std::shared_ptr<::Material> &getMaterial() const;
-
-        void setMaterial(const std::shared_ptr<::Material> &material);
-
-        void setMaterial(::Material *material);
 
     private:
         std::shared_ptr<::Material> material;

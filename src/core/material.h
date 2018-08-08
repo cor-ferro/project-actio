@@ -100,9 +100,9 @@ public:
 private:
     bool wireframe = false;
 
-    color::Rgb ambient = colors::green();
-    color::Rgb diffuse = colors::green();
-    color::Rgb specular = colors::green();
+    color::Rgb ambient = colors::black();
+    color::Rgb diffuse = colors::black();
+    color::Rgb specular = colors::black();
     std::shared_ptr<Texture> diffuseMap = nullptr;
     std::shared_ptr<Texture> normalMap = nullptr;
     std::shared_ptr<Texture> specularMap = nullptr;

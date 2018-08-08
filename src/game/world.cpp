@@ -435,4 +435,14 @@ namespace game {
     const profiling::ProfileTimings &World::getSystemProfiler() const {
         return systemProfiler;
     }
+
+    std::shared_ptr<Material> World::findMaterial(const std::string &name) {
+        assets::Material *assetMaterial = assets->getMaterial(name);
+
+        if (assetMaterial == nullptr) {
+            return nullptr;
+        }
+
+        return assetMaterial->getMaterial();
+    }
 }

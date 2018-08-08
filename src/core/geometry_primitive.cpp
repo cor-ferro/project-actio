@@ -44,9 +44,12 @@ void GeometryPrimitive::Box(
                 normal[v] = 0.0f;
                 normal[w] = depth > 0.0f ? 1.0f : -1.0f;
 
+                vec2 texCoord = vec2(static_cast<float>(ix) / static_cast<float>(gridX), 1.0f - (static_cast<float>(iy) / static_cast<float>(gridY)));
+
                 Vertex vertex;
                 vertex.Position = position;
                 vertex.Normal = normal;
+                vertex.TexCoords = texCoord;
 
                 geometry.addVertex(vertex);
                 vertexCounter += 1;
@@ -118,6 +121,7 @@ void GeometryPrimitive::Plane(
             Vertex vertex;
             vertex.Position = vec3(x, -y, 0.0f);
             vertex.Normal = vec3(0.0f, 0.0f, -1.0f);
+            vertex.TexCoords = vec2(static_cast<float>(ix) / static_cast<float>(gridX), 1.0f - (static_cast<float>(iy) / static_cast<float>(gridY)));
 
             geometry.addVertex(vertex);
         }
@@ -179,6 +183,8 @@ void GeometryPrimitive::Sphere(
                     vertex.Position.y,
                     vertex.Position.z
             ));
+
+            vertex.TexCoords = vec2(u, 1 - v);
 
             geometry.addVertex(vertex);
 
@@ -243,6 +249,11 @@ void GeometryPrimitive::Circle(
                 1.0f
         );
 
+        vertex.TexCoords = vec2(
+             (vertex.Position.x / radius + 1.0f) * 0.5f,
+             (vertex.Position.y / radius + 1.0f) * 0.5f
+        );
+
         geometry.addVertex(vertex);
     }
 
@@ -288,6 +299,8 @@ void GeometryPrimitive::CylinderTorso(
                     slope,
                     cosTheta
             ));
+
+            vertex.TexCoords = vec2(u, 1 - v);
 
             geometry.addVertex(vertex);
             indexRow.push_back(index++);
@@ -348,6 +361,7 @@ void GeometryPrimitive::CylinderCap(
         Vertex vertex;
         vertex.Position = vec3(radius * sinTheta, halfHeight * sign, radius * cosTheta);
         vertex.Normal = vec3(0.0f, sign, 0.0f);
+        vertex.TexCoords = vec2(0.5f, 0.5f);
 
         geometry.addVertex(vertex);
 
@@ -441,6 +455,7 @@ void GeometryPrimitive::Ring(
                     0.0f,
                     1.0f
             );
+            vertex.TexCoords = vec2((vertex.Position.x / outerRadius + 1.0f) / 2.0f, (vertex.Position.y / outerRadius + 1.0f) / 2.0f);
 
             geometry.addVertex(vertex);
         }
@@ -495,6 +510,11 @@ void GeometryPrimitive::Torus(
             );
 
             vertex.Normal = glm::normalize(center - vertex.Position);
+
+            vertex.TexCoords = vec2(
+                static_cast<float>(i) / static_cast<float>(tubularSegments),
+                static_cast<float>(j) / static_cast<float>(radialSegments)
+            );
 
             geometry.addVertex(vertex);
         }

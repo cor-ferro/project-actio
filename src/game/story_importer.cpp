@@ -231,15 +231,11 @@ namespace game {
 
         const std::vector<Chapter::ResourceMaterial>& materials = chapter->getMaterials();
         for (const auto &materialResource : materials) {
-
-            auto *assetMaterial = new assets::Material();
             auto *material = new Material();
-            Texture diffuseMap = Texture::Empty(Texture::Type::Diffuse, 155);
-            Texture specularMap = Texture::Empty(Texture::Type::Specular, 155);
-            Texture heightMap = Texture::Empty(Texture::Type::Height, 155);
-            Texture normalMap = Texture::Empty(Texture::Type::Normal, 155);
-
-            assetMaterial->setMaterial(material);
+            Texture diffuseMap = Texture::Empty(Texture::Type::Diffuse, 0);
+            Texture specularMap = Texture::Empty(Texture::Type::Specular, 0);
+            Texture heightMap = Texture::Empty(Texture::Type::Height, 0);
+            Texture normalMap = Texture::Empty(Texture::Type::Normal, 0);
 
             if (!materialResource.diffuseTexture.empty()) {
                 assets::Texture *assetTexture = assets->getTexture(materialResource.diffuseTexture);
@@ -289,6 +285,8 @@ namespace game {
             material->setSpecularMap(specularMap);
             material->setHeightMap(heightMap);
             material->setNormalMap(normalMap);
+
+            assets->addMaterial(materialResource.name, material);
         }
 
         return true;

@@ -21,17 +21,15 @@ assets::Texture *Assets::addTexture(assets::Resource *resource) {
     return addTexture("", resource);
 }
 
-assets::Texture * Assets::addTexture(std::string name, assets::Resource *resource) {
+assets::Texture * Assets::addTexture(const std::string &name, assets::Resource *resource) {
     Id id = genId();
 
-    if (name.empty()) {
-        name = std::to_string(id);
-    }
-
-    auto it = textureNames.find(name);
-    if (it != textureNames.end()) {
-        console::warn("texture %s already exists in assets", name);
-        return nullptr;
+    if (!name.empty()) {
+        auto it = textureNames.find(name);
+        if (it != textureNames.end()) {
+            console::warn("texture %s already exists in assets", name);
+            return nullptr;
+        }
     }
 
     textureNames.insert({name, id});
@@ -110,4 +108,49 @@ assets::Texture *Assets::getTexture(Assets::Id id) {
     }
 
     return &it->second;
+}
+
+assets::Material *Assets::getMaterial(const std::string &name) {
+    auto nameIt = materialNames.find(name);
+    if (nameIt == materialNames.end()) {
+        return nullptr;
+    }
+
+    auto idIt = materials.find(nameIt->second);
+    if (idIt == materials.end()) {
+        return nullptr;
+    }
+
+    return &idIt->second;
+}
+
+assets::Material *Assets::getMaterial(const Assets::Id id) {
+    return nullptr;
+}
+
+assets::Material *Assets::addMaterial(Material *material) {
+    return addMaterial("", material);
+}
+
+assets::Material *Assets::addMaterial(const std::string &name, Material *material) {
+    Id id = genId();
+
+    if (!name.empty()) {
+        auto it = materialNames.find(name);
+        if (it != materialNames.end()) {
+            console::warn("material %s already exists", name);
+            return nullptr;
+        }
+    }
+
+    materialNames.insert({name, id});
+    auto insert = materials.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(material));
+
+    if (insert.second) {
+        return &insert.first->second;
+    }
+
+    return nullptr;
+
+    return nullptr;
 }

@@ -28,6 +28,17 @@ namespace game {
         return Mesh::Create(); // @todo: create from factory
     }
 
+    Mesh *Script::WorldLib::createMesh(const std::string &materialName) {
+        std::shared_ptr<Material> material = world->findMaterial(materialName);
+
+        if (material) {
+            return Mesh::Create(material); // @todo: create from factory
+        } else {
+            console::warn("material %s not found for mesh", materialName);
+            return Mesh::Create();
+        }
+    }
+
     ex::Entity Script::WorldLib::createModelEntity(Mesh *mesh) {
         return world->createEntity(mesh);
     }
@@ -48,8 +59,8 @@ namespace game {
         return mat;
     }
 
-    Material *Script::WorldLib::findMaterial(const std::string &name) {
-        return nullptr;
+    void Script::WorldLib::findMaterial(const std::string &name) {
+//        return world->findMaterial(name);
     }
 
 
@@ -420,7 +431,8 @@ namespace game {
                     .addFunction("addSpotLight", &Script::WorldLib::addSpotLight)
                     .addFunction("createModelEntity", &Script::WorldLib::createModelEntity)
                     .addFunction("createMaterial", &Script::WorldLib::createMaterial)
-                    .addFunction("createMesh", &Script::WorldLib::createMesh)
+                    .addFunction("createMesh", static_cast<Mesh *(game::Script::WorldLib::*)()>(&Script::WorldLib::createMesh))
+                    .addFunction("createMeshWithMaterial", static_cast<Mesh* (game::Script::WorldLib::*)(const std::string &)>(&Script::WorldLib::createMesh))
                     .addFunction("spawnObject", &Script::WorldLib::spawnObject)
                     .addFunction("createObject", &Script::WorldLib::createObject)
                     .addFunction("findMaterial", &Script::WorldLib::findMaterial)

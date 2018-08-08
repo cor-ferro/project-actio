@@ -35,13 +35,21 @@ public:
 
     void addScript(assets::Resource *resource);
 
-    assets::Texture * addTexture(assets::Resource *resource);
+    assets::Texture *addTexture(assets::Resource *resource);
 
-    assets::Texture * addTexture(std::string name, assets::Resource *resource);
+    assets::Texture *addTexture(const std::string &name, assets::Resource *resource);
 
     assets::Texture *getTexture(std::string name);
 
     assets::Texture *getTexture(Id id);
+
+    assets::Material *addMaterial(Material *material);
+
+    assets::Material *addMaterial(const std::string &name, Material *material);
+
+    assets::Material *getMaterial(const Id id);
+
+    assets::Material *getMaterial(const std::string &name);
 
     void free();
 
@@ -55,6 +63,7 @@ private:
     std::map<Id, assets::Material> materials;
 
     std::map<std::string, Id> textureNames; // @todo: use boost multi_index
+    std::map<std::string, Id> materialNames; // @todo: use boost multi_index
 
     Id idCounter = 1;
 

@@ -231,6 +231,8 @@ namespace game {
 
         void impactWave(vec3 position, vec3 direction);
 
+        std::shared_ptr<Material> findMaterial(const std::string &name);
+
         ex::Entity createEntity(Mesh *mesh);
 
         void spawn(game::WorldObject &object);

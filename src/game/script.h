@@ -68,6 +68,8 @@ namespace game {
 
             Mesh *createMesh();
 
+            Mesh *createMesh(const std::string &materialName);
+
             ex::Entity createModelEntity(Mesh *mesh);
 
             WorldObject createObject(ex::Entity &entity);
@@ -76,7 +78,7 @@ namespace game {
 
             Material createMaterial();
 
-            Material *findMaterial(const std::string &name);
+            void findMaterial(const std::string &name);
 
             World *world = nullptr;
         };
