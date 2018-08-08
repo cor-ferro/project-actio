@@ -261,6 +261,10 @@ namespace game {
         Context context;
 
         profiling::ProfileTimings systemProfiler;
+    public:
+        const profiling::ProfileTimings &getSystemProfiler() const;
+
+    private:
 
         std::vector<game::Script*> scripts;
 

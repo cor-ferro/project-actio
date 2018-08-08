@@ -37,9 +37,9 @@ namespace profiling {
 
         void timeEnd(std::string label);
 
-        std::map<std::string, TimePrecision> getDurations(Time timeType);
+        const std::map<std::string, TimePrecision> getDurations(Time timeType) const;
 
-        TimePrecision getDuration(std::string label, Time timeType);
+        const TimePrecision getDuration(const std::string label, Time timeType) const;
 
         void reset();
 
@@ -61,7 +61,7 @@ namespace profiling {
 
         inline TimePoint timeNow();
 
-        inline TimePrecision castDuration(chrono::duration<TimePrecision> &ds, Time timeType);
+        inline TimePrecision castDuration(chrono::duration<TimePrecision> &ds, Time timeType) const;
     };
 
     struct Mark {

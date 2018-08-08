@@ -28,11 +28,11 @@ namespace profiling {
         mark.end = timeNow();
     }
 
-    std::map<std::string, TimePrecision> ProfileTimings::getDurations(Time timeType) {
+    const std::map<std::string, TimePrecision> ProfileTimings::getDurations(Time timeType) const {
         std::map<std::string, TimePrecision> results;
 
         for (auto &it : timings) {
-            TimeMark &mark = it.second;
+            const TimeMark &mark = it.second;
 
             std::chrono::duration<TimePrecision> ds = mark.end - mark.start;
             TimePrecision t = castDuration(ds, timeType);
@@ -43,8 +43,10 @@ namespace profiling {
         return results;
     };
 
-    TimePrecision ProfileTimings::getDuration(std::string label, Time timeType) {
-        TimeMark &mark = timings[label];
+    const TimePrecision ProfileTimings::getDuration(const std::string label, Time timeType) const {
+        auto it = timings.find(label);
+
+        const TimeMark &mark = it->second;
 
         chrono::duration<TimePrecision> ds = mark.end - mark.start;
 
@@ -74,7 +76,7 @@ namespace profiling {
         return chrono::high_resolution_clock::now();
     }
 
-    TimePrecision ProfileTimings::castDuration(chrono::duration<TimePrecision> &ds, Time timeType) {
+    TimePrecision ProfileTimings::castDuration(chrono::duration<TimePrecision> &ds, Time timeType) const {
         switch (timeType) {
             case Nanoseconds:
                 return chrono::duration_cast<chrono::nanoseconds>(ds).count();

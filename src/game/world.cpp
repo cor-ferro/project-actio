@@ -102,7 +102,7 @@ namespace game {
     }
 
     void World::render(ex::TimeDelta dt) {
-        systems.update<systems::Render>(dt);
+        PROFILE(systemProfiler, "Render", systems.update<systems::Render>(dt));
     }
 
     inline void World::spawn(Character *character) {
@@ -430,5 +430,9 @@ namespace game {
         for (auto &it : assets->getTextures()) {
             renderer->removeTexture(&it.second);
         }
+    }
+
+    const profiling::ProfileTimings &World::getSystemProfiler() const {
+        return systemProfiler;
     }
 }

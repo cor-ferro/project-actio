@@ -156,7 +156,17 @@ int main(int argc, char **argv) {
                 ImGui::SliderFloat("near", guiSettings.cameraNear.get(), 0.0f, 500.0f, "near = %.3f");
                 ImGui::SliderFloat("far", guiSettings.cameraFar.get(), 0.0f, 500.0f, "far = %.3f");
 
-                ImGui::SetWindowSize(ImVec2(200.0f, 250.0f));
+                const profiling::ProfileTimings &worldSystemProfiler = world->getSystemProfiler();
+                const profiling::TimePrecision physicDuration = worldSystemProfiler.getDuration("Physic", profiling::Milliseconds);
+                const profiling::TimePrecision renderDuration = worldSystemProfiler.getDuration("Render", profiling::Milliseconds);
+                const profiling::TimePrecision worldUpdateDuration = worldSystemProfiler.getDuration("WorldUpdate", profiling::Milliseconds);
+
+                ImGui::Separator();
+                ImGui::Text("world: %.2f", worldUpdateDuration);
+                ImGui::Text("physic: %.2f", physicDuration);
+                ImGui::Text("render: %.2f", renderDuration);
+
+                ImGui::SetWindowSize(ImVec2(200.0f, 350.0f));
                 ImGui::End();
                 ImGui::Render();
             }
