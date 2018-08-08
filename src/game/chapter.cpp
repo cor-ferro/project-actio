@@ -5,11 +5,11 @@ namespace game {
         return name;
     }
 
-    const std::vector<std::string> &Chapter::getScripts() {
+    const std::vector<Chapter::ResourceScript> &Chapter::getScripts() {
         return scripts;
     }
 
-    const std::vector<std::string> &Chapter::getTextures() {
+    const std::vector<Chapter::ResourceTexture> &Chapter::getTextures() {
         return textures;
     }
 
@@ -32,12 +32,12 @@ namespace game {
         chapter.name = name;
     }
 
-    void ChapterBuilder::addScript(std::string str) {
-        chapter.scripts.emplace_back(str);
+    void ChapterBuilder::addScript(const Chapter::ResourceScript &resource) {
+        chapter.scripts.push_back(resource);
     }
 
-    void ChapterBuilder::addTexture(std::string path) {
-        chapter.textures.emplace_back(path);
+    void ChapterBuilder::addTexture(const Chapter::ResourceTexture &resource) {
+        chapter.textures.push_back(resource);
     }
 
     void ChapterBuilder::addModel(const Chapter::ResourceModel &resource) {

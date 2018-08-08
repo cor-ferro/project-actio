@@ -6,10 +6,12 @@
 #define ACTIO_LIB_ASSETS_TYPES_H
 
 #include <vector>
+#include <memory>
 #include "assets_resource.h"
 #include "path.h"
 #include "image_data.h"
 #include "text_set.h"
+#include "../core/material.h"
 
 namespace assets {
     class BaseAsset {
@@ -70,9 +72,18 @@ namespace assets {
     };
 
 
-    class Material {
-        std::vector<Texture> textures;
-        Shader shader;
+    class Material : BaseAsset {
+    public:
+        explicit Material();
+
+        const std::shared_ptr<::Material> &getMaterial() const;
+
+        void setMaterial(const std::shared_ptr<::Material> &material);
+
+        void setMaterial(::Material *material);
+
+    private:
+        std::shared_ptr<::Material> material;
     };
 }
 

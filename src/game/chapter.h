@@ -18,6 +18,16 @@ namespace game {
     public:
         typedef std::map<std::string, std::string> ResourceOptions;
 
+        struct ResourceScript {
+            std::string name;
+            std::string path;
+        };
+
+        struct ResourceTexture {
+            std::string name;
+            std::string path;
+        };
+
         struct ResourceShader {
             std::string name;
             std::vector<std::string> paths;
@@ -45,16 +55,19 @@ namespace game {
 
         struct ResourceMaterial {
             std::string name;
-            std::vector<std::string> textures;
+            std::string diffuseTexture;
+            std::string normalTexture;
+            std::string specularTexture;
+            std::string heightTexture;
             std::string shader;
             ResourceOptions options;
         };
 
         const std::string getName();
 
-        const std::vector<std::string> &getScripts();
+        const std::vector<ResourceScript> &getScripts();
 
-        const std::vector<std::string> &getTextures();
+        const std::vector<ResourceTexture> &getTextures();
 
         const std::vector<ResourceShader> &getShaders();
 
@@ -64,8 +77,8 @@ namespace game {
 
     private:
         std::string name;
-        std::vector<std::string> scripts;
-        std::vector<std::string> textures;
+        std::vector<ResourceScript> scripts;
+        std::vector<ResourceTexture> textures;
         std::vector<ResourceShader> shaders;
         std::vector<ResourceModel> models;
         std::vector<ResourceMaterial> materials;
@@ -77,9 +90,9 @@ namespace game {
 
         void setName(const std::string &name);
 
-        void addScript(std::string str);
+        void addScript(const Chapter::ResourceScript &resource);
 
-        void addTexture(std::string path);
+        void addTexture(const Chapter::ResourceTexture &resource);
 
         void addModel(const Chapter::ResourceModel &resource);
 

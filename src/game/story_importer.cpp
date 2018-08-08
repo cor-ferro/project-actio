@@ -53,10 +53,20 @@ namespace game {
                  */
                 YAML::Node scriptsNode = chapterNode["scripts"];
                 if (scriptsNode.IsSequence()) {
-                    std::vector<std::string> scripts = scriptsNode.as<std::vector<std::string>>();
+                    for (auto node : scriptsNode) {
+                        Chapter::ResourceScript resource;
 
-                    for (const auto &scriptName : scripts) {
-                        chapterBuilder.addScript(scriptName);
+                        if (node.IsScalar()) {
+                            resource.name = node.as<std::string>();
+                            resource.path = node.as<std::string>();
+                        } else if (node.IsMap()) {
+                            resource.name = node["name"].as<std::string>();
+                            resource.path = node["path"].as<std::string>();
+                        } else {
+                            console::warn("unknown script node type");
+                        }
+
+                        chapterBuilder.addScript(resource);
                     }
                 }
 
@@ -66,10 +76,20 @@ namespace game {
                  */
                 YAML::Node texturesNode = chapterNode["textures"];
                 if (texturesNode.IsSequence()) {
-                    std::vector<std::string> textures = texturesNode.as<std::vector<std::string>>();
+                    for (auto node : texturesNode) {
+                        Chapter::ResourceTexture resource;
 
-                    for (const auto &texturePath : textures) {
-                        chapterBuilder.addTexture(texturePath);
+                        if (node.IsScalar()) {
+                            resource.name = node.as<std::string>();
+                            resource.path = node.as<std::string>();
+                        } else if (node.IsMap()) {
+                            resource.name = node["name"].as<std::string>();
+                            resource.path = node["path"].as<std::string>();
+                        } else {
+                            console::warn("unknown texture node type");
+                        }
+
+                        chapterBuilder.addTexture(resource);
                     }
                 }
 
@@ -101,7 +121,16 @@ namespace game {
                     for (auto node : materialsNode) {
                         Chapter::ResourceMaterial resource;
                         resource.name = node["name"].as<std::string>();
-                        resource.textures = node["textures"].as<std::vector<std::string>>();
+
+                        auto diffuseTextureNode = node["diffuseTexture"];
+                        auto normalTextureNode = node["normalTexture"];
+                        auto specularTextureNode = node["specularTexture"];
+                        auto heightTextureNode = node["heightTexture"];
+
+                        resource.diffuseTexture = diffuseTextureNode.IsScalar() ? diffuseTextureNode.as<std::string>() : "";
+                        resource.normalTexture = normalTextureNode.IsScalar() ? normalTextureNode.as<std::string>() : "";
+                        resource.specularTexture = specularTextureNode.IsScalar() ? specularTextureNode.as<std::string>() : "";
+                        resource.heightTexture = heightTextureNode.IsScalar() ? heightTextureNode.as<std::string>() : "";
                         resource.shader = node["shader"].as<std::string>();
 
                         chapterBuilder.addMaterial(resource);
@@ -156,21 +185,21 @@ namespace game {
 
         assets::Loader assetsLoader(chapterPath.string());
 
-        const std::vector<std::string> &scriptNames = chapter->getScripts();
-        for (const auto &scriptPath : scriptNames) {
-            assets::Resource *resource = assetsLoader.load(scriptPath);
+        const std::vector<Chapter::ResourceScript> &scripts = chapter->getScripts();
+        for (const auto &chapterResource : scripts) {
+            assets::Resource *resource = assetsLoader.load(chapterResource.path);
 
             if (resource != nullptr) {
                 assets->addScript(resource);
             }
         }
 
-        const std::vector<std::string> &textureNames = chapter->getTextures();
-        for (const auto &texturePath : textureNames) {
-            assets::Resource *resource = assetsLoader.load(texturePath);
+        const std::vector<Chapter::ResourceTexture> &textures = chapter->getTextures();
+        for (const auto &chapterResource : textures) {
+            assets::Resource *resource = assetsLoader.load(chapterResource.path);
 
             if (resource != nullptr) {
-                assets->addTexture(resource);
+                assets->addTexture(chapterResource.name, resource);
             }
         }
 
@@ -198,6 +227,68 @@ namespace game {
 
                 }
             }
+        }
+
+        const std::vector<Chapter::ResourceMaterial>& materials = chapter->getMaterials();
+        for (const auto &materialResource : materials) {
+
+            auto *assetMaterial = new assets::Material();
+            auto *material = new Material();
+            Texture diffuseMap = Texture::Empty(Texture::Type::Diffuse, 155);
+            Texture specularMap = Texture::Empty(Texture::Type::Specular, 155);
+            Texture heightMap = Texture::Empty(Texture::Type::Height, 155);
+            Texture normalMap = Texture::Empty(Texture::Type::Normal, 155);
+
+            assetMaterial->setMaterial(material);
+
+            if (!materialResource.diffuseTexture.empty()) {
+                assets::Texture *assetTexture = assets->getTexture(materialResource.diffuseTexture);
+                std::shared_ptr<ImageData> image;
+
+                if (assetTexture != nullptr) {
+                    image = assetTexture->getImage();
+                } else {
+                    assetTexture = assets->getTexture("DefaultTexture");
+                    image = assetTexture->getImage();
+                }
+
+                diffuseMap.setData(image);
+            }
+
+            if (!materialResource.normalTexture.empty()) {
+                assets::Texture *assetTexture = assets->getTexture(materialResource.normalTexture);
+                std::shared_ptr<ImageData> image;
+
+                if (assetTexture != nullptr) {
+                    image = assetTexture->getImage();
+                    normalMap.setData(image);
+                }
+            }
+
+            if (!materialResource.specularTexture.empty()) {
+                assets::Texture *assetTexture = assets->getTexture(materialResource.specularTexture);
+                std::shared_ptr<ImageData> image;
+
+                if (assetTexture != nullptr) {
+                    image = assetTexture->getImage();
+                    specularMap.setData(image);
+                }
+            }
+
+            if (!materialResource.heightTexture.empty()) {
+                assets::Texture *assetTexture = assets->getTexture(materialResource.heightTexture);
+                std::shared_ptr<ImageData> image;
+
+                if (assetTexture != nullptr) {
+                    image = assetTexture->getImage();
+                    heightMap.setData(image);
+                }
+            }
+
+            material->setDiffuseMap(diffuseMap);
+            material->setSpecularMap(specularMap);
+            material->setHeightMap(heightMap);
+            material->setNormalMap(normalMap);
         }
 
         return true;

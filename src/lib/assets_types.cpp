@@ -80,4 +80,22 @@ namespace assets {
      * -------------------- Model --------------------
      */
     Model::Model(assets::Resource *resource) : BaseAsset(resource) {};
+
+
+    /**
+     * -------------------- Material --------------------
+     */
+    Material::Material() : BaseAsset(nullptr) {}
+
+    const std::shared_ptr<::Material> &Material::getMaterial() const {
+        return material;
+    }
+
+    void Material::setMaterial(const std::shared_ptr<::Material> &material) {
+        Material::material = material;
+    }
+
+    void Material::setMaterial(::Material *material) {
+        Material::material.reset(material);
+    }
 }

@@ -113,6 +113,7 @@ namespace utils {
 
             in.seekg(0, std::ios::end);
             str->reserve(in.tellg());
+            *size = static_cast<size_t>(in.tellg());
             in.seekg(0, std::ios::beg);
 
             str->assign((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
