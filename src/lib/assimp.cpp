@@ -154,14 +154,14 @@ namespace libAi {
             std::string path = it.first;
             Texture *textureMap = it.second;
 
-            assets::Resource *resource = assetsLoader.load(path);
+            assets::Resource *resource = assetsLoader.createResource(path);
             assets::Texture *assetTexture = nullptr;
             std::shared_ptr<ImageData> image;
 
             if (resource != nullptr) {
                 assetTexture = assets->addTexture(resource);
             } else {
-                assetTexture = assets->getTexture("DefaultTexture");
+                assetTexture = assets->getDefaultTexture(*textureMap);
             }
 
             if (assetTexture != nullptr) {

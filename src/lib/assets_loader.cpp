@@ -5,7 +5,7 @@ namespace assets {
 
     Loader::Loader(const Path &entryPoint) : entryPoint(entryPoint.string()) {}
 
-    Resource *Loader::load(const Path &path) {
+    Resource *Loader::createResource(const Path &path) {
         Resource *resource = nullptr;
 
         Path fullPath = createPath(entryPoint) /= path;

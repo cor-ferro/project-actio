@@ -73,11 +73,25 @@ void Assets::free() {
 void Assets::loadDefaultResources() {
     assets::Loader assetsLoader(App::instance().resourcePath());
 
-    Path defaultTexturePath("default2.png");
-    assets::Resource *defaultTextureResource = assetsLoader.load(defaultTexturePath);
+    const std::vector<std::pair<std::string, std::string>> defaultTextures = {
+        {"DefaultDiffuseTexture", "default-diffuse.png"},
+        {"DefaultNormalTexture", "default-normal.jpg"},
+        {"DefaultSpecularTexture", "default-specular.png"},
+        {"DefaultHeightTexture", "default-height.png"}
+    };
 
-    if (defaultTextureResource != nullptr) {
-        addTexture("DefaultTexture", defaultTextureResource);
+    for (const auto &it : defaultTextures) {
+        const std::string &textureName = it.first;
+        const std::string &texturePath = it.second;
+
+        Path defaultTexturePath(texturePath);
+        assets::Resource *defaultTextureResource = assetsLoader.createResource(defaultTexturePath);
+
+        if (defaultTextureResource != nullptr) {
+            addTexture(textureName, defaultTextureResource);
+        } else {
+            console::err("failed load default resource %s, %s", textureName, texturePath);
+        }
     }
 }
 
@@ -165,4 +179,14 @@ assets::Material *Assets::createMaterial(const std::string &name) {
     auto assetMaterial = addMaterial(material);
 
     return assetMaterial;
+}
+
+assets::Texture *Assets::getDefaultTexture(Texture &texture) {
+    switch (texture.type) {
+        case Texture::Type::Diffuse: return getTexture("DefaultDiffuseTexture");
+        case Texture::Type::Normal: return getTexture("DefaultNormalTexture");
+        case Texture::Type::Specular: return getTexture("DefaultSpecularTexture");
+        case Texture::Type::Height: return getTexture("DefaultHeightTexture");
+        default: return getTexture("DefaultDiffuseTexture");
+    }
 }

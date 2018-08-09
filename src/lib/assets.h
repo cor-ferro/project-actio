@@ -12,6 +12,7 @@
 #include "assets_types.h"
 #include "console.h"
 #include "data_loader.h"
+#include "../core/texture.h"
 
 class Assets {
 public:
@@ -52,6 +53,8 @@ public:
     assets::Material *getMaterial(const std::string &name);
 
     assets::Material *createMaterial(const std::string &name);
+
+    assets::Texture *getDefaultTexture(Texture &texture);
 
     void free();
 

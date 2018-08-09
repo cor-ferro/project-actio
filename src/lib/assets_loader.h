@@ -17,7 +17,7 @@ namespace assets {
 
         explicit Loader(const Path &entryPoint);
 
-        Resource *load(const Path &path);
+        Resource *createResource(const Path &path);
 
     protected:
         std::string entryPoint;
