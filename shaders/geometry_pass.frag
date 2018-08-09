@@ -20,13 +20,14 @@ struct Material {
 
 uniform Material material;
 uniform sampler2D diffuseTexture;
+uniform sampler2D normalTexture;
 uniform sampler2D specularTexture;
 uniform sampler2D heightTexture;
 
 void main()
 {
 	gWorldPosition = inData.worldPosition;
-	gNormal = inData.normal;
+	gNormal = texture(normalTexture, inData.texCoord).xyz;
 	gAlbedo = vec4(
 		texture(diffuseTexture, inData.texCoord).xyz + material.diffuse,
 		texture(specularTexture, inData.texCoord).x
