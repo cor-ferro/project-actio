@@ -618,6 +618,7 @@ namespace renderer {
 
     void OpenglRenderer::setupGeometry(Geometry *geometry) {
         if (geometry == nullptr) return;
+        if (geometry->renderHandle != nullptr) return;
 
         auto *handle = createGeometryHandle();
 
@@ -717,6 +718,8 @@ namespace renderer {
     }
 
     void OpenglRenderer::setupTexture2d(::Texture *texture) {
+        if (texture->renderHandle != nullptr) return;
+
         std::shared_ptr<ImageData> imageData = texture->getData();
         auto *handle = createTextureHandle();
 
@@ -740,6 +743,8 @@ namespace renderer {
     }
 
     void OpenglRenderer::setupTextureCube(::Texture *texture) {
+        if (texture->renderHandle != nullptr) return;
+
         auto *handle = createTextureHandle();
 
         glGenTextures(1, &handle->textureId);
