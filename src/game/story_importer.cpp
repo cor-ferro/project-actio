@@ -207,26 +207,7 @@ namespace game {
         for (const auto &modelResource : models) {
             assets::Resource *resource = assetsLoader.createResource(modelResource.path);
 
-            if (resource != nullptr) {
-                unsigned int flags = aiProcessPreset_TargetRealtime_Quality
-                                     | aiProcess_GenSmoothNormals
-                                     | aiProcess_Triangulate
-                                     | aiProcess_CalcTangentSpace;
-
-                bool flipUv = modelResource.getOption("flipUv") == "true";
-
-                if (flipUv) {
-                    flags |= aiProcess_FlipUVs;
-                }
-
-                Assimp::Importer importer;
-                const aiScene *scene = importer.ReadFile(modelResource.path, flags);
-                const std::unique_ptr<Resource::Assimp> assimpResource(new Resource::Assimp(scene, modelResource.path));
-
-                if (scene) {
-
-                }
-            }
+            assets->addModel(modelResource.name, resource, modelResource.options);
         }
 
         const std::vector<Chapter::ResourceMaterial>& materials = chapter->getMaterials();

@@ -1,8 +1,6 @@
 #ifndef GAME_WORLD_H
 #define GAME_WORLD_H
 
-#define NDEBUG
-
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -181,6 +179,7 @@ namespace game {
         void spawn(Character *character, glm::vec3 pos);
 
         World::Character createCharacter(Resource::Assimp *resource);
+
         World::Character createCharacter(std::string name, Resource::Assimp *resource);
 
         void removeCharacter(World::Character character);
@@ -241,13 +240,15 @@ namespace game {
 
         Character getUserControlCharacter();
 
-        const game::Context &getContext();
+        game::Context &getContext();
 
         void importAssets(std::shared_ptr<Assets> &newAssets);
 
         void load();
 
         void unload();
+
+        const profiling::ProfileTimings &getSystemProfiler() const;
 
     private:
         std::string name;
@@ -263,12 +264,8 @@ namespace game {
         Context context;
 
         profiling::ProfileTimings systemProfiler;
-    public:
-        const profiling::ProfileTimings &getSystemProfiler() const;
 
-    private:
-
-        std::vector<game::Script*> scripts;
+        std::vector<game::Script *> scripts;
 
         std::shared_ptr<Assets> assets;
 

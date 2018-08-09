@@ -27,6 +27,15 @@ namespace utils {
     std::string getFileContents(Path path);
 
     void getFileContents(Path path, std::shared_ptr<std::string> &data, size_t *size);
+
+    float scaleNumber(float x, float y, float value);
+
+    template <typename T>
+    inline T toZero(T value, T reduceValue) {
+        return value > static_cast<T>(0)
+               ? value - reduceValue
+               : value + reduceValue;
+    }
 }
 
 

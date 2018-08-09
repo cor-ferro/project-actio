@@ -73,12 +73,6 @@ struct Model {
 		mat4 transformation;
 	};
 
-	struct BoneMap {
-		uint jointIndex;
-		uint boneIndex;
-		mat4 offset;
-	};
-
 	Model();
 
 	Model(File &modelFile);
@@ -126,7 +120,6 @@ private:
 	ModelMeshes meshes_;
 	Node *rootNode_ = nullptr;
 	std::unordered_map<std::string, std::shared_ptr<const Node>> nodes_;
-	std::unordered_map<std::string, ImageLoader::Data> images_;
 };
 
 #endif

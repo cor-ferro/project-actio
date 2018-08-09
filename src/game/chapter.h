@@ -6,6 +6,7 @@
 #define ACTIO_CHAPTER_H
 
 #include <string>
+#include <unordered_map>
 #include "script.h"
 #include "../lib/path.h"
 
@@ -16,7 +17,7 @@ namespace game {
         friend ChapterBuilder;
 
     public:
-        typedef std::map<std::string, std::string> ResourceOptions;
+        typedef std::unordered_map<std::string, std::string> ResourceOptions;
 
         struct ResourceScript {
             std::string name;
@@ -37,20 +38,6 @@ namespace game {
             std::string name;
             std::string path;
             ResourceOptions options;
-
-            bool hasOption(std::string key) const {
-                return options.find(key) != options.end();
-            }
-
-            std::string getOption(std::string key) const {
-                auto it = options.find(key);
-
-                if (it != options.end()) {
-                    return it->second;
-                }
-
-                return "";
-            }
         };
 
         struct ResourceMaterial {

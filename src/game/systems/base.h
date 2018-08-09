@@ -9,17 +9,18 @@
 #include "../context.h"
 
 namespace game {
-    struct World;
+    class World;
 
     namespace systems {
         namespace ex = entityx;
 
         class BaseSystem {
         public:
-            explicit BaseSystem(game::Context *context) : worldContext(context) {}
+            explicit BaseSystem(game::World *world);
 
         protected:
-            game::Context *worldContext = nullptr;
+            game::World *world = nullptr;
+            game::Context *context = nullptr;
         };
     }
 }

@@ -17,6 +17,8 @@
 #include "base.h"
 
 namespace game {
+    class World;
+
     namespace systems {
         namespace ex = entityx;
 
@@ -25,50 +27,13 @@ namespace game {
                   , public ex::System<Animations>
                   , public ex::Receiver<Animations> {
         public:
-            explicit Animations(Context *context) : systems::BaseSystem(context) {}
+            explicit Animations(game::World *world);
 
-            void configure(ex::EventManager &event_manager) {
-                event_manager.subscribe<events::KeyPress>(*this);
-            }
+            void configure(ex::EventManager &event_manager) override;
 
-            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
-                ex::ComponentHandle<components::Model> model;
-                ex::ComponentHandle<components::Skin> skin;
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
-                for (ex::Entity entity : es.entities_with_components(model, skin)) {
-                    if (skin->canProcessAnimation()) {
-                        skin->processAnimation(dt);
-                        skin->animSamplers.update(dt);
-
-                        mat4 *transforms = skin->getTransforms();
-
-                        for (Mesh *mesh : model->getMeshes()) {
-                            for (unsigned int boneIndex = 0; boneIndex < mesh->bones.count; boneIndex++) {
-                                const unsigned int &nodeIndex = mesh->bones.indexes[boneIndex];
-
-                                mesh->bones.transforms[boneIndex] = transforms[nodeIndex];
-                            }
-                        }
-                    }
-                }
-            }
-
-            void receive(const events::KeyPress &event) {
-                bool isMovingKey = event.key == InputHandler::KEY_W
-                                   || event.key == InputHandler::KEY_S
-                                   || event.key == InputHandler::KEY_A
-                                   || event.key == InputHandler::KEY_D;
-
-                if (isMovingKey) {
-                    isMoving = event.action != 0;
-                    isChangeState = true;
-                }
-
-                if (event.key == InputHandler::KEY_SPACE) {
-                    isJump = true;
-                    isChangeState = true;
-                }
-            }
+            void receive(const events::KeyPress &event);
 
         private:
             bool isChangeState = false;

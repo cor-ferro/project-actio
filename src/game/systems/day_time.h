@@ -13,6 +13,8 @@
 #include "base.h"
 
 namespace game {
+    class World;
+
     namespace systems {
         namespace ex = entityx;
 
@@ -21,39 +23,13 @@ namespace game {
                   , public entityx::System<DayTime>
                   , public entityx::Receiver<DayTime> {
         public:
-            explicit DayTime(Context *context) : systems::BaseSystem(context) {}
+            explicit DayTime(World *World);
 
-            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
-                time += dt;
-                currentDayTime = glm::mod(time, daySize);
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
-                double delta = currentDayTime / daySize;
-                float angle = glm::radians(359.9f * static_cast<float>(delta));
+            double getTime();
 
-                ex::ComponentHandle<components::LightDirectional> dirLight;
-
-                vec3 dir(0.0f, 0.0f, 1.0f);
-                quat q = glm::quat(
-                        glm::cos(angle / 2.0f),
-                        glm::sin(angle / 2.0f) * dir.x,
-                        glm::sin(angle / 2.0f) * dir.y,
-                        glm::sin(angle / 2.0f) * dir.z
-                );
-
-                vec3 newDir = q * vec3(0.0f, 1.0f, 0.0f);
-
-                for (ex::Entity entity : es.entities_with_components(dirLight)) {
-                    dirLight->setDirection(newDir);
-                }
-            }
-
-            double getTime() {
-                return time;
-            }
-
-            void setDaySize(double newDaySize) {
-                daySize = newDaySize;
-            }
+            void setDaySize(double newDaySize);
 
         private:
             double time = 0.0;

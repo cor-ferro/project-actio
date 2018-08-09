@@ -26,6 +26,8 @@
 #include "base.h"
 
 namespace game {
+    class World;
+
     namespace systems {
         namespace ex = entityx;
         namespace c = components;
@@ -58,181 +60,48 @@ namespace game {
             };
 
         public:
-            explicit Render(Context *context, renderer::Renderer *newRenderer)
-                    : renderer(newRenderer)
-                    , systems::BaseSystem(context) {}
+            explicit Render(World *world, renderer::Renderer *newRenderer);
 
-            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
-                if (renderer == nullptr) return;
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
-                processShaders();
-                processTextures();
-                processMeshes();
+            void configure(entityx::EventManager &event_manager) override;
 
-                renderer->draw(es);
-            }
+            void receive(const events::RenderResize &event);
 
-            void configure(entityx::EventManager &event_manager) override {
-                event_manager.subscribe<events::RenderSetupModel>(*this);
-                event_manager.subscribe<events::RenderResize>(*this);
-                event_manager.subscribe<ex::EntityDestroyedEvent>(*this);
+            void receive(const events::RenderSetupModel &event);
 
-                // @todo: handle resize
-                renderer::Params params = renderer->getParams();
-                worldContext->windowHeight = static_cast<float>(params.height);
-                worldContext->windowWidth = static_cast<float>(params.width);
-            }
+            void receive(const ex::EntityDestroyedEvent &event);
 
-            void receive(const events::RenderResize &event) {
-                worldContext->windowWidth = static_cast<float>(event.width);
-                worldContext->windowHeight = static_cast<float>(event.height);
-            }
+            void addModel(Model *model);
 
-            void receive(const events::RenderSetupModel &event) {
-                ex::Entity entity = event.entity;
-                events::RenderSetupModel::Action eventAction = event.action;
+            void updateModel(Model *model);
 
-                ex::ComponentHandle<c::Model> model = components::get<c::Model>(entity);
+            void removeModel(Model *model);
 
-                if (model) {
-                    switch (eventAction) {
-                        case events::RenderSetupModel::Action::Add:
-                            addModel(model.get());
-                            entity.assign<c::Renderable>();
-                            break;
-                        case events::RenderSetupModel::Action::Update:
-                            updateModel(model.get());
-                            break;
-                        case events::RenderSetupModel::Action::Remove:
-                            removeModel(model.get());
-                            entity.remove<c::Renderable>();
-                    }
-                }
-            }
+            void addMesh(Mesh *mesh);
 
-            void receive(const ex::EntityDestroyedEvent &event) {
-                ex::Entity entity = event.entity;
+            void updateMesh(Mesh *mesh);
 
-                auto model = components::get<c::Model>(entity);
+            void removeMesh(Mesh *mesh);
 
-                if (model) {
-                    removeModel(model.get());
-                    entity.remove<c::Renderable>();
-                }
-            }
+            void addShader(assets::Shader *asset);
 
-            void addModel(Model *model) {
-                auto meshes = model->getMeshes();
+            void addTexture(assets::Texture *asset);
 
-                for (auto &mesh : meshes) {
-                    addMesh(mesh);
-                }
-            }
+            void removeTexture(assets::Texture *asset);
 
-            void updateModel(Model *model) {
-                auto meshes = model->getMeshes();
+            void addMaterial(assets::Material *asset);
 
-                for (auto &mesh : meshes) {
-                    updateMesh(mesh);
-                }
-            }
-
-            void removeModel(Model *model) {
-                auto meshes = model->getMeshes();
-
-                for (auto &mesh : meshes) {
-                    removeMesh(mesh);
-                }
-            }
-
-            void addMesh(Mesh *mesh) {
-                setupMesh.push(std::make_tuple(MeshAction::Add, mesh));
-            }
-
-            void updateMesh(Mesh *mesh) {
-                setupMesh.push(std::make_tuple(MeshAction::Update, mesh));
-            }
-
-            void removeMesh(Mesh *mesh) {
-                setupMesh.push(std::make_tuple(MeshAction::Remove, mesh));
-            }
-
-            void addShader(assets::Shader *asset) {
-                setupShaders.push(asset);
-            }
-
-            void addTexture(assets::Texture *asset) {
-                setupTextures.push({ asset, TextureAction::Add });
-            }
-
-            void removeTexture(assets::Texture *asset) {
-                setupTextures.push({ asset, TextureAction::Remove });
-            }
-
-            void addMaterial(assets::Material *asset) {
-                setupMaterials.push(asset);
-            }
-
-            void destroy() {
-                renderer->destroy();
-                renderer = nullptr;
-            }
+            void destroy();
 
         private:
+            void processShaders();
+
+            void processTextures();
+
+            void processMeshes();
+
             int updatePerTick = 30;
-
-            void processShaders() {
-                while (!setupShaders.empty()) {
-                    assets::Shader *asset = setupShaders.top();
-                    setupShaders.pop();
-                }
-            }
-
-            void processTextures() {
-                while (!setupTextures.empty()) {
-                    std::pair<assets::Texture*, TextureAction> &process = setupTextures.top();
-                    setupTextures.pop();
-
-                    assets::Texture *asset = process.first;
-                    TextureAction &action = process.second;
-
-                    if (action == TextureAction::Add) {
-//                        renderer->createTexture(asset->getImage());
-                    } else if (action == TextureAction::Remove) {
-//                        renderer->destroyTexture();
-                    } else {
-                        console::warn("unknown process texture action");
-                    }
-                }
-            }
-
-            void processMeshes() {
-                size_t counter = 0;
-
-                while (!setupMesh.empty() && counter < updatePerTick) {
-                    std::tuple<MeshAction, Mesh *> &item = setupMesh.top();
-
-                    MeshAction action = std::get<0>(item);
-                    Mesh *mesh = std::get<1>(item);
-
-                    switch (action) {
-                        case MeshAction::Add:
-                            renderer->setupMesh(mesh);
-                            break;
-                        case MeshAction::Remove:
-                            renderer->destroyMesh(mesh);
-                            break;
-                        case MeshAction ::Update:
-                            renderer->updateMesh(mesh);
-                            break;
-                        default:
-                            console::warn("unknown mesh action");
-                    }
-
-                    setupMesh.pop();
-                    counter++;
-                }
-            }
 
             renderer::Renderer *renderer = nullptr;
 

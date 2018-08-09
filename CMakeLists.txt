@@ -14,6 +14,7 @@ set(PROJECT_INSTALL "${CMAKE_SOURCE_DIR}/build")
 
 option(COPY_LIBS "Copy all libs" OFF)
 
+add_definitions(-DNDEBUG)
 add_definitions(-DPROFILE_ENABLED)
 add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
 add_definitions(-DGRAPHIC_API=${GRAPHIC_API})
@@ -105,7 +106,7 @@ endforeach (lib)
 
 #PhysX3Gpu
 foreach (lib PxFoundation PhysX3Common PhysX3 PhysX3Cooking PxPvdSDK PhysX3CharacterKinematic)
-    add_library(${lib} SHARED IMPORTED)
+    add_library(${lib} SHARED IMPORTED src/game/systems/base.cpp)
     set_property(TARGET ${lib} PROPERTY IMPORTED_LOCATION "${PROJECT_INSTALL}/lib${lib}${PHYSX_CONFIGURATION}_${PHYSX_ARCH}.so")
     target_link_libraries(actio ${lib})
 endforeach (lib)

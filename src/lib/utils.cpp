@@ -119,4 +119,11 @@ namespace utils {
             str->assign((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         }
     }
+
+    float scaleNumber(float x, float y, float value) {
+        float v = glm::clamp(value, x, y);
+        float dist = glm::abs(y) - glm::abs(x);
+
+        return (v - x) / dist;
+    }
 }

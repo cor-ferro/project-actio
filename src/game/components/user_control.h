@@ -5,6 +5,8 @@
 #ifndef ACTIO_COMPONENTS_USER_CONTROL_H
 #define ACTIO_COMPONENTS_USER_CONTROL_H
 
+#include <characterkinematic/PxController.h>
+
 namespace game {
     namespace components {
         using namespace physx;
@@ -40,7 +42,7 @@ namespace game {
 
             void setIsSecondaryActionPress(bool value) { secondaryActionPress = value; }
 
-            PxController *controller = nullptr;
+            physx::PxController *controller = nullptr;
 
         private:
             bool leftPress = false;

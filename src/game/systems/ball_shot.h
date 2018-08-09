@@ -27,6 +27,8 @@
 #include "base.h"
 
 namespace game {
+    class World;
+
     namespace systems {
         namespace ex = entityx;
         namespace c = components;
@@ -36,71 +38,15 @@ namespace game {
                   , public ex::System<BallShot>
                   , public ex::Receiver<BallShot> {
         public:
-            explicit BallShot(Context *context) : systems::BaseSystem(context) {}
+            explicit BallShot(World *world);
 
-            void configure(ex::EventManager &event_manager) {
-                event_manager.subscribe<events::KeyPress>(*this);
-                event_manager.subscribe<events::MousePress>(*this);
-            }
+            void configure(ex::EventManager &event_manager) override;
 
-            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override {
-                vec3 cameraPosition, cameraTarget;
-                vec3 charPosition, charTarget;
-                float charHeight = 0.0f;
+            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
-                es.each<components::Camera>(
-                        [&cameraPosition, &cameraTarget](ex::Entity entity, components::Camera &camera) {
-                            cameraPosition = camera.getPosition();
-                            cameraTarget = camera.getTarget();
-                        });
+            void receive(const events::KeyPress &event);
 
-                es.each<components::Model, c::UserControl, components::Transform>(
-                        [&charPosition, &charHeight](
-                                ex::Entity,
-                                c::Model &model,
-                                c::UserControl &userControl,
-                                c::Transform &transform
-                        ) {
-                            charPosition = transform.getPosition();
-                            charHeight = model.height() * transform.getScale().y;
-                        });
-
-                while (!newItems.empty()) {
-                    newItems.pop();
-
-                    ex::Entity ball = es.create();
-
-                    float radius = 1.0f;
-                    Mesh *mesh = Mesh::Create();
-
-                    GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
-                    mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
-
-                    vec3 target = glm::normalize(worldContext->mouseWorldPosition - charPosition);
-
-                    float yAxis = glm::clamp(glm::abs(worldContext->mouseWorldPosition.y - charPosition.y), 1.0f, 5.0f);
-                    float zAxis = glm::clamp(worldContext->mouseWorldPosition.z - charPosition.z, -3.0f, 3.0f);
-
-                    ball.assign<components::Model>(mesh);
-                    ball.assign<components::Transform>(charPosition + (vec3(0.0f, 1.0f + yAxis, zAxis) + target));
-
-                    events.emit<events::PhysicCreateSphere>(ball, radius);
-                    events.emit<events::PhysicForce>(ball, target, 5.0f);
-                    events.emit<events::RenderSetupModel>(ball);
-                }
-            }
-
-            void receive(const events::KeyPress &event) {
-                if (event.key == InputHandler::KEY_E && event.action == 1) {
-                    newItems.push(1);
-                }
-            }
-
-            void receive(const events::MousePress &event) {
-//                if (event.button == 0 && event.action == 1) {
-//                    newItems.push(1);
-//                }
-            }
+            void receive(const events::MousePress &event);
 
         private:
             std::stack<int> newItems;

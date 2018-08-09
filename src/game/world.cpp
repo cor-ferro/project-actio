@@ -38,7 +38,7 @@ namespace game {
     }
 
     void World::setupRenderer(renderer::Renderer *renderer) {
-        systems.add<game::systems::Render>(&context, renderer);
+        systems.add<game::systems::Render>(this, renderer);
     }
 
     void World::destroyRenderer() {
@@ -48,17 +48,17 @@ namespace game {
     void World::setup() {
 //        entities.each<c::Model, c::Skin, c::Character, c::CharItems>([](ex::Entity, c::Model &, c::Skin &, c::Character &, c::CharItems &) {});
 
-        systems.add<systems::Input>(&context);
-        systems.add<systems::Camera>(&context);
-        systems.add<systems::CharControl>(&context);
-        systems.add<systems::CharacterControl>(&context); // deprecated
-        systems.add<systems::Animations>(&context);
-        systems.add<systems::Physic>(&context);
-        systems.add<systems::BallShot>(&context);
-        systems.add<systems::LightHelpers>(&context);
-        systems.add<systems::DayTime>(&context);
-        systems.add<systems::Sky>(&context);
-        systems.add<systems::Weapons>(&context, this);
+        systems.add<systems::Input>(this);
+        systems.add<systems::Camera>(this);
+        systems.add<systems::CharControl>(this);
+        systems.add<systems::CharacterControl>(this); // deprecated
+        systems.add<systems::Animations>(this);
+        systems.add<systems::Physic>(this);
+        systems.add<systems::BallShot>(this);
+        systems.add<systems::LightHelpers>(this);
+        systems.add<systems::DayTime>(this);
+        systems.add<systems::Sky>(this);
+        systems.add<systems::Weapons>(this);
 
         systems.configure();
 
@@ -230,7 +230,7 @@ namespace game {
 
     }
 
-    const game::Context &World::getContext() {
+    game::Context &World::getContext() {
         return context;
     }
 

@@ -2,6 +2,7 @@
 #define GAME_COMPONENTS_PHYSIC_H_
 
 #include <glm/glm.hpp>
+#include "PxScene.h"
 #include "PxRigidDynamic.h"
 #include "PxMaterial.h"
 
@@ -10,7 +11,7 @@ namespace game {
         using namespace physx;
 
         struct Physic {
-            Physic(PxRigidDynamic *dynamic) :  dynamic(dynamic) {};
+            explicit Physic(PxRigidDynamic *dynamic) :  dynamic(dynamic) {};
 
             ~Physic() {
                 if (dynamic != nullptr) {
