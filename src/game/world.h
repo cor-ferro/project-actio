@@ -170,8 +170,6 @@ namespace game {
 
         void setup();
 
-        void initGroundPlane();
-
         void destroy();
 
         inline void spawn(Character *character);

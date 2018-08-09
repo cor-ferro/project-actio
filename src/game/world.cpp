@@ -72,8 +72,6 @@ namespace game {
 
         physic->postConfigure(events);
 
-        initGroundPlane();
-
         console::info("world configure success");
     }
 
@@ -187,25 +185,6 @@ namespace game {
 
     void World::remove() {
 
-    }
-
-    void World::initGroundPlane() {
-        Mesh *mesh = Mesh::Create();
-
-        GeometryPrimitive::Plane(mesh->geometry, 20, 20, 10, 10);
-//        mesh->material.setWireframe(true);
-        mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
-
-        entityx::Entity entity = entities.create();
-
-        entity.assign<components::Transform>(
-                vec3(0.0f),
-                glm::angleAxis(glm::radians(90.f), glm::vec3(1.0f, 0.0f, 0.0f)),
-                vec3(1.0f)
-        );
-        entity.assign<components::Model>(mesh);
-
-        events.emit<events::RenderSetupModel>(entity);
     }
 
     void World::destroy() {
