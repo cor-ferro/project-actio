@@ -187,7 +187,7 @@ namespace game {
 
         const std::vector<Chapter::ResourceScript> &scripts = chapter->getScripts();
         for (const auto &chapterResource : scripts) {
-            assets::Resource *resource = assetsLoader.load(chapterResource.path);
+            assets::Resource *resource = assetsLoader.createResource(chapterResource.path);
 
             if (resource != nullptr) {
                 assets->addScript(resource);
@@ -196,7 +196,7 @@ namespace game {
 
         const std::vector<Chapter::ResourceTexture> &textures = chapter->getTextures();
         for (const auto &chapterResource : textures) {
-            assets::Resource *resource = assetsLoader.load(chapterResource.path);
+            assets::Resource *resource = assetsLoader.createResource(chapterResource.path);
 
             if (resource != nullptr) {
                 assets->addTexture(chapterResource.name, resource);
@@ -205,7 +205,7 @@ namespace game {
 
         const std::vector<Chapter::ResourceModel> &models = chapter->getModels();
         for (const auto &modelResource : models) {
-            assets::Resource *resource = assetsLoader.load(modelResource.path);
+            assets::Resource *resource = assetsLoader.createResource(modelResource.path);
 
             if (resource != nullptr) {
                 unsigned int flags = aiProcessPreset_TargetRealtime_Quality
@@ -235,50 +235,52 @@ namespace game {
             Texture diffuseMap = Texture::Empty(Texture::Type::Diffuse, 0);
             Texture specularMap = Texture::Empty(Texture::Type::Specular, 0);
             Texture heightMap = Texture::Empty(Texture::Type::Height, 0);
-            Texture normalMap = Texture::Empty(Texture::Type::Normal, 0);
+            Texture normalMap = Texture::Empty(Texture::Type::Normal, 255);
+
+            std::vector<std::pair<std::string, Texture*>> texturesToLoad;
 
             if (!materialResource.diffuseTexture.empty()) {
+                texturesToLoad.push_back({ materialResource.diffuseTexture, &diffuseMap });
+            }
+
+            if (!materialResource.normalTexture.empty()) {
+                texturesToLoad.push_back({ materialResource.normalTexture, &normalMap });
+            }
+
+            if (!materialResource.specularTexture.empty()) {
+                texturesToLoad.push_back({ materialResource.specularTexture, &specularMap });
+            }
+
+            if (!materialResource.heightTexture.empty()) {
+                texturesToLoad.push_back({ materialResource.heightTexture, &heightMap });
+            }
+
+            for (auto &it : texturesToLoad) {
+                std::string textureName = it.first;
+                Texture *texture = it.second;
+
                 assets::Texture *assetTexture = assets->getTexture(materialResource.diffuseTexture);
                 std::shared_ptr<ImageData> image;
 
                 if (assetTexture != nullptr) {
                     image = assetTexture->getImage();
                 } else {
-                    assetTexture = assets->getTexture("DefaultTexture");
-                    image = assetTexture->getImage();
+                    Chapter::ResourceTexture chapterTextureResource;
+                    chapterTextureResource.path = materialResource.diffuseTexture;
+                    chapterTextureResource.name = chapterTextureResource.path;
+
+                    assets::Resource *resource = assetsLoader.createResource(chapterTextureResource.path);
+
+                    if (resource != nullptr) {
+                        assetTexture = assets->addTexture(chapterTextureResource.name, resource);
+                        image = assetTexture->getImage();
+                    } else {
+                        assetTexture = assets->getDefaultTexture(*texture);
+                        image = assetTexture->getImage();
+                    }
                 }
 
-                diffuseMap.setData(image);
-            }
-
-            if (!materialResource.normalTexture.empty()) {
-                assets::Texture *assetTexture = assets->getTexture(materialResource.normalTexture);
-                std::shared_ptr<ImageData> image;
-
-                if (assetTexture != nullptr) {
-                    image = assetTexture->getImage();
-                    normalMap.setData(image);
-                }
-            }
-
-            if (!materialResource.specularTexture.empty()) {
-                assets::Texture *assetTexture = assets->getTexture(materialResource.specularTexture);
-                std::shared_ptr<ImageData> image;
-
-                if (assetTexture != nullptr) {
-                    image = assetTexture->getImage();
-                    specularMap.setData(image);
-                }
-            }
-
-            if (!materialResource.heightTexture.empty()) {
-                assets::Texture *assetTexture = assets->getTexture(materialResource.heightTexture);
-                std::shared_ptr<ImageData> image;
-
-                if (assetTexture != nullptr) {
-                    image = assetTexture->getImage();
-                    heightMap.setData(image);
-                }
+                texture->setData(image);
             }
 
             material->setDiffuseMap(diffuseMap);

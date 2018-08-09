@@ -372,6 +372,7 @@ namespace game {
         // @todo: cleanup world items
         assets.reset();
         assets = newAssets;
+        context.assets = assets;
     }
 
     void World::reloadAssetsScripts() {
