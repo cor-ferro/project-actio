@@ -51,6 +51,8 @@ public:
 
     assets::Material *getMaterial(const std::string &name);
 
+    assets::Material *createMaterial(const std::string &name);
+
     void free();
 
     void loadDefaultResources();

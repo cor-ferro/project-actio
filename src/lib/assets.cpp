@@ -151,6 +151,18 @@ assets::Material *Assets::addMaterial(const std::string &name, Material *materia
     }
 
     return nullptr;
+}
 
-    return nullptr;
+assets::Material *Assets::createMaterial(const std::string &name) {
+    assets::Material *currentAssetMaterial = getMaterial(name);
+
+    if (!currentAssetMaterial) {
+        return nullptr;
+    }
+
+    auto currentMaterial = currentAssetMaterial->getMaterial();
+    auto material = new ::Material(*currentMaterial);
+    auto assetMaterial = addMaterial(material);
+
+    return assetMaterial;
 }

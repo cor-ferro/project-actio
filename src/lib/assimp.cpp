@@ -88,10 +88,10 @@ namespace libAi {
             return std::move(material);
         }
 
-        Texture diffuseMap = Texture::Empty(Texture::Type::Diffuse, 155);
-        Texture specularMap = Texture::Empty(Texture::Type::Specular, 155);
-        Texture heightMap = Texture::Empty(Texture::Type::Height, 155);
-        Texture normalMap = Texture::Empty(Texture::Type::Normal, 155);
+        Texture diffuseMap = Texture::Empty(Texture::Type::Diffuse, 0);
+        Texture specularMap = Texture::Empty(Texture::Type::Specular, 255);
+        Texture heightMap = Texture::Empty(Texture::Type::Height, 0);
+        Texture normalMap = Texture::Empty(Texture::Type::Normal, 0);
 
         float shininessValue = 0.0f;
         bool isWireframe = false;
