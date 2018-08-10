@@ -8,27 +8,21 @@ Object3D::Object3D()
         , modelMatrix(mat4(1.0f))
         , needUpdateMatrix(true) {}
 
-Object3D::Object3D(const Object3D &other)
-        : position(other.position)
-        , scale(other.scale)
-        , rotation(other.rotation)
-        , quaternion(other.quaternion)
-        , modelMatrix(other.modelMatrix)
-        , needUpdateMatrix(other.needUpdateMatrix) {}
+Object3D::Object3D(const Object3D &other) = default;
 
-Object3D::~Object3D() {}
+Object3D::~Object3D() = default;
 
-void Object3D::rotate(quat rotateQuat) {
+void Object3D::rotate(const quat &rotateQuat) {
     modelMatrix = modelMatrix * glm::mat4_cast(rotateQuat);
 }
 
-void Object3D::setAffineTransform(vec3 &pos, quat &rot, vec3 &scale) {
+void Object3D::setAffineTransform(const vec3 &pos, const quat &rot, const vec3 &scale) {
     setPosition(pos);
     setQuaternion(rot);
     setScale(scale);
 }
 
-void Object3D::setPosition(vec3 vector) {
+void Object3D::setPosition(const vec3 &vector) {
     position = vector;
 
     needUpdateMatrix = true;
@@ -42,7 +36,11 @@ void Object3D::setPosition(float x, float y, float z) {
     needUpdateMatrix = true;
 }
 
-void Object3D::setScale(vec3 vector) {
+void Object3D::setPosition(const physx::PxVec3 &pos) {
+    setPosition(pos.x, pos.y, pos.z);
+}
+
+void Object3D::setScale(const vec3 &vector) {
     scale = vector;
 
     needUpdateMatrix = true;
@@ -58,13 +56,13 @@ void Object3D::setRotation(float x, float y, float z) {
     needUpdateMatrix = true;
 }
 
-void Object3D::setRotation(vec3 &vector) {
+void Object3D::setRotation(const vec3 &vector) {
     quat newQuat(vector);
     setQuaternion(newQuat);
     needUpdateMatrix = true;
 }
 
-void Object3D::setQuaternion(quat &newQuat) {
+void Object3D::setQuaternion(const quat &newQuat) {
     quaternion = newQuat;
     needUpdateMatrix = true;
 }
@@ -75,6 +73,15 @@ void Object3D::setQuaternion(float x, float y, float z, float w) {
     quaternion.y = y;
     quaternion.z = z;
     needUpdateMatrix = true;
+}
+
+void Object3D::setQuaternion(const physx::PxQuat &quat) {
+    setQuaternion(quat.x, quat.y, quat.z, quat.w);
+}
+
+void Object3D::setTransform(const physx::PxTransform &transform) {
+    setPosition(transform.p);
+    setQuaternion(transform.q);
 }
 
 void Object3D::rotate(float x, float y, float z, float angle) {
@@ -108,11 +115,11 @@ const mat4 &Object3D::getModelMatrix() {
     return modelMatrix;
 }
 
-vec3 Object3D::getPosition() {
+const vec3 &Object3D::getPosition() {
     return position;
 }
 
-vec3 Object3D::getScale() {
+const vec3 &Object3D::getScale() {
     return scale;
 }
 

@@ -248,6 +248,20 @@ namespace game {
 
         const profiling::ProfileTimings &getSystemProfiler() const;
 
+
+
+        /* ----- API v2 ----- */
+
+        ex::Entity createStaticObject();
+
+        ex::Entity createDynamicObject();
+
+        ex::Entity createTerrain();
+
+        void hideObject(ex::Entity &entity);
+
+        void showObject(ex::Entity &entity);
+
     private:
         std::string name;
 

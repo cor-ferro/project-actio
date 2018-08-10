@@ -5,6 +5,8 @@
 #ifndef ACTIO_COMPONENTS_PHYSIC_ENTITY_H
 #define ACTIO_COMPONENTS_PHYSIC_ENTITY_H
 
+#include <entityx/entityx.h>
+
 namespace game {
     namespace components {
         namespace ex = entityx;
@@ -15,7 +17,7 @@ namespace game {
                 Weapon,
                 WeaponProjectile,
                 StaticObject,
-
+                DynamicObject,
                 Other
             };
 
@@ -25,7 +27,7 @@ namespace game {
             PhysicEntity() : type(Other) {}
 
             PhysicEntity(Type type) : type(type) {}
-            PhysicEntity(Type type, ex::Entity entity) : type(type), entity(entity) {}
+            PhysicEntity(Type type, ex::Entity entity) : type(type), entity(entity) {} // @todo: remove entity reference
         };
     }
 }

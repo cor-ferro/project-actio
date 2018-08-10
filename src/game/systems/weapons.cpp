@@ -49,7 +49,7 @@ namespace game {
 
                     auto handler = static_cast<WeaponHandler *>(weapon.get());
 
-                    strategy->handler->onWeaponFire(world, handler);
+//                    strategy->handler->onWeaponFire(world, handler);
                 }
 
                 firedWeapons.pop();

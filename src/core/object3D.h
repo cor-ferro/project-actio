@@ -5,49 +5,75 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <foundation/PxTransform.h>
+#include <foundation/PxVec3.h>
+#include <foundation/PxQuat.h>
 #include "../lib/console.h"
 #include "../lib/types.h"
 #include <math.h>
 
-struct Object3D {
-	Object3D();
-	Object3D(const Object3D& other);
-	~Object3D();
+class Object3D {
+public:
+    Object3D();
 
-	vec3 getPosition();
-	vec3 getScale();
+    Object3D(const Object3D &other);
 
-	void rotate(quat rotateQuat);
-	void setAffineTransform(vec3 &pos, quat &rot, vec3 &scale);
-	void setPosition(vec3 vec);
-	void setScale(vec3 vec);
-	void setScale(float s);
-	void setPosition(float x, float y, float z);
-	void setQuaternion(quat& newQuat);
-	void setQuaternion(float x, float y, float z, float w);
-	void setRotation(vec3& vector);
-	void setRotation(float x, float y, float z);
+    ~Object3D();
 
-	void rotate(vec3 vector, float angle);
-	void rotate(float x, float y, float z, float angle);
-	void rotateX(float angle);
-	void rotateY(float angle);
-	void rotateZ(float angle);
+    const vec3 &getPosition();
 
-	const mat4& getModelMatrix();
-	void updateModelMatrix(bool force);
+    const vec3 &getScale();
 
-	vec3 position;
-	vec3 scale;
-	vec3 rotation;
-	quat quaternion;
+    void rotate(const quat &rotateQuat);
+
+    void setAffineTransform(const vec3 &pos, const quat &rot, const vec3 &scale);
+
+    void setPosition(const vec3 &vec);
+
+    void setScale(const vec3 &vec);
+
+    void setScale(float s);
+
+    void setPosition(float x, float y, float z);
+
+    void setPosition(const physx::PxVec3 &pos);
+
+    void setQuaternion(const quat &newQuat);
+
+    void setQuaternion(float x, float y, float z, float w);
+
+    void setQuaternion(const physx::PxQuat &quat);
+
+    void setRotation(const vec3 &vector);
+
+    void setRotation(float x, float y, float z);
+
+    void setTransform(const physx::PxTransform &transform);
+
+    void rotate(vec3 vector, float angle);
+
+    void rotate(float x, float y, float z, float angle);
+
+    void rotateX(float angle);
+
+    void rotateY(float angle);
+
+    void rotateZ(float angle);
+
+    const mat4 &getModelMatrix();
+
+    void updateModelMatrix(bool force);
+
+    vec3 position;
+    vec3 scale;
+    vec3 rotation;
+    quat quaternion;
 
 protected:
-	mat4 modelMatrix;
-	
+    mat4 modelMatrix;
 
 private:
-	bool needUpdateMatrix;
+    bool needUpdateMatrix;
 };
 
 #endif /* OBJECT_3D_H_ */

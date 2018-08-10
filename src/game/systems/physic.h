@@ -120,6 +120,12 @@ namespace game {
 
             void receive(const events::KeyPress &event);
 
+            void makeStatic(ex::Entity &entity);
+
+            void makeDynamic(ex::Entity &entity);
+
+            px::PxMaterial *findMaterial(const std::string &name);
+
             void onContact(const px::PxContactPairHeader &pairHeader, const px::PxContactPair *pairs, px::PxU32 nbPairs) override;
 
             void onTrigger(px::PxTriggerPair *pairs, px::PxU32 count) override;

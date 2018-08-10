@@ -425,4 +425,40 @@ namespace game {
 
         return assetMaterial->getMaterial();
     }
+
+
+
+    /* ----- API v2 ----- */
+
+    ex::Entity World::createStaticObject() {
+        ex::Entity object = entities.create();
+
+        object.assign<c::Transform>(vec3(0.0f));
+        physic->makeStatic(object);
+
+        return object;
+    }
+
+    ex::Entity World::createDynamicObject() {
+        ex::Entity object = entities.create();
+
+        object.assign<c::Transform>(vec3(0.0f));
+        physic->makeDynamic(object);
+
+        return object;
+    }
+
+    ex::Entity World::createTerrain() {
+        ex::Entity entity = entities.create();
+
+        return entity;
+    }
+
+    void World::hideObject(ex::Entity &entity) {
+        entity.assign<c::Renderable>();
+    }
+
+    void World::showObject(ex::Entity &entity) {
+        entity.remove<c::Renderable>();
+    }
 }

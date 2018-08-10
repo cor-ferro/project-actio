@@ -8,24 +8,46 @@
 
 namespace game {
     namespace components {
-        using namespace physx;
+        namespace px = physx;
 
         struct Physic {
-            explicit Physic(PxRigidDynamic *dynamic) :  dynamic(dynamic) {};
+            enum Type {
+                Character,
+                Weapon,
+                WeaponProjectile,
+                StaticObject,
+                DynamicObject,
+                Other
+            };
 
-            ~Physic() {
-                if (dynamic != nullptr) {
-                    dynamic->userData = nullptr;
-
-                    auto *scene = dynamic->getScene();
-
-                    if (scene == nullptr) return;
-
-                    scene->removeActor(*dynamic);
+            explicit Physic(px::PxRigidActor *actor) :  actor(actor) {
+                if (actor->is<px::PxRigidDynamic>()) {
+                    type = DynamicObject;
+                } else if (actor->is<px::PxRigidStatic>()) {
+                    type = StaticObject;
+                } else {
+                    type = Other;
                 }
             }
 
-            PxRigidDynamic *dynamic = nullptr;
+            explicit Physic(px::PxRigidActor *actor, Type type) : actor(actor), type(type) {}
+
+            ~Physic() {
+                if (actor != nullptr) {
+                    actor->userData = nullptr;
+
+                    auto *scene = actor->getScene();
+
+                    if (scene == nullptr) {
+                        return;
+                    }
+
+                    scene->removeActor(*actor);
+                }
+            }
+
+            px::PxRigidActor *actor = nullptr;
+            Type type = Other;
         };
     }
 }

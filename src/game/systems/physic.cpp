@@ -190,19 +190,29 @@ namespace game {
             }
 
             es.each<components::Physic, components::Transform>(
-                    [](
-                            ex::Entity entity,
-                            components::Physic &physic,
-                            components::Transform &transform
-                    ) {
-                        if (!physic.dynamic->isSleeping()) {
-                            px::PxTransform newTransform = physic.dynamic->getGlobalPose();
-
-                            transform.setPosition(newTransform.p.x, newTransform.p.y, newTransform.p.z);
-                            transform.setQuaternion(newTransform.q.x, newTransform.q.y, newTransform.q.z,
-                                                    newTransform.q.w);
-                        }
+                [](
+                    ex::Entity entity,
+                    components::Physic &physic,
+                    components::Transform &transform
+                ) {
+                    if (physic.actor == nullptr) {
+                        return;
                     }
+
+                    switch (physic.type) {
+                        case components::Physic::DynamicObject: {
+                            auto *actor = static_cast<px::PxRigidDynamic *>(physic.actor);
+                            if (actor->isSleeping()) {
+                                return;
+                            }
+                        }
+                        case components::Physic::StaticObject: {
+                            px::PxTransform newTransform = physic.actor->getGlobalPose();
+                            transform.setTransform(newTransform);
+                        }
+                        default: return;
+                    }
+                }
             );
 
 
@@ -237,16 +247,12 @@ namespace game {
 
                 const px::PxExtendedVec3 &pxPos = userControl.controller->getFootPosition();
 
-                if (!character.isJump && pxPos.y > 0.0f) {
+                if (!character.isJump && pxPos.y > 0.0) {
                     character.jump -= (gravity.y) * elapsedTime;
                     character.motion.y -= 0.1f * character.jump;
                 }
 
-                transform.setPosition(
-                        static_cast<float>(pxPos.x),
-                        static_cast<float>(pxPos.y),
-                        static_cast<float>(pxPos.z)
-                );
+                transform.setPosition(px::toVec3(pxPos));
             });
 
             if (drawDebug) {
@@ -540,8 +546,11 @@ namespace game {
             ex::ComponentHandle<components::Physic> physic = entity.component<components::Physic>();
 
             px::PxVec3 dir(event.direction.x, event.direction.y, event.direction.z);
-//                physic->dynamic->setLinearVelocity(dir * 1.0f);
-            physic->dynamic->addForce(dir, px::PxForceMode::eVELOCITY_CHANGE);
+
+            auto *actor = static_cast<px::PxRigidDynamic *>(physic->actor);
+
+//                actor->setLinearVelocity(dir * 1.0f);
+            actor->addForce(dir, px::PxForceMode::eVELOCITY_CHANGE);
         }
 
         void Physic::receive(const events::SetupControlled &event) {
@@ -599,6 +608,37 @@ namespace game {
             if (event.key == InputHandler::KEY_C) {
                 controlDir.y = event.action != 0 ? -0.15f : 0.0f;
             }
+        }
+
+        void Physic::makeStatic(ex::Entity &entity) {
+            auto transform = entity.component<components::Transform>();
+            px::PxMaterial *material = findMaterial("default");
+
+            px::PxRigidStatic* actor = gPhysics->createRigidStatic(px::PxTransform(PX_REST_VEC(transform->position)));
+            px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.0f, 1.0f, 1.0f), *material);
+
+            gScene->addActor(*actor);
+            entity.assign<c::Physic>(actor);
+        }
+
+        void Physic::makeDynamic(ex::Entity &entity) {
+            auto transform = entity.component<components::Transform>();
+            px::PxMaterial *material = findMaterial("default");
+
+            px::PxRigidDynamic* actor = gPhysics->createRigidDynamic(px::PxTransform(PX_REST_VEC(transform->position)));
+
+            // @todo: iterate over all meshes
+            px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.f, 1.0f, 1.0f), *material);
+
+            actor->setAngularVelocity(px::PxVec3(0.0f, 0.0f, 0.0f));
+            actor->setAngularDamping(0.f);
+
+            gScene->addActor(*actor);
+            entity.assign<c::Physic>(actor);
+        }
+
+        px::PxMaterial *Physic::findMaterial(const std::string &name) {
+            return pxMaterials.find(name)->second;
         }
 
         void Physic::onContact(const px::PxContactPairHeader &pairHeader, const px::PxContactPair *pairs, px::PxU32 nbPairs) {
