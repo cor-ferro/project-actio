@@ -34,6 +34,10 @@ public:
 
     std::map<Id, assets::Material> &getMaterials();
 
+    assets::Model *addModel(assets::Resource *resource, const std::unordered_map<std::string, std::string> &options);
+
+    assets::Model *addModel(const std::string &name, assets::Resource *resource, const std::unordered_map<std::string, std::string> &options);
+
     void addScript(assets::Resource *resource);
 
     assets::Texture *addTexture(assets::Resource *resource);
@@ -69,6 +73,7 @@ private:
 
     std::map<std::string, Id> textureNames; // @todo: use boost multi_index
     std::map<std::string, Id> materialNames; // @todo: use boost multi_index
+    std::map<std::string, Id> modelNames; // @todo: use boost multi_index
 
     Id idCounter = 1;
 

@@ -79,7 +79,46 @@ namespace assets {
     /**
      * -------------------- Model --------------------
      */
-    Model::Model(assets::Resource *resource) : BaseAsset(resource) {};
+    Model::Model(assets::Resource *resource, const Options &options) : BaseAsset(resource), options(options) {}
+
+    bool Model::hasOption(const std::string &key) const  {
+        return options.find(key) != options.end();
+    }
+
+    const std::string Model::getOption(const std::string &key) const {
+        auto it = options.find(key);
+
+        if (it != options.end()) {
+            return it->second;
+        }
+
+        return "";
+    }
+
+    void Model::init() {
+//            if (resource != nullptr) {
+//                unsigned int flags = aiProcessPreset_TargetRealtime_Quality
+//                                     | aiProcess_GenSmoothNormals
+//                                     | aiProcess_Triangulate
+//                                     | aiProcess_CalcTangentSpace;
+//
+//                bool flipUv = modelResource.getOption("flipUv") == "true";
+//
+//                if (flipUv) {
+//                    flags |= aiProcess_FlipUVs;
+//                }
+//
+//                Assimp::Importer importer;
+//                const aiScene *scene = importer.ReadFile(modelResource.path, flags);
+//                const std::unique_ptr<Resource::Assimp> assimpResource(new Resource::Assimp(scene, modelResource.path));
+//
+//                if (scene) {
+//                    World::Character character = world->createCharacter(section.name, assimpResource.get());
+//
+//                    delete scene;
+//                }
+//            }
+    }
 
 
     /**

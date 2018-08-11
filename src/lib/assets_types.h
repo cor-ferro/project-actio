@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_map>
 #include "assets_resource.h"
 #include "path.h"
 #include "image_data.h"
@@ -57,7 +58,19 @@ namespace assets {
 
 
     class Model : BaseAsset {
-        explicit Model(assets::Resource *resource);
+    public:
+        typedef std::unordered_map<std::string, std::string> Options;
+
+        explicit Model(assets::Resource *resource, const Options &options);
+
+        void init();
+
+        bool hasOption(const std::string &key) const;
+
+        const std::string getOption(const std::string &key) const;
+
+    private:
+        Options options;
     };
 
 

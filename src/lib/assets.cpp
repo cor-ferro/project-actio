@@ -190,3 +190,28 @@ assets::Texture *Assets::getDefaultTexture(Texture &texture) {
         default: return getTexture("DefaultDiffuseTexture");
     }
 }
+
+assets::Model *Assets::addModel(assets::Resource *resource, const std::unordered_map<std::string, std::string> &options) {
+    return addModel("", resource, options);
+}
+
+assets::Model *Assets::addModel(const std::string &name, assets::Resource *resource, const std::unordered_map<std::string, std::string> &options) {
+    Id id = genId();
+
+    if (!name.empty()) {
+        auto it = modelNames.find(name);
+        if (it != modelNames.end()) {
+            console::warn("model %s already exists", name);
+            return nullptr;
+        }
+    }
+
+    modelNames.insert({name, id});
+    auto insert = models.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(resource, options));
+
+    if (insert.second) {
+        return &insert.first->second;
+    }
+
+    return nullptr;
+}
