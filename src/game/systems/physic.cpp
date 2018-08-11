@@ -700,7 +700,7 @@ namespace game {
         }
 
         px::PxRigidStatic *Physic::generateTerrain(const HeightMap &heightmap, const px::PxReal &width, const px::PxReal &height) {
-            px::PxHeightFieldSample samples[heightmap.size];
+            auto samples = new px::PxHeightFieldSample[heightmap.size];
 
             for (size_t i = 0; i < heightmap.size; i ++)
             {
@@ -739,6 +739,8 @@ namespace game {
                 console::warn("creating heightfield shape failed");
                 return nullptr;
             }
+
+            delete[] samples;
 
             gScene->addActor(*hfActor);
 
