@@ -34,18 +34,24 @@ public:
 
     void initData(Res width, Res height, Format format);
 
-    Res getWidth();
+    const Res getWidth();
 
-    Res getHeight();
+    const Res getHeight();
 
-    Format getFormat();
+    const Format getFormat();
+
+    const int getStride();
+
+    const size_t getLength();
 
 protected:
     RawData *data_ = nullptr;
+    size_t length = 0;
     Res width = 0;
     Res height = 0;
     size_t size = 0;
     Format format = 0;
+    int stride = 0;
 };
 
 #endif //ACTIO_IMAGE_DATA_H

@@ -25,6 +25,7 @@ static MeshId newMeshId() {
 
 enum MeshDrawType {
     Mesh_Draw_Triangle,
+    Mesh_Draw_Triangle_Strip,
     Mesh_Draw_Line,
     Mesh_Draw_Line_Loop,
     Mesh_Draw_Point

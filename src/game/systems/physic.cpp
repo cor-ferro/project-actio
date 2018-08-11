@@ -1,5 +1,6 @@
 #include "physic.h"
 #include "../world.h"
+#include <glm/gtc/random.hpp>
 
 namespace game {
     namespace systems {
@@ -49,6 +50,15 @@ namespace game {
 
             gControllerManager = PxCreateControllerManager(*gScene);
 
+            px::PxTolerancesScale scale;
+            px::PxCookingParams params(scale);
+            params.meshWeldTolerance = 0.001f;
+            params.meshPreprocessParams = px::PxMeshPreprocessingFlags(px::PxMeshPreprocessingFlag::eWELD_VERTICES);
+            params.buildGPUData = false; //Enable GRB data being produced in cooking.
+            cooking = PxCreateCooking(PX_PHYSICS_VERSION, *gFoundation, params);
+            if(!cooking)
+                console::err("PxCreateCooking failed!");
+
             pxMaterials.insert({"default", gPhysics->createMaterial(0.2f, 0.1f, 0.2f)});
 
             px::PxRigidStatic *groundPlane = PxCreatePlane(*gPhysics, px::PxPlane(0, 1, 0, 0),
@@ -88,6 +98,11 @@ namespace game {
             if (gScene != nullptr) {
                 gScene->release();
                 gScene = nullptr;
+            }
+
+            if (cooking != nullptr) {
+                cooking->release();
+                cooking = nullptr;
             }
 
             if (gPhysics != nullptr) {
@@ -663,6 +678,136 @@ namespace game {
 
         void Physic::onAdvance(const px::PxRigidBody *const *, const px::PxTransform *, const px::PxU32) {
             console::info("onAdvance");
+        }
+
+        HeightMap *Physic::createHeightMap(const std::shared_ptr<ImageData> &image) {
+            ImageData::RawData *data = image->get();
+            int width = image->getWidth();
+            int height = image->getHeight();
+            int step = image->getStride();
+
+            auto *heightmap = new HeightMap(width, height);
+
+            for (int i = 0; i < heightmap->size; i++) {
+                int r = data[(i*step)+0];
+                int g = data[(i*step)+1];
+                int b = data[(i*step)+2];
+
+                heightmap->values[i] = static_cast<px::PxI16>((r + g + b) / 3);
+            }
+
+            return heightmap;
+        }
+
+        px::PxRigidStatic *Physic::generateTerrain(const HeightMap &heightmap, const px::PxReal &width, const px::PxReal &height) {
+            px::PxHeightFieldSample samples[heightmap.size];
+
+            for (size_t i = 0; i < heightmap.size; i ++)
+            {
+                samples[i].height = heightmap.values[i];
+                samples[i].materialIndex0 = 2;
+                samples[i].materialIndex1 = 3;
+            }
+
+            px::PxHeightFieldDesc heightFieldDesc;
+            heightFieldDesc.nbColumns = heightmap.cols;
+            heightFieldDesc.nbRows = heightmap.rows;
+            heightFieldDesc.thickness = -10;
+            heightFieldDesc.convexEdgeThreshold = 3;
+            heightFieldDesc.samples.data = samples;
+            heightFieldDesc.samples.stride = sizeof(px::PxHeightFieldSample);
+
+            px::PxHeightField* pHeightField = cooking->createHeightField(heightFieldDesc, gPhysics->getPhysicsInsertionCallback());
+
+            if (!pHeightField) {
+                console::warn("failed create highfield");
+                return nullptr;
+            }
+
+            const px::PxReal heightScale = 0.01f;
+            const px::PxReal hfRowsScale = static_cast<px::PxReal>(height) / static_cast<px::PxReal>(heightmap.rows);
+            const px::PxReal hfColumnScale = static_cast<px::PxReal>(width) / static_cast<px::PxReal>(heightmap.cols);
+
+            px::PxTransform pose = px::PxTransform(px::PxIdentity);
+            pose.p.x = -(static_cast<px::PxReal>(heightmap.rows) * hfRowsScale / 2.0f);
+            pose.p.z = -(static_cast<px::PxReal>(heightmap.cols) * hfColumnScale / 2.0f);
+            px::PxRigidStatic* hfActor = gPhysics->createRigidStatic(pose);
+
+            px::PxHeightFieldGeometry hfGeom(pHeightField, px::PxMeshGeometryFlags(), heightScale, hfRowsScale, hfColumnScale);
+            px::PxShape* hfShape = px::PxRigidActorExt::createExclusiveShape(*hfActor, hfGeom, *findMaterial("default"));
+            if(!hfShape) {
+                console::warn("creating heightfield shape failed");
+                return nullptr;
+            }
+
+            gScene->addActor(*hfActor);
+
+            return hfActor;
+        }
+
+        Mesh *Physic::generateTerrainMesh(px::PxRigidStatic *actor, const HeightMap &heightmap) {
+            px::PxShape *shape;
+            actor->getShapes(&shape, 1);
+
+            physx::PxHeightFieldGeometry hfg;
+            shape->getHeightFieldGeometry(hfg);
+
+//            for(px::PxU32 i = 0; i < hfNumTris; i++)
+//            {
+//                indices[i*3+0] = src[i*3+0];
+//                indices[i*3+1] = src[i*3+2];
+//                indices[i*3+2] = src[i*3+1];
+//            }
+
+            Mesh *mesh = Mesh::Create();
+            mesh->geometry.allocVertices(heightmap.size);
+            mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
+//            mesh->setDrawType(Mesh_Draw_Triangle_Strip);
+
+            for(px::PxU32 y = 0; y < heightmap.rows; y++)
+            {
+                for(px::PxU32 x = 0; x < heightmap.cols; x++)
+                {
+                    Vertex vertex;
+                    vertex.Position = vec3(
+                        px::PxReal(x) * hfg.columnScale,
+                        heightmap.values[x + y * heightmap.cols] * hfg.heightScale,
+                        (px::PxReal(y)) * hfg.rowScale
+                    );
+
+                    vertex.Normal = vec3(0.0f, 1.0f, 0.0f);
+                    vertex.TexCoords = vec2(
+                            static_cast<float>(x) / heightmap.cols,
+                            1.0f - (static_cast<float>(y) / heightmap.rows)
+                    );
+
+                    mesh->geometry.addVertex(vertex);
+                }
+            }
+
+            px::PxU32 numTris = 0;
+            for(px::PxU32 j = 0; j < heightmap.rows - 1; j++)
+            {
+                for(px::PxU32 i = 0; i < heightmap.cols - 1; i++)
+                {
+                    mesh->geometry.addFace(
+                        (i + j * (heightmap.cols)),
+                        (i + (j+1) * (heightmap.cols)),
+                        (i + 1 + j * (heightmap.cols))
+                    );
+
+                    mesh->geometry.addFace(
+                        i + (j + 1) * (heightmap.cols),
+                        i + 1 + (j + 1) * (heightmap.cols),
+                        i + 1 + j * (heightmap.cols)
+                    );
+
+
+                    numTris+=2;
+                }
+            }
+
+            return mesh;
         }
     }
 }

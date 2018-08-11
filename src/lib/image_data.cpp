@@ -7,13 +7,15 @@ ImageData::ImageData(const ImageData &other) {
     height = other.height;
     size = other.size;
     format = other.format;
+    stride = other.stride;
 };
 
 ImageData::ImageData(RawData *data, Res width, Res height, Format format)
         : width(width)
         , height(height)
-        , format(format) {
-    auto dataSize = static_cast<size_t>(width * height * ImageData::componentSize(format));
+        , format(format)
+        , stride(ImageData::componentSize(format)) {
+    auto dataSize = static_cast<size_t>(width * height * stride);
 
     set(data, dataSize);
     calcSize();
@@ -29,6 +31,7 @@ bool ImageData::isReady() {
 
 
 void ImageData::calcSize() {
+    stride = ImageData::componentSize(format);
     size = width * height * sizeof(RawData);
 };
 
@@ -40,6 +43,7 @@ void ImageData::set(RawData *data, size_t size) {
         newData[i] = data[i];
     }
 
+    length = size;
     data_ = newData;
 };
 
@@ -60,15 +64,15 @@ void ImageData::initData(Res newWidth, Res newHeight, Format newFormat) {
     format = newFormat;
 }
 
-ImageData::Res ImageData::getWidth() {
+const ImageData::Res ImageData::getWidth() {
     return width;
 }
 
-ImageData::Res ImageData::getHeight() {
+const ImageData::Res ImageData::getHeight() {
     return height;
 }
 
-ImageData::Format ImageData::getFormat() {
+const ImageData::Format ImageData::getFormat() {
     return format;
 }
 
@@ -102,4 +106,12 @@ int ImageData::componentSize(Format format) {
             console::warn("unknown image format %s", format);
             return 3;
     }
+}
+
+const int ImageData::getStride() {
+    return stride;
+}
+
+const size_t ImageData::getLength() {
+    return length;
 }

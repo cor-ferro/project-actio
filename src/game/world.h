@@ -249,6 +249,7 @@ namespace game {
         const profiling::ProfileTimings &getSystemProfiler() const;
 
 
+        void generateBaseTerrain();
 
         /* ----- API v2 ----- */
 
@@ -256,7 +257,7 @@ namespace game {
 
         ex::Entity createDynamicObject();
 
-        ex::Entity createTerrain();
+        ex::Entity createTerrain(const std::shared_ptr<ImageData> &image);
 
         void hideObject(ex::Entity &entity);
 

@@ -122,6 +122,9 @@ namespace renderer {
                         case Mesh_Draw_Triangle:
                             primitiveType = GL_TRIANGLES;
                             break;
+                        case Mesh_Draw_Triangle_Strip:
+                            primitiveType = GL_TRIANGLE_STRIP_ADJACENCY;
+                            break;
                         case Mesh_Draw_Line:
                             primitiveType = GL_LINES;
                             break;

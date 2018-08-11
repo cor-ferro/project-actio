@@ -137,7 +137,12 @@ void Geometry::setVertices(std::vector<vec3> vertices) {
     }
 }
 
-void Geometry::addVertex(Vertex vertex) {
+void Geometry::addVertex(const Vertex &vertex) {
+    vertices_->push_back(vertex);
+    AddTotalCountVertices(1);
+}
+
+void Geometry::addVertex(const Vertex &&vertex) {
     vertices_->push_back(vertex);
     AddTotalCountVertices(1);
 }

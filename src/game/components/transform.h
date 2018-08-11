@@ -2,6 +2,7 @@
 #define GAME_COMPONENTS_TRANSFORM_H_
 
 #include <glm/glm.hpp>
+#include <foundation/PxTransform.h>
 #include "../../core/object3D.h"
 
 namespace game {
@@ -28,7 +29,11 @@ namespace game {
                 quaternion.w = newRotation[3];
 
                 scale = newScale;
-            };
+            }
+
+            Transform(const physx::PxTransform &transform) : Object3D() {
+                setPosition(transform.p);
+            }
         };
     }
 }

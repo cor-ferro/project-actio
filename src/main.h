@@ -16,8 +16,6 @@
 #include <list>
 #include <string>
 
-#include "glm/gtc/random.hpp"
-
 #include "app/app.h"
 #include "imgui_impl_glfw_gl3.h"
 

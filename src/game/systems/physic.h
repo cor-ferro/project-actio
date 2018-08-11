@@ -15,6 +15,7 @@
 #include "PxRigidDynamic.h"
 #include "PxShape.h"
 #include "PxPhysicsAPI.h"
+#include "cooking/PxCooking.h"
 #include "../components/physic.h"
 #include "../components/transform.h"
 #include "../components/controlled.h"
@@ -30,8 +31,11 @@
 #include "../components/character.h"
 #include "../components/user_control.h"
 #include "../components/physic_entity.h"
-#include "../../core/geometry_primitive.h"
+#include "../../core/mesh.h"
+#include "../../core/geometry.h"
+#include "../../core/vertex.h"
 #include "../../lib/console.h"
+#include "../../lib/image_data.h"
 #include "../context.h"
 #include "base.h"
 
@@ -39,6 +43,24 @@
 
 namespace game {
     class World;
+
+    struct HeightMap {
+        explicit HeightMap(const physx::PxU32 &cols, const physx::PxU32 &rows)
+            : cols(cols)
+            , rows(rows)
+            , size(cols * rows)
+            , values(new physx::PxI16[cols * rows])
+        {}
+
+        ~HeightMap() {
+            delete []values;
+        }
+
+        physx::PxI16 *values = nullptr;
+        physx::PxU32 cols;
+        physx::PxU32 rows;
+        size_t size;
+    };
 
     namespace systems {
         namespace ex = entityx;
@@ -124,6 +146,12 @@ namespace game {
 
             void makeDynamic(ex::Entity &entity);
 
+            HeightMap *createHeightMap(const std::shared_ptr<ImageData> &image);
+
+            px::PxRigidStatic *generateTerrain(const HeightMap &heightmap, const px::PxReal &width, const px::PxReal &height);
+
+            Mesh *generateTerrainMesh(px::PxRigidStatic *actor, const HeightMap &heightmap);
+
             px::PxMaterial *findMaterial(const std::string &name);
 
             void onContact(const px::PxContactPairHeader &pairHeader, const px::PxContactPair *pairs, px::PxU32 nbPairs) override;
@@ -149,6 +177,7 @@ namespace game {
 //            PxCudaContextManager* cudaContextManager = nullptr;
             px::PxScene *gScene = nullptr;
             px::PxControllerManager *gControllerManager = nullptr;
+            px::PxCooking *cooking = nullptr;
             std::unordered_map<std::string, px::PxMaterial *> pxMaterials;
 
             px::PxVec3 controlDir;

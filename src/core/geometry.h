@@ -71,7 +71,9 @@ struct Geometry {
 
     void setVertices(std::vector<vec3> vertices);
 
-    void addVertex(Vertex vertex);
+    void addVertex(const Vertex &vertex);
+
+    void addVertex(const Vertex &&vertex);
 
     void addVertex(float x, float y, float z);
 

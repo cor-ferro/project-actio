@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
     }
 
     world->load();
+    world->generateBaseTerrain();
 
     bool renderExec = true;
 

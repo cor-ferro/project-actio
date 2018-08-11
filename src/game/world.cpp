@@ -426,6 +426,15 @@ namespace game {
         return assetMaterial->getMaterial();
     }
 
+    void World::generateBaseTerrain() {
+        assets::Texture *texture = assets->getTexture("terrain");
+
+        if (texture != nullptr) {
+            ex::Entity baseTerrain = createTerrain(texture->getImage());
+            showObject(baseTerrain);
+            events.emit<events::RenderSetupModel>(baseTerrain);
+        }
+    }
 
 
     /* ----- API v2 ----- */
@@ -448,17 +457,28 @@ namespace game {
         return object;
     }
 
-    ex::Entity World::createTerrain() {
-        ex::Entity entity = entities.create();
+    ex::Entity World::createTerrain(const std::shared_ptr<ImageData> &image) {
+        ex::Entity terrain = entities.create();
 
-        return entity;
+        game::HeightMap *heightmap = physic->createHeightMap(image);
+        physx::PxRigidStatic *terrainActor = physic->generateTerrain(*heightmap, 50.0f, 50.0f);
+
+        Mesh *mesh = physic->generateTerrainMesh(terrainActor, *heightmap);
+        mesh->material = findMaterial("terrain");
+
+        terrain.assign<c::Model>(mesh);
+        terrain.assign<c::Transform>(terrainActor->getGlobalPose());
+
+        delete heightmap;
+
+        return terrain;
     }
 
     void World::hideObject(ex::Entity &entity) {
-        entity.assign<c::Renderable>();
+        entity.remove<c::Renderable>();
     }
 
     void World::showObject(ex::Entity &entity) {
-        entity.remove<c::Renderable>();
+        entity.assign<c::Renderable>();
     }
 }
