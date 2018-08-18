@@ -37,6 +37,7 @@
 #include "../../lib/console.h"
 #include "../../lib/image_data.h"
 #include "../context.h"
+#include "../world_object.h"
 #include "base.h"
 
 #define PX_REST_VEC(vec) px::PxVec3(vec.x, vec.y, vec.z)
@@ -116,8 +117,6 @@ namespace game {
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
-            void add();
-
             void setDrawDebug(bool value);
 
             void drawDebugBuffer(ex::EventManager &events);
@@ -125,6 +124,14 @@ namespace game {
             void setSceneGravity(vec3 value);
 
             px::PxRigidDynamic *createDynamic(const px::PxTransform &t, const px::PxGeometry &geometry, const px::PxVec3 &velocity);
+
+            void spawn(game::WorldObject *object);
+
+            void remove(game::WorldObject *object);
+
+            void makeStatic(game::WorldObject *object);
+
+            void makeDynamic(game::WorldObject *object);
 
             void wave(vec3 position, vec3 direction);
 
@@ -141,10 +148,6 @@ namespace game {
             void receive(const events::SetupControlled &event);
 
             void receive(const events::KeyPress &event);
-
-            void makeStatic(ex::Entity &entity);
-
-            void makeDynamic(ex::Entity &entity);
 
             HeightMap *createHeightMap(const std::shared_ptr<ImageData> &image);
 
@@ -187,7 +190,7 @@ namespace game {
 
             std::stack<std::pair<px::PxActor *, px::PxActor *>> contactedActors;
 
-            bool drawDebug = false;
+            bool drawDebug = true;
             bool isFirstFrame = true;
         };
     }

@@ -190,6 +190,12 @@ namespace game {
     void World::destroy() {
         unloadScripts();
 
+        for (auto &it : objects) {
+            delete it.second;
+        }
+
+        objects.erase(objects.begin(), objects.end());
+
         entities.reset();
 
         console::info("world %s destroyed", name);
@@ -329,14 +335,15 @@ namespace game {
         return entity;
     }
 
-    void World::spawn(game::WorldObject &object) {
-        vec3 position = vec3(0.0f);
+    void World::spawn(game::WorldObject *object) {
+        vec3 position = object->transform->getPosition();
         spawn(object, position);
     }
 
-    void World::spawn(game::WorldObject &object, vec3 &position) {
-        object.transform->setPosition(position);
-        events.emit<events::RenderSetupModel>(object.getEntity());
+    void World::spawn(game::WorldObject *object, const vec3 &position) {
+        object->transform->setPosition(position);
+        physic->spawn(object);
+        events.emit<events::RenderSetupModel>(object->getEntity());
     }
 
     void World::setPhysicsDebug(bool value) {
@@ -439,22 +446,54 @@ namespace game {
 
     /* ----- API v2 ----- */
 
-    ex::Entity World::createStaticObject() {
-        ex::Entity object = entities.create();
+    game::WorldObject *World::createObject() {
+        createObject(vec3(0.0f));
+    }
 
-        object.assign<c::Transform>(vec3(0.0f));
+    game::WorldObject *World::createObject(const glm::vec3 &pos) {
+        ex::Entity entity = entities.create();
+        auto object = new game::WorldObject(entity);
+        object->setPosition(pos);
+
+        objects.insert({ object->getId(), object });
+
+        return object;
+    }
+
+    game::WorldObject *World::createStaticObject() {
+        createStaticObject(vec3(0.0f));
+    }
+
+    game::WorldObject *World::createDynamicObject() {
+        createDynamicObject(vec3(0.0f));
+    }
+
+    game::WorldObject *World::createStaticObject(const glm::vec3 &pos) {
+        auto *object = createObject(pos);
         physic->makeStatic(object);
 
         return object;
     }
 
-    ex::Entity World::createDynamicObject() {
-        ex::Entity object = entities.create();
-
-        object.assign<c::Transform>(vec3(0.0f));
+    game::WorldObject *World::createDynamicObject(const glm::vec3 &pos) {
+        auto *object = createObject(pos);
         physic->makeDynamic(object);
 
         return object;
+    }
+
+    void World::destroyObject(game::WorldObject *object) {
+        if (object != nullptr) {
+            game::WorldObject::Id objectId = object->getId();
+
+            auto it = objects.find(objectId);
+            if (it != objects.end()) {
+                objects.erase(it);
+            }
+
+            delete object;
+            object = nullptr;
+        }
     }
 
     ex::Entity World::createTerrain(const std::shared_ptr<ImageData> &image) {

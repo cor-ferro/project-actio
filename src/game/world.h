@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include <glm/glm.hpp>
 #include <entityx/entityx.h>
 #include "context.h"
@@ -232,9 +233,9 @@ namespace game {
 
         ex::Entity createEntity(Mesh *mesh);
 
-        void spawn(game::WorldObject &object);
+        void spawn(game::WorldObject *object);
 
-        void spawn(game::WorldObject &object, vec3 &position);
+        void spawn(game::WorldObject *object, const vec3 &position);
 
         Character getUserControlCharacter();
 
@@ -253,9 +254,19 @@ namespace game {
 
         /* ----- API v2 ----- */
 
-        ex::Entity createStaticObject();
+        game::WorldObject *createObject();
 
-        ex::Entity createDynamicObject();
+        game::WorldObject *createObject(const glm::vec3 &pos);
+
+        game::WorldObject *createStaticObject();
+
+        game::WorldObject *createDynamicObject();
+
+        game::WorldObject *createStaticObject(const glm::vec3 &pos);
+
+        game::WorldObject *createDynamicObject(const glm::vec3 &pos);
+
+        void destroyObject(game::WorldObject *object);
 
         ex::Entity createTerrain(const std::shared_ptr<ImageData> &image);
 
@@ -270,6 +281,8 @@ namespace game {
         std::shared_ptr<game::systems::Camera> camera = nullptr;
         std::shared_ptr<game::systems::Weapons> weapons = nullptr;
         std::shared_ptr<game::systems::Render> renderer = nullptr;
+
+        std::map<game::WorldObject::Id, game::WorldObject*> objects;
 
         InputHandler *input1 = nullptr;
         InputHandler *input2 = nullptr;

@@ -74,11 +74,21 @@ namespace game {
 
             WorldObject createObject(ex::Entity &entity);
 
-            void spawnObject(WorldObject &object, vec3 position);
+            void spawnObject(WorldObject *object);
+
+            void spawnObject(WorldObject *object, const vec3 &position);
 
             Material createMaterial();
 
             void findMaterial(const std::string &name);
+
+            game::WorldObject *createStaticObject();
+
+            game::WorldObject *createDynamicObject();
+
+            game::WorldObject *createStaticObject(const vec3 &position);
+
+            game::WorldObject *createDynamicObject(const vec3 &position);
 
             World *world = nullptr;
         };

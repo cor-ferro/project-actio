@@ -275,16 +275,6 @@ namespace game {
             }
         }
 
-        void Physic::add() {
-            px::PxRigidDynamic *ball = createDynamic(
-                    px::PxTransform(px::PxVec3(0, 20, 0)),
-                    px::PxSphereGeometry(3),
-                    px::PxVec3(0, -25, -5)
-            );
-            px::PxRigidBodyExt::updateMassAndInertia(*ball, 1000.0f);
-            gScene->addActor(*ball);
-        }
-
         void Physic::setDrawDebug(bool value) {
             drawDebug = value;
 
@@ -579,15 +569,15 @@ namespace game {
 
             px::PxCapsuleControllerDesc cDesc;
 
-            cDesc.height = 1.0f;
+            cDesc.height = 2.0f;
             cDesc.radius = scaledRadius.y;
             cDesc.upDirection = px::PxVec3(0.0f, 1.0f, 0.0f);
             cDesc.material = pxMaterials["default"];
-            cDesc.position = px::PxExtendedVec3(0.0f, cDesc.height, 0.0f);
+            cDesc.position = px::PxExtendedVec3(0.0f, 1.0f + cDesc.height, 0.0f);
             cDesc.slopeLimit = 0.1f;
             cDesc.contactOffset = 0.01f;
             cDesc.stepOffset = 0.1f;
-            cDesc.scaleCoeff = 0.9f;
+            cDesc.scaleCoeff = 1.0f;
             cDesc.climbingMode = px::PxCapsuleClimbingMode::eEASY;
             cDesc.invisibleWallHeight = 0.0f;
             cDesc.maxJumpHeight = 0.0f;
@@ -595,7 +585,6 @@ namespace game {
 
             auto *mController = static_cast<px::PxCapsuleController *>(gControllerManager->createController(cDesc));
 
-//                entity.assign<components::Controlled>(mController);
             entity.assign<components::UserControl>(mController);
         }
 
@@ -625,7 +614,23 @@ namespace game {
             }
         }
 
-        void Physic::makeStatic(ex::Entity &entity) {
+        void Physic::spawn(game::WorldObject *object) {
+            auto handle = object->getComponent<c::Physic>();
+            if (handle) {
+                handle->actor->setGlobalPose(px::PxTransform(PX_REST_VEC(object->transform->position)));
+                gScene->addActor(*handle->actor);
+            }
+        }
+
+        void Physic::remove(game::WorldObject *object) {
+            auto handle = object->getComponent<c::Physic>();
+            if (handle) {
+                gScene->removeActor(*handle->actor);
+            }
+        }
+
+        void Physic::makeStatic(game::WorldObject *object) {
+            ex::Entity entity = object->getEntity();
             auto transform = entity.component<components::Transform>();
             px::PxMaterial *material = findMaterial("default");
 
@@ -636,19 +641,20 @@ namespace game {
             entity.assign<c::Physic>(actor);
         }
 
-        void Physic::makeDynamic(ex::Entity &entity) {
-            auto transform = entity.component<components::Transform>();
-            px::PxMaterial *material = findMaterial("default");
+        void Physic::makeDynamic(game::WorldObject *object) {
+            ex::Entity entity = object->getEntity();
+            auto transform = object->getComponent<components::Transform>();
 
+            px::PxMaterial *material = findMaterial("default");
             px::PxRigidDynamic* actor = gPhysics->createRigidDynamic(px::PxTransform(PX_REST_VEC(transform->position)));
 
             // @todo: iterate over all meshes
             px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.f, 1.0f, 1.0f), *material);
 
             actor->setAngularVelocity(px::PxVec3(0.0f, 0.0f, 0.0f));
-            actor->setAngularDamping(0.f);
+            actor->setAngularDamping(0.0f);
+            px::PxRigidBodyExt::updateMassAndInertia(*actor, 100.0f);
 
-            gScene->addActor(*actor);
             entity.assign<c::Physic>(actor);
         }
 

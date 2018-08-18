@@ -12,6 +12,14 @@ namespace game {
         return entity_;
     }
 
+    WorldObject::~WorldObject() {
+        entity_.destroy();
+    }
+
+    const WorldObject::Id WorldObject::getId() {
+        return entity_.id();
+    }
+
     void WorldObject::rotate(vec3 vector, float angle) {
         transform->rotate(vector, angle);
     }
@@ -35,4 +43,5 @@ namespace game {
     void WorldObject::setQuaternion(const glm::quat &quat) {
         transform->setQuaternion(quat);
     }
+
 }

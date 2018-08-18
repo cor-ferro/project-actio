@@ -16,7 +16,11 @@ namespace game {
 
     class WorldObject {
     public:
+        typedef ex::Entity::Id Id;
+
         explicit WorldObject(ex::Entity &fromEntity);
+
+        ~WorldObject();
 
         ex::Entity getEntity() const;
 
@@ -31,6 +35,18 @@ namespace game {
         void setScale(const float &x, const float &y, const float &z);
 
         void setQuaternion(const glm::quat &quat);
+
+        const Id getId();
+
+        template <class C>
+        bool hasComponent() {
+            return entity_.has_component<C>();
+        }
+
+        template <class C>
+        inline entityx::ComponentHandle<C> getComponent() {
+            return entity_.component<C>();
+        }
 
         ex::ComponentHandle<c::Transform> transform;
     protected:

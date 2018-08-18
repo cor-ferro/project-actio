@@ -49,7 +49,11 @@ namespace game {
         return object;
     }
 
-    void Script::WorldLib::spawnObject(WorldObject &object, vec3 position) {
+    void Script::WorldLib::spawnObject(WorldObject *object) {
+        world->spawn(object);
+    }
+
+    void Script::WorldLib::spawnObject(WorldObject *object, const vec3 &position) {
         world->spawn(object, position);
     }
 
@@ -61,6 +65,22 @@ namespace game {
 
     void Script::WorldLib::findMaterial(const std::string &name) {
 //        return world->findMaterial(name);
+    }
+
+    game::WorldObject *Script::WorldLib::createStaticObject() {
+        return world->createStaticObject();
+    }
+
+    game::WorldObject *Script::WorldLib::createDynamicObject() {
+        return world->createDynamicObject();
+    }
+
+    game::WorldObject *Script::WorldLib::createStaticObject(const vec3 &position) {
+        return world->createStaticObject(position);
+    }
+
+    game::WorldObject *Script::WorldLib::createDynamicObject(const vec3 &position) {
+        return world->createDynamicObject(position);
     }
 
 
@@ -448,8 +468,13 @@ namespace game {
                     .addFunction("createMaterial", &Script::WorldLib::createMaterial)
                     .addFunction("createMesh", static_cast<Mesh *(game::Script::WorldLib::*)()>(&Script::WorldLib::createMesh))
                     .addFunction("createMeshWithMaterial", static_cast<Mesh* (game::Script::WorldLib::*)(const std::string &)>(&Script::WorldLib::createMesh))
-                    .addFunction("spawnObject", &Script::WorldLib::spawnObject)
+                    .addFunction("spawnObject", static_cast<void (game::Script::WorldLib::*)(game::WorldObject*)>(&Script::WorldLib::spawnObject))
+                    .addFunction("spawnObjectAt", static_cast<void (game::Script::WorldLib::*)(game::WorldObject*, const glm::vec3&)>(&Script::WorldLib::spawnObject))
                     .addFunction("createObject", &Script::WorldLib::createObject)
+                    .addFunction("createStaticObject", static_cast<game::WorldObject *(game::Script::WorldLib::*)()>(&Script::WorldLib::createStaticObject))
+                    .addFunction("createDynamicObject", static_cast<game::WorldObject *(game::Script::WorldLib::*)()>(&Script::WorldLib::createDynamicObject))
+                    .addFunction("createStaticObjectAt", static_cast<game::WorldObject *(game::Script::WorldLib::*)(const glm::vec3&)>(&Script::WorldLib::createStaticObject))
+                    .addFunction("createDynamicObjectAt", static_cast<game::WorldObject *(game::Script::WorldLib::*)(const glm::vec3&)>(&Script::WorldLib::createDynamicObject))
                     .addFunction("findMaterial", &Script::WorldLib::findMaterial)
                 .endClass()
                 .addVariable("world", worldApi)
