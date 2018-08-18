@@ -12,17 +12,17 @@ namespace game {
         struct LightDirectionalDesc {
             LightDirectionalDesc() = default;
 
-            vec3 ambient;
-            vec3 diffuse;
-            vec3 specular;
-            vec3 position;
-            vec3 direction;
+            vec3 ambient = vec3(0.0f);
+            vec3 diffuse = vec3(0.0f);
+            vec3 specular = vec3(0.0f);
+            vec3 position = vec3(0.0f);
+            vec3 direction = vec3(0.0f);
 
-            void setAmbient(vec3 value) {  }
-            void setDiffuse(vec3 value) {  }
-            void setSpecular(vec3 value) {  }
-            void setPosition(vec3 value) {  }
-            void setDirection(vec3 value) {  }
+            void setAmbient(const vec3 &value) { ambient = value; }
+            void setDiffuse(const vec3 &value) { diffuse = value; }
+            void setSpecular(const vec3 &value) { specular = value; }
+            void setPosition(const vec3 &value) { position = value; }
+            void setDirection(const vec3 &value) { direction = value; }
 
             vec3 getAmbient() const { return ambient; }
             vec3 getDiffuse() const { return diffuse; }
