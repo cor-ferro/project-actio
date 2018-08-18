@@ -25,7 +25,6 @@ using ozz::animation::offline::RawSkeleton;
 
 extern memory::PoolAllocator * modelsAllocator;
 
-typedef std::size_t ModelId;
 typedef std::string ModelName;
 typedef std::vector<Mesh*> ModelMeshes;
 
