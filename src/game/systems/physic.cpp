@@ -766,21 +766,23 @@ namespace game {
             mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 //            mesh->setDrawType(Mesh_Draw_Triangle_Strip);
 
+            const float textureMultiplier = 4.0f;
+
             for(px::PxU32 y = 0; y < heightmap.rows; y++)
             {
                 for(px::PxU32 x = 0; x < heightmap.cols; x++)
                 {
                     Vertex vertex;
                     vertex.Position = vec3(
-                        px::PxReal(x) * hfg.columnScale,
+                        (px::PxReal(y)) * hfg.rowScale,
                         heightmap.values[x + y * heightmap.cols] * hfg.heightScale,
-                        (px::PxReal(y)) * hfg.rowScale
+                        px::PxReal(x) * hfg.columnScale
                     );
 
                     vertex.Normal = vec3(0.0f, 1.0f, 0.0f);
                     vertex.TexCoords = vec2(
-                            static_cast<float>(x) / heightmap.cols,
-                            1.0f - (static_cast<float>(y) / heightmap.rows)
+                            (static_cast<float>(x) / heightmap.cols) * textureMultiplier,
+                            (1.0f - (static_cast<float>(y) / heightmap.rows)) * textureMultiplier
                     );
 
                     mesh->geometry.addVertex(vertex);
