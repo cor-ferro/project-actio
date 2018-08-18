@@ -32,7 +32,15 @@ public:
 
     void setScale(const vec3 &vec);
 
-    void setScale(float s);
+    void setScale(const float &s);
+
+    void setScale(const float &x, const float &y, const float &z);
+
+    void scaleX(const float &s);
+
+    void scaleY(const float &s);
+
+    void scaleZ(const float &s);
 
     void setPosition(float x, float y, float z);
 

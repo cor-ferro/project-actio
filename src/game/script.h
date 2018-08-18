@@ -51,7 +51,7 @@ namespace game {
 
         void evalStart();
 
-        void evalUpdate();
+        void evalUpdate(const float &dt);
 
         const std::string getName();
 
@@ -85,6 +85,12 @@ namespace game {
 
         struct Math1Lib {
             static float clamp(const float &v, const float &a, const float &b);
+
+            static float sin(const float &v);
+
+            static float cos(const float &v);
+
+            static float abs(const float &v);
 
             static float PI;
             static float TWO_PI;
@@ -130,11 +136,15 @@ namespace game {
 
             static void createCone(Mesh *mesh, float radius, float height, uint radialSegments, uint heightSegments);
 
-            static void createCylinder(Mesh *mesh, float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments);
+            static void
+            createCylinder(Mesh *mesh, float radiusTop, float radiusBottom, float height, uint radialSegments,
+                           uint heightSegments);
 
-            static void createRing(Mesh *mesh, float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments);
+            static void
+            createRing(Mesh *mesh, float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments);
 
-            static void createTorus(Mesh *mesh, float radius, float tube, uint radialSegments, uint tubularSegments, float arc);
+            static void
+            createTorus(Mesh *mesh, float radius, float tube, uint radialSegments, uint tubularSegments, float arc);
 
             static void createOctahedron(Mesh *mesh, float radius);
 

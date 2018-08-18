@@ -22,13 +22,15 @@ namespace game {
 
         void rotate(vec3 vector, float angle);
 
-        void setPosition(glm::vec3 position);
+        void setPosition(const glm::vec3 &position);
 
-        void setRotation(glm::quat quat);
+        void setRotation(const glm::quat &quat);
 
-        void setScale(glm::vec3 scale);
+        void setScale(const glm::vec3 &scale);
 
-        void setQuaternion(glm::quat quat);
+        void setScale(const float &x, const float &y, const float &z);
+
+        void setQuaternion(const glm::quat &quat);
 
         ex::ComponentHandle<c::Transform> transform;
     protected:

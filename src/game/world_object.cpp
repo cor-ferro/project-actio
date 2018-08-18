@@ -16,19 +16,23 @@ namespace game {
         transform->rotate(vector, angle);
     }
 
-    void WorldObject::setPosition(glm::vec3 position) {
+    void WorldObject::setPosition(const glm::vec3 &position) {
         transform->setPosition(position);
     }
 
-    void WorldObject::setRotation(glm::quat quat) {
+    void WorldObject::setRotation(const glm::quat &quat) {
         transform->rotate(quat);
     }
 
-    void WorldObject::setScale(glm::vec3 scale) {
+    void WorldObject::setScale(const glm::vec3 &scale) {
         transform->setScale(scale);
     }
 
-    void WorldObject::setQuaternion(glm::quat quat) {
+    void WorldObject::setScale(const float &x, const float &y, const float &z) {
+        transform->setScale(x, y, z);
+    }
+
+    void WorldObject::setQuaternion(const glm::quat &quat) {
         transform->setQuaternion(quat);
     }
 }

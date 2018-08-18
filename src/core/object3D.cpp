@@ -46,8 +46,16 @@ void Object3D::setScale(const vec3 &vector) {
     needUpdateMatrix = true;
 }
 
-void Object3D::setScale(float s) {
+void Object3D::setScale(const float &s) {
     setScale(vec3(s));
+}
+
+void Object3D::setScale(const float &x, const float &y, const float &z) {
+    scale.x = x;
+    scale.y = y;
+    scale.z = z;
+
+    needUpdateMatrix = true;
 }
 
 void Object3D::setRotation(float x, float y, float z) {
@@ -124,7 +132,7 @@ const vec3 &Object3D::getScale() {
 }
 
 void Object3D::updateModelMatrix(bool force = false) {
-    if (true) { // todo@ add logic with needUpdateMatrix and force
+    if (needUpdateMatrix || force) {
         // console::info("update matrix");
         modelMatrix = mat4(1.0f);
 
@@ -135,4 +143,19 @@ void Object3D::updateModelMatrix(bool force = false) {
         modelMatrix = translateMatrix * rotateMatrix * scaleMatrix;
         needUpdateMatrix = false;
     }
+}
+
+void Object3D::scaleX(const float &s) {
+    scale.x = s;
+    needUpdateMatrix = true;
+}
+
+void Object3D::scaleY(const float &s) {
+    scale.y = s;
+    needUpdateMatrix = true;
+}
+
+void Object3D::scaleZ(const float &s) {
+    scale.z = s;
+    needUpdateMatrix = true;
 }

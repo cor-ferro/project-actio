@@ -70,6 +70,19 @@ namespace game {
         return glm::clamp(v, a, b);
     }
 
+    float Script::Math1Lib::sin(const float &v) {
+        return glm::sin(v);
+    }
+
+    float Script::Math1Lib::cos(const float &v) {
+        return glm::cos(v);
+    }
+
+    float Script::Math1Lib::abs(const float &v) {
+        return glm::abs(v);
+    }
+
+
     float Script::Math1Lib::PI = glm::pi<float>();
     float Script::Math1Lib::TWO_PI = glm::two_pi<float>();
     float Script::Math1Lib::HALF_PI = glm::half_pi<float>();
@@ -264,7 +277,7 @@ namespace game {
         fn();
     }
 
-    void Script::evalUpdate() {
+    void Script::evalUpdate(const float &dt) {
         if (!inited) return;
         if (isFirstCall) {
             evalStart();
@@ -273,7 +286,7 @@ namespace game {
 
         luabridge::LuaRef fn = luabridge::getGlobal(L, "update");
 
-        fn();
+        fn(dt);
     }
 
     const std::string Script::getName() {
@@ -365,7 +378,9 @@ namespace game {
                 .addFunction("rotate", &WorldObject::rotate)
                 .addFunction("setPosition", &WorldObject::setPosition)
                 .addFunction("setRotation", &WorldObject::setRotation)
-                .addFunction("setScale", &WorldObject::setScale)
+                .addFunction("setScaleV", static_cast<void (game::WorldObject::*)(const glm::vec3 &)>(&game::WorldObject::setScale))
+                .addFunction("setScale3f", static_cast<void (game::WorldObject::*)(const float&, const float&, const float&)>(&game::WorldObject::setScale))
+
                 .addFunction("setQuaternion", &WorldObject::setQuaternion)
             .endClass()
             .beginClass<ex::Entity>("Entity")
@@ -444,6 +459,9 @@ namespace game {
         luabridge::getGlobalNamespace(L)
             .beginNamespace("math1")
                 .addFunction("clamp", &Math1Lib::clamp)
+                .addFunction("sin", &Math1Lib::sin)
+                .addFunction("cos", &Math1Lib::cos)
+                .addFunction("abs", &Math1Lib::abs)
                 .addVariable("PI", &math.PI, false)
                 .addVariable("TWO_PI", &math.TWO_PI, false)
                 .addVariable("HALF_PI", &math.HALF_PI, false)

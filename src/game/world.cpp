@@ -91,7 +91,7 @@ namespace game {
         PROFILE(systemProfiler, "BallShot", systems.update<game::systems::BallShot>(dt));
 
         for (auto &script : scripts) {
-            PROFILE(systemProfiler, script->getName(), script->evalUpdate());
+            PROFILE(systemProfiler, script->getName(), script->evalUpdate(static_cast<float>(dt)));
         }
 
         // post update
