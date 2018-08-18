@@ -464,7 +464,7 @@ namespace game {
         physx::PxRigidStatic *terrainActor = physic->generateTerrain(*heightmap, 50.0f, 50.0f);
 
         Mesh *mesh = physic->generateTerrainMesh(terrainActor, *heightmap);
-        mesh->material = findMaterial("terrain");
+        mesh->material = findMaterial("ground");
 
         terrain.assign<c::Model>(mesh);
         terrain.assign<c::Transform>(terrainActor->getGlobalPose());
