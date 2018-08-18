@@ -754,17 +754,9 @@ namespace game {
             physx::PxHeightFieldGeometry hfg;
             shape->getHeightFieldGeometry(hfg);
 
-//            for(px::PxU32 i = 0; i < hfNumTris; i++)
-//            {
-//                indices[i*3+0] = src[i*3+0];
-//                indices[i*3+1] = src[i*3+2];
-//                indices[i*3+2] = src[i*3+1];
-//            }
-
             Mesh *mesh = Mesh::Create();
             mesh->geometry.allocVertices(heightmap.size);
             mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
-//            mesh->setDrawType(Mesh_Draw_Triangle_Strip);
 
             const float textureMultiplier = 4.0f;
 
