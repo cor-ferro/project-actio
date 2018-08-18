@@ -103,23 +103,6 @@ namespace game {
         PROFILE(systemProfiler, "Render", systems.update<systems::Render>(dt));
     }
 
-    inline void World::spawn(Character *character) {
-        spawn(character, vec3(0.0f, 0.0f, 0.0f));
-    }
-
-    void World::spawn(Character *character, vec3 position) {
-        entityx::Entity entity = entities.create();
-        entity.assign<components::State>();
-        entity.assign<components::Renderable>();
-        entity.assign<components::Transform>(position);
-
-        // WorldObject<Character> object;
-        // object.object = character;
-        // object.position = position;
-        // object.frozen = false;
-        // object.hidden = false;
-    }
-
     World::Character World::createCharacter(Resource::Assimp *resource) {
         return createCharacter("", resource);
     }
@@ -145,22 +128,6 @@ namespace game {
         entity.destroy();
     }
 
-    World::StaticObject World::createStaticObject(Mesh *mesh) {
-        ex::Entity entity = entities.create();
-
-        World::StaticObject object(entity, mesh);
-
-        events.emit<game::events::RenderSetupModel>(entity);
-
-        return object;
-    }
-
-    void World::removeStaticObject(World::StaticObject object) {
-        ex::Entity entity = object.getEntity();
-
-        entity.destroy();
-    }
-
     bool World::registerWeapon(strategy::WeaponsBase *system) {
         return weapons->registerStrategy(system);
     }
@@ -177,14 +144,6 @@ namespace game {
         World::Weapon weapon(entity, description, strategy);
 
         return weapon;
-    }
-
-    void World::add() {
-
-    }
-
-    void World::remove() {
-
     }
 
     void World::destroy() {
@@ -299,13 +258,6 @@ namespace game {
         entity.assign<components::Transform>(lightDescription.position);
 
         events.emit<events::LightAdd>(entity);
-    }
-
-    void World::removeLight(entityx::Entity entity) {
-        // @todo: check light components
-        events.emit<events::LightRemove>(entity);
-
-        entity.destroy();
     }
 
     void World::setLightDebug(bool value) {

@@ -131,22 +131,6 @@ namespace game {
                     }
 
                     importer.FreeScene();
-
-                } else if (geometryType == "box") {
-                    vec3 size;
-                    section.getFieldVec<vec3>("Size", size, vec3(1.0f));
-
-                    Mesh *mesh = Mesh::Create();
-                    GeometryPrimitive::Box(mesh->geometry, size.x, size.y, size.z);
-                    mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
-
-                    World::StaticObject object = world->createStaticObject(mesh);
-
-                    object.transform->setAffineTransform(pos, rotQuat, scale);
-
-                    if (isPhysic) {
-                        world->events.emit<events::PhysicCreateBox>(object.getEntity(), size.x, size.y, size.z);
-                    }
                 }
             }
         }

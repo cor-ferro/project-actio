@@ -117,26 +117,6 @@ namespace game {
             explicit Character() = default;
         };
 
-
-        /**
-         * Static object of world, i.e. tree, wall...
-         */
-        class StaticObject : public WorldObject {
-        public:
-            StaticObject(ex::Entity &fromEntity, Mesh *mesh) : WorldObject(fromEntity) {
-                model = entity_.assign<c::Model>(mesh);
-            }
-
-            StaticObject(const StaticObject &other) = default;
-
-            StaticObject &operator=(const StaticObject &other) = default;
-
-            ex::ComponentHandle<c::Model> model;
-        private:
-            explicit StaticObject() = default;
-        };
-
-
         /**
          * Base weapon of world
          */
@@ -167,15 +147,13 @@ namespace game {
 
         void destroyRenderer();
 
-        void setupInput(InputHandler *ih);
-
         void setup();
 
         void destroy();
 
-        inline void spawn(Character *character);
+        void update(ex::TimeDelta dt);
 
-        void spawn(Character *character, glm::vec3 pos);
+        void render(ex::TimeDelta dt);
 
         World::Character createCharacter(Resource::Assimp *resource);
 
@@ -183,31 +161,15 @@ namespace game {
 
         void removeCharacter(World::Character character);
 
-        World::StaticObject createStaticObject(Mesh *mesh);
-
-        void removeStaticObject(World::StaticObject object);
-
         bool registerWeapon(strategy::WeaponsBase *system);
 
         World::Weapon createWeapon();
-
-        void add();
-
-        void remove();
 
         void addLight(desc::LightPointDesc);
 
         void addLight(desc::LightDirectionalDesc);
 
         void addLight(desc::LightSpotDesc);
-
-        void removeLight(entityx::Entity entity);
-
-        void start(ex::TimeDelta dt);
-
-        void update(ex::TimeDelta dt);
-
-        void render(ex::TimeDelta dt);
 
         void setPhysicsDebug(bool value);
 
@@ -233,10 +195,6 @@ namespace game {
 
         ex::Entity createEntity(Mesh *mesh);
 
-        void spawn(game::WorldObject *object);
-
-        void spawn(game::WorldObject *object, const vec3 &position);
-
         Character getUserControlCharacter();
 
         game::Context &getContext();
@@ -248,7 +206,6 @@ namespace game {
         void unload();
 
         const profiling::ProfileTimings &getSystemProfiler() const;
-
 
         void generateBaseTerrain();
 
@@ -273,6 +230,10 @@ namespace game {
         void hideObject(ex::Entity &entity);
 
         void showObject(ex::Entity &entity);
+
+        void spawn(game::WorldObject *object);
+
+        void spawn(game::WorldObject *object, const vec3 &position);
 
     private:
         std::string name;
