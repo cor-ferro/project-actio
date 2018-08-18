@@ -13,7 +13,7 @@ namespace Helpers
         meshHelper->material->setWireframe(true);
         meshHelper->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
-        addMesh(meshHelper);
+        add(meshHelper);
     }
 
     PointLight::~PointLight() {}

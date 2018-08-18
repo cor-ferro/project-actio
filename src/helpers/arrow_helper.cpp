@@ -12,8 +12,8 @@ namespace Helpers
 		line = Mesh::Create();
 		cone = Mesh::Create();
 
-		addMesh(line);
-		addMesh(cone);
+		add(line);
+		add(cone);
 
 		line->setDrawType(Mesh_Draw_Line);
 

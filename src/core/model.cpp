@@ -36,18 +36,18 @@ Model::Node::Node(aiNode *node) : name(std::string(node->mName.C_Str())) {
 	transformation = libAi::toNativeType(node->mTransformation);
 }
 
-void Model::Node::addMesh(Mesh *mesh) {
+void Model::Node::add(Mesh *mesh) {
 	meshes.push_back(mesh);
 }
 
-void Model::Node::addNode(Model::Node *node) {
+void Model::Node::add(Model::Node *node) {
 	children.push_back(node);
 }
 
 Model::Model() : name_() {}
 
 Model::Model(Mesh *mesh) : Model() {
-	addMesh(mesh);
+	add(mesh);
 }
 
 Model::Model(Model::File &modelFile) : Model() {
@@ -67,7 +67,7 @@ const ModelName &Model::getName() {
 	return name_;
 }
 
-void Model::setName(std::string newName) {
+void Model::setName(const std::string &newName) {
 	name_ = newName;
 }
 
@@ -85,15 +85,15 @@ void Model::freeNodes() {
 	nodes_.clear();
 }
 
-void Model::addMesh(Mesh *mesh) {
+void Model::add(Mesh *mesh) {
 	meshes_.push_back(mesh);
 }
 
-void Model::addNode(Node *node) {
+void Model::add(Node *node) {
 	nodes_.insert({node->name, std::shared_ptr<Node>(node)});
 }
 
-void Model::removeMesh(Mesh *mesh) {
+void Model::remove(Mesh *mesh) {
 	ModelMeshes::iterator it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const Mesh *ptr) {
 		return ptr == mesh;
 	});
@@ -103,7 +103,7 @@ void Model::removeMesh(Mesh *mesh) {
 	}
 }
 
-void Model::removeNode(Node *node) {
+void Model::remove(Node *node) {
 	auto it = nodes_.find(node->name);
 
 	if (it != nodes_.end()) {
@@ -113,10 +113,6 @@ void Model::removeNode(Node *node) {
 
 const ModelMeshes &Model::getMeshes() {
 	return meshes_;
-}
-
-Mesh *Model::getFirstMesh() {
-	return meshes_.at(0);
 }
 
 Mesh *Model::getMesh() {

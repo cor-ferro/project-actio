@@ -29,12 +29,6 @@ typedef std::size_t ModelId;
 typedef std::string ModelName;
 typedef std::vector<Mesh*> ModelMeshes;
 
-static size_t idCounter = 0;
-static ModelId newId()
-{
-	return ++idCounter;
-}
-
 typedef std::string ModelName;
 typedef std::vector<Mesh *> ModelMeshes;
 
@@ -59,13 +53,13 @@ struct Model {
 	struct Node {
 		Node();
 
-		Node(aiNode *node);
+		explicit Node(aiNode *node);
 
 		~Node();
 
-		void addMesh(Mesh *mesh);
+		void add(Mesh *mesh);
 
-		void addNode(Node *node);
+		void add(Node *node);
 
 		std::string name;
 		std::vector<Node *> children;
@@ -75,27 +69,25 @@ struct Model {
 
 	Model();
 
-	Model(File &modelFile);
+	explicit Model(File &modelFile);
 
-	Model(Mesh *mesh);
+	explicit Model(Mesh *mesh);
 
 	~Model();
 
 	const ModelName &getName();
 
-	void setName(std::string newName);
+	void setName(const std::string &newName);
 
-	void addMesh(Mesh *mesh);
+	void add(Mesh *mesh);
 
-	void addNode(Node *node);
+	void add(Node *node);
 
-	void removeMesh(Mesh *mesh);
+	void remove(Mesh *mesh);
 
-	void removeNode(Node *node);
+	void remove(Node *node);
 
 	const ModelMeshes &getMeshes();
-
-	Mesh *getFirstMesh();
 
 	Mesh *getMesh();
 

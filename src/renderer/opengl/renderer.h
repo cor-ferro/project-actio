@@ -9,7 +9,6 @@
 #include "../base_renderer.h"
 #include "../shader_content.h"
 #include "../../lib/console.h"
-#include "../../scenes/scene.h"
 #include "../../cameras/camera.h"
 #include "../../lib/types.h"
 #include "../../core/geometry.h"
@@ -79,8 +78,6 @@ namespace renderer {
         void destroyTextureHandle(renderer::Opengl::TextureHandle *handle);
 
         void drawModels(entityx::EntityManager &es);
-
-        void forwardRender(Scene *scene);
 
         void deferredRender(entityx::EntityManager &es);
 

@@ -7,7 +7,6 @@
 #include <boost/signals2.hpp>
 #include "../game/components/model.h"
 #include "../game/components/transform.h"
-#include "../scenes/scene.h"
 #include "../lib/path.h"
 #include "stats.h"
 #include "renderer_types.h"

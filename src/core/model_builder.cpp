@@ -60,7 +60,7 @@ void ModelBuilder::FromAi(Model *model, Resource::Assimp *assimpResource, Assets
                     }
                 }
 
-                modelNode->addMesh(modelMesh);
+                modelNode->add(modelMesh);
             }
 
             setupNodes.push(modelNode);
@@ -79,10 +79,10 @@ void ModelBuilder::FromAi(Model *model, Resource::Assimp *assimpResource, Assets
 
     Model::Node* setupNode;
     while (setupNodes.pop(setupNode)) {
-        model->addNode(setupNode);
+        model->add(setupNode);
 
         for (auto &mesh : setupNode->meshes) {
-            model->addMesh(mesh);
+            model->add(mesh);
         }
     }
 

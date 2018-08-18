@@ -15,7 +15,7 @@ namespace Helpers
 
 			Mesh * boxMesh = createBoxMesh(meshBbox);
 
-			addMesh(boxMesh);
+			add(boxMesh);
 		}
 	}
 

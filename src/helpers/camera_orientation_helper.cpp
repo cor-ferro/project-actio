@@ -13,9 +13,9 @@ namespace Helpers
 		lineLeft = Mesh::Create();
 		lineForward = Mesh::Create();
 
-		addMesh(lineUp);
-		addMesh(lineLeft);
-		addMesh(lineForward);
+		add(lineUp);
+		add(lineLeft);
+		add(lineForward);
 
 		lineUp->setDrawType(Mesh_Draw_Line);
 		lineLeft->setDrawType(Mesh_Draw_Line);
