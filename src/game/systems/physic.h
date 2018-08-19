@@ -106,6 +106,13 @@ namespace game {
                 Scene_Gravity
             };
 
+            enum class GeometryType {
+                Box,
+                Capsule,
+                Sphere,
+                TriangleMesh
+            };
+
             explicit Physic(World *world);
 
             ~Physic() override;
@@ -132,7 +139,7 @@ namespace game {
 
             void makeStatic(game::WorldObject *object);
 
-            void makeDynamic(game::WorldObject *object);
+            void makeDynamic(game::WorldObject *object, const GeometryType &geometryType = GeometryType::Box);
 
             void wave(vec3 position, vec3 direction);
 

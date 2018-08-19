@@ -640,7 +640,7 @@ namespace game {
             entity.assign<c::Physic>(actor);
         }
 
-        void Physic::makeDynamic(game::WorldObject *object) {
+        void Physic::makeDynamic(game::WorldObject *object, const GeometryType &geometryType) {
             ex::Entity entity = object->getEntity();
             auto transform = object->getComponent<c::Transform>();
 
@@ -648,7 +648,25 @@ namespace game {
             px::PxRigidDynamic* actor = gPhysics->createRigidDynamic(px::PxTransform(PX_REST_VEC(transform->position)));
 
             // @todo: iterate over all meshes
-            px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.f, 1.0f, 1.0f), *material);
+            switch (geometryType) {
+                case GeometryType::Box: {
+                    const px::PxBoxGeometry pxGeometry(1.0f, 1.0f, 1.0f);
+                    px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
+                    break;
+                }
+                case GeometryType::Sphere: {
+                    const px::PxSphereGeometry pxGeometry(1.0f);
+                    px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
+                    break;
+                }
+                case GeometryType::Capsule: {
+                    const px::PxCapsuleGeometry pxGeometry(1.0f, 1.0f);
+                    px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
+                    break;
+                }
+                default:
+                    px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.0f, 1.0f, 1.0f), *material);
+            }
 
             actor->setAngularVelocity(px::PxVec3(0.0f, 0.0f, 0.0f));
             actor->setAngularDamping(0.0f);
