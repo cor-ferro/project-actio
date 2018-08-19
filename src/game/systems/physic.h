@@ -20,6 +20,7 @@
 #include "../components/transform.h"
 #include "../components/controlled.h"
 #include "../components/model.h"
+#include "../components/meshes.h"
 #include "../events/physic_create.h"
 #include "../events/physic_force.h"
 #include "../events/setup_controlled.h"
@@ -145,7 +146,9 @@ namespace game {
 
             void receive(const events::PhysicForce &event);
 
-            void receive(const events::SetupControlled &event);
+            void receive(const events::MakeControlled &event);
+
+            void receive(const events::MakeUnControlled &event);
 
             void receive(const events::KeyPress &event);
 
@@ -153,7 +156,7 @@ namespace game {
 
             px::PxRigidStatic *generateTerrain(const HeightMap &heightmap, const px::PxReal &width, const px::PxReal &height);
 
-            Mesh *generateTerrainMesh(px::PxRigidStatic *actor, const HeightMap &heightmap);
+            std::shared_ptr<Mesh> generateTerrainMesh(px::PxRigidStatic *actor, const HeightMap &heightmap);
 
             px::PxMaterial *findMaterial(const std::string &name);
 
@@ -184,9 +187,9 @@ namespace game {
             std::unordered_map<std::string, px::PxMaterial *> pxMaterials;
 
             px::PxVec3 controlDir;
-            entityx::Entity debugLinesEntity;
-            entityx::Entity debugTrianglesEntity;
-            entityx::Entity debugPointsEntity;
+            game::WorldObject *debugLinesObject;
+            game::WorldObject *debugTrianglesObject;
+            game::WorldObject *debugPointsObject;
 
             std::stack<std::pair<px::PxActor *, px::PxActor *>> contactedActors;
 

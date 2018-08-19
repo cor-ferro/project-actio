@@ -5,6 +5,7 @@
 #include <vector>
 #include <chrono>
 #include <stack>
+#include <memory>
 #include "entityx/entityx.h"
 #include "../components/base.h"
 #include "../components/renderable.h"
@@ -72,17 +73,11 @@ namespace game {
 
             void receive(const ex::EntityDestroyedEvent &event);
 
-            void addModel(Model *model);
+            void addMesh(std::shared_ptr<Mesh> &mesh);
 
-            void updateModel(Model *model);
+            void updateMesh(std::shared_ptr<Mesh> &mesh);
 
-            void removeModel(Model *model);
-
-            void addMesh(Mesh *mesh);
-
-            void updateMesh(Mesh *mesh);
-
-            void removeMesh(Mesh *mesh);
+            void removeMesh(std::shared_ptr<Mesh> &mesh);
 
             void addShader(assets::Shader *asset);
 
@@ -105,7 +100,7 @@ namespace game {
 
             renderer::Renderer *renderer = nullptr;
 
-            std::stack<std::tuple<MeshAction, Mesh *>> setupMesh;
+            std::stack<std::tuple<MeshAction, std::shared_ptr<Mesh>>> setupMesh;
             std::stack<assets::Shader*> setupShaders;
             std::stack<std::pair<assets::Texture*, TextureAction>> setupTextures;
             std::stack<assets::Material*> setupMaterials;

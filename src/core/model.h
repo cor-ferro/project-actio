@@ -5,23 +5,14 @@
 #include <unordered_map>
 #include <map>
 #include <vector>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <ozz/base/memory/allocator.h>
-#include <ozz/animation/runtime/skeleton.h>
-#include <ozz/animation/offline/raw_skeleton.h>
-#include <ozz/animation/offline/skeleton_builder.h>
+#include "model.h"
 #include "mesh.h"
 #include "../lib/image_loader.h"
 #include "../lib/comparators.h"
 #include "../resources/resources.h"
-#include "../animation/animation.h"
-#include "../animation/process.h"
+#include "../math/Box3.h"
 
 #include "../memory/poolallocator.h"
-
-using ozz::animation::offline::RawSkeleton;
 
 extern memory::PoolAllocator * modelsAllocator;
 
@@ -35,19 +26,6 @@ class ModelBuilder;
 
 struct Model {
 	friend class ModelBuilder;
-
-	struct File {
-		File();
-
-		File(std::string filePath);
-
-		File(const File &other);
-
-		std::string name;
-		Resource::File file;
-		bool flipUv;
-		std::string animation;
-	};
 
 	struct Node {
 		Node();
@@ -67,8 +45,6 @@ struct Model {
 	};
 
 	Model();
-
-	explicit Model(File &modelFile);
 
 	explicit Model(Mesh *mesh);
 
@@ -90,7 +66,7 @@ struct Model {
 
 	Mesh *getMesh();
 
-	const int getNodesCount();
+	const size_t getNodesCount();
 
 	float height();
 

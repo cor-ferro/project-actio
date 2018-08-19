@@ -8,11 +8,16 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
 #include "assets_resource.h"
 #include "path.h"
 #include "image_data.h"
 #include "text_set.h"
 #include "../core/material.h"
+#include "../core/model.h"
+#include "../core/skin.h"
+#include "../core/mesh.h"
 
 namespace assets {
     class BaseAsset {
@@ -21,13 +26,14 @@ namespace assets {
 
         ~BaseAsset();
 
+        const assets::Resource *getResource();
+
     protected:
         bool isLoaded = false;
         assets::Resource *resource = nullptr;
     };
 
-
-    class Script : BaseAsset {
+    class Script : public BaseAsset {
     public:
         explicit Script(assets::Resource *resource);
 
@@ -39,8 +45,7 @@ namespace assets {
         Resource::Content content;
     };
 
-
-    class Shader : BaseAsset {
+    class Shader : public BaseAsset {
     public:
         explicit Shader(assets::Resource *resource);
 
@@ -56,25 +61,7 @@ namespace assets {
         TextSet data;
     };
 
-
-    class Model : BaseAsset {
-    public:
-        typedef std::unordered_map<std::string, std::string> Options;
-
-        explicit Model(assets::Resource *resource, const Options &options);
-
-        void init();
-
-        bool hasOption(const std::string &key) const;
-
-        const std::string getOption(const std::string &key) const;
-
-    private:
-        Options options;
-    };
-
-
-    class Texture : BaseAsset {
+    class Texture : public BaseAsset {
     public:
         explicit Texture(assets::Resource *resource);
 
@@ -84,8 +71,7 @@ namespace assets {
         std::shared_ptr<ImageData> image;
     };
 
-
-    class Material : BaseAsset {
+    class Material : public BaseAsset {
     public:
         explicit Material(::Material *material);
 
@@ -93,6 +79,48 @@ namespace assets {
 
     private:
         std::shared_ptr<::Material> material;
+
+        std::vector<std::shared_ptr<Texture>> textures;
+    };
+
+    class Model : public BaseAsset {
+    public:
+        typedef std::unordered_map<std::string, std::string> Options;
+
+        explicit Model(assets::Resource *resource, const Options &options);
+
+        ~Model();
+
+        void load();
+
+        bool hasOption(const std::string &key) const;
+
+        const std::string getOption(const std::string &key) const;
+
+        bool isLoaded();
+
+        void markLoaded();
+
+        void markUnLoaded();
+
+        const aiScene *getScene();
+
+        const ::Resource::Assimp *getAiResource();
+
+        void addMesh(std::shared_ptr<::Mesh> &mesh);
+
+        const std::vector<std::shared_ptr<::Mesh>> &getMeshes();
+
+    private:
+        Assimp::Importer importer;
+        const aiScene *scene = nullptr;
+        ::Resource::Assimp *assimpResource = nullptr;
+
+        bool loaded = false;
+        Options options;
+
+        std::vector<std::shared_ptr<Material>> materials;
+        std::vector<std::shared_ptr<::Mesh>> meshes;
     };
 }
 

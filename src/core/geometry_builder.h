@@ -1,13 +1,9 @@
-//
-// Created by demitriy on 4/8/18.
-//
-
-#ifndef ACTIO_GEOMETRY_PRIMITIVES_H
-#define ACTIO_GEOMETRY_PRIMITIVES_H
+#ifndef ACTIO_GEOMETRY_BUILDER_H
+#define ACTIO_GEOMETRY_BUILDER_H
 
 #include "geometry.h"
 
-struct GeometryPrimitive {
+struct GeometryBuilder {
     static void Box(Geometry&, float width = 1.0f, float height = 1.0f, float depth = 1.0f, int widthSegments = 1, int heightSegments = 1, int depthSegments = 1);
 
     static void Plane(Geometry&, uint width, uint height, uint widthSegments, uint heightSegments);
@@ -33,6 +29,8 @@ struct GeometryPrimitive {
     static void Quad2d(Geometry&);
 
     static void Lines(Geometry&, std::vector<vec3> lines);
+
+    static void FromAi(Geometry &geometry, const aiMesh *mesh);
 };
 
-#endif //ACTIO_GEOMETRY_PRIMITIVES_H
+#endif //ACTIO_GEOMETRY_BUILDER_H

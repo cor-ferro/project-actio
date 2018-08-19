@@ -10,7 +10,7 @@
 #include "../components/transform.h"
 #include "../events/render_setup_model.h"
 #include "../../core/mesh.h"
-#include "../../core/geometry_primitive.h"
+#include "../../core/geometry_builder.h"
 #include "../../lib/console.h"
 #include "base.h"
 
@@ -29,9 +29,6 @@ namespace game {
             explicit Sky(World *world);
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
-
-        private:
-            bool isFirstCall = false;
         };
     }
 }

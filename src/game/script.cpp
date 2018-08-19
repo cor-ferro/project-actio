@@ -24,11 +24,11 @@ namespace game {
         world->addLight(description);
     }
 
-    Mesh *Script::WorldLib::createMesh() {
+    std::shared_ptr<Mesh> Script::WorldLib::createMesh() {
         return Mesh::Create(); // @todo: create from factory
     }
 
-    Mesh *Script::WorldLib::createMesh(const std::string &materialName) {
+    std::shared_ptr<Mesh> Script::WorldLib::createMesh(const std::string &materialName) {
         std::shared_ptr<Material> material = world->findMaterial(materialName);
 
         if (material) {
@@ -37,10 +37,6 @@ namespace game {
             console::warn("material %s not found for mesh", materialName);
             return Mesh::Create();
         }
-    }
-
-    ex::Entity Script::WorldLib::createModelEntity(Mesh *mesh) {
-        return world->createEntity(mesh);
     }
 
     WorldObject Script::WorldLib::createObject(ex::Entity &entity) {
@@ -67,6 +63,10 @@ namespace game {
 //        return world->findMaterial(name);
     }
 
+    game::WorldObject *Script::WorldLib::createCharacterObject() {
+        return world->createCharacterObject();
+    }
+
     game::WorldObject *Script::WorldLib::createStaticObject() {
         return world->createStaticObject();
     }
@@ -83,6 +83,29 @@ namespace game {
         return world->createDynamicObject(position);
     }
 
+    assets::Model *Script::WorldLib::findModel(const std::string &name) {
+        return world->findAssetModel(name);
+    }
+
+    void Script::WorldLib::setObjectModel(game::WorldObject *object, assets::Model *asset) {
+        world->setObjectModel(object, asset);
+    }
+
+    void Script::WorldLib::showObject(game::WorldObject *object) {
+        world->showObject(object);
+    }
+
+    void Script::WorldLib::hideObject(game::WorldObject *object) {
+        world->hideObject(object);
+    }
+
+    void Script::WorldLib::makeControlled(game::WorldObject *object) {
+        world->makeControlled(object);
+    }
+
+    void Script::WorldLib::makeUnControlled(game::WorldObject *object) {
+        world->makeUnControlled(object);
+    }
 
     /* ----- Script math layer ----- */
 
@@ -161,57 +184,57 @@ namespace game {
 
     void Script::GeometryLib::createBox(Mesh *mesh, float width, float height) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Box(geometry, width, height, 1, 1, 1);
+        GeometryBuilder::Box(geometry, width, height, 1, 1, 1);
     }
 
     void Script::GeometryLib::createPlane(Mesh *mesh, uint width, uint height) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Plane(geometry, width, height, 1, 1);
+        GeometryBuilder::Plane(geometry, width, height, 1, 1);
     }
 
     void Script::GeometryLib::createSphere(Mesh *mesh, float radius, uint widthSegments, uint heightSegments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Sphere(geometry, radius, widthSegments, heightSegments, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+        GeometryBuilder::Sphere(geometry, radius, widthSegments, heightSegments, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
     }
 
     void Script::GeometryLib::createCircle(Mesh *mesh, float radius, uint segments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Circle(geometry, radius, segments, 0.0f, glm::two_pi<float>());
+        GeometryBuilder::Circle(geometry, radius, segments, 0.0f, glm::two_pi<float>());
     }
 
     void Script::GeometryLib::createCone(Mesh *mesh, float radius, float height, uint radialSegments, uint heightSegments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Cone(geometry, radius, height, radialSegments, heightSegments, true, 0.0f, glm::two_pi<float>());
+        GeometryBuilder::Cone(geometry, radius, height, radialSegments, heightSegments, true, 0.0f, glm::two_pi<float>());
     }
 
     void Script::GeometryLib::createCylinder(Mesh *mesh, float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Cylinder(geometry, radiusTop, radiusBottom, height, radialSegments, heightSegments, false, 0.0f, glm::two_pi<float>());
+        GeometryBuilder::Cylinder(geometry, radiusTop, radiusBottom, height, radialSegments, heightSegments, false, 0.0f, glm::two_pi<float>());
     }
 
     void Script::GeometryLib::createRing(Mesh *mesh, float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Ring(geometry, innerRadius, outerRadius, thetaSegments, phiSegments, 0.0f, glm::two_pi<float>());
+        GeometryBuilder::Ring(geometry, innerRadius, outerRadius, thetaSegments, phiSegments, 0.0f, glm::two_pi<float>());
     }
 
     void Script::GeometryLib::createTorus(Mesh *mesh, float radius, float tube, uint radialSegments, uint tubularSegments, float arc) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Torus(geometry, radius, tube, radialSegments, tubularSegments, arc);
+        GeometryBuilder::Torus(geometry, radius, tube, radialSegments, tubularSegments, arc);
     }
 
     void Script::GeometryLib::createOctahedron(Mesh *mesh, float radius) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Octahedron(geometry, radius);
+        GeometryBuilder::Octahedron(geometry, radius);
     }
 
     void Script::GeometryLib::createQuad2d(Mesh *mesh) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Quad2d(geometry);
+        GeometryBuilder::Quad2d(geometry);
     }
 
     void Script::GeometryLib::createLines(Mesh *mesh, std::vector<vec3> &lines) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryPrimitive::Lines(geometry, lines);
+        GeometryBuilder::Lines(geometry, lines);
     }
 
     struct Vec2Helper {
@@ -400,8 +423,9 @@ namespace game {
                 .addFunction("setRotation", &WorldObject::setRotation)
                 .addFunction("setScaleV", static_cast<void (game::WorldObject::*)(const glm::vec3 &)>(&game::WorldObject::setScale))
                 .addFunction("setScale3f", static_cast<void (game::WorldObject::*)(const float&, const float&, const float&)>(&game::WorldObject::setScale))
-
                 .addFunction("setQuaternion", &WorldObject::setQuaternion)
+            .endClass()
+            .beginClass<assets::Model>("AssetModel")
             .endClass()
             .beginClass<ex::Entity>("Entity")
             .endClass()
@@ -464,18 +488,24 @@ namespace game {
                     .addFunction("addDirectionalLight", &Script::WorldLib::addDirectionalLight)
                     .addFunction("addPointLight", &Script::WorldLib::addPointLight)
                     .addFunction("addSpotLight", &Script::WorldLib::addSpotLight)
-                    .addFunction("createModelEntity", &Script::WorldLib::createModelEntity)
                     .addFunction("createMaterial", &Script::WorldLib::createMaterial)
-                    .addFunction("createMesh", static_cast<Mesh *(game::Script::WorldLib::*)()>(&Script::WorldLib::createMesh))
-                    .addFunction("createMeshWithMaterial", static_cast<Mesh* (game::Script::WorldLib::*)(const std::string &)>(&Script::WorldLib::createMesh))
+//                    .addFunction("createMesh", static_cast<Mesh *(game::Script::WorldLib::*)()>(&Script::WorldLib::createMesh))
+//                    .addFunction("createMeshWithMaterial", static_cast<Mesh* (game::Script::WorldLib::*)(const std::string &)>(&Script::WorldLib::createMesh))
                     .addFunction("spawnObject", static_cast<void (game::Script::WorldLib::*)(game::WorldObject*)>(&Script::WorldLib::spawnObject))
                     .addFunction("spawnObjectAt", static_cast<void (game::Script::WorldLib::*)(game::WorldObject*, const glm::vec3&)>(&Script::WorldLib::spawnObject))
                     .addFunction("createObject", &Script::WorldLib::createObject)
+                    .addFunction("createCharacterObject", &Script::WorldLib::createCharacterObject)
                     .addFunction("createStaticObject", static_cast<game::WorldObject *(game::Script::WorldLib::*)()>(&Script::WorldLib::createStaticObject))
                     .addFunction("createDynamicObject", static_cast<game::WorldObject *(game::Script::WorldLib::*)()>(&Script::WorldLib::createDynamicObject))
                     .addFunction("createStaticObjectAt", static_cast<game::WorldObject *(game::Script::WorldLib::*)(const glm::vec3&)>(&Script::WorldLib::createStaticObject))
                     .addFunction("createDynamicObjectAt", static_cast<game::WorldObject *(game::Script::WorldLib::*)(const glm::vec3&)>(&Script::WorldLib::createDynamicObject))
                     .addFunction("findMaterial", &Script::WorldLib::findMaterial)
+                    .addFunction("findModel", &Script::WorldLib::findModel)
+                    .addFunction("setObjectModel", &Script::WorldLib::setObjectModel)
+                    .addFunction("showObject", &Script::WorldLib::showObject)
+                    .addFunction("hideObject", &Script::WorldLib::hideObject)
+                    .addFunction("makeControlled", &Script::WorldLib::makeControlled)
+                    .addFunction("makeUnControlled", &Script::WorldLib::makeUnControlled)
                 .endClass()
                 .addVariable("world", worldApi)
             .endNamespace()

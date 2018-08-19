@@ -10,8 +10,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "types.h"
 #include "console.h"
-#include "assets.h"
-#include "../core/material.h"
 
 namespace libAi {
     mat4 toNativeType(const aiMatrix4x4& aiMat);
@@ -21,8 +19,6 @@ namespace libAi {
     void print(const aiMatrix4x4& aiMat);
     void print(const aiVector3D& aiVec);
     void print(const aiQuaternion& aiQuat);
-
-    Material createMaterial(const aiMaterial *assimpMaterial, const Resource::Assimp *assimpResource, Assets *assets);
 }
 
 #endif /* LIB_ASSIMP_H_ */

@@ -4,7 +4,6 @@
 #include <glad/glad.h>
 
 #include <vector>
-#include <assimp/scene.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <glm/gtx/normal.hpp>
@@ -12,17 +11,15 @@
 #include "../lib/types.h"
 #include "../lib/console.h"
 #include "../lib/mem.h"
-#include "../lib/assimp.h"
 #include "../resources/resources.h"
 #include "../math/Box3.h"
 #include "../math/Sphere.h"
+#include "../renderer/handler.h"
 #include "vertex.h"
 
 typedef unsigned int MeshIndex;
 typedef std::vector<Vertex> GeometryVertices;
 typedef std::vector<MeshIndex> GeometryIndices;
-
-static size_t TotalCountVertices = 0;
 
 struct GeometryCone {
     float radiusTop;
@@ -43,8 +40,6 @@ struct Geometry {
 
     Geometry();
 
-    Geometry(aiMesh *mesh, const Resource::Assimp *assimpResource);
-
     Geometry(const Geometry &geometry);
 
     ~Geometry();
@@ -52,14 +47,6 @@ struct Geometry {
     void destroy();
 
     static int VertexSize() { return sizeof(Vertex); }
-
-    static void AddTotalCountVertices(size_t count) { TotalCountVertices += count; }
-
-    static void SubTotalCountVertices(size_t count) { TotalCountVertices -= count; }
-
-    static size_t GetTotalCountVertices() { return TotalCountVertices; }
-
-    void initFromAi(const aiMesh *mesh, const Resource::Assimp *assimpResource);
 
     GeometryVertices *getVertices();
 

@@ -6,6 +6,7 @@
 #define ACTIO_EVENTS_RENDER_SETUP_MODEL_H
 
 #include <entityx/entityx/Entity.h>
+#include "../world_object.h"
 #include "../../core/model.h"
 
 namespace game {
@@ -19,8 +20,12 @@ namespace game {
                 Update = 3
             };
 
-            RenderSetupModel(ex::Entity entity, Action action = Action::Add)
+            explicit RenderSetupModel(ex::Entity entity, Action action = Action::Add)
                 : entity(entity)
+                , action(action) {};
+
+            explicit RenderSetupModel(game::WorldObject *object, Action action = Action::Add)
+                : entity(object->getEntity())
                 , action(action) {};
 
             ex::Entity entity;

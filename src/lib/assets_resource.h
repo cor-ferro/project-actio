@@ -27,6 +27,8 @@ namespace assets {
 
         bool isLoaded();
 
+        const Path &getPath() const;
+
     protected:
         Path path;
         bool loaded = false;

@@ -22,7 +22,7 @@ extern "C" {
 #include "../core/material.h"
 #include "../lib/assets_types.h"
 #include "../lib/console.h"
-#include "../core/geometry_primitive.h"
+#include "../core/geometry_builder.h"
 #include "../core/mesh.h"
 #include "world_object.h"
 #include "context.h"
@@ -66,11 +66,9 @@ namespace game {
 
             void addSpotLight(desc::LightSpotDesc &description);
 
-            Mesh *createMesh();
+            std::shared_ptr<Mesh> createMesh();
 
-            Mesh *createMesh(const std::string &materialName);
-
-            ex::Entity createModelEntity(Mesh *mesh);
+            std::shared_ptr<Mesh> createMesh(const std::string &materialName);
 
             WorldObject createObject(ex::Entity &entity);
 
@@ -82,6 +80,12 @@ namespace game {
 
             void findMaterial(const std::string &name);
 
+            assets::Model *findModel(const std::string &name);
+
+            void setObjectModel(game::WorldObject *object, assets::Model *asset);
+
+            game::WorldObject *createCharacterObject();
+
             game::WorldObject *createStaticObject();
 
             game::WorldObject *createDynamicObject();
@@ -89,6 +93,14 @@ namespace game {
             game::WorldObject *createStaticObject(const vec3 &position);
 
             game::WorldObject *createDynamicObject(const vec3 &position);
+
+            void showObject(game::WorldObject *object);
+
+            void hideObject(game::WorldObject *object);
+
+            void makeControlled(game::WorldObject *object);
+
+            void makeUnControlled(game::WorldObject *object);
 
             World *world = nullptr;
         };

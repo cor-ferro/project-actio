@@ -2,7 +2,8 @@
 #include "../../game/components/camera.h"
 #include "../../game/components/skin.h"
 #include "../../game/components/transform.h"
-#include "../../core/geometry_primitive.h"
+#include "../../game/components/meshes.h"
+#include "../../core/geometry_builder.h"
 #include "../shader_description.h"
 #include "../texture.h"
 
@@ -43,9 +44,9 @@ namespace renderer {
         lightSphere = Mesh::Create();
         lightCylinder = Mesh::Create();
 
-        GeometryPrimitive::Quad2d(lightQuad->geometry);
-        GeometryPrimitive::Sphere(lightSphere->geometry, 1.0f, 64, 64, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
-        GeometryPrimitive::Cylinder(lightCylinder->geometry, 4.0f, 1.0f, 10.0f, 16, 16, false, 0.0f,
+        GeometryBuilder::Quad2d(lightQuad->geometry);
+        GeometryBuilder::Sphere(lightSphere->geometry, 1.0f, 64, 64, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+        GeometryBuilder::Cylinder(lightCylinder->geometry, 4.0f, 1.0f, 10.0f, 16, 16, false, 0.0f,
                                     glm::two_pi<float>());
 
         setupMesh(lightQuad);
@@ -332,6 +333,7 @@ namespace renderer {
 
     void OpenglRenderer::drawModels(entityx::EntityManager &es) {
         modelPipeline.use();
+
         es.each<components::Renderable, components::Transform, components::Model>([this](
                 ex::Entity entity,
                 components::Renderable &,
@@ -344,6 +346,29 @@ namespace renderer {
 
             const ModelMeshes &meshes = model.getMeshes();
             for (auto &mesh : meshes) {
+                if (skin) {
+                    renderFlags |= Mesh_Draw_Bones;
+                }
+
+                modelPipeline.setTransform(transform); // todo: pass pointer instead of copy
+                modelPipeline.draw(*mesh, renderFlags);
+
+                stats.increaseDrawCall();
+            }
+        });
+
+        es.each<components::Renderable, components::Transform, components::Meshes>([this](
+                ex::Entity entity,
+                components::Renderable &,
+                components::Transform &transform,
+                components::Meshes &meshes
+        ) {
+            entityx::ComponentHandle<components::Skin> skin = entity.component<components::Skin>();
+
+            uint renderFlags = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Material;
+
+            const std::vector<std::shared_ptr<Mesh>> items = meshes.items();
+            for (auto &mesh : items) {
                 if (skin) {
                     renderFlags |= Mesh_Draw_Bones;
                 }
@@ -384,25 +409,10 @@ namespace renderer {
 
         textureHandles.erase(textureHandles.begin(), textureHandles.end());
 
-        if (lightQuad != nullptr) {
-            Mesh::Destroy(lightQuad);
-            lightQuad = nullptr;
-        }
-
-        if (lightSphere != nullptr) {
-            Mesh::Destroy(lightSphere);
-            lightSphere = nullptr;
-        }
-
-        if (lightCylinder != nullptr) {
-            Mesh::Destroy(lightCylinder);
-            lightCylinder = nullptr;
-        }
-
         console::info("opengl renderer destroyed");
     }
 
-    void OpenglRenderer::updateMesh(Mesh *mesh) {
+    void OpenglRenderer::updateMesh(std::shared_ptr<Mesh> mesh) {
         if (mesh->geometry.renderHandle == nullptr) {
             return;
         }
@@ -429,7 +439,7 @@ namespace renderer {
         OpenglCheckErrors();
     };
 
-    void OpenglRenderer::destroyMesh(Mesh *mesh) {
+    void OpenglRenderer::destroyMesh(std::shared_ptr<Mesh> mesh) {
         if (mesh->geometry.renderHandle == nullptr) {
             return;
         }
@@ -497,8 +507,8 @@ namespace renderer {
         console::info("piplines inited");
     }
 
-    void OpenglRenderer::setupMesh(Mesh *mesh) {
-        if (mesh == nullptr) return;
+    void OpenglRenderer::setupMesh(std::shared_ptr<Mesh> mesh) {
+        if (!mesh) return;
 
         setupGeometry(&mesh->geometry);
         setupMaterial(mesh->material.get());

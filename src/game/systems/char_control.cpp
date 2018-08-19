@@ -12,10 +12,9 @@ namespace game {
         }
 
         void CharControl::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
-            es.each<c::Character, c::CharItems, c::UserControl, c::Transform>([&dt](
+            es.each<c::Character, c::UserControl, c::Transform>([&dt](
                     ex::Entity entity,
                     c::Character &character,
-                    c::CharItems &charItems,
                     c::UserControl &userControl,
                     c::Transform &transform
             ) {
@@ -28,7 +27,6 @@ namespace game {
 
                 const float minZAxis = character.walkSpeed * -1.0f;
                 const float maxZAxis = character.walkSpeed;
-
 
                 if (!userControl.isLeftPress() && !userControl.isRightPress()) {
                     character.motionDelta.z = 0.0f;
@@ -122,7 +120,9 @@ namespace game {
                 ) {
                     ex::Entity activeItem = charItems.getActiveItem();
 
-                    execItem(activeItem, mousePos);
+                    if (activeItem.valid()) {
+                        execItem(activeItem, mousePos);
+                    }
                 });
             }
         }

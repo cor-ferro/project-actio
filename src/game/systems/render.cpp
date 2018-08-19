@@ -1,5 +1,6 @@
 #include "render.h"
 #include "../world.h"
+#include "../components/meshes.h"
 
 namespace game {
     namespace systems {
@@ -37,19 +38,25 @@ namespace game {
             ex::Entity entity = event.entity;
             events::RenderSetupModel::Action eventAction = event.action;
 
-            ex::ComponentHandle<c::Model> model = components::get<c::Model>(entity);
+            ex::ComponentHandle<c::Meshes> meshes = components::get<c::Meshes>(entity);
 
-            if (model) {
+            if (meshes) {
                 switch (eventAction) {
                     case events::RenderSetupModel::Action::Add:
-                        addModel(model.get());
+                        for (auto &mesh : meshes->items()) {
+                            addMesh(mesh);
+                        }
                         entity.assign<c::Renderable>();
                         break;
                     case events::RenderSetupModel::Action::Update:
-                        updateModel(model.get());
+                        for (auto &mesh : meshes->items()) {
+                            updateMesh(mesh);
+                        }
                         break;
                     case events::RenderSetupModel::Action::Remove:
-                        removeModel(model.get());
+                        for (auto &mesh : meshes->items()) {
+                            removeMesh(mesh);
+                        }
                         entity.remove<c::Renderable>();
                 }
             }
@@ -58,47 +65,25 @@ namespace game {
         void Render::receive(const ex::EntityDestroyedEvent &event) {
             ex::Entity entity = event.entity;
 
-            auto model = components::get<c::Model>(entity);
+            auto meshes = components::get<c::Meshes>(entity);
 
-            if (model) {
-                removeModel(model.get());
+            if (meshes) {
+                for (auto &mesh : meshes->items()) {
+                    removeMesh(mesh);
+                }
                 entity.remove<c::Renderable>();
             }
         }
 
-        void Render::addModel(Model *model) {
-            auto meshes = model->getMeshes();
-
-            for (auto &mesh : meshes) {
-                addMesh(mesh);
-            }
-        }
-
-        void Render::updateModel(Model *model) {
-            auto meshes = model->getMeshes();
-
-            for (auto &mesh : meshes) {
-                updateMesh(mesh);
-            }
-        }
-
-        void Render::removeModel(Model *model) {
-            auto meshes = model->getMeshes();
-
-            for (auto &mesh : meshes) {
-                removeMesh(mesh);
-            }
-        }
-
-        void Render::addMesh(Mesh *mesh) {
+        void Render::addMesh(std::shared_ptr<Mesh> &mesh) {
             setupMesh.push(std::make_tuple(MeshAction::Add, mesh));
         }
 
-        void Render::updateMesh(Mesh *mesh) {
+        void Render::updateMesh(std::shared_ptr<Mesh> &mesh) {
             setupMesh.push(std::make_tuple(MeshAction::Update, mesh));
         }
 
-        void Render::removeMesh(Mesh *mesh) {
+        void Render::removeMesh(std::shared_ptr<Mesh> &mesh) {
             setupMesh.push(std::make_tuple(MeshAction::Remove, mesh));
         }
 
@@ -152,10 +137,10 @@ namespace game {
             size_t counter = 0;
 
             while (!setupMesh.empty() && counter < updatePerTick) {
-                std::tuple<MeshAction, Mesh *> &item = setupMesh.top();
+                std::tuple<MeshAction, std::shared_ptr<Mesh>> &item = setupMesh.top();
 
                 MeshAction action = std::get<0>(item);
-                Mesh *mesh = std::get<1>(item);
+                std::shared_ptr<Mesh> mesh = std::get<1>(item);
 
                 switch (action) {
                     case MeshAction::Add:

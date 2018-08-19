@@ -13,7 +13,9 @@ namespace game {
     }
 
     WorldObject::~WorldObject() {
-        entity_.destroy();
+        if (entity_.valid()) {
+            entity_.destroy();
+        }
     }
 
     const WorldObject::Id WorldObject::getId() {
@@ -22,6 +24,10 @@ namespace game {
 
     void WorldObject::rotate(vec3 vector, float angle) {
         transform->rotate(vector, angle);
+    }
+
+    const glm::vec3 &WorldObject::getPosition() const {
+        return transform->position;
     }
 
     void WorldObject::setPosition(const glm::vec3 &position) {

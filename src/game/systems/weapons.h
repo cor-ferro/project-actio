@@ -16,7 +16,7 @@
 #include "../events/physic_force.h"
 #include "../events/physic_contact.h"
 #include "../strategies/weapons/base.h"
-#include "../../core/geometry_primitive.h"
+#include "../../core/geometry_builder.h"
 
 namespace game {
     struct World;

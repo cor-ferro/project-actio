@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
+#include <list>
 #include <glm/glm.hpp>
 #include <entityx/entityx.h>
 #include "context.h"
@@ -19,6 +20,7 @@
 #include "../resources/file_resource.h"
 #include "../renderer/base_renderer.h"
 #include "../core/model_builder.h"
+#include "../core/skin_builder.h"
 #include "systems/physic.h"
 #include "systems/camera.h"
 #include "systems/input.h"
@@ -44,79 +46,6 @@ namespace game {
     typedef glm::mat4 mat4;
 
     struct World : ex::EntityX {
-        /**
-         * Base world object
-         */
-        class WorldObject {
-        public:
-            explicit WorldObject(ex::Entity &fromEntity) {
-                assert(fromEntity.valid());
-                entity_ = fromEntity;
-
-                transform = entity_.assign<c::Transform>();
-            }
-
-            ex::Entity getEntity() {
-                return entity_;
-            }
-
-            ex::ComponentHandle<c::Transform> transform;
-        protected:
-            explicit WorldObject() = default;
-
-            ex::Entity entity_;
-        };
-
-
-        /**
-         * Character of world
-         */
-        class Character : public WorldObject {
-        public:
-            Character(ex::Entity &fromEntity, const std::string name = "") : WorldObject(fromEntity) {
-                model = entity_.assign<components::Model>();
-                character = entity_.assign<c::Character>();
-                items = entity_.assign<c::CharItems>();
-
-                model->setName(name);
-            };
-
-            Character(const Character &other) = default;
-
-            Character &operator=(const Character &other) = default;
-
-            static Character Restore(ex::Entity fromEntity) {
-                Character character;
-                character.entity_ = fromEntity;
-
-                character.model = components::get<c::Model>(character.entity_);
-                character.skin = components::get<c::Skin>(character.entity_);
-                character.character = components::get<c::Character>(character.entity_);
-                character.items = components::get<c::CharItems>(character.entity_);
-                character.transform = components::get<c::Transform>(character.entity_);
-
-                return character;
-            }
-
-            void setup(Resource::Assimp *resource, Assets *assets) {
-                ModelBuilder::FromAi(model.get(), resource, assets);
-
-                if (resource->hasAnimations()) {
-                    skin = entity_.assign<components::Skin>(resource);
-
-                    auto nodeIndexes = skin->getNodeIndexes();
-                    model->reindexMeshBones(nodeIndexes);
-                }
-            }
-
-            ex::ComponentHandle<c::Model> model;
-            ex::ComponentHandle<c::Skin> skin;
-            ex::ComponentHandle<c::Character> character;
-            ex::ComponentHandle<c::CharItems> items;
-        private:
-            explicit Character() = default;
-        };
-
         /**
          * Base weapon of world
          */
@@ -155,12 +84,6 @@ namespace game {
 
         void render(ex::TimeDelta dt);
 
-        World::Character createCharacter(Resource::Assimp *resource);
-
-        World::Character createCharacter(std::string name, Resource::Assimp *resource);
-
-        void removeCharacter(World::Character character);
-
         bool registerWeapon(strategy::WeaponsBase *system);
 
         World::Weapon createWeapon();
@@ -193,9 +116,7 @@ namespace game {
 
         std::shared_ptr<Material> findMaterial(const std::string &name);
 
-        ex::Entity createEntity(Mesh *mesh);
-
-        Character getUserControlCharacter();
+        game::WorldObject *getUserControlCharacter();
 
         game::Context &getContext();
 
@@ -223,6 +144,12 @@ namespace game {
 
         game::WorldObject *createDynamicObject(const glm::vec3 &pos);
 
+        game::WorldObject *createCharacterObject();
+
+        void setObjectMesh(game::WorldObject *object, std::shared_ptr<Mesh> &mesh);
+
+        void setObjectModel(game::WorldObject *object, assets::Model *);
+
         void destroyObject(game::WorldObject *object);
 
         ex::Entity createTerrain(const std::shared_ptr<ImageData> &image);
@@ -231,9 +158,19 @@ namespace game {
 
         void showObject(ex::Entity &entity);
 
+        void hideObject(game::WorldObject *object);
+
+        void showObject(game::WorldObject *object);
+
         void spawn(game::WorldObject *object);
 
         void spawn(game::WorldObject *object, const vec3 &position);
+
+        void makeControlled(game::WorldObject *object);
+
+        void makeUnControlled(game::WorldObject *object);
+
+        assets::Model *findAssetModel(const std::string &name);
 
     private:
         std::string name;

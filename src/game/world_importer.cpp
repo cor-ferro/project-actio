@@ -86,52 +86,6 @@ namespace game {
                 section.getField("Control", control);
 
                 rotQuat = glm::angleAxis(glm::radians(rot.w), vec3(rot.x, rot.y, rot.z));
-
-                if (geometryType == "file") {
-                    Path p = createPath(std::string(RESOURCE_DIR), filePath); // move RESOURCE_DIR to app
-                    components::Model::File modelFile(p.string());
-
-                    modelFile.name = section.name;
-                    modelFile.flipUv = flipUv;
-                    modelFile.animation = animation;
-
-                    Assimp::Importer importer;
-
-                    std::string pFile = modelFile.file.getPath();
-                    unsigned int flags = aiProcessPreset_TargetRealtime_Quality
-                                         | aiProcess_GenSmoothNormals
-                                         | aiProcess_Triangulate
-                                         | aiProcess_CalcTangentSpace;
-
-                    if (flipUv) {
-                        flags |= aiProcess_FlipUVs;
-                    }
-
-                    const aiScene *scene = importer.ReadFile(pFile, flags);
-                    const std::unique_ptr<Resource::Assimp> assimpResource(new Resource::Assimp(scene, pFile));
-
-                    if (scene) {
-                        World::Character character = world->createCharacter(section.name, assimpResource.get());
-
-                        World::Weapon characterWeapon = world->createWeapon();
-
-                        character.transform->setAffineTransform(pos, rotQuat, scale);
-                        character.items->add(characterWeapon.getEntity());
-                        character.items->setActiveItem(characterWeapon.getEntity());
-
-                        if (!animation.empty()) {
-                            character.skin->setCurrentAnimation(animation);
-                        }
-
-                        if (control) {
-                            world->events.emit<events::SetupControlled>(character.getEntity());
-                        }
-                    } else {
-                        console::err("failed model loading %s", importer.GetErrorString());
-                    }
-
-                    importer.FreeScene();
-                }
             }
         }
 

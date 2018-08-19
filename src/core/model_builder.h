@@ -1,7 +1,3 @@
-//
-// Created by demitriy on 7/28/18.
-//
-
 #ifndef ACTIO_CORE_MODEL_BUILDER_H
 #define ACTIO_CORE_MODEL_BUILDER_H
 

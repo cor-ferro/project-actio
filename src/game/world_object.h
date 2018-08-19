@@ -26,6 +26,8 @@ namespace game {
 
         void rotate(vec3 vector, float angle);
 
+        const glm::vec3 &getPosition() const;
+
         void setPosition(const glm::vec3 &position);
 
         void setRotation(const glm::quat &quat);
@@ -46,6 +48,11 @@ namespace game {
         template <class C>
         inline entityx::ComponentHandle<C> getComponent() {
             return entity_.component<C>();
+        }
+
+        template <class C, typename ... Args>
+        inline entityx::ComponentHandle<C> addComponent(Args && ... args) {
+            return entity_.assign<C>(std::forward<Args>(args)...);
         }
 
         ex::ComponentHandle<c::Transform> transform;

@@ -4,26 +4,9 @@
 #include <mutex>
 #include <queue>
 #include <unordered_set>
-#include "model.h"
 #include "../lib/console.h"
-#include "../lib/ozz.h"
-#include "../lib/assimp.h"
-#include "../math/Box3.h"
 
 // #define THREAD_INIT_AI_
-
-Model::File::File()
-		: name("")
-		, flipUv(false) {}
-
-Model::File::File(std::string filePath)
-		: file(filePath) {}
-
-Model::File::File(const Model::File &other)
-		: name(other.name)
-		, file(other.file)
-		, flipUv(other.flipUv)
-		, animation(other.animation) {}
 
 Model::Node::Node() : name("") {}
 
@@ -48,10 +31,6 @@ Model::Model() : name_() {}
 
 Model::Model(Mesh *mesh) : Model() {
 	add(mesh);
-}
-
-Model::Model(Model::File &modelFile) : Model() {
-	setName(modelFile.name);
 }
 
 Model::~Model() {
@@ -94,7 +73,7 @@ void Model::add(Node *node) {
 }
 
 void Model::remove(Mesh *mesh) {
-	ModelMeshes::iterator it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const Mesh *ptr) {
+	auto it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const Mesh *ptr) {
 		return ptr == mesh;
 	});
 
@@ -119,7 +98,7 @@ Mesh *Model::getMesh() {
 	return meshes_.at(0);
 }
 
-const int Model::getNodesCount() {
+const size_t Model::getNodesCount() {
 	return nodes_.size();
 }
 

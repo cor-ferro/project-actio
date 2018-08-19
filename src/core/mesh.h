@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <memory>
 #include "material.h"
 #include "../resources/resources.h"
 #include "../memory/poolallocator.h"
@@ -23,12 +24,12 @@ static MeshId newMeshId() {
     return ++idMeshCounter;
 }
 
-enum MeshDrawType {
-    Mesh_Draw_Triangle,
-    Mesh_Draw_Triangle_Strip,
-    Mesh_Draw_Line,
-    Mesh_Draw_Line_Loop,
-    Mesh_Draw_Point
+enum MeshPrimitiveType {
+    Mesh_Primitive_Triangle,
+    Mesh_Primitive_Triangle_Strip,
+    Mesh_Primitive_Line,
+    Mesh_Primitive_Line_Loop,
+    Mesh_Primitive_Point
 };
 
 enum MeshDrawMode {
@@ -61,13 +62,13 @@ struct Mesh : Object3D {
         }
     };
 
-    static Mesh *Create();
+    static std::shared_ptr<Mesh> Create();
 
-    static Mesh *Create(std::shared_ptr<Material> &material);
+    static std::shared_ptr<Mesh> Create(std::shared_ptr<Material> &material);
 
     static void Destroy(Mesh *mesh);
 
-    ~Mesh();
+    ~Mesh() = default;
 
     std::string getName();
 
@@ -77,9 +78,9 @@ struct Mesh : Object3D {
 
     void setName(const char *newName);
 
-    void setDrawType(MeshDrawType type);
+    void setPrimitiveType(MeshPrimitiveType type);
 
-    MeshDrawType getDrawType();
+    MeshPrimitiveType getPrimitiveType();
 
     const Geometry &getGeometry() const;
 
@@ -97,7 +98,7 @@ private:
 
     std::size_t id;
     std::string name;
-    MeshDrawType drawType;
+    MeshPrimitiveType primitive;
 };
 
 #endif

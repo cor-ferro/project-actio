@@ -215,3 +215,28 @@ assets::Model *Assets::addModel(const std::string &name, assets::Resource *resou
 
     return nullptr;
 }
+
+assets::Model *Assets::getModel(std::string name) {
+    auto nameIt = modelNames.find(name);
+
+    if (nameIt == modelNames.end()) {
+        return nullptr;
+    }
+
+    auto idIt = models.find(nameIt->second);
+    if (idIt == models.end()) {
+        return nullptr;
+    }
+
+    return &idIt->second;
+}
+
+assets::Model *Assets::getModel(Assets::Id id) {
+    auto it = models.find(id);
+
+    if (it == models.end()) {
+        return nullptr;
+    }
+
+    return &it->second;
+}

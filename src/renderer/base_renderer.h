@@ -64,11 +64,11 @@ namespace renderer {
 
         const Stats &getStats() const;
 
-        virtual void setupMesh(Mesh *mesh) = 0;
+        virtual void setupMesh(std::shared_ptr<Mesh>) = 0;
 
-        virtual void updateMesh(Mesh *mesh) = 0;
+        virtual void updateMesh(std::shared_ptr<Mesh>) = 0;
 
-        virtual void destroyMesh(Mesh *mesh) = 0;
+        virtual void destroyMesh(std::shared_ptr<Mesh>) = 0;
 
         virtual void setupGeometry(Geometry *geometry) = 0;
 

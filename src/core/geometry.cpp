@@ -1,20 +1,11 @@
 #include "geometry.h"
 
-#define MAX_BONES 4
-
 Geometry::Geometry() {
     vertices_.reset(new GeometryVertices());
     indices_.reset(new GeometryIndices());
 
     allocVertices(1);
     allocIndices(1);
-}
-
-Geometry::Geometry(aiMesh *mesh, const Resource::Assimp *assimpResource) {
-    vertices_.reset(new GeometryVertices());
-    indices_.reset(new GeometryIndices());
-
-    initFromAi(mesh, assimpResource);
 }
 
 Geometry::Geometry(const Geometry &other) {
@@ -30,86 +21,6 @@ Geometry::~Geometry() {
 void Geometry::destroy() {
     freeVerties();
     freeIndices();
-}
-
-void Geometry::initFromAi(const aiMesh *mesh, const Resource::Assimp *assimpResource) {
-    unsigned int numVertices = mesh->mNumVertices;
-    unsigned int numBones = mesh->mNumBones;
-    allocVertices(numVertices);
-
-    GetTotalCountVertices(); // why?
-
-    for (unsigned int i = 0; i < numVertices; i++) {
-        Vertex vertex;
-
-        vertex.Position = libAi::toNativeType(mesh->mVertices[i]);
-
-        if (mesh->mNormals != nullptr) {
-            vertex.Normal = libAi::toNativeType(mesh->mNormals[i]);
-        } else {
-            vertex.Normal = vec3(0.0f, 1.0f, 0.0f);
-        }
-
-        if (mesh->mTextureCoords[0]) {
-            vertex.TexCoords = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-        } else {
-            vertex.TexCoords = vec2(0.0f, 0.0f);
-        }
-
-        if (mesh->mTangents != nullptr) {
-            vertex.Tangent = libAi::toNativeType(mesh->mTangents[i]);
-            vertex.Bitangent = libAi::toNativeType(mesh->mBitangents[i]);
-        } else {
-            vertex.Tangent = vec3(1.0f);
-            vertex.Bitangent = vec3(1.0f);
-        }
-
-        addVertex(vertex);
-    }
-
-    if (numBones > 0) {
-        std::vector<std::vector<std::pair<uint, float>>> affectedVertices;
-        affectedVertices.resize(vertices_->size());
-
-        for (uint i = 0; i < numBones; i++) {
-            aiBone *bone = mesh->mBones[i];
-
-            for (uint j = 0; j < bone->mNumWeights; j++) {
-                uint vertexId = bone->mWeights[j].mVertexId;
-                float weight = bone->mWeights[j].mWeight;
-
-                affectedVertices.at(vertexId).push_back({i, weight});
-            }
-        }
-
-        for (uint i = 0; i < affectedVertices.size(); i++) {
-            const std::vector<std::pair<uint, float>> &boneData = affectedVertices.at(i);
-            const int bonesDataSize = boneData.size();
-
-            for (uint j = 0; j < MAX_BONES; j++) {
-                if (j < bonesDataSize) {
-                    vertices_->at(i).BonedIDs[j] = boneData[j].first;
-                    vertices_->at(i).Weights[j] = boneData[j].second;
-                } else {
-                    vertices_->at(i).BonedIDs[j] = 0;
-                    vertices_->at(i).Weights[j] = 0;
-                }
-            }
-        }
-    }
-
-    unsigned int numFaces = mesh->mNumFaces;
-    freeIndices();
-    allocIndices(numFaces);
-
-    for (unsigned int i = 0; i < numFaces; i++) {
-        aiFace &face = mesh->mFaces[i];
-        for (unsigned int j = 0; j < face.mNumIndices; j++) {
-            indices_->push_back(face.mIndices[j]);
-        }
-    }
-
-    computeBoundingBox();
 }
 
 GeometryVertices *Geometry::getVertices() {
@@ -139,18 +50,15 @@ void Geometry::setVertices(std::vector<vec3> vertices) {
 
 void Geometry::addVertex(const Vertex &vertex) {
     vertices_->push_back(vertex);
-    AddTotalCountVertices(1);
 }
 
 void Geometry::addVertex(const Vertex &&vertex) {
     vertices_->push_back(vertex);
-    AddTotalCountVertices(1);
 }
 
 void Geometry::addVertex(float x, float y, float z) {
     Vertex v(x, y, z);
     vertices_->push_back(v);
-    AddTotalCountVertices(1);
 }
 
 void Geometry::addVertex(std::vector<float> &vertices) {
@@ -207,7 +115,6 @@ void Geometry::addFace(unsigned int i1, unsigned int i2, unsigned int i3) {
 }
 
 void Geometry::freeVerties() {
-    SubTotalCountVertices(vertices_->size());
     vertices_->clear();
 }
 

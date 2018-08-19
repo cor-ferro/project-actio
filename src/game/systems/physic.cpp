@@ -125,61 +125,56 @@ namespace game {
             event_manager.subscribe<events::PhysicCreateSphere>(*this);
             event_manager.subscribe<events::PhysicCreateBox>(*this);
             event_manager.subscribe<events::PhysicForce>(*this);
-            event_manager.subscribe<events::SetupControlled>(*this);
+            event_manager.subscribe<events::MakeControlled>(*this);
+            event_manager.subscribe<events::MakeUnControlled>(*this);
             event_manager.subscribe<events::KeyPress>(*this);
 
             {
-                debugLinesEntity = entities.create();
+//                world->createObject();
+                debugLinesObject = world->createObject();
 
-                Mesh *mesh = Mesh::Create();
+                std::shared_ptr<Mesh> mesh = Mesh::Create();
 
-                GeometryPrimitive::Lines(mesh->geometry, {});
+                GeometryBuilder::Lines(mesh->geometry, {});
                 mesh->geometry.setType(Geometry::Geometry_Dynamic);
                 mesh->material->setDiffuse(vec3(0.0f, 1.0f, 0.0f));
 
-                mesh->setDrawType(Mesh_Draw_Line);
+                mesh->setPrimitiveType(Mesh_Primitive_Line);
 
-                debugLinesEntity.assign<components::Model>(mesh);
-                debugLinesEntity.assign<components::Transform>(vec3(0.0f));
+                world->setObjectMesh(debugLinesObject, mesh);
             }
 
             {
-                debugTrianglesEntity = entities.create();
+                debugTrianglesObject = world->createObject();
 
-                Mesh *mesh = Mesh::Create();
+                std::shared_ptr<Mesh> mesh = Mesh::Create();
 
                 mesh->geometry.setType(Geometry::Geometry_Dynamic);
                 mesh->material->setDiffuse(vec3(0.0f, 0.0f, 1.0f));
 
-                mesh->setDrawType(Mesh_Draw_Triangle);
+                mesh->setPrimitiveType(Mesh_Primitive_Triangle);
 
-                debugTrianglesEntity.assign<components::Model>(mesh);
-                debugTrianglesEntity.assign<components::Transform>(vec3(0.0f));
+                world->setObjectMesh(debugTrianglesObject, mesh);
             }
 
             {
-                debugPointsEntity = entities.create();
+                debugPointsObject = world->createObject();
 
-                Mesh *mesh = Mesh::Create();
+                std::shared_ptr<Mesh> mesh = Mesh::Create();
 
                 mesh->geometry.setType(Geometry::Geometry_Dynamic);
                 mesh->material->setDiffuse(vec3(1.0f, 0.0f, 0.0f));
 
-                mesh->setDrawType(Mesh_Draw_Point);
+                mesh->setPrimitiveType(Mesh_Primitive_Point);
 
-                debugPointsEntity.assign<components::Model>(mesh);
-                debugPointsEntity.assign<components::Transform>(vec3(0.0f));
+                world->setObjectMesh(debugPointsObject, mesh);
             }
         }
 
         void Physic::postConfigure(entityx::EventManager &events) {
-            auto modelLines = components::get<components::Model>(debugLinesEntity);
-            auto modelTriangles = components::get<components::Model>(debugTrianglesEntity);
-            auto modelPoints = components::get<components::Model>(debugPointsEntity);
-
-            events.emit<events::RenderSetupModel>(debugLinesEntity);
-            events.emit<events::RenderSetupModel>(debugTrianglesEntity);
-            events.emit<events::RenderSetupModel>(debugPointsEntity);
+            world->spawn(debugLinesObject, vec3(0.0f));
+            world->spawn(debugTrianglesObject, vec3(0.0f));
+            world->spawn(debugPointsObject, vec3(0.0f));
         }
 
         void Physic::destroy() {
@@ -204,7 +199,7 @@ namespace game {
                 contactedActors.pop();
             }
 
-            es.each<components::Physic, components::Transform>(
+            es.each<c::Physic, components::Transform>(
                 [](
                     ex::Entity entity,
                     components::Physic &physic,
@@ -279,31 +274,22 @@ namespace game {
             drawDebug = value;
 
             if (!drawDebug) {
-                auto renderableLines = components::get<components::Renderable>(debugLinesEntity);
-                auto renderableTriangles = components::get<components::Renderable>(debugTrianglesEntity);
-                auto renderablePoints = components::get<components::Renderable>(debugPointsEntity);
-
-                renderableLines.remove();
-                renderableTriangles.remove();
-                renderablePoints.remove();
+                world->hideObject(debugLinesObject);
+                world->hideObject(debugTrianglesObject);
+                world->hideObject(debugPointsObject);
             } else {
-                debugLinesEntity.assign<components::Renderable>();
-                debugTrianglesEntity.assign<components::Renderable>();
-                debugPointsEntity.assign<components::Renderable>();
+                world->showObject(debugLinesObject);
+                world->showObject(debugTrianglesObject);
+                world->showObject(debugPointsObject);
             }
         }
 
         void Physic::drawDebugBuffer(ex::EventManager &events) {
             const px::PxRenderBuffer &rb = gScene->getRenderBuffer();
 
-            auto linesModel = components::get<components::Model>(debugLinesEntity);
-            Mesh *linesMesh = linesModel->getMesh();
-
-            auto trianglesModel = components::get<components::Model>(debugTrianglesEntity);
-            Mesh *trianglesMesh = trianglesModel->getMesh();
-
-            auto pointsModel = components::get<components::Model>(debugPointsEntity);
-            Mesh *pointsMesh = pointsModel->getMesh();
+            std::shared_ptr<Mesh> linesMesh = debugLinesObject->getComponent<c::Meshes>()->item();
+            std::shared_ptr<Mesh> trianglesMesh = debugTrianglesObject->getComponent<c::Meshes>()->item();
+            std::shared_ptr<Mesh> pointsMesh = debugPointsObject->getComponent<c::Meshes>()->item();
 
             const px::PxU32 countLines = rb.getNbLines();
             const px::PxU32 countTriangles = rb.getNbTriangles();
@@ -396,9 +382,9 @@ namespace game {
                 }
             }
 
-            events.emit<events::RenderSetupModel>(debugLinesEntity, events::RenderSetupModel::Action::Update);
-            events.emit<events::RenderSetupModel>(debugTrianglesEntity, events::RenderSetupModel::Action::Update);
-            events.emit<events::RenderSetupModel>(debugPointsEntity, events::RenderSetupModel::Action::Update);
+            events.emit<events::RenderSetupModel>(debugLinesObject, events::RenderSetupModel::Action::Update);
+            events.emit<events::RenderSetupModel>(debugTrianglesObject, events::RenderSetupModel::Action::Update);
+            events.emit<events::RenderSetupModel>(debugPointsObject, events::RenderSetupModel::Action::Update);
         }
 
         void Physic::setSceneGravity(vec3 value) {
@@ -493,17 +479,17 @@ namespace game {
 
         void Physic::receive(const ex::EntityCreatedEvent &event) {
 //                const Entity& e = event.entity;
-//                event.entity.assign<components::Controlled>(gControllerManager);
+//                event.entity.assign<c::Controlled>(gControllerManager);
         }
 
         void Physic::receive(const ex::EntityDestroyedEvent &event) {
-//                event.entity.assign<components::Controlled>(gControllerManager);
+//                event.entity.assign<c::Controlled>(gControllerManager);
         }
 
         void Physic::receive(const events::PhysicCreateSphere &event) {
             ex::Entity entity = event.entity;
 
-            ex::ComponentHandle<components::Transform> transform = entity.component<components::Transform>();
+            ex::ComponentHandle<c::Transform> transform = entity.component<c::Transform>();
 
             px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
             const px::PxTransform pxTransform(PX_REST_VEC(transform->position));
@@ -523,13 +509,13 @@ namespace game {
 
             gScene->addActor(*dynamic);
 
-            entity.assign<components::Physic>(dynamic);
+            entity.assign<c::Physic>(dynamic);
         }
 
         void Physic::receive(const events::PhysicCreateBox &event) {
             ex::Entity entity = event.entity;
 
-            ex::ComponentHandle<components::Transform> transform = entity.component<components::Transform>();
+            ex::ComponentHandle<c::Transform> transform = entity.component<c::Transform>();
 
             px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
             const px::PxTransform pxTransform(PX_REST_VEC(transform->position));
@@ -542,13 +528,13 @@ namespace game {
 
             gScene->addActor(*dynamic);
 
-            entity.assign<components::Physic>(dynamic);
+            entity.assign<c::Physic>(dynamic);
         }
 
         void Physic::receive(const events::PhysicForce &event) {
             ex::Entity entity = event.entity;
 
-            ex::ComponentHandle<components::Physic> physic = entity.component<components::Physic>();
+            ex::ComponentHandle<c::Physic> physic = entity.component<c::Physic>();
 
             px::PxVec3 dir(event.direction.x, event.direction.y, event.direction.z);
 
@@ -558,19 +544,27 @@ namespace game {
             actor->addForce(dir, px::PxForceMode::eVELOCITY_CHANGE);
         }
 
-        void Physic::receive(const events::SetupControlled &event) {
+        void Physic::receive(const events::MakeControlled &event) {
             ex::Entity entity = event.entity;
 
-            auto model = components::get<components::Model>(entity);
-            auto transform = components::get<components::Transform>(entity);
+            float radius = 0.0f;
 
-            Math::Box3 boundingBox = model->getBoundingBox();
-            vec3 scaledRadius = boundingBox.radius * transform->getScale();
+            if (entity.has_component<c::Meshes>()) {
+                auto meshes = components::get<c::Meshes>(entity);
+                auto transform = components::get<c::Transform>(entity);
+
+                Math::Box3 boundingBox = meshes->getBoundingBox();
+                vec3 scaledRadius = boundingBox.radius * transform->getScale();
+
+                radius = scaledRadius.y;
+            } else {
+                radius = 1.0f;
+            }
 
             px::PxCapsuleControllerDesc cDesc;
 
             cDesc.height = 2.0f;
-            cDesc.radius = scaledRadius.y;
+            cDesc.radius = radius;
             cDesc.upDirection = px::PxVec3(0.0f, 1.0f, 0.0f);
             cDesc.material = pxMaterials["default"];
             cDesc.position = px::PxExtendedVec3(0.0f, 1.0f + cDesc.height, 0.0f);
@@ -581,11 +575,16 @@ namespace game {
             cDesc.climbingMode = px::PxCapsuleClimbingMode::eEASY;
             cDesc.invisibleWallHeight = 0.0f;
             cDesc.maxJumpHeight = 0.0f;
-//                cDesc.reportCallback		= this;
+//            cDesc.reportCallback		= this;
 
             auto *mController = static_cast<px::PxCapsuleController *>(gControllerManager->createController(cDesc));
 
-            entity.assign<components::UserControl>(mController);
+            entity.assign<c::UserControl>(mController);
+        }
+
+        void Physic::receive(const events::MakeUnControlled &event) {
+            ex::Entity entity = event.entity;
+            entity.remove<c::UserControl>();
         }
 
         void Physic::receive(const events::KeyPress &event) {
@@ -631,7 +630,7 @@ namespace game {
 
         void Physic::makeStatic(game::WorldObject *object) {
             ex::Entity entity = object->getEntity();
-            auto transform = entity.component<components::Transform>();
+            auto transform = entity.component<c::Transform>();
             px::PxMaterial *material = findMaterial("default");
 
             px::PxRigidStatic* actor = gPhysics->createRigidStatic(px::PxTransform(PX_REST_VEC(transform->position)));
@@ -643,7 +642,7 @@ namespace game {
 
         void Physic::makeDynamic(game::WorldObject *object) {
             ex::Entity entity = object->getEntity();
-            auto transform = object->getComponent<components::Transform>();
+            auto transform = object->getComponent<c::Transform>();
 
             px::PxMaterial *material = findMaterial("default");
             px::PxRigidDynamic* actor = gPhysics->createRigidDynamic(px::PxTransform(PX_REST_VEC(transform->position)));
@@ -753,14 +752,14 @@ namespace game {
             return hfActor;
         }
 
-        Mesh *Physic::generateTerrainMesh(px::PxRigidStatic *actor, const HeightMap &heightmap) {
+        std::shared_ptr<Mesh> Physic::generateTerrainMesh(px::PxRigidStatic *actor, const HeightMap &heightmap) {
             px::PxShape *shape;
             actor->getShapes(&shape, 1);
 
             physx::PxHeightFieldGeometry hfg;
             shape->getHeightFieldGeometry(hfg);
 
-            Mesh *mesh = Mesh::Create();
+            std::shared_ptr<Mesh> mesh = Mesh::Create();
             mesh->geometry.allocVertices(heightmap.size);
             mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 

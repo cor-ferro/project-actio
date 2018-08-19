@@ -1,6 +1,9 @@
-#include "geometry_primitive.h"
+#include "geometry_builder.h"
+#include "../lib/assimp.h"
 
-void GeometryPrimitive::Box(
+#define MAX_BONES 4
+
+void GeometryBuilder::Box(
         Geometry &geometry,
         float width,
         float height,
@@ -90,7 +93,7 @@ void GeometryPrimitive::Box(
 
 }
 
-void GeometryPrimitive::Plane(
+void GeometryBuilder::Plane(
         Geometry &geometry,
         uint width,
         uint height,
@@ -142,7 +145,7 @@ void GeometryPrimitive::Plane(
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::Sphere(
+void GeometryBuilder::Sphere(
         Geometry &geometry,
         float radius,
         uint widthSegments,
@@ -215,7 +218,7 @@ void GeometryPrimitive::Sphere(
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::Circle(
+void GeometryBuilder::Circle(
         Geometry &geometry,
         float radius,
         uint segments,
@@ -264,7 +267,7 @@ void GeometryPrimitive::Circle(
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::CylinderTorso(
+void GeometryBuilder::CylinderTorso(
         Geometry &geometry,
         GeometryCone &params
 ) {
@@ -324,7 +327,7 @@ void GeometryPrimitive::CylinderTorso(
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::CylinderCap(
+void GeometryBuilder::CylinderCap(
         Geometry &geometry,
         GeometryCone &params,
         bool top
@@ -382,7 +385,7 @@ void GeometryPrimitive::CylinderCap(
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::Cylinder(
+void GeometryBuilder::Cylinder(
         Geometry &geometry,
         float radiusTop,
         float radiusBottom,
@@ -414,7 +417,7 @@ void GeometryPrimitive::Cylinder(
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::Cone(
+void GeometryBuilder::Cone(
         Geometry &geometry,
         float radius,
         float height,
@@ -424,11 +427,11 @@ void GeometryPrimitive::Cone(
         float thetaStart,
         float thetaLength
 ) {
-    GeometryPrimitive::Cylinder(geometry, 0.0f, radius, height, radialSegments, heightSegments, openEnded, thetaStart,
+    GeometryBuilder::Cylinder(geometry, 0.0f, radius, height, radialSegments, heightSegments, openEnded, thetaStart,
                                 thetaLength);
 }
 
-void GeometryPrimitive::Ring(
+void GeometryBuilder::Ring(
         Geometry &geometry,
         float innerRadius,
         float outerRadius,
@@ -481,7 +484,7 @@ void GeometryPrimitive::Ring(
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::Torus(
+void GeometryBuilder::Torus(
         Geometry &geometry,
         float radius,
         float tube,
@@ -535,7 +538,7 @@ void GeometryPrimitive::Torus(
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::Octahedron(Geometry &geometry, float radius) {
+void GeometryBuilder::Octahedron(Geometry &geometry, float radius) {
     float vertices[] = {
             1.0f, 0.0f, 0.0f,
             -1.0f, 0.0f, 0.0f,
@@ -574,7 +577,7 @@ void GeometryPrimitive::Octahedron(Geometry &geometry, float radius) {
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::Quad2d(Geometry &geometry) {
+void GeometryBuilder::Quad2d(Geometry &geometry) {
     float vertices[] = {
             1.0f, 1.0f, 0.0f,
             1.0f, -1.0f, 0.0f,
@@ -605,7 +608,7 @@ void GeometryPrimitive::Quad2d(Geometry &geometry) {
     geometry.computeBoundingBox();
 }
 
-void GeometryPrimitive::Lines(Geometry &geometry, std::vector<vec3> lines) {
+void GeometryBuilder::Lines(Geometry &geometry, std::vector<vec3> lines) {
     assert(lines.size() % 2 == 0);
 
     for (vec3 &point : lines) {
@@ -613,4 +616,82 @@ void GeometryPrimitive::Lines(Geometry &geometry, std::vector<vec3> lines) {
     }
 
     geometry.computeBoundingBox();
+}
+
+void GeometryBuilder::FromAi(Geometry &geometry, const aiMesh *mesh) {
+    unsigned int numVertices = mesh->mNumVertices;
+    unsigned int numBones = mesh->mNumBones;
+
+    geometry.allocVertices(numVertices);
+
+    for (unsigned int i = 0; i < numVertices; i++) {
+        Vertex vertex;
+
+        vertex.Position = libAi::toNativeType(mesh->mVertices[i]);
+
+        if (mesh->mNormals != nullptr) {
+            vertex.Normal = libAi::toNativeType(mesh->mNormals[i]);
+        } else {
+            vertex.Normal = vec3(0.0f, 1.0f, 0.0f);
+        }
+
+        if (mesh->mTextureCoords[0]) {
+            vertex.TexCoords = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+        } else {
+            vertex.TexCoords = vec2(0.0f, 0.0f);
+        }
+
+        if (mesh->mTangents != nullptr) {
+            vertex.Tangent = libAi::toNativeType(mesh->mTangents[i]);
+            vertex.Bitangent = libAi::toNativeType(mesh->mBitangents[i]);
+        } else {
+            vertex.Tangent = vec3(1.0f);
+            vertex.Bitangent = vec3(1.0f);
+        }
+
+        geometry.addVertex(vertex);
+    }
+
+    if (numBones > 0) {
+        std::vector<std::vector<std::pair<uint, float>>> affectedVertices;
+        affectedVertices.resize(geometry.getCountVertices());
+
+        for (uint i = 0; i < numBones; i++) {
+            aiBone *bone = mesh->mBones[i];
+
+            for (uint j = 0; j < bone->mNumWeights; j++) {
+                uint vertexId = bone->mWeights[j].mVertexId;
+                float weight = bone->mWeights[j].mWeight;
+
+                affectedVertices.at(vertexId).push_back({i, weight});
+            }
+        }
+
+        for (uint i = 0; i < affectedVertices.size(); i++) {
+            const std::vector<std::pair<uint, float>> &boneData = affectedVertices.at(i);
+            const unsigned long bonesDataSize = boneData.size();
+
+            for (uint j = 0; j < MAX_BONES; j++) {
+                if (j < bonesDataSize) {
+                    geometry.getVertex(i).BonedIDs[j] = boneData[j].first;
+                    geometry.getVertex(i).Weights[j] = boneData[j].second;
+                } else {
+                    geometry.getVertex(i).BonedIDs[j] = 0;
+                    geometry.getVertex(i).Weights[j] = 0;
+                }
+            }
+        }
+    }
+
+    unsigned int numFaces = mesh->mNumFaces;
+
+    geometry.freeIndices();
+    geometry.allocIndices(numFaces);
+
+    for (unsigned int i = 0; i < numFaces; i++) {
+        aiFace &face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) {
+            geometry.addIndex(face.mIndices[j]);
+        }
+    }
 }

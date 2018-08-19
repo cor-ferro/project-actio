@@ -22,7 +22,7 @@
 #include "../../lib/console.h"
 #include "../../lib/types.h"
 #include "../../core/mesh.h"
-#include "../../core/geometry_primitive.h"
+#include "../../core/geometry_builder.h"
 #include "../context.h"
 #include "base.h"
 

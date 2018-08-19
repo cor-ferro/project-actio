@@ -18,10 +18,9 @@ namespace game {
 
             vec3 characterPosition(0.0f);
 
-            ex::ComponentHandle<components::Model> model;
             ex::ComponentHandle<components::UserControl> userControl;
             ex::ComponentHandle<components::Transform> characterTransform;
-            for (ex::Entity entity : es.entities_with_components(model, userControl, characterTransform)) {
+            for (ex::Entity entity : es.entities_with_components(userControl, characterTransform)) {
                 characterPosition = characterTransform->getPosition();
             }
 

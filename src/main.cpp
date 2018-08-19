@@ -64,6 +64,7 @@ int main(int argc, char **argv) {
     world->setup();
     world->setLightDebug(guiSettings.debugLight.getRef());
 
+    // @todo: очистка ресурсов происходит после удаления world, получаем segmentation fault
     std::shared_ptr<Assets> worldAssets(new Assets());
     worldAssets->loadDefaultResources();
     world->importAssets(worldAssets);

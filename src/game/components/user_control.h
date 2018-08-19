@@ -14,6 +14,10 @@ namespace game {
         struct UserControl {
             explicit UserControl(PxController *const mController) : controller(mController) {}
 
+            ~UserControl() {
+                controller->release();
+            }
+
             bool isLeftPress() { return leftPress; }
 
             bool isRightPress() { return rightPress; }

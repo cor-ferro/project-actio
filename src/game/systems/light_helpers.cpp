@@ -23,25 +23,24 @@ namespace game {
                     float radius = light->getRadius();
                     vec3 position = light->getPosition();
 
-                    Mesh *mesh = Mesh::Create();
-                    GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f,
-                                              3.14f);
+                    std::shared_ptr<Mesh> mesh = Mesh::Create();
+                    GeometryBuilder::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
                     mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
                     mesh->material->setWireframe(true);
 
-                    entityx::Entity helper = es.create();
+                    game::WorldObject *helper = world->createObject();
+                    ex::Entity entity = helper->getEntity();
 
-                    helper.assign<components::LightHelper>(lightEntity);
-                    helper.assign<components::Model>(mesh);
-                    helper.assign<components::Transform>(position);
+                    helper->addComponent<components::LightHelper>(lightEntity);
 
                     if (isShowHelpers) {
-                        helper.assign<components::Renderable>();
+                        world->showObject(helper);
                     }
 
-                    lightEntity.assign<components::Helper>(helper);
+                    lightEntity.assign<components::Helper>(entity);
 
-                    events.emit<events::RenderSetupModel>(helper);
+                    world->setObjectMesh(helper, mesh);
+                    world->spawn(helper, position);
                 }
             }
 

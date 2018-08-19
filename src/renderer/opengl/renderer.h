@@ -2,6 +2,7 @@
 #define RENDERER_OPENGL_H_
 
 #include <vector>
+#include <memory>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -87,9 +88,9 @@ namespace renderer {
 
         void renderDirLights(ex::EntityManager &es);
 
-        void updateMesh(Mesh *mesh) override;
+        void updateMesh(std::shared_ptr<Mesh>) override;
 
-        void destroyMesh(Mesh *mesh) override;
+        void destroyMesh(std::shared_ptr<Mesh>) override;
 
         void registerShader(std::string name) override;
 
@@ -103,7 +104,7 @@ namespace renderer {
 
         void addShaders(std::vector<ShaderDescription> list) override;
 
-        void setupMesh(Mesh *mesh) override;
+        void setupMesh(std::shared_ptr<Mesh>) override;
 
         void setupGeometry(Geometry *geometry) override;
 
@@ -145,9 +146,9 @@ namespace renderer {
         renderer::Opengl::MeshDrawPipeline skyboxPipeline;
         renderer::Opengl::MeshDrawPipeline nullPipeline;
 
-        Mesh *lightQuad = nullptr;
-        Mesh *lightSphere = nullptr;
-        Mesh *lightCylinder = nullptr;
+        std::shared_ptr<Mesh> lightQuad = nullptr;
+        std::shared_ptr<Mesh> lightSphere = nullptr;
+        std::shared_ptr<Mesh> lightCylinder = nullptr;
 
         std::unordered_map<std::string, Opengl::Program> requiredPrograms;
         std::unordered_map<std::string, Opengl::Program> optionalPrograms;

@@ -41,11 +41,11 @@ namespace game {
                 console::info("rocket launcher fire");
 
                 const game::Context &context = world->getContext();
-                World::Character character = world->getUserControlCharacter();
+                game::WorldObject *character = world->getUserControlCharacter();
 
                 float fireStability = weapon->fireStability();
 
-                vec3 charPosition = character.transform->getPosition();
+                vec3 charPosition = character->getPosition();
 
                 vec3 direction(0.0f); // Рандом умножать на стабильность огня. Чем выше стабильность, тем меньше разброс
                 vec3 target = glm::normalize(context.mouseWorldPosition - charPosition);

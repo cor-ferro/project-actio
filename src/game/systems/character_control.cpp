@@ -8,18 +8,17 @@ namespace game {
 
         void CharacterControl::configure(ex::EventManager &event_manager) {
             event_manager.subscribe<events::KeyPress>(*this);
-            event_manager.subscribe<events::SetupControlled>(*this);
+            event_manager.subscribe<events::MakeControlled>(*this);
         }
 
         void CharacterControl::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
-            ex::ComponentHandle<components::Model> model;
-            ex::ComponentHandle<components::Skin> skin;
+//            ex::ComponentHandle<components::Skin> skin;
             ex::ComponentHandle<components::Controlled> control;
             ex::ComponentHandle<components::Transform> transform;
 
 //                console::info("press: %i %i", isLeftPress, isRightPress);
 
-            for (ex::Entity entity : es.entities_with_components(model, skin, control, transform)) {
+            for (ex::Entity entity : es.entities_with_components(/*skin, */control, transform)) {
                 const float maxSpeed = 1.5f;
                 const float minSpeed = -1.5f;
                 const float jumpForce = 1.2f;
@@ -101,9 +100,9 @@ namespace game {
                 float runAnimationWeight = scaleSpeed;
                 float jumpAnimationWeight = 0.0f;
 
-                skin->animSamplers.setWeight(idleIndex, idleAnimationWeight);
-                skin->animSamplers.setWeight(runIndex, runAnimationWeight);
-                skin->animSamplers.setWeight(jumpIndex, jumpAnimationWeight);
+//                skin->animSamplers.setWeight(idleIndex, idleAnimationWeight);
+//                skin->animSamplers.setWeight(runIndex, runAnimationWeight);
+//                skin->animSamplers.setWeight(jumpIndex, jumpAnimationWeight);
             }
 
             if (isControlChange) {
@@ -157,7 +156,7 @@ namespace game {
             }
         }
 
-        void CharacterControl::receive(const events::SetupControlled &event) {
+        void CharacterControl::receive(const events::MakeControlled &event) {
             entityx::Entity entity = event.entity;
 
             auto skin = components::get<components::Skin>(entity);

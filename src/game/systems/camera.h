@@ -15,7 +15,7 @@
 #include "../events/mouse_press.h"
 #include "../components/model.h"
 #include "../components/controlled.h"
-#include "../../core/geometry_primitive.h"
+#include "../../core/geometry_builder.h"
 #include "../components/renderable.h"
 #include "../components/base.h"
 #include "../context.h"

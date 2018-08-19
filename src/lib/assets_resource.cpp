@@ -26,6 +26,10 @@ namespace assets {
         data.reset();
     }
 
+    const Path &Resource::getPath() const {
+        return path;
+    }
+
 
     FilesystemResource::FilesystemResource(Path path) : Resource(path) {};
 

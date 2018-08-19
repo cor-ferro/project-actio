@@ -18,7 +18,7 @@
 #include "../components/light_helper.h"
 #include "../components/renderable.h"
 #include "../components/helper.h"
-#include "../../core/geometry_primitive.h"
+#include "../../core/geometry_builder.h"
 #include "../../core/mesh.h"
 #include "../context.h"
 #include "base.h"

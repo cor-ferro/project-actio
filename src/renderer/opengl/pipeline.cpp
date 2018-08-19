@@ -118,20 +118,20 @@ namespace renderer {
                     GeometryIndices *indices = mesh.geometry.getIndices();
 
                     GLenum primitiveType;
-                    switch (mesh.getDrawType()) {
-                        case Mesh_Draw_Triangle:
+                    switch (mesh.getPrimitiveType()) {
+                        case Mesh_Primitive_Triangle:
                             primitiveType = GL_TRIANGLES;
                             break;
-                        case Mesh_Draw_Triangle_Strip:
+                        case Mesh_Primitive_Triangle_Strip:
                             primitiveType = GL_TRIANGLE_STRIP_ADJACENCY;
                             break;
-                        case Mesh_Draw_Line:
+                        case Mesh_Primitive_Line:
                             primitiveType = GL_LINES;
                             break;
-                        case Mesh_Draw_Line_Loop:
+                        case Mesh_Primitive_Line_Loop:
                             primitiveType = GL_LINE_LOOP;
                             break;
-                        case Mesh_Draw_Point:
+                        case Mesh_Primitive_Point:
                             primitiveType = GL_POINT;
                             break;
                         default:

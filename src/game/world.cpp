@@ -1,5 +1,8 @@
 #include <algorithm>
 #include <thread>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 #include "world.h"
 #include "systems/physic.h"
 #include "systems/camera.h"
@@ -26,11 +29,13 @@
 #include "components/light_point.h"
 #include "components/light_directional.h"
 #include "components/char_items.h"
+#include "components/meshes.h"
 #include "desc/light_spot.h"
 #include "strategies/weapons/default.h"
 #include "strategies/weapons/rocket_launcher.h"
 #include "world_importer.h"
 #include "../math/Box3.h"
+#include "../core/material_builder.h"
 
 namespace game {
     World::World() : name("") {
@@ -46,8 +51,6 @@ namespace game {
     }
 
     void World::setup() {
-//        entities.each<c::Model, c::Skin, c::Character, c::CharItems>([](ex::Entity, c::Model &, c::Skin &, c::Character &, c::CharItems &) {});
-
         systems.add<systems::Input>(this);
         systems.add<systems::Camera>(this);
         systems.add<systems::CharControl>(this);
@@ -103,31 +106,6 @@ namespace game {
         PROFILE(systemProfiler, "Render", systems.update<systems::Render>(dt));
     }
 
-    World::Character World::createCharacter(Resource::Assimp *resource) {
-        return createCharacter("", resource);
-    }
-
-    World::Character World::createCharacter(std::string name, Resource::Assimp *resource) {
-        ex::Entity entity = entities.create();
-
-        World::Character character(entity, name);
-
-        character.setup(resource, assets.get());
-
-        events.emit<game::events::RenderSetupModel>(entity);
-        events.emit<events::CharacterCreate>();
-
-        return character;
-    }
-
-    void World::removeCharacter(World::Character character) {
-        ex::Entity entity = character.getEntity();
-
-        events.emit<events::CharacterRemove>();
-
-        entity.destroy();
-    }
-
     bool World::registerWeapon(strategy::WeaponsBase *system) {
         return weapons->registerStrategy(system);
     }
@@ -178,16 +156,18 @@ namespace game {
         return context;
     }
 
-    World::Character World::getUserControlCharacter() {
-        ex::Entity charEntity;
+    game::WorldObject *World::getUserControlCharacter() {
+        game::WorldObject *object = nullptr;
 
-        entities.each<components::UserControl>([&charEntity](ex::Entity entity, components::UserControl &control) {
-            charEntity = entity;
-        });
+        ex::ComponentHandle<components::UserControl> userControl;
+        for (ex::Entity entity : entities.entities_with_components(userControl)) {
+            auto it = objects.find(entity.id());
+            if (it != objects.end()) {
+                object = it->second;
+            }
+        }
 
-        World::Character character = World::Character::Restore(charEntity);
-
-        return character;
+        return object;
     }
 
     /**
@@ -245,7 +225,7 @@ namespace game {
     void World::addLight(desc::LightSpotDesc lightDescription) {
         entityx::Entity entity = entities.create();
 
-        components::LightSpot light;
+        c::LightSpot light;
         light.setAmbient(lightDescription.ambient);
         light.setDiffuse(lightDescription.diffuse);
         light.setSpecular(lightDescription.specular);
@@ -254,8 +234,8 @@ namespace game {
         light.setAttenuation(lightDescription.constant, lightDescription.linear, lightDescription.quadratic);
         light.setCutoff(lightDescription.cutOff, lightDescription.outerCutOff);
 
-        entity.assign<components::LightSpot>(light);
-        entity.assign<components::Transform>(lightDescription.position);
+        entity.assign<c::LightSpot>(light);
+        entity.assign<c::Transform>(lightDescription.position);
 
         events.emit<events::LightAdd>(entity);
     }
@@ -277,14 +257,6 @@ namespace game {
 
     void World::impactWave(vec3 position, vec3 direction) {
         physic->wave(position, direction);
-    }
-
-    ex::Entity World::createEntity(Mesh *mesh) {
-        ex::Entity entity = entities.create();
-
-        entity.assign<c::Model>(mesh);
-
-        return entity;
     }
 
     void World::spawn(game::WorldObject *object) {
@@ -434,6 +406,27 @@ namespace game {
         return object;
     }
 
+    game::WorldObject *World::createCharacterObject() {
+        auto *object = createObject();
+
+        ex::Entity entity = object->getEntity();
+
+//        auto model = entity.assign<c::Meshes>();
+//        auto skin = entity.assign<c::Skin>();
+        entity.assign<c::Character>();
+        entity.assign<c::CharItems>();
+//
+////        ModelBuilder::FromAi(model.get(), resource, assets);
+////        SkinBuilder::FromAi(skin.get(), resource);
+
+//        auto nodeIndexes = skin->getNodeIndexes();
+//        model->reindexMeshBones(nodeIndexes);
+
+        events.emit<events::CharacterCreate>();
+
+        return object;
+    }
+
     void World::destroyObject(game::WorldObject *object) {
         if (object != nullptr) {
             game::WorldObject::Id objectId = object->getId();
@@ -454,10 +447,10 @@ namespace game {
         game::HeightMap *heightmap = physic->createHeightMap(image);
         physx::PxRigidStatic *terrainActor = physic->generateTerrain(*heightmap, 50.0f, 50.0f);
 
-        Mesh *mesh = physic->generateTerrainMesh(terrainActor, *heightmap);
+        std::shared_ptr<Mesh> mesh = physic->generateTerrainMesh(terrainActor, *heightmap);
         mesh->material = findMaterial("ground");
 
-        terrain.assign<c::Model>(mesh);
+        terrain.assign<c::Meshes>(mesh);
         terrain.assign<c::Transform>(terrainActor->getGlobalPose());
 
         delete heightmap;
@@ -471,5 +464,95 @@ namespace game {
 
     void World::showObject(ex::Entity &entity) {
         entity.assign<c::Renderable>();
+    }
+
+    assets::Model *World::findAssetModel(const std::string &name) {
+        assets::Model *asset = assets->getModel(name);
+
+        if (!asset->isLoaded()) {
+            asset->load();
+
+            const aiScene *scene = asset->getScene();
+
+            if (scene != nullptr) {
+                const ::Resource::Assimp *assimpResource = asset->getAiResource();
+
+                const unsigned int numMeshes = scene->mNumMeshes;
+                for (unsigned int i = 0; i < numMeshes; i++) {
+                    aiMesh *mesh = scene->mMeshes[i];
+                    aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+
+                    std::shared_ptr<Mesh> modelMesh = Mesh::Create();
+
+                    modelMesh->setName(mesh->mName.C_Str());
+
+                    GeometryBuilder::FromAi(modelMesh->geometry, mesh);
+                    MaterialBuilder::FromAi(modelMesh->material, material, assimpResource, assets.get());
+
+                    if (mesh->mNumBones > 0) {
+                        modelMesh->bones.resize(mesh->mNumBones);
+
+                        for (uint boneId = 0; boneId < mesh->mNumBones; boneId++) {
+                            aiBone *bone = mesh->mBones[boneId];
+                            modelMesh->bones.offsets[boneId] = libAi::toNativeType(bone->mOffsetMatrix);
+                            modelMesh->bones.names[boneId] = std::string(bone->mName.C_Str());
+                        }
+                    }
+
+                    asset->addMesh(modelMesh);
+                }
+            }
+
+            asset->markLoaded();
+        }
+
+        return asset;
+    }
+
+    void World::setObjectModel(game::WorldObject *object, assets::Model *asset) {
+        if (asset != nullptr) {
+            ex::Entity entity = object->getEntity();
+
+            aiScene const *scene = asset->getScene();
+
+            auto meshes = entity.assign<c::Meshes>(asset->getMeshes());
+
+            if (scene->HasAnimations()) {
+                auto skin = entity.assign<c::Skin>();
+                SkinBuilder::FromAi(skin.get(), scene);
+
+                // @todo: реиндексацию можно делать один раз, но основе только скелета
+                auto nodeIndexes = skin->getNodeIndexes();
+                meshes->reindexBones(nodeIndexes);
+
+                std::string animationName = asset->getOption("animation");
+                if (!animationName.empty()) {
+                    skin->setCurrentAnimation(animationName);
+                }
+            }
+        }
+    }
+
+    void World::hideObject(game::WorldObject *object) {
+        ex::Entity entity = object->getEntity();
+        hideObject(entity);
+    }
+
+    void World::showObject(game::WorldObject *object) {
+        ex::Entity entity = object->getEntity();
+        showObject(entity);
+    }
+
+    void World::setObjectMesh(game::WorldObject *object, std::shared_ptr<Mesh> &mesh) {
+        ex::Entity entity = object->getEntity();
+        entity.assign<c::Meshes>(mesh);
+    }
+
+    void World::makeControlled(game::WorldObject *object) {
+        events.emit<events::MakeControlled>(object->getEntity());
+    }
+
+    void World::makeUnControlled(game::WorldObject *object) {
+        events.emit<events::MakeUnControlled>(object->getEntity());
     }
 }

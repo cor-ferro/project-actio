@@ -41,7 +41,7 @@ namespace game {
 
             void receive(const events::KeyPress &event);
 
-            void receive(const events::SetupControlled &event);
+            void receive(const events::MakeControlled &event);
 
         private:
             struct AnimationCommand {

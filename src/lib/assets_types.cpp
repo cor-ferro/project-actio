@@ -1,5 +1,8 @@
 #include "assets_types.h"
 #include "image_parser.h"
+#include "../resources/assimp_resource.h"
+#include <assimp/include/assimp/postprocess.h>
+#include "../core/model_builder.h"
 
 namespace assets {
     /**
@@ -12,6 +15,10 @@ namespace assets {
             delete resource;
             resource = nullptr;
         }
+    }
+
+    const assets::Resource *BaseAsset::getResource() {
+        return resource;
     }
 
 
@@ -81,6 +88,16 @@ namespace assets {
      */
     Model::Model(assets::Resource *resource, const Options &options) : BaseAsset(resource), options(options) {}
 
+    Model::~Model() {
+        if (assimpResource != nullptr) {
+            delete assimpResource;
+        }
+
+        if (scene != nullptr) {
+            importer.FreeScene();
+        }
+    }
+
     bool Model::hasOption(const std::string &key) const  {
         return options.find(key) != options.end();
     }
@@ -95,29 +112,59 @@ namespace assets {
         return "";
     }
 
-    void Model::init() {
-//            if (resource != nullptr) {
-//                unsigned int flags = aiProcessPreset_TargetRealtime_Quality
-//                                     | aiProcess_GenSmoothNormals
-//                                     | aiProcess_Triangulate
-//                                     | aiProcess_CalcTangentSpace;
-//
-//                bool flipUv = modelResource.getOption("flipUv") == "true";
-//
-//                if (flipUv) {
-//                    flags |= aiProcess_FlipUVs;
-//                }
-//
-//                Assimp::Importer importer;
-//                const aiScene *scene = importer.ReadFile(modelResource.path, flags);
-//                const std::unique_ptr<Resource::Assimp> assimpResource(new Resource::Assimp(scene, modelResource.path));
-//
-//                if (scene) {
-//                    World::Character character = world->createCharacter(section.name, assimpResource.get());
-//
-//                    delete scene;
-//                }
-//            }
+    bool Model::isLoaded() {
+        return loaded;
+    }
+
+    void Model::markLoaded() {
+        loaded = true;
+    }
+
+    void Model::markUnLoaded() {
+        loaded = false;
+    }
+
+    void Model::load() {
+        bool flipUv = getOption("flipUv") == "true";
+
+        unsigned int flags = aiProcessPreset_TargetRealtime_Quality
+                             | aiProcess_GenSmoothNormals
+                             | aiProcess_Triangulate
+                             | aiProcess_CalcTangentSpace;
+
+        if (flipUv) {
+            flags |= aiProcess_FlipUVs;
+        }
+
+        const assets::Resource *resource = getResource();
+        const Path &path = resource->getPath();
+
+        scene = importer.ReadFile(path.string().c_str(), flags);
+
+        if (scene != nullptr) {
+            assimpResource = new ::Resource::Assimp(scene, path.string());
+        }
+    }
+
+    const aiScene *Model::getScene() {
+        if (!isLoaded()) {
+            load();
+            markLoaded();
+        }
+
+        return scene;
+    }
+
+    const std::vector<std::shared_ptr<::Mesh>> &Model::getMeshes() {
+        return meshes;
+    }
+
+    void Model::addMesh(std::shared_ptr<::Mesh> &mesh) {
+        meshes.push_back(mesh);
+    }
+
+    const ::Resource::Assimp *Model::getAiResource() {
+        return assimpResource;
     }
 
 

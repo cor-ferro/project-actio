@@ -9,8 +9,14 @@
 
 namespace game {
     namespace events {
-        struct SetupControlled {
-            explicit SetupControlled(entityx::Entity entity) : entity(entity) {}
+        struct MakeControlled {
+            explicit MakeControlled(const entityx::Entity &entity) : entity(entity) {}
+
+            entityx::Entity entity;
+        };
+
+        struct MakeUnControlled {
+            explicit MakeUnControlled(const entityx::Entity &entity) : entity(entity) {}
 
             entityx::Entity entity;
         };

@@ -25,10 +25,9 @@ namespace game {
         void Weapons::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
             vec3 charPosition, charTarget;
 
-            es.each<components::Model, components::UserControl, components::Transform>(
+            es.each<components::UserControl, components::Transform>(
                     [&charPosition](
                             ex::Entity,
-                            components::Model &model,
                             components::UserControl &userControl,
                             components::Transform &transform
                     ) {
@@ -97,20 +96,20 @@ namespace game {
                     game::desc::WeaponProjectile &projectileDesc = newProjectiles.top();
 
                     float radius = 0.3f;
-                    Mesh *mesh = Mesh::Create();
+                    std::shared_ptr<Mesh> mesh = Mesh::Create();
 
-                    GeometryPrimitive::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+                    GeometryBuilder::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
                     mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
-                    ex::Entity projectile = es.create();
+                    game::WorldObject *object = world->createDynamicObject();
+                    ex::Entity entity = object->getEntity();
 
-                    projectile.assign<c::Model>(mesh);
-                    projectile.assign<c::Transform>(projectileDesc.position);
-                    projectile.assign<c::WeaponProjectile>(projectileDesc);
-                    projectile.assign<c::WeaponStrategy>(strategy);
-                    projectile.assign<c::PhysicEntity>(c::PhysicEntity::WeaponProjectile, projectile);
+//                    entity.assign<c::PhysicEntity>(c::PhysicEntity::WeaponProjectile, projectile);
+                    entity.assign<c::WeaponProjectile>(projectileDesc);
+                    entity.assign<c::WeaponStrategy>(strategy);
 
-                    events.emit<events::PhysicCreateSphere>(projectile, radius);
+                    world->setObjectMesh(object, mesh);
+                    world->spawn(object, projectileDesc.position);
 
                     newProjectiles.pop();
                 }

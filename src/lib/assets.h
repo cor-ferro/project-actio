@@ -38,6 +38,10 @@ public:
 
     assets::Model *addModel(const std::string &name, assets::Resource *resource, const std::unordered_map<std::string, std::string> &options);
 
+    assets::Model *getModel(std::string name);
+
+    assets::Model *getModel(Id id);
+
     void addScript(assets::Resource *resource);
 
     assets::Texture *addTexture(assets::Resource *resource);

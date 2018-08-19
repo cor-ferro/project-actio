@@ -5,7 +5,7 @@
 
 #include <map>
 #include <vector>
-#include <assimp/scene.h>
+#include <assimp/mesh.h>
 #include "../lib/types.h"
 #include "../lib/assimp.h"
 

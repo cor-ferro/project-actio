@@ -32,13 +32,6 @@ namespace game {
             void configure(ex::EventManager &event_manager) override;
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
-
-            void receive(const events::KeyPress &event);
-
-        private:
-            bool isChangeState = false;
-            bool isMoving = false;
-            bool isJump = false;
         };
     }
 }
