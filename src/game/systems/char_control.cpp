@@ -1,5 +1,6 @@
 #include "char_control.h"
 #include "../world.h"
+#include "../components/equipment.h"
 #include "../../lib/utils.h"
 
 namespace game {
@@ -110,24 +111,24 @@ namespace game {
 
         void CharControl::receive(const events::MousePress &event) {
             if (event.button == InputHandler::MOUSE_BUTTON_LEFT && event.action == InputHandler::KEY_PRESS) {
-                vec3 mousePos = context->mouseWorldPosition;
 
-                entityManager->each<c::Character, c::CharItems, c::UserControl>([&](
+                entityManager->each<c::Character, c::Equipment, c::Inventory, c::UserControl>([&](
                         ex::Entity entity,
                         c::Character &character,
-                        c::CharItems &charItems,
+                        c::Equipment &equipment,
+                        c::Inventory &inventory,
                         c::UserControl &userControl
                 ) {
-                    ex::Entity activeItem = charItems.getActiveItem();
+                    if (equipment.equipPrimaryItem()) {
+                        ex::Entity activeItem = equipment.getPrimaryItem();
 
-                    if (activeItem.valid()) {
-                        execItem(activeItem, mousePos);
+                        execItem(activeItem);
                     }
                 });
             }
         }
 
-        void CharControl::execItem(ex::Entity activeItem, vec3 mousePos) {
+        void CharControl::execItem(ex::Entity activeItem) {
             newExec.push({ExecWeapon, activeItem});
 //                // only weapon items
 //                ex::ComponentHandle<c::Weapon> weapon = components::get<c::Weapon>(activeItem);

@@ -19,7 +19,7 @@
 #include "../components/base.h"
 #include "../components/transform.h"
 #include "../components/character.h"
-#include "../components/char_items.h"
+#include "../components/inventory.h"
 #include "../components/user_control.h"
 #include "../components/ai_control.h"
 #include "../../lib/input_handler.h"
@@ -50,7 +50,7 @@ namespace game {
 
             void receive(const events::MousePress &event);
 
-            void execItem(ex::Entity activeItem, vec3 mousePos);
+            void execItem(ex::Entity activeItem);
 
         private:
             void handleUserControl() {}

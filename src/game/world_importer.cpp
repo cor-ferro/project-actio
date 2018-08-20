@@ -12,7 +12,7 @@
 #include "components/light_spot.h"
 #include "components/camera.h"
 #include "components/target.h"
-#include "components/char_items.h"
+#include "components/inventory.h"
 
 namespace game {
     WorldImporter::WorldImporter(World *world) : world(world) {}

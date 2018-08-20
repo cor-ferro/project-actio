@@ -16,6 +16,9 @@
 #include "systems/day_time.h"
 #include "systems/weapons.h"
 #include "systems/sky.h"
+#include "components/skin.h"
+#include "components/equipment.h"
+#include "components/inventory.h"
 #include "components/transform.h"
 #include "components/state.h"
 #include "components/renderable.h"
@@ -28,7 +31,7 @@
 #include "events/render_setup_model.h"
 #include "components/light_point.h"
 #include "components/light_directional.h"
-#include "components/char_items.h"
+#include "components/inventory.h"
 #include "components/meshes.h"
 #include "desc/light_spot.h"
 #include "strategies/weapons/default.h"
@@ -414,7 +417,8 @@ namespace game {
 //        auto model = entity.assign<c::Meshes>();
 //        auto skin = entity.assign<c::Skin>();
         entity.assign<c::Character>();
-        entity.assign<c::CharItems>();
+        entity.assign<c::Inventory>();
+        entity.assign<c::Equipment>();
 //
 ////        ModelBuilder::FromAi(model.get(), resource, assets);
 ////        SkinBuilder::FromAi(skin.get(), resource);

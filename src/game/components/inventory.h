@@ -15,12 +15,18 @@ namespace game {
     namespace components {
         namespace ex = entityx;
 
-        class CharItems {
+        class Inventory {
         public:
-            CharItems() = default;
+            Inventory() = default;
 
-            void add(ex::Entity entity) {
+            bool add(ex::Entity entity) {
+                if (items.size() + 1 >= maxItems) {
+                    return false;
+                }
+
                 items.insert(entity);
+
+                return true;
             }
 
             bool has(ex::Entity entity) {
@@ -37,21 +43,9 @@ namespace game {
                 }
             }
 
-            void setActiveItem(ex::Entity entity) {
-                activeItem = entity;
-            }
-
-            bool isSetActiveItem() {
-                return activeItem.valid();
-            }
-
-            ex::Entity getActiveItem() {
-                return activeItem;
-            }
-
         private:
             std::unordered_set<ex::Entity> items;
-            ex::Entity activeItem;
+            int maxItems = 10;
         };
     }
 }
