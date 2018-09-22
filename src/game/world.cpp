@@ -449,7 +449,7 @@ namespace game {
         ex::Entity terrain = entities.create();
 
         game::HeightMap *heightmap = physic->createHeightMap(image);
-        physx::PxRigidStatic *terrainActor = physic->generateTerrain(*heightmap, 50.0f, 50.0f);
+        physx::PxRigidStatic *terrainActor = physic->generateTerrain(*heightmap, 200.0f, 200.0f);
 
         std::shared_ptr<Mesh> mesh = physic->generateTerrainMesh(terrainActor, *heightmap);
         mesh->material = findMaterial("ground");
@@ -520,6 +520,8 @@ namespace game {
             aiScene const *scene = asset->getScene();
 
             auto meshes = entity.assign<c::Meshes>(asset->getMeshes());
+
+            physic->computeBoundingBox(object);
 
             if (scene->HasAnimations()) {
                 auto skin = entity.assign<c::Skin>();

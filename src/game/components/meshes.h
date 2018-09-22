@@ -53,6 +53,7 @@ namespace game {
                 Math::Box3 maxBox;
 
                 for (auto &mesh : meshes) {
+                    mesh->geometry.computeBoundingBox();
                     const Math::Box3 &bBox = mesh->geometry.getBoundingBox();
 
                     maxBox.radius.x = glm::max(bBox.radius.x, maxBox.radius.x);

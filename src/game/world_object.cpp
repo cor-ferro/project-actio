@@ -24,6 +24,7 @@ namespace game {
 
     void WorldObject::rotate(vec3 vector, float angle) {
         transform->rotate(vector, angle);
+        transform->dirty = true;
     }
 
     const glm::vec3 &WorldObject::getPosition() const {
@@ -32,22 +33,27 @@ namespace game {
 
     void WorldObject::setPosition(const glm::vec3 &position) {
         transform->setPosition(position);
+        transform->dirty = true;
     }
 
     void WorldObject::setRotation(const glm::quat &quat) {
         transform->rotate(quat);
+        transform->dirty = true;
     }
 
     void WorldObject::setScale(const glm::vec3 &scale) {
         transform->setScale(scale);
+        transform->dirty = true;
     }
 
     void WorldObject::setScale(const float &x, const float &y, const float &z) {
         transform->setScale(x, y, z);
+        transform->dirty = true;
     }
 
     void WorldObject::setQuaternion(const glm::quat &quat) {
         transform->setQuaternion(quat);
+        transform->dirty = true;
     }
 
 }

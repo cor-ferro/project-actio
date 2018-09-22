@@ -31,9 +31,11 @@ namespace game {
                 scale = newScale;
             }
 
-            Transform(const physx::PxTransform &transform) : Object3D() {
+            explicit Transform(const physx::PxTransform &transform) : Object3D() {
                 setPosition(transform.p);
             }
+
+            bool dirty = false;
         };
     }
 }

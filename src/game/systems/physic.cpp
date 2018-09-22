@@ -218,7 +218,19 @@ namespace game {
                         }
                         case components::Physic::StaticObject: {
                             px::PxTransform newTransform = physic.actor->getGlobalPose();
-                            transform.setTransform(newTransform);
+                            if (transform.dirty) {
+                                newTransform.p.x = transform.position.x;
+                                newTransform.p.y = transform.position.y;
+                                newTransform.p.z = transform.position.z;
+                                newTransform.q.w = transform.quaternion.w;
+                                newTransform.q.x = transform.quaternion.x;
+                                newTransform.q.y = transform.quaternion.y;
+                                newTransform.q.z = transform.quaternion.z;
+                                physic.actor->setGlobalPose(newTransform);
+                                transform.dirty = false;
+                            } else {
+                                transform.setTransform(newTransform);
+                            }
                         }
                         default: return;
                     }
@@ -634,7 +646,7 @@ namespace game {
             px::PxMaterial *material = findMaterial("default");
 
             px::PxRigidStatic* actor = gPhysics->createRigidStatic(px::PxTransform(PX_REST_VEC(transform->position)));
-            px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.0f, 1.0f, 1.0f), *material);
+//            px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.0f, 1.0f, 1.0f), *material);
 
             gScene->addActor(*actor);
             entity.assign<c::Physic>(actor);
@@ -747,7 +759,7 @@ namespace game {
                 return nullptr;
             }
 
-            const px::PxReal heightScale = 0.01f;
+            const px::PxReal heightScale = 0.03f;
             const px::PxReal hfRowsScale = static_cast<px::PxReal>(height) / static_cast<px::PxReal>(heightmap.rows);
             const px::PxReal hfColumnScale = static_cast<px::PxReal>(width) / static_cast<px::PxReal>(heightmap.cols);
 
@@ -781,7 +793,7 @@ namespace game {
             mesh->geometry.allocVertices(heightmap.size);
             mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
-            const float textureMultiplier = 4.0f;
+            const float textureMultiplier = 16.0f;
 
             for(px::PxU32 y = 0; y < heightmap.rows; y++)
             {
@@ -827,6 +839,26 @@ namespace game {
             }
 
             return mesh;
+        }
+
+        void Physic::computeBoundingBox(game::WorldObject *object) {
+            if (object->hasComponent<c::Meshes>() && object->hasComponent<c::Physic>()) {
+                auto meshes = object->getComponent<c::Meshes>();
+                auto physic = object->getComponent<c::Physic>();
+
+                const Math::Box3 box = meshes->getBoundingBox();
+                float height = meshes->height();
+
+                px::PxBoxGeometry geometry;
+                geometry.halfExtents = px::PxVec3(
+                    box.radius.x,
+                    box.radius.y,
+                    box.radius.z
+                );
+
+                px::PxMaterial *material = findMaterial("default");
+                px::PxRigidActorExt::createExclusiveShape(*physic->actor, geometry, *material);
+            }
         }
     }
 }

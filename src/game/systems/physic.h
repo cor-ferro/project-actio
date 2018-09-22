@@ -143,6 +143,8 @@ namespace game {
 
             void wave(vec3 position, vec3 direction);
 
+            void computeBoundingBox(game::WorldObject *object);
+
             void receive(const ex::EntityCreatedEvent &event);
 
             void receive(const ex::EntityDestroyedEvent &event);
