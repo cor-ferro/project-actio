@@ -144,7 +144,9 @@ namespace renderer {
 
                     switch (drawMode) {
                         case Mesh_Draw_Arrays:
-                            glDrawArrays(primitiveType, 0, static_cast<int>(vertices->size()));
+                            if (!vertices->empty()) {
+                                glDrawArrays(primitiveType, 0, static_cast<int>(vertices->size()));
+                            }
                             break;
                         case Mesh_Draw_Elements:
                             glDrawElements(primitiveType, static_cast<int>(indices->size()), GL_UNSIGNED_INT, nullptr);

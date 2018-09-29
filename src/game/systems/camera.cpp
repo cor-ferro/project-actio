@@ -158,8 +158,8 @@ namespace game {
                 if (input->isPress(InputHandler::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
             }
 
-            newPosition = vec3(-20.0f, 4.0f, sideTarget.z);
-            newTarget = vec3(sideTarget.x, 4.0f, sideTarget.z);
+            newPosition = vec3(-25.0f, sideTarget.y + 7.0f, sideTarget.z);
+            newTarget = vec3(sideTarget.x, sideTarget.y + 3.0f, sideTarget.z);
         }
 
         void Camera::lookAt(vec3 target) {
