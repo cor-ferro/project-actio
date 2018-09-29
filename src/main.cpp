@@ -35,8 +35,8 @@ int main(int argc, char **argv) {
     meshAllocator->Init();
 
     const Monitor *const monitor = app.getPrimaryMonitor();
-    uint windowWidth = monitor->getWidth() / 2;
-    uint windowHeight = monitor->getHeight() / 2;
+    uint windowWidth = monitor->getWidth() / 1.5;
+    uint windowHeight = monitor->getHeight() / 1.5;
 
     renderer::Params rendererParams;
     rendererParams.width = windowWidth;
