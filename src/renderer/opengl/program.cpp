@@ -244,31 +244,29 @@ namespace renderer {
             return glGetUniformLocation(handle, locationName);
         }
 
-        GLint Program::getUniformCacheLoc(std::string locationName) const {
-            GLint loc = glGetUniformLocation(handle, locationName.c_str());
+        GLint Program::getUniformCacheLoc(const std::string &locationName) const {
+            auto it = uniformIndexCache.find(locationName);
 
-            if (loc < 0) {
-                if (locationName != "normalTexture" && locationName != "heightTexture") {
-//                    console::info("loc: %s %s, %i", name.c_str(), locationName, loc);
-                }
-            }
-
-            return loc;
-
-            std::unordered_map<std::string, GLint>::const_iterator got = uniformIndexCache.find(locationName);
-
-#ifndef OPENGL_PROGRAM_UNIFORM_CACHE
-            if (got == uniformIndexCache.end()) {
-                return getUniformLoc(locationName.c_str());
+            if (it != uniformIndexCache.end()) {
+                return it->second;
             } else {
-                return got->second;
-            }
-#endif
+                GLint loc = glGetUniformLocation(handle, locationName.c_str());
 
-#ifdef OPENGL_PROGRAM_UNIFORM_CACHE
-            return got->second;
-#endif
+                return loc;
+            }
         }
+
+        GLint Program::getUniformCacheLoc(const UniformName &uniformName) const {
+            auto it = uniformIndexCache2.find(uniformName);
+
+            if (it != uniformIndexCache2.end()) {
+                return it->second;
+            } else {
+                GLint loc = glGetUniformLocation(handle, uniformName.name);
+
+                return loc;
+            }
+        };
 
         template<typename T>
         void Program::set(const std::string &name, const T &ref) {
@@ -353,11 +351,12 @@ namespace renderer {
 
                 GLint index = glGetUniformLocation(handle, name);
 
-                if (index == -1) {
-                    return; // named uniform block or optimized variable
-                }
+//                if (index == -1) {
+//                    return; // named uniform block or optimized variable
+//                }
 
                 uniformIndexCache.insert({name, index});
+                uniformIndexCache2.insert({UniformName(name), index});
             }
         }
 

@@ -20,7 +20,63 @@
 
 namespace renderer {
     namespace Opengl {
+        struct UniformName {
+            UniformName() = default;
 
+            UniformName(const UniformName& other) {
+                strcpy(name, other.name);
+            }
+
+            explicit UniformName(const std::string &str) {
+                assert(str.length() <= 50);
+                strcpy(name, str.c_str());
+            }
+
+            explicit UniformName(const char *str) {
+                assert(strlen(str) <= 50);
+                strcpy(name, str);
+            }
+
+            bool operator<(const UniformName &uniformName) const {
+                return strcmp(name, uniformName.name) == -1;
+            }
+
+            bool operator>(const UniformName &uniformName) const {
+                return strcmp(name, uniformName.name) == 1;
+            }
+
+            bool operator==(const UniformName &uniformName) const {
+                return strcmp(name, uniformName.name) == 0;
+            }
+
+            char name[50];
+        };
+    }
+}
+
+namespace std {
+    template <>
+    struct hash<renderer::Opengl::UniformName>
+    {
+        std::size_t operator()(const renderer::Opengl::UniformName& uniformName) const
+        {
+//            size_t hash = 5381;
+//            int c;
+//            const char *str = &(uniformName.name[0]);
+//
+//            while ((c = *str++))
+//                hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+//
+//            return hash;
+
+            return std::hash<std::string>()(uniformName.name);
+        }
+    };
+
+}
+
+namespace renderer {
+    namespace Opengl {
         struct Program {
             typedef std::unordered_map<std::string, GLuint> ProgramSubroutines;
             typedef std::unordered_map<std::string, GLuint> ProgramUniformSubroutines;
@@ -44,7 +100,9 @@ namespace renderer {
 
             GLint getUniformLoc(const char *) const;
 
-            GLint getUniformCacheLoc(std::string locationName) const;
+            GLint getUniformCacheLoc(const std::string &locationName) const;
+
+            GLint getUniformCacheLoc(const UniformName &uniformName) const;
 
             template<typename T>
             void set(const std::string &name, const T &ref);
@@ -104,6 +162,7 @@ namespace renderer {
             bool isUsed = false;
             bool success = false;
             std::unordered_map<std::string, GLint> uniformIndexCache;
+            std::unordered_map<UniformName, GLint, std::hash<renderer::Opengl::UniformName>> uniformIndexCache2;
 
             ProgramSubroutines vertexSubroutines;
             ProgramSubroutines fragmentSubroutines;
