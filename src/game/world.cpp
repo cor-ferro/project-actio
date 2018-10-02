@@ -3,6 +3,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assert.h>
 #include "world.h"
 #include "systems/physic.h"
 #include "systems/camera.h"
@@ -103,6 +104,19 @@ namespace game {
         // post update
         PROFILE(systemProfiler, "Animations", systems.update<game::systems::Animations>(dt));
         PROFILE(systemProfiler, "LightHelpers", systems.update<game::systems::LightHelpers>(dt));
+    }
+
+    void World::flush() {
+        WorldTask *task = nullptr;
+
+        while (!completedTasks.empty()) {
+            bool status = completedTasks.pop(task);
+            if (!status) {
+                continue;
+            }
+
+            task->onFlush();
+        }
     }
 
     void World::render(ex::TimeDelta dt) {
@@ -270,7 +284,6 @@ namespace game {
     void World::spawn(game::WorldObject *object, const vec3 &position) {
         object->transform->setPosition(position);
         physic->spawn(object);
-        events.emit<events::RenderSetupModel>(object->getEntity());
     }
 
     void World::setPhysicsDebug(bool value) {
@@ -382,7 +395,7 @@ namespace game {
         auto object = new game::WorldObject(entity);
         object->setPosition(pos);
 
-        objects.insert({ object->getId(), object });
+        objects.insert({object->getId(), object});
 
         return object;
     }
@@ -474,40 +487,7 @@ namespace game {
         assets::Model *asset = assets->getModel(name);
 
         if (!asset->isLoaded()) {
-            asset->load();
-
-            const aiScene *scene = asset->getScene();
-
-            if (scene != nullptr) {
-                const ::Resource::Assimp *assimpResource = asset->getAiResource();
-
-                const unsigned int numMeshes = scene->mNumMeshes;
-                for (unsigned int i = 0; i < numMeshes; i++) {
-                    aiMesh *mesh = scene->mMeshes[i];
-                    aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-
-                    std::shared_ptr<Mesh> modelMesh = Mesh::Create();
-
-                    modelMesh->setName(mesh->mName.C_Str());
-
-                    GeometryBuilder::FromAi(modelMesh->geometry, mesh);
-                    MaterialBuilder::FromAi(modelMesh->material, material, assimpResource, assets.get());
-
-                    if (mesh->mNumBones > 0) {
-                        modelMesh->bones.resize(mesh->mNumBones);
-
-                        for (uint boneId = 0; boneId < mesh->mNumBones; boneId++) {
-                            aiBone *bone = mesh->mBones[boneId];
-                            modelMesh->bones.offsets[boneId] = libAi::toNativeType(bone->mOffsetMatrix);
-                            modelMesh->bones.names[boneId] = std::string(bone->mName.C_Str());
-                        }
-                    }
-
-                    asset->addMesh(modelMesh);
-                }
-            }
-
-            asset->markLoaded();
+            asyncLoad(asset);
         }
 
         return asset;
@@ -515,27 +495,15 @@ namespace game {
 
     void World::setObjectModel(game::WorldObject *object, assets::Model *asset) {
         if (asset != nullptr) {
-            ex::Entity entity = object->getEntity();
+            World *world = this;
 
-            aiScene const *scene = asset->getScene();
-
-            auto meshes = entity.assign<c::Meshes>(asset->getMeshes());
-
-            physic->computeBoundingBox(object);
-
-            if (scene->HasAnimations()) {
-                auto skin = entity.assign<c::Skin>();
-                SkinBuilder::FromAi(skin.get(), scene);
-
-                // @todo: реиндексацию можно делать один раз, но основе только скелета
-                auto nodeIndexes = skin->getNodeIndexes();
-                meshes->reindexBones(nodeIndexes);
-
-                std::string animationName = asset->getOption("animation");
-                if (!animationName.empty()) {
-                    skin->setCurrentAnimation(animationName);
-                }
+            if (asset->isLoaded()) {
+                applyObjectAsset(object, asset);
             }
+
+            asset->onLoad.connect([object, asset, world]() {
+                world->applyObjectAsset(object, asset);
+            });
         }
     }
 
@@ -560,5 +528,80 @@ namespace game {
 
     void World::makeUnControlled(game::WorldObject *object) {
         events.emit<events::MakeUnControlled>(object->getEntity());
+    }
+
+    void World::asyncLoad(assets::Model *asset) {
+        asyncLoadModel(asset);
+    }
+
+    void World::asyncLoadModel(assets::Model *asset) {
+        auto *context = new WorldTaskContext(this);
+        context->setData(asset);
+
+        WorldTask *task = new WorldModelLoadTask(context);
+
+        tasks.push(task);
+    }
+
+    bool World::hasTasks() {
+        return !tasks.empty();
+    }
+
+    WorldTask *World::popTaskToPerform() {
+        WorldTask *task = nullptr;
+
+        bool status = tasks.pop(task);
+
+        if (!status || task == NULL) {
+            task = nullptr;
+        }
+
+        return task;
+    }
+
+    void World::performTask(WorldTask *task) {
+        assert(task != nullptr);
+
+        task->onStart();
+        task->onFinish();
+
+        completedTasks.push(task);
+    }
+
+    std::shared_ptr<Assets> World::getAssets() {
+        return assets;
+    }
+
+    void World::setupRenderMesh(const ex::Entity &entity) {
+        events.emit<events::RenderSetupModel>(entity);
+    }
+
+    void World::applyObjectAsset(game::WorldObject *object, assets::Model *asset) {
+        ex::Entity entity = object->getEntity();
+
+        if (entity.has_component<c::Meshes>()) {
+            entity.remove<c::Meshes>();
+        }
+
+        entity.assign<c::Meshes>(asset->getMeshes());
+
+        physic->computeBoundingBox(object);
+
+//        if (scene->HasAnimations()) {
+//            aiScene const *scene = asset->getScene();
+//            auto skin = entity.assign<c::Skin>();
+//            SkinBuilder::FromAi(skin.get(), scene);
+//
+//            // @todo: реиндексацию можно делать один раз, но основе только скелета
+//            auto nodeIndexes = skin->getNodeIndexes();
+//            meshes->reindexBones(nodeIndexes);
+//
+//            const std::string animationName = asset->getOption("animation");
+//            if (!animationName.empty()) {
+//                skin->setCurrentAnimation(animationName);
+//            }
+//        }
+
+        setupRenderMesh(entity);
     }
 }

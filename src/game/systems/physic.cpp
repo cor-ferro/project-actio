@@ -175,6 +175,10 @@ namespace game {
             world->spawn(debugLinesObject, vec3(0.0f));
             world->spawn(debugTrianglesObject, vec3(0.0f));
             world->spawn(debugPointsObject, vec3(0.0f));
+
+            world->setupRenderMesh(debugLinesObject->getEntity());
+            world->setupRenderMesh(debugTrianglesObject->getEntity());
+            world->setupRenderMesh(debugPointsObject->getEntity());
         }
 
         void Physic::destroy() {
@@ -199,44 +203,8 @@ namespace game {
                 contactedActors.pop();
             }
 
-            es.each<c::Physic, components::Transform>(
-                [](
-                    ex::Entity entity,
-                    components::Physic &physic,
-                    components::Transform &transform
-                ) {
-                    if (physic.actor == nullptr) {
-                        return;
-                    }
-
-                    switch (physic.type) {
-                        case components::Physic::DynamicObject: {
-                            auto *actor = static_cast<px::PxRigidDynamic *>(physic.actor);
-                            if (actor->isSleeping()) {
-                                return;
-                            }
-                        }
-                        case components::Physic::StaticObject: {
-                            px::PxTransform newTransform = physic.actor->getGlobalPose();
-                            if (transform.dirty) {
-                                newTransform.p.x = transform.position.x;
-                                newTransform.p.y = transform.position.y;
-                                newTransform.p.z = transform.position.z;
-                                newTransform.q.w = transform.quaternion.w;
-                                newTransform.q.x = transform.quaternion.x;
-                                newTransform.q.y = transform.quaternion.y;
-                                newTransform.q.z = transform.quaternion.z;
-                                physic.actor->setGlobalPose(newTransform);
-                                transform.dirty = false;
-                            } else {
-                                transform.setTransform(newTransform);
-                            }
-                        }
-                        default: return;
-                    }
-                }
-            );
-
+            updateObjects1(es);
+//            updateObjects2();
 
             es.each<c::Character, c::UserControl, c::Transform>([&elapsedTime, this](
                     ex::Entity entity,
@@ -643,9 +611,19 @@ namespace game {
         void Physic::makeStatic(game::WorldObject *object) {
             ex::Entity entity = object->getEntity();
             auto transform = entity.component<c::Transform>();
-            px::PxMaterial *material = findMaterial("default");
+//            px::PxMaterial *material = findMaterial("default");
 
-            px::PxRigidStatic* actor = gPhysics->createRigidStatic(px::PxTransform(PX_REST_VEC(transform->position)));
+            px::PxTransform pxTransform;
+            pxTransform.p.x = transform->position.x;
+            pxTransform.p.y = transform->position.y;
+            pxTransform.p.z = transform->position.z;
+            pxTransform.q.x = transform->quaternion.x;
+            pxTransform.q.y = transform->quaternion.y;
+            pxTransform.q.z = transform->quaternion.z;
+            pxTransform.q.w = transform->quaternion.w;
+
+            // setDominanceGroup
+            px::PxRigidStatic* actor = gPhysics->createRigidStatic(pxTransform);
 //            px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.0f, 1.0f, 1.0f), *material);
 
             gScene->addActor(*actor);
@@ -657,7 +635,17 @@ namespace game {
             auto transform = object->getComponent<c::Transform>();
 
             px::PxMaterial *material = findMaterial("default");
-            px::PxRigidDynamic* actor = gPhysics->createRigidDynamic(px::PxTransform(PX_REST_VEC(transform->position)));
+
+            px::PxTransform pxTransform;
+            pxTransform.p.x = transform->position.x;
+            pxTransform.p.y = transform->position.y;
+            pxTransform.p.z = transform->position.z;
+            pxTransform.q.x = transform->quaternion.x;
+            pxTransform.q.y = transform->quaternion.y;
+            pxTransform.q.z = transform->quaternion.z;
+            pxTransform.q.w = transform->quaternion.w;
+
+            px::PxRigidDynamic* actor = gPhysics->createRigidDynamic(pxTransform);
 
             // @todo: iterate over all meshes
             switch (geometryType) {
@@ -858,6 +846,55 @@ namespace game {
 
                 px::PxMaterial *material = findMaterial("default");
                 px::PxRigidActorExt::createExclusiveShape(*physic->actor, geometry, *material);
+            }
+        }
+
+        void Physic::updateObjects1(ex::EntityManager &es) {
+            es.each<c::Physic, components::Transform>(
+                [](
+                    ex::Entity entity,
+                    components::Physic &physic,
+                    components::Transform &transform
+                ) {
+                    if (physic.actor == nullptr) {
+                        return;
+                    }
+
+                    switch (physic.type) {
+                        case components::Physic::DynamicObject: {
+                            auto *actor = static_cast<px::PxRigidDynamic *>(physic.actor);
+                            if (actor->isSleeping()) {
+                                return;
+                            }
+                        }
+                        case components::Physic::StaticObject: {
+                            px::PxTransform newTransform = physic.actor->getGlobalPose();
+                            if (transform.dirty) {
+                                newTransform.p.x = transform.position.x;
+                                newTransform.p.y = transform.position.y;
+                                newTransform.p.z = transform.position.z;
+                                newTransform.q.w = transform.quaternion.w;
+                                newTransform.q.x = transform.quaternion.x;
+                                newTransform.q.y = transform.quaternion.y;
+                                newTransform.q.z = transform.quaternion.z;
+                                physic.actor->setGlobalPose(newTransform);
+                                transform.dirty = false;
+                            } else {
+                                transform.setTransform(newTransform);
+                            }
+                        }
+                        default: return;
+                    }
+                }
+            );
+        }
+
+        void Physic::updateObjects2() {
+            px::PxU32 nbActiveActors;
+            px::PxActor** activeActors = gScene->getActiveActors(nbActiveActors);
+
+            for (px::PxU32 i = 0; i < nbActiveActors; i++) {
+
             }
         }
     }

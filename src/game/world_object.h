@@ -7,6 +7,7 @@
 
 #include <entityx/entityx.h>
 #include <glm/glm.hpp>
+#include <boost/signals2.hpp>
 #include "components/base.h"
 #include "components/transform.h"
 
@@ -19,6 +20,10 @@ namespace game {
         typedef ex::Entity::Id Id;
 
         explicit WorldObject(ex::Entity &fromEntity);
+
+        WorldObject(const WorldObject &other);
+
+        WorldObject(WorldObject && other) noexcept;
 
         ~WorldObject();
 
@@ -60,6 +65,8 @@ namespace game {
         explicit WorldObject() = default;
 
         ex::Entity entity_;
+
+        boost::signals2::signal<void ()> onSpawn;
     };
 }
 

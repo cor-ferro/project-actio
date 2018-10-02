@@ -41,6 +41,7 @@ namespace game {
 
                     world->setObjectMesh(helper, mesh);
                     world->spawn(helper, position);
+                    world->setupRenderMesh(entity);
                 }
             }
 

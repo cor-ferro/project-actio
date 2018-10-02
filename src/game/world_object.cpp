@@ -8,6 +8,19 @@ namespace game {
         transform = entity_.assign<c::Transform>();
     }
 
+    WorldObject::WorldObject(const WorldObject &other) {
+        console::info("+++ Copy world object");
+        entity_ = other.entity_;
+        transform = other.transform;
+        onSpawn.connect(other.onSpawn);
+    }
+
+    WorldObject::WorldObject(WorldObject && other) noexcept {
+        std::swap(entity_, other.entity_);
+        std::swap(transform, other.transform);
+        std::swap(onSpawn, other.onSpawn);
+    }
+
     ex::Entity WorldObject::getEntity() const {
         return entity_;
     }

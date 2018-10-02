@@ -20,7 +20,7 @@ extern "C" {
 #include "desc/light_point.h"
 #include "desc/light_spot.h"
 #include "../core/material.h"
-#include "../lib/assets_types.h"
+#include "../lib/assets_script.h"
 #include "../lib/console.h"
 #include "../core/geometry_builder.h"
 #include "../core/mesh.h"
@@ -113,6 +113,10 @@ namespace game {
             static float cos(const float &v);
 
             static float abs(const float &v);
+
+            static float randomf(const float &min, const float &max);
+
+            static glm::vec2 randomDiskf(const float &radius);
 
             static float PI;
             static float TWO_PI;

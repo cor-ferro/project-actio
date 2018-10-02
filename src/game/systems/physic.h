@@ -125,6 +125,10 @@ namespace game {
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
+            void updateObjects1(ex::EntityManager &es);
+
+            void updateObjects2();
+
             void setDrawDebug(bool value);
 
             void drawDebugBuffer(ex::EventManager &events);

@@ -1,8 +1,8 @@
 #include <glm/glm.hpp>
+#include <glm/gtc/random.hpp>
 #include "script.h"
 #include "world.h"
 #include "../lib/assets_resource.h"
-#include "../lib/assets_types.h"
 
 
 namespace game {
@@ -40,9 +40,7 @@ namespace game {
     }
 
     WorldObject Script::WorldLib::createObject(ex::Entity &entity) {
-        WorldObject object(entity);
-
-        return object;
+        return std::move(WorldObject(entity));
     }
 
     void Script::WorldLib::spawnObject(WorldObject *object) {
@@ -123,6 +121,14 @@ namespace game {
 
     float Script::Math1Lib::abs(const float &v) {
         return glm::abs(v);
+    }
+
+    float Script::Math1Lib::randomf(const float &min, const float &max) {
+        return glm::linearRand(min, max);
+    }
+
+    glm::vec2 Script::Math1Lib::randomDiskf(const float &radius) {
+        return glm::diskRand(radius);
     }
 
 
@@ -517,6 +523,8 @@ namespace game {
                 .addFunction("sin", &Math1Lib::sin)
                 .addFunction("cos", &Math1Lib::cos)
                 .addFunction("abs", &Math1Lib::abs)
+                .addFunction("randomf", &Math1Lib::randomf)
+                .addFunction("randomDiskf", &Math1Lib::randomDiskf)
                 .addVariable("PI", &math.PI, false)
                 .addVariable("TWO_PI", &math.TWO_PI, false)
                 .addVariable("HALF_PI", &math.HALF_PI, false)

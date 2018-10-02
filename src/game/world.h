@@ -8,6 +8,7 @@
 #include <list>
 #include <glm/glm.hpp>
 #include <entityx/entityx.h>
+#include <boost/lockfree/queue.hpp>
 #include "context.h"
 #include "character.h"
 #include "script.h"
@@ -34,6 +35,7 @@
 #include "desc/weapon.h"
 #include "weapon_handler.h"
 #include "world_object.h"
+#include "world_tasks.h"
 
 namespace game {
     namespace ex = entityx;
@@ -120,6 +122,8 @@ namespace game {
 
         void importAssets(std::shared_ptr<Assets> &newAssets);
 
+        std::shared_ptr<Assets> getAssets();
+
         void load();
 
         void unload();
@@ -127,6 +131,21 @@ namespace game {
         const profiling::ProfileTimings &getSystemProfiler() const;
 
         void generateBaseTerrain();
+
+
+        void asyncLoad(assets::Model *asset);
+
+        void asyncLoadModel(assets::Model *asset);
+
+        bool hasTasks();
+
+        WorldTask *popTaskToPerform();
+
+        void performTask(WorldTask *task);
+
+        void flush();
+
+        void setupRenderMesh(const ex::Entity &entity);
 
         /* ----- API v2 ----- */
 
@@ -178,7 +197,7 @@ namespace game {
         std::shared_ptr<game::systems::Weapons> weapons = nullptr;
         std::shared_ptr<game::systems::Render> renderer = nullptr;
 
-        std::map<game::WorldObject::Id, game::WorldObject*> objects;
+        std::map<game::WorldObject::Id, game::WorldObject *> objects;
 
         InputHandler *input1 = nullptr;
         InputHandler *input2 = nullptr;
@@ -191,6 +210,9 @@ namespace game {
 
         std::shared_ptr<Assets> assets;
 
+        boost::lockfree::queue<WorldTask *> tasks;
+        boost::lockfree::queue<WorldTask *> completedTasks;
+
         void reloadAssetsScripts();
 
         void reloadRenderAssets();
@@ -198,6 +220,8 @@ namespace game {
         void unloadScripts();
 
         void unloadTextures();
+
+        void applyObjectAsset(game::WorldObject *object, assets::Model *asset);
     };
 }
 

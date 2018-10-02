@@ -29,8 +29,6 @@ namespace game {
             while (!newItems.empty()) {
                 newItems.pop();
 
-                ex::Entity ball = es.create();
-
                 float radius = 1.0f;
 
                 assets::Material *assetMaterial = context->assets->createMaterial("waterball");
@@ -48,6 +46,7 @@ namespace game {
 
                 world->setObjectMesh(object, mesh);
                 world->spawn(object, charPosition + (vec3(0.0f, 1.0f + yAxis, zAxis) + target));
+                world->setupRenderMesh(object->getEntity());
 //                world->forcePush(object, target, 5.0f)
             }
         }

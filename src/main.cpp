@@ -189,10 +189,52 @@ int main(int argc, char **argv) {
         renderExec = false;
     });
 
+    std::mutex m;
+    std::condition_variable cv;
+
+    auto appSecondThread = std::thread([&]() {
+        std::unique_lock<std::mutex> lk(m);
+
+
+    });
+
+    std::map<std::thread::id, bool> workingSecondaryThreads;
+
     auto appThread = std::thread([&]() {
         const float elapsedTime = 16.6f;
 
         while (renderExec) {
+            bool hasTasks = world->hasTasks();
+
+            if (hasTasks) {
+                auto *task = world->popTaskToPerform();
+
+                if (task == nullptr) {
+                    continue;
+                }
+
+                std::thread t([task, &workingSecondaryThreads, &world]() {
+                    std::thread::id tid = std::this_thread::get_id();
+                    console::info("make task thread: %i", tid);
+
+                    workingSecondaryThreads.insert({tid, true});
+
+                    world->performTask(task);
+
+                    auto it = workingSecondaryThreads.find(tid);
+
+                    if (it != workingSecondaryThreads.end()) {
+                        workingSecondaryThreads.erase(it);
+                        console::info("complete thread: %i", tid);
+                    } else {
+                        console::warn("unable found the thread %i", tid);
+                    }
+                });
+
+                t.detach();
+            }
+
+            world->flush();
             world->update(elapsedTime);
 
             std::this_thread::sleep_for(std::chrono::microseconds(static_cast<int>(1000.0f * elapsedTime)));
@@ -201,7 +243,12 @@ int main(int argc, char **argv) {
 
     // wait all loops finish
     renderThread.join();
+    appSecondThread.join();
     appThread.join();
+
+    while (!workingSecondaryThreads.empty()) {
+        console::info("wait all secondary threads finish");
+    }
 
     world->destroy();
     delete world;
