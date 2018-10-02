@@ -30,7 +30,8 @@ namespace renderer {
             , forwardProgram(nullptr)
             , skyboxProgram(nullptr)
             , lightPassProgram(nullptr)
-            , nullProgram(nullptr) {}
+            , nullProgram(nullptr)
+            , shadowProgram(nullptr) {}
 
     bool OpenglRenderer::init() {
         const renderer::Params &renderParams = getParams();
@@ -103,16 +104,21 @@ namespace renderer {
 
         gbuffer.startFrame();
 
-        // Geometry pass
-        gbuffer.geometryPass();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+//        renderIntoDepth(es);
+//        renderShadowVolIntoStencil(es);
 
-        glDepthMask(GL_TRUE);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
-        OpenglCheckErrors();
+        {
+            // Geometry pass
+            gbuffer.geometryPass();
 
-        drawModels(es);
-        OpenglCheckErrorsSilent();
+            glDepthMask(GL_TRUE);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            glEnable(GL_DEPTH_TEST);
+            OpenglCheckErrors();
+
+            drawModels(es);
+            OpenglCheckErrorsSilent();
 
 //        bool isHasSkybox = scene->hasSkybox();
 //        if (isHasSkybox) {
@@ -129,41 +135,43 @@ namespace renderer {
 //            OpenglCheckErrorsSilent();
 //        }
 
-        glDepthMask(GL_FALSE);
-        OpenglCheckErrors();
+            glDepthMask(GL_FALSE);
+            OpenglCheckErrors();
 
-        // Light pass
-        vec3 screenSize = vec3(static_cast<float>(renderParams.width), static_cast<float>(renderParams.height), 0.0f);
+            // Light pass
+            vec3 screenSize = vec3(static_cast<float>(renderParams.width), static_cast<float>(renderParams.height), 0.0f);
 
-        lightPassProgram->use();
-        lightPassProgram->setInt("gPositionMap", 0);
-        lightPassProgram->setInt("gNormalMap", 1);
-        lightPassProgram->setInt("gAlbedoMap", 2);
-        lightPassProgram->setVec("gScreenSize", screenSize); // fix to vec2
+            lightPassProgram->use();
+            lightPassProgram->setInt("gPositionMap", 0);
+            lightPassProgram->setInt("gNormalMap", 1);
+            lightPassProgram->setInt("gAlbedoMap", 2);
+            lightPassProgram->setVec("gScreenSize", screenSize); // fix to vec2
 //        lightPassProgram->setVec("viewDir", cameraPosition);
 
-        glStencilFunc(GL_ALWAYS, 0, 0);
-        glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-        glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+            glStencilFunc(GL_ALWAYS, 0, 0);
+            glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+            glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 
-        // Point light
-        gbuffer.lightPass();
-        lightPassProgram->use();
-        lightPassProgram->setMat("projection", projection);
-        lightPassProgram->setMat("view", view);
+            // Point light
+            gbuffer.lightPass();
+            lightPassProgram->use();
+            lightPassProgram->setMat("projection", projection);
+            lightPassProgram->setMat("view", view);
 
-        const std::vector<GLuint> &bufferTextures = gbuffer.getTextures();
-        for (uint i = 0; i < bufferTextures.size(); i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, bufferTextures[i]);
+            const std::vector<GLuint> &bufferTextures = gbuffer.getTextures();
+            for (uint i = 0; i < bufferTextures.size(); i++) {
+                glActiveTexture(GL_TEXTURE0 + i);
+                glBindTexture(GL_TEXTURE_2D, bufferTextures[i]);
+            }
+            OpenglCheckErrors();
+
+            renderPointLights(es, cameraPosition);
+            renderSpotLights(es, cameraPosition);
+            renderDirLights(es);
+
+            gbuffer.finalPass();
         }
-        OpenglCheckErrors();
 
-        renderPointLights(es, cameraPosition);
-        renderSpotLights(es, cameraPosition);
-        renderDirLights(es);
-
-        gbuffer.finalPass();
 
         glBlitFramebuffer(
                 0, 0, gbuffer.getWidth(), gbuffer.getHeight(),
@@ -495,16 +503,18 @@ namespace renderer {
         skyboxProgram = &requiredPrograms["skybox"];
         lightPassProgram = &requiredPrograms["light_pass"];
         nullProgram = &requiredPrograms["null"];
+        shadowProgram = &requiredPrograms["shadow_volume"];
 
         skyboxPipeline.setProgram(skyboxDeferredProgram);
         modelPipeline.setProgram(geometryPassProgram);
         nullPipeline.setProgram(nullProgram);
+        shadowPipeline.setProgram(shadowProgram);
 
         console::info("geometryPass success: %i", geometryPassProgram->isSuccess());
         console::info("lightPass success: %i", lightPassProgram->isSuccess());
         console::info("null success: %i", nullProgram->isSuccess());
 
-        console::info("piplines inited");
+        console::info("pipelines inited");
     }
 
     void OpenglRenderer::setupMesh(std::shared_ptr<Mesh> mesh) {
@@ -709,5 +719,63 @@ namespace renderer {
         }
 
         handle->ready = false;
+    }
+
+    void OpenglRenderer::renderIntoDepth(entityx::EntityManager &es) {
+        glDrawBuffer(GL_NONE);
+        glDepthMask(GL_TRUE);
+
+        nullPipeline.use();
+
+        es.each<components::Renderable, components::Transform, components::Meshes>([this](
+                ex::Entity entity,
+                components::Renderable &,
+                components::Transform &transform,
+                components::Meshes &meshes
+        ) {
+            entityx::ComponentHandle<components::Skin> skin = entity.component<components::Skin>();
+
+            uint renderFlags = Mesh_Draw_Base;
+
+            const std::vector<std::shared_ptr<Mesh>> items = meshes.items();
+            for (auto &mesh : items) {
+                if (skin) {
+                    renderFlags |= Mesh_Draw_Bones;
+                }
+
+                nullPipeline.setTransform(transform); // todo: pass pointer instead of copy
+                nullPipeline.draw(*mesh, renderFlags);
+
+                stats.increaseDrawCall();
+            }
+        });
+    }
+
+    void OpenglRenderer::renderShadowVolIntoStencil(entityx::EntityManager &es) {
+        glEnable(GL_STENCIL_TEST);
+        glDrawBuffer(GL_NONE);
+        glDepthMask(GL_FALSE);
+        glDisable(GL_CULL_FACE);
+
+//        glStencilFunc(GL_ALWAYS, 0, 0xff);
+
+//        glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+//        glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+
+        shadowPipeline.use();
+
+        ex::ComponentHandle<components::LightPoint> light;
+        ex::ComponentHandle<components::Transform> transform;
+
+        for (ex::Entity entity : es.entities_with_components(light, transform)) {
+            float radius = light->getRadius();
+
+            transform->setScale(radius);
+
+            shadowPipeline.setInitialTransform();
+//            shadowPipeline.draw(*lightSphere, Mesh_Draw_Base);
+        }
+
+        glEnable(GL_CULL_FACE);
     }
 }

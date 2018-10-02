@@ -21,7 +21,8 @@
 #include "u-buffer.h"
 #include "uniforms.h"
 #include "utils.h"
-#include "pipeline.h"
+#include "pipelines/mesh_pipeline.h"
+#include "pipelines/shadow_pipeline.h"
 
 #include "../../game/components/camera.h"
 #include "../../game/components/transform.h"
@@ -129,6 +130,10 @@ namespace renderer {
 
         void initRequiredShaders();
 
+        void renderIntoDepth(entityx::EntityManager &es);
+
+        void renderShadowVolIntoStencil(entityx::EntityManager &es);
+
         Opengl::GeometryHandle* createGeometryHandle();
 
         Opengl::TextureHandle* createTextureHandle();
@@ -139,12 +144,14 @@ namespace renderer {
         Opengl::Program *geometryPassProgram;
         Opengl::Program *lightPassProgram;
         Opengl::Program *nullProgram;
+        Opengl::Program *shadowProgram;
 
         std::unordered_map<size_t, Opengl::Program> programs;
 
         renderer::Opengl::MeshDrawPipeline modelPipeline;
         renderer::Opengl::MeshDrawPipeline skyboxPipeline;
         renderer::Opengl::MeshDrawPipeline nullPipeline;
+        renderer::Opengl::MeshDrawPipeline shadowPipeline;
 
         std::shared_ptr<Mesh> lightQuad = nullptr;
         std::shared_ptr<Mesh> lightSphere = nullptr;
