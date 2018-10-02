@@ -626,7 +626,6 @@ namespace game {
             px::PxRigidStatic* actor = gPhysics->createRigidStatic(pxTransform);
 //            px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.0f, 1.0f, 1.0f), *material);
 
-            gScene->addActor(*actor);
             entity.assign<c::Physic>(actor);
         }
 
