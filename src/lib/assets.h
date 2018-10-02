@@ -9,10 +9,14 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
 #include "assets_resource.h"
-#include "assets_types.h"
 #include "console.h"
 #include "data_loader.h"
 #include "../core/texture.h"
+#include "assets_script.h"
+#include "assets_shader.h"
+#include "assets_texture.h"
+#include "assets_material.h"
+#include "assets_model.h"
 
 class Assets {
 public:
