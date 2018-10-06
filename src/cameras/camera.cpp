@@ -59,6 +59,8 @@ void Camera::updateViewMatrix()
 	rotM = glm::rotate(rotM, glm::radians(rotation_.y), vec3(0.0f, 1.0f, 0.0f));
 	rotM = glm::rotate(rotM, glm::radians(rotation_.z), vec3(0.0f, 0.0f, 1.0f));
 
+	rotationMat_ = rotM;
+
 	transM = glm::translate(mat4(1.0f), position_ * -1.0f);
 
 	view_ = rotM * transM; // for 3d person reverse operands
@@ -71,6 +73,10 @@ vec3& Camera::getFront() { return front_; }
 vec3& Camera::getTarget() { return target_; }
 vec3& Camera::getUp() { return up_; }
 mat4& Camera::getProjection() { return projection_; }
+
+const mat4 &Camera::getRotationMat() {
+	return rotationMat_;
+}
 
 
 PerspectiveCamera::PerspectiveCamera(float fov, float aspect, float near, float far)

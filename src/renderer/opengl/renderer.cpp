@@ -37,6 +37,7 @@ namespace renderer {
         const renderer::Params &renderParams = getParams();
 
         gbuffer.init(renderParams.width, renderParams.height);
+        shadowBuffer.init(renderParams.width, renderParams.height);
 
         initMatricesBuffer();
         initRequiredShaders();
@@ -59,7 +60,6 @@ namespace renderer {
         return true;
     }
 
-
     OpenglRenderer::~OpenglRenderer() {
         destroy();
     }
@@ -78,114 +78,50 @@ namespace renderer {
         matricesBuffer.init(map, UBO_MATRICES_POINT_INDEX);
     }
 
-    void OpenglRenderer::deferredRender(entityx::EntityManager &es) {
+    void OpenglRenderer::draw(entityx::EntityManager &es) {
+        preRender();
+
         const renderer::Params &renderParams = getParams();
 
-        glViewport(0, 0, renderParams.width, renderParams.height);
+        FrameContext frameContext(renderParams, es);
 
-        mat4 view, projection;
-        vec3 cameraPosition;
-
-        ex::ComponentHandle<components::Camera> camera;
-        ex::ComponentHandle<components::Transform> cameraTransform;
-        ex::ComponentHandle<components::Target> cameraTarget;
-
-        for (ex::Entity entity : es.entities_with_components(camera, cameraTransform, cameraTarget)) {
-            view = camera->getView();
-            projection = camera->getProjection();
-            cameraPosition = camera->getPosition();
-            break;
+        switch (type) {
+            case RenderForward:
+//                forwardRender(frameContext);
+                break;
+            case RenderDeferred:
+                deferredRender(frameContext);
+                break;
         }
+
+        postRender();
+    }
+
+    void OpenglRenderer::deferredRender(const FrameContext &frameContext) {
+        glViewport(0, 0, frameContext.getScreenWidth(), frameContext.getScreenHeight());
 
         matricesBuffer.use();
-        matricesBuffer.set(0, glm::value_ptr(projection));
-        matricesBuffer.set(1, glm::value_ptr(view));
+        matricesBuffer.set(0, glm::value_ptr(frameContext.getProjection()));
+        matricesBuffer.set(1, glm::value_ptr(frameContext.getView()));
         OpenglCheckErrors();
 
+//        shadowPass(frameContext);
+
         gbuffer.startFrame();
+        geometryPass(frameContext);
+        lightPass(frameContext);
+        gbuffer.finalPass();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-//        renderIntoDepth(es);
-//        renderShadowVolIntoStencil(es);
-
-        {
-            // Geometry pass
-            gbuffer.geometryPass();
-
-            glDepthMask(GL_TRUE);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-            glEnable(GL_DEPTH_TEST);
-            OpenglCheckErrors();
-
-            drawModels(es);
-            OpenglCheckErrorsSilent();
-
-//        bool isHasSkybox = scene->hasSkybox();
-//        if (isHasSkybox) {
-//            Model *skyboxModel = scene->getSkybox();
-//            Mesh *mesh = skyboxModel->getFirstMesh();
-//            Texture texture = mesh->material.getTextures().at(0);
-//
-//            glDepthFunc(GL_LEQUAL);
-//            OpenglUtils::bindTexture(GL_TEXTURE0 + maxTextureUnits - 1, texture);
-//            skyboxDeferredProgram.use();
-//            skyboxDeferredProgram.setInt("cubeTexture", maxTextureUnits - 1);
-//            mesh->draw(skyboxDeferredProgram, Mesh_Draw_Base);
-//            glDepthFunc(GL_LESS);
-//            OpenglCheckErrorsSilent();
-//        }
-
-            glDepthMask(GL_FALSE);
-            OpenglCheckErrors();
-
-            // Light pass
-            vec3 screenSize = vec3(static_cast<float>(renderParams.width), static_cast<float>(renderParams.height), 0.0f);
-
-            lightPassProgram->use();
-            lightPassProgram->setInt("gPositionMap", 0);
-            lightPassProgram->setInt("gNormalMap", 1);
-            lightPassProgram->setInt("gAlbedoMap", 2);
-            lightPassProgram->setVec("gScreenSize", screenSize); // fix to vec2
-//        lightPassProgram->setVec("viewDir", cameraPosition);
-
-            glStencilFunc(GL_ALWAYS, 0, 0);
-            glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-            glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
-
-            // Point light
-            gbuffer.lightPass();
-            lightPassProgram->use();
-            lightPassProgram->setMat("projection", projection);
-            lightPassProgram->setMat("view", view);
-
-            const std::vector<GLuint> &bufferTextures = gbuffer.getTextures();
-            for (uint i = 0; i < bufferTextures.size(); i++) {
-                glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, bufferTextures[i]);
-            }
-            OpenglCheckErrors();
-
-            renderPointLights(es, cameraPosition);
-            renderSpotLights(es, cameraPosition);
-            renderDirLights(es);
-
-            gbuffer.finalPass();
-        }
-
-
-        glBlitFramebuffer(
-                0, 0, gbuffer.getWidth(), gbuffer.getHeight(),
-                0, 0, renderParams.width, renderParams.height,
-                GL_COLOR_BUFFER_BIT, GL_LINEAR
-        );
         OpenglCheckErrors();
 
         glBindFramebuffer(GL_FRAMEBUFFER, DEFAULT_FRAME_BUFFER);
     }
 
-    void OpenglRenderer::renderPointLights(ex::EntityManager &es, vec3 &cameraPosition) {
+    void OpenglRenderer::renderPointLights(const FrameContext &frameContext) {
 //        console::info("renderPointLights");
         gbuffer.lightPass();
+
+        auto &es = frameContext.getEntityManager();
 
         ex::ComponentHandle<components::LightPoint> light;
         ex::ComponentHandle<components::Transform> transform;
@@ -225,7 +161,7 @@ namespace renderer {
             glCullFace(GL_FRONT);
             OpenglCheckErrors();
 
-            lightPassProgram->setVec("gEyePosition", cameraPosition);
+            lightPassProgram->setVec("gEyePosition", frameContext.getCameraPosition());
             lightPassProgram->setVec("pointLight.ambient", light->ambient);
             lightPassProgram->setVec("pointLight.diffuse", light->diffuse);
             lightPassProgram->setVec("pointLight.specular", light->specular);
@@ -246,8 +182,10 @@ namespace renderer {
         }
     }
 
-    void OpenglRenderer::renderSpotLights(ex::EntityManager &es, vec3 &cameraPosition) {
+    void OpenglRenderer::renderSpotLights(const FrameContext &frameContext) {
 //        console::info("renderSpotLights");
+
+        auto &es = frameContext.getEntityManager();
 
         ex::ComponentHandle<components::LightSpot> light;
         ex::ComponentHandle<components::Transform> transform;
@@ -305,7 +243,7 @@ namespace renderer {
         }
     }
 
-    void OpenglRenderer::renderDirLights(ex::EntityManager &es) {
+    void OpenglRenderer::renderDirLights(const FrameContext &frameContext) {
         std::string programLightName = "DirLightType";
 
         gbuffer.lightPass();
@@ -321,6 +259,8 @@ namespace renderer {
         glBlendFunc(GL_ONE, GL_ONE);
 
         OpenglCheckErrors();
+
+        auto &es = frameContext.getEntityManager();
 
         ex::ComponentHandle<components::LightDirectional> light;
 
@@ -339,8 +279,10 @@ namespace renderer {
         glDisable(GL_BLEND);
     }
 
-    void OpenglRenderer::drawModels(entityx::EntityManager &es) {
+    void OpenglRenderer::drawModels(const FrameContext &frameContext) {
         modelPipeline.use();
+
+        auto &es = frameContext.getEntityManager();
 
         es.each<components::Renderable, components::Transform, components::Model>([this](
                 ex::Entity entity,
@@ -387,21 +329,6 @@ namespace renderer {
                 stats.increaseDrawCall();
             }
         });
-    }
-
-    void OpenglRenderer::draw(entityx::EntityManager &es) {
-        preRender();
-
-        switch (type) {
-            case RenderForward:
-//                forwardRender(es);
-                break;
-            case RenderDeferred:
-                deferredRender(es);
-                break;
-        }
-
-        postRender();
     }
 
     void OpenglRenderer::destroy() {
@@ -504,11 +431,12 @@ namespace renderer {
         lightPassProgram = &requiredPrograms["light_pass"];
         nullProgram = &requiredPrograms["null"];
         shadowProgram = &requiredPrograms["shadow_volume"];
+        shadowMapProgram = &requiredPrograms["shadow_map"];
 
         skyboxPipeline.setProgram(skyboxDeferredProgram);
         modelPipeline.setProgram(geometryPassProgram);
         nullPipeline.setProgram(nullProgram);
-        shadowPipeline.setProgram(shadowProgram);
+        shadowPipeline.setProgram(shadowMapProgram);
 
         console::info("geometryPass success: %i", geometryPassProgram->isSuccess());
         console::info("lightPass success: %i", lightPassProgram->isSuccess());
@@ -721,61 +649,106 @@ namespace renderer {
         handle->ready = false;
     }
 
-    void OpenglRenderer::renderIntoDepth(entityx::EntityManager &es) {
-        glDrawBuffer(GL_NONE);
-        glDepthMask(GL_TRUE);
+    void OpenglRenderer::shadowPass(const FrameContext &frameContext) {
+        if (shadowBuffer.isCompleted()) {
+            shadowBuffer.bindForWriting();
+            shadowPipeline.use();
 
-        nullPipeline.use();
+            glDrawBuffer(GL_NONE);
+            glDepthMask(GL_TRUE);
+            glEnable(GL_DEPTH_TEST);
 
-        es.each<components::Renderable, components::Transform, components::Meshes>([this](
-                ex::Entity entity,
-                components::Renderable &,
-                components::Transform &transform,
-                components::Meshes &meshes
-        ) {
-            entityx::ComponentHandle<components::Skin> skin = entity.component<components::Skin>();
+            glClear(GL_DEPTH_BUFFER_BIT);
 
-            uint renderFlags = Mesh_Draw_Base;
+            auto &es = frameContext.getEntityManager();
 
-            const std::vector<std::shared_ptr<Mesh>> items = meshes.items();
-            for (auto &mesh : items) {
-                if (skin) {
-                    renderFlags |= Mesh_Draw_Bones;
+            const mat4 &cameraRotateMat = frameContext.getCameraRotationMat();
+
+            ex::ComponentHandle<components::LightPoint> light;
+            ex::ComponentHandle<components::Transform> lightTransform;
+
+            for (ex::Entity lightEntity : es.entities_with_components(light, lightTransform)) {
+                ex::ComponentHandle<components::Renderable> objectRenderable;
+                ex::ComponentHandle<components::Transform> objectTransform;
+                ex::ComponentHandle<components::Meshes> objectMeshes;
+
+                const mat4 proj = frameContext.getProjection();
+                const mat4 transM = glm::translate(mat4(1.0f), lightTransform->getPosition() * -1.0f);
+                const mat4 lightCameraView = cameraRotateMat * transM; // for 3d person reverse operands
+                const mat4 m_WorldTransformation = mat4(1.0f);
+                const mat4 gWVP = proj * lightCameraView * m_WorldTransformation;
+
+                for (ex::Entity objectEntity : es.entities_with_components(objectRenderable, objectTransform, objectMeshes)) {
+                    shadowPipeline.setWVP(gWVP);
+
+                    const std::vector<std::shared_ptr<Mesh>> items = objectMeshes->items();
+                    for (auto &mesh : items) {
+                        shadowPipeline.setTransform(*objectTransform); // todo: pass pointer instead of copy
+                        shadowPipeline.draw(*mesh, Mesh_Draw_Base);
+
+                        stats.increaseDrawCall();
+                    }
                 }
-
-                nullPipeline.setTransform(transform); // todo: pass pointer instead of copy
-                nullPipeline.draw(*mesh, renderFlags);
-
-                stats.increaseDrawCall();
             }
-        });
+
+
+            OpenglCheckErrors();
+        }
     }
 
-    void OpenglRenderer::renderShadowVolIntoStencil(entityx::EntityManager &es) {
-        glEnable(GL_STENCIL_TEST);
-        glDrawBuffer(GL_NONE);
+    void OpenglRenderer::geometryPass(const FrameContext &frameContext) {
+        const renderer::Params &renderParams = getParams();
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        // Geometry pass
+        gbuffer.geometryPass();
+
+        glDepthMask(GL_TRUE);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+        OpenglCheckErrors();
+
+        drawModels(frameContext);
+
+        OpenglCheckErrorsSilent();
+
         glDepthMask(GL_FALSE);
-        glDisable(GL_CULL_FACE);
+        OpenglCheckErrors();
+    }
 
-//        glStencilFunc(GL_ALWAYS, 0, 0xff);
+    void OpenglRenderer::lightPass(const FrameContext &frameContext) {
+        const renderer::Params &renderParams = getParams();
 
-//        glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-//        glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+        // Light pass
+        const vec3 screenSize = vec3(static_cast<float>(renderParams.width), static_cast<float>(renderParams.height), 0.0f);
 
-        shadowPipeline.use();
+        lightPassProgram->use();
+        lightPassProgram->setInt("gPositionMap", 0);
+        lightPassProgram->setInt("gNormalMap", 1);
+        lightPassProgram->setInt("gAlbedoMap", 2);
+        lightPassProgram->setVec("gScreenSize", screenSize); // fix to vec2
+//        lightPassProgram->setVec("viewDir", cameraPosition);
 
-        ex::ComponentHandle<components::LightPoint> light;
-        ex::ComponentHandle<components::Transform> transform;
+        glStencilFunc(GL_ALWAYS, 0, 0);
+        glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+        glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 
-        for (ex::Entity entity : es.entities_with_components(light, transform)) {
-            float radius = light->getRadius();
+        // Point light
+        gbuffer.lightPass();
+        lightPassProgram->use();
+        lightPassProgram->setMat("projection", frameContext.getProjection());
+        lightPassProgram->setMat("view", frameContext.getView());
 
-            transform->setScale(radius);
-
-            shadowPipeline.setInitialTransform();
-//            shadowPipeline.draw(*lightSphere, Mesh_Draw_Base);
+        const std::vector<GLuint> &bufferTextures = gbuffer.getTextures();
+        for (uint i = 0; i < bufferTextures.size(); i++) {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, bufferTextures[i]);
         }
+        OpenglCheckErrors();
 
-        glEnable(GL_CULL_FACE);
+        renderPointLights(frameContext);
+        renderSpotLights(frameContext);
+        renderDirLights(frameContext);
     }
 }

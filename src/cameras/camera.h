@@ -44,6 +44,7 @@ struct Camera {
 	mat4& getProjection();
 	vec3& getPosition();
 	vec3& getRotation();
+	const mat4& getRotationMat();
 	vec3& getFront();
 	vec3& getUp();
 	vec3& getTarget();
@@ -51,6 +52,7 @@ struct Camera {
 
 	vec3 position_;
 	vec3 rotation_;
+	mat4 rotationMat_;
 	mat4 view_;
 	vec3 target_;
 

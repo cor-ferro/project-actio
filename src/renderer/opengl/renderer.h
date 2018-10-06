@@ -18,6 +18,7 @@
 #include "shader.h"
 #include "program.h"
 #include "g-buffer.h"
+#include "shadow-buffer.h"
 #include "u-buffer.h"
 #include "uniforms.h"
 #include "utils.h"
@@ -65,29 +66,96 @@ namespace renderer {
             GLenum target;
         };
 
-        OpenglRenderer(renderer::Params);
+        struct FrameContext {
+            explicit FrameContext(const renderer::Params &renderParams, entityx::EntityManager &es) : es(es) {
+                setScreenHeight(renderParams.height);
+                setScreenWidth(renderParams.width);
 
-        ~OpenglRenderer();
+                ex::ComponentHandle<components::Camera> camera;
+                ex::ComponentHandle<components::Transform> cameraTransform;
+                ex::ComponentHandle<components::Target> cameraTarget;
 
-        bool init();
+                for (ex::Entity entity : es.entities_with_components(camera, cameraTransform, cameraTarget)) {
+                    setView(camera->getView());
+                    setProjection(camera->getProjection());
+                    setCameraPosition(camera->getPosition());
+                    setCameraRotation(camera->getRotation());
+                    setCameraRotationMat(camera->getRotationMat());
+                    break;
+                }
+            };
 
-        void draw(entityx::EntityManager &es);
+            mat4 view;
+            mat4 projection;
+            vec3 cameraPosition;
+            vec3 cameraRotation;
+            mat4 cameraRotationMat;
+            entityx::EntityManager &es;
+            renderer::ScreenSize screenHeight = 0;
+            renderer::ScreenSize screenWidth = 0;
 
-        void destroy();
+            const renderer::ScreenSize &getScreenWidth() const {
+                return screenWidth;
+            }
+
+            void setScreenWidth(ScreenSize screenWidth) {
+                FrameContext::screenWidth = screenWidth;
+            }
+
+            const renderer::ScreenSize &getScreenHeight() const {
+                return screenHeight;
+            }
+
+            void setScreenHeight(renderer::ScreenSize screenHeight) {
+                FrameContext::screenHeight = screenHeight;
+            }
+
+            void setView(const mat4 &value) { view = value; }
+
+            void setProjection(const mat4 &value) { projection = value; };
+
+            void setCameraPosition(const vec3 &value) { cameraPosition = value; }
+
+            void setCameraRotation(const vec3 &value) { cameraRotation = value; }
+
+            void setCameraRotationMat(const mat4 &value) { cameraRotationMat = value; };
+
+            const mat4 &getView() const { return view; }
+
+            const mat4 &getProjection() const { return projection; }
+
+            const vec3 &getCameraPosition() const { return cameraPosition; }
+
+            const vec3 &getCameraRotation() const { return cameraRotation; }
+
+            const mat4 &getCameraRotationMat() const { return cameraRotationMat; }
+
+            entityx::EntityManager &getEntityManager() const { return es; };
+        };
+
+        explicit OpenglRenderer(renderer::Params);
+
+        ~OpenglRenderer() override;
+
+        bool init() override;
+
+        void draw(entityx::EntityManager &es) override;
+
+        void destroy() override;
 
         void destroyGeometryHandle(renderer::Opengl::GeometryHandle *handle);
 
         void destroyTextureHandle(renderer::Opengl::TextureHandle *handle);
 
-        void drawModels(entityx::EntityManager &es);
+        void drawModels(const FrameContext &frameContext);
 
-        void deferredRender(entityx::EntityManager &es);
+        void deferredRender(const FrameContext &frameContext);
 
-        void renderPointLights(ex::EntityManager &es, vec3 &cameraPosition);
+        void renderPointLights(const FrameContext &frameContext);
 
-        void renderSpotLights(ex::EntityManager &es, vec3 &cameraPosition);
+        void renderSpotLights(const FrameContext &frameContext);
 
-        void renderDirLights(ex::EntityManager &es);
+        void renderDirLights(const FrameContext &frameContext);
 
         void updateMesh(std::shared_ptr<Mesh>) override;
 
@@ -123,6 +191,7 @@ namespace renderer {
         GLuint depthMap;
 
         Opengl::GBuffer gbuffer;
+        Opengl::ShadowBuffer shadowBuffer;
         Opengl::UBuffer matricesBuffer;
         Opengl::UBuffer lightBuffer;
     private:
@@ -130,13 +199,15 @@ namespace renderer {
 
         void initRequiredShaders();
 
-        void renderIntoDepth(entityx::EntityManager &es);
+        void shadowPass(const FrameContext &frameContext);
 
-        void renderShadowVolIntoStencil(entityx::EntityManager &es);
+        void geometryPass(const FrameContext &frameContext);
 
-        Opengl::GeometryHandle* createGeometryHandle();
+        void lightPass(const FrameContext &frameContext);
 
-        Opengl::TextureHandle* createTextureHandle();
+        Opengl::GeometryHandle *createGeometryHandle();
+
+        Opengl::TextureHandle *createTextureHandle();
 
         Opengl::Program *forwardProgram;
         Opengl::Program *skyboxProgram;
@@ -145,13 +216,14 @@ namespace renderer {
         Opengl::Program *lightPassProgram;
         Opengl::Program *nullProgram;
         Opengl::Program *shadowProgram;
+        Opengl::Program *shadowMapProgram;
 
         std::unordered_map<size_t, Opengl::Program> programs;
 
         renderer::Opengl::MeshDrawPipeline modelPipeline;
         renderer::Opengl::MeshDrawPipeline skyboxPipeline;
         renderer::Opengl::MeshDrawPipeline nullPipeline;
-        renderer::Opengl::MeshDrawPipeline shadowPipeline;
+        renderer::Opengl::ShadowDrawPipeline shadowPipeline;
 
         std::shared_ptr<Mesh> lightQuad = nullptr;
         std::shared_ptr<Mesh> lightSphere = nullptr;
@@ -160,8 +232,8 @@ namespace renderer {
         std::unordered_map<std::string, Opengl::Program> requiredPrograms;
         std::unordered_map<std::string, Opengl::Program> optionalPrograms;
 
-        std::vector<Opengl::GeometryHandle*> geometryHandles;
-        std::vector<Opengl::TextureHandle*> textureHandles;
+        std::vector<Opengl::GeometryHandle *> geometryHandles;
+        std::vector<Opengl::TextureHandle *> textureHandles;
     };
 
 }

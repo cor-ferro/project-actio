@@ -17,7 +17,7 @@ namespace renderer {
         struct Pipeline {
             Pipeline();
 
-            virtual ~Pipeline() = 0;
+            ~Pipeline();
 
             explicit Pipeline(Program *newProgram);
 
@@ -31,9 +31,9 @@ namespace renderer {
 
             void setInitialTransform();
 
-            virtual void draw(Mesh &mesh, uint flags) = 0;
+            void draw(Mesh &mesh, uint flags);
 
-            virtual void draw(Program *program, Mesh &mesh, uint flags) = 0;
+            void draw(Program *program, Mesh &mesh, uint flags);
 
         protected:
             renderer::Opengl::Program *program = nullptr;
