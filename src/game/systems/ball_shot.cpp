@@ -29,14 +29,14 @@ namespace game {
             while (!newItems.empty()) {
                 newItems.pop();
 
-                float radius = 1.0f;
-
                 assets::Material *assetMaterial = context->assets->createMaterial("waterball");
                 std::shared_ptr<Material> material = assetMaterial->getMaterial();
                 std::shared_ptr<Mesh> mesh = Mesh::Create(material);
 
                 GeometryBuilder::SphereDescription sphereDesc;
                 sphereDesc.radius = 1.0f;
+                sphereDesc.widthSegments = 16;
+                sphereDesc.heightSegments = 16;
                 GeometryBuilder::Sphere(mesh->geometry, sphereDesc);
 
                 vec3 target = glm::normalize(context->mouseWorldPosition - charPosition);
