@@ -2,11 +2,11 @@
 #include "../world.h"
 #include "../components/meshes.h"
 
+#include "../../renderer/init.h"
+
 namespace game {
     namespace systems {
-        Render::Render(World *world, renderer::Renderer *newRenderer)
-                : renderer(newRenderer)
-                , systems::BaseSystem(world) {}
+        Render::Render(World *world) : systems::BaseSystem(world) {}
 
         void Render::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
             if (renderer == nullptr) return;
@@ -15,18 +15,37 @@ namespace game {
             processTextures();
             processMeshes();
 
-            renderer->draw(es);
+            renderer::FrameContext frameContext = renderer->createFrameContext(es);
+
+            entityx::ComponentHandle<game::components::Camera> camera;
+            entityx::ComponentHandle<game::components::Transform> cameraTransform;
+            entityx::ComponentHandle<game::components::Target> cameraTarget;
+
+            for (ex::Entity entity : es.entities_with_components(camera, cameraTransform, cameraTarget)) {
+                frameContext.setView(camera->getView());
+                frameContext.setProjection(camera->getProjection());
+                frameContext.setCameraPosition(camera->getPosition());
+                frameContext.setCameraRotation(camera->getRotation());
+                frameContext.setCameraRotationMat(camera->getRotationMat());
+                break;
+            }
+
+            renderer->draw(frameContext);
         }
 
         void Render::configure(entityx::EventManager &event_manager) {
             event_manager.subscribe<events::RenderSetupModel>(*this);
             event_manager.subscribe<events::RenderResize>(*this);
             event_manager.subscribe<ex::EntityDestroyedEvent>(*this);
+        }
+
+        void Render::setRenderer(renderer::Renderer *newRenderer) {
+            renderer = newRenderer;
 
             // @todo: handle resize
-            renderer::Params params = renderer->getParams();
-            context->windowHeight = static_cast<float>(params.height);
-            context->windowWidth = static_cast<float>(params.width);
+            const renderer::Params &params = renderer->getParams();
+            context->windowHeight = static_cast<float>(params.getHeight());
+            context->windowWidth = static_cast<float>(params.getWidth());
         }
 
         void Render::receive(const events::RenderResize &event) {
@@ -144,7 +163,7 @@ namespace game {
 
                 switch (action) {
                     case MeshAction::Add:
-                        renderer->setupMesh(mesh);
+                        renderer->createMesh(mesh);
                         break;
                     case MeshAction::Remove:
                         renderer->destroyMesh(mesh);

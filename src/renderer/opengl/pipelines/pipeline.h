@@ -33,7 +33,7 @@ namespace renderer {
 
             void draw(Mesh &mesh, uint flags);
 
-            void draw(Program *program, Mesh &mesh, uint flags);
+            void draw(Program &program, Mesh &mesh, uint flags);
 
         protected:
             renderer::Opengl::Program *program = nullptr;

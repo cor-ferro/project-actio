@@ -1,358 +1,60 @@
+#include <cassert>
 #include "renderer.h"
-#include "../../game/components/camera.h"
-#include "../../game/components/skin.h"
-#include "../../game/components/transform.h"
-#include "../../game/components/meshes.h"
-#include "../../core/geometry_builder.h"
-#include "../shader_description.h"
-#include "../texture.h"
-
-#define UBO_MATRICES_POINT_INDEX 0
-#define DEFAULT_FRAME_BUFFER 0
+#include "../../lib/console.h"
 
 namespace renderer {
-    void MessageCallback(GLenum source,
-                         GLenum type,
-                         GLuint id,
-                         GLenum severity,
-                         GLsizei length,
-                         const GLchar *message,
-                         const void *userParam) {
-        const char *strType = type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "";
+    OpenglRenderer::OpenglRenderer(Params &params) : Renderer(params) {
 
-        console::err("GL ERROR: %s type = 0x%x, severity = 0x%x, message = %s", strType, type, severity, message);
-    }
-
-    OpenglRenderer::OpenglRenderer(renderer::Params params)
-            : Renderer(params)
-            , skyboxDeferredProgram(nullptr)
-            , geometryPassProgram(nullptr)
-            , forwardProgram(nullptr)
-            , skyboxProgram(nullptr)
-            , lightPassProgram(nullptr)
-            , nullProgram(nullptr)
-            , shadowProgram(nullptr) {}
-
-    bool OpenglRenderer::init() {
-        const renderer::Params &renderParams = getParams();
-
-        gbuffer.init(renderParams.width, renderParams.height);
-        shadowBuffer.init(renderParams.width, renderParams.height);
-
-        initMatricesBuffer();
-        initRequiredShaders();
-
-        lightQuad = Mesh::Create();
-        lightSphere = Mesh::Create();
-        lightCylinder = Mesh::Create();
-
-        GeometryBuilder::Quad2d(lightQuad->geometry);
-        GeometryBuilder::Sphere(lightSphere->geometry, 1.0f, 64, 64, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
-        GeometryBuilder::Cylinder(lightCylinder->geometry, 4.0f, 1.0f, 10.0f, 16, 16, false, 0.0f,
-                                    glm::two_pi<float>());
-
-        setupMesh(lightQuad);
-        setupMesh(lightSphere);
-        setupMesh(lightCylinder);
-
-        OpenglCheckErrors();
-
-        return true;
     }
 
     OpenglRenderer::~OpenglRenderer() {
+        console::info("destruct opengl renderer");
+    }
+
+    void OpenglRenderer::init() {
         destroy();
-    }
-
-    void OpenglRenderer::initMatricesBuffer() {
-        std::vector<size_t> sizes = {
-                sizeof(mat4), // projection
-                sizeof(mat4)  // view
-        };
-
-        Opengl::UBufferData matricesData(1, sizes);
-
-        std::unordered_map<std::string, Opengl::UBufferData> map;
-        map["main"] = matricesData;
-
-        matricesBuffer.init(map, UBO_MATRICES_POINT_INDEX);
-    }
-
-    void OpenglRenderer::draw(entityx::EntityManager &es) {
-        preRender();
 
         const renderer::Params &renderParams = getParams();
 
-        FrameContext frameContext(renderParams, es);
+        initMatricesBuffer();
+        registerPrograms();
 
-        switch (type) {
-            case RenderForward:
-//                forwardRender(frameContext);
-                break;
-            case RenderDeferred:
-                deferredRender(frameContext);
-                break;
-        }
-
-        postRender();
+        deferredShader.init(&context, renderParams);
+        forwardShader.init(&context, renderParams);
     }
 
-    void OpenglRenderer::deferredRender(const FrameContext &frameContext) {
-        glViewport(0, 0, frameContext.getScreenWidth(), frameContext.getScreenHeight());
+    void OpenglRenderer::initMatricesBuffer() {
 
-        matricesBuffer.use();
-        matricesBuffer.set(0, glm::value_ptr(frameContext.getProjection()));
-        matricesBuffer.set(1, glm::value_ptr(frameContext.getView()));
-        OpenglCheckErrors();
-
-//        shadowPass(frameContext);
-
-        gbuffer.startFrame();
-        geometryPass(frameContext);
-        lightPass(frameContext);
-        gbuffer.finalPass();
-
-        OpenglCheckErrors();
-
-        glBindFramebuffer(GL_FRAMEBUFFER, DEFAULT_FRAME_BUFFER);
-    }
-
-    void OpenglRenderer::renderPointLights(const FrameContext &frameContext) {
-//        console::info("renderPointLights");
-        gbuffer.lightPass();
-
-        auto &es = frameContext.getEntityManager();
-
-        ex::ComponentHandle<components::LightPoint> light;
-        ex::ComponentHandle<components::Transform> transform;
-
-        for (ex::Entity entity : es.entities_with_components(light, transform)) {
-            float radius = light->getRadius();
-
-            transform->setScale(radius);
-
-            // Stencil
-            nullProgram->use();
-            gbuffer.stencilPass();
-
-            glEnable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE);
-            glClear(GL_STENCIL_BUFFER_BIT);
-
-            glStencilFunc(GL_ALWAYS, 0, 0);
-            glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-            glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
-            OpenglCheckErrors();
-
-            modelPipeline.setInitialTransform();
-            modelPipeline.draw(nullProgram, *lightSphere, Mesh_Draw_Base);
-            OpenglCheckErrorsSilent();
-
-            // Light
-            gbuffer.lightPass();
-            lightPassProgram->use();
-
-            glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
-            glDisable(GL_DEPTH_TEST);
-            glEnable(GL_BLEND);
-            glBlendEquation(GL_FUNC_ADD);
-            glBlendFunc(GL_ONE, GL_ONE);
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_FRONT);
-            OpenglCheckErrors();
-
-            lightPassProgram->setVec("gEyePosition", frameContext.getCameraPosition());
-            lightPassProgram->setVec("pointLight.ambient", light->ambient);
-            lightPassProgram->setVec("pointLight.diffuse", light->diffuse);
-            lightPassProgram->setVec("pointLight.specular", light->specular);
-            lightPassProgram->setVec("pointLight.position", transform->getPosition());
-            lightPassProgram->setFloat("pointLight.constant", light->constant);
-            lightPassProgram->setFloat("pointLight.linear", light->linear);
-            lightPassProgram->setFloat("pointLight.quadratic", light->quadratic);
-            lightPassProgram->enableFragmentSubroutine("getLightColor", "PointLightType");
-            OpenglCheckErrors();
-            modelPipeline.setTransform(*transform);
-            modelPipeline.draw(lightPassProgram, *lightSphere, Mesh_Draw_Base);
-            OpenglCheckErrorsSilent();
-
-            glDisable(GL_BLEND);
-            glCullFace(GL_BACK);
-            glDisable(GL_CULL_FACE);
-            OpenglCheckErrors();
-        }
-    }
-
-    void OpenglRenderer::renderSpotLights(const FrameContext &frameContext) {
-//        console::info("renderSpotLights");
-
-        auto &es = frameContext.getEntityManager();
-
-        ex::ComponentHandle<components::LightSpot> light;
-        ex::ComponentHandle<components::Transform> transform;
-
-        for (ex::Entity entity : es.entities_with_components(light, transform)) {
-            // Stencil
-            //		nullProgram.use();
-            //		gbuffer.stencilPass();
-            //
-            //		glEnable(GL_DEPTH_TEST);
-            //		glDisable(GL_CULL_FACE);
-            //		glClear(GL_STENCIL_BUFFER_BIT);
-            //
-            //		glStencilFunc(GL_ALWAYS, 0, 0);
-            //		glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-            //		glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
-            //		checkGlError(__FILE__, __LINE__);
-            //
-            //		lightCylinder->draw(nullProgram, Mesh_Draw_Base);
-            //		checkGlError(__FILE__, __LINE__, true);
-
-            // Light
-            gbuffer.lightPass();
-            lightPassProgram->use();
-            glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
-            glDisable(GL_DEPTH_TEST);
-            glEnable(GL_BLEND);
-            glBlendEquation(GL_FUNC_ADD);
-            glBlendFunc(GL_ONE, GL_ONE);
-            //		glEnable(GL_CULL_FACE);
-            //		glCullFace(GL_FRONT);
-            OpenglCheckErrors();
-
-            lightPassProgram->enableFragmentSubroutine("getLightColor", "SpotLightType");
-            OpenglCheckErrors();
-            lightPassProgram->setVec("spotLight.ambient", light->ambient);
-            lightPassProgram->setVec("spotLight.diffuse", light->diffuse);
-            lightPassProgram->setVec("spotLight.specular", light->specular);
-            lightPassProgram->setVec("spotLight.position", light->position);
-            lightPassProgram->setVec("spotLight.direction", light->direction);
-            lightPassProgram->setFloat("spotLight.constant", light->constant);
-            lightPassProgram->setFloat("spotLight.linear", light->linear);
-            lightPassProgram->setFloat("spotLight.quadratic", light->quadratic);
-            lightPassProgram->setFloat("spotLight.cutOff", light->cutOff);
-            lightPassProgram->setFloat("spotLight.outerCutOff", light->outerCutOff);
-            OpenglCheckErrors();
-            modelPipeline.setTransform(*transform);
-            modelPipeline.draw(lightPassProgram, *lightCylinder, Mesh_Draw_Base);
-            OpenglCheckErrorsSilent();
-
-            glDisable(GL_BLEND);
-            //		glCullFace(GL_BACK);
-            //		glDisable(GL_CULL_FACE);
-            OpenglCheckErrors();
-        }
-    }
-
-    void OpenglRenderer::renderDirLights(const FrameContext &frameContext) {
-        std::string programLightName = "DirLightType";
-
-        gbuffer.lightPass();
-
-        lightPassProgram->use();
-        lightPassProgram->setMat("projection", mat4(1.0f));
-        lightPassProgram->setMat("view", mat4(1.0f));
-        lightPassProgram->enableFragmentSubroutine("getLightColor", "DirLightType");
-
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glBlendEquation(GL_FUNC_ADD);
-        glBlendFunc(GL_ONE, GL_ONE);
-
-        OpenglCheckErrors();
-
-        auto &es = frameContext.getEntityManager();
-
-        ex::ComponentHandle<components::LightDirectional> light;
-
-        for (ex::Entity entity : es.entities_with_components(light)) {
-            lightPassProgram->setVec("dirLight.ambient", light->ambient);
-            lightPassProgram->setVec("dirLight.diffuse", light->diffuse);
-            lightPassProgram->setVec("dirLight.specular", light->specular);
-            lightPassProgram->setVec("dirLight.direction", light->direction);
-            OpenglCheckErrors();
-
-            modelPipeline.setInitialTransform();
-            modelPipeline.draw(lightPassProgram, *lightQuad, Mesh_Draw_Base);
-            OpenglCheckErrorsSilent();
-        }
-
-        glDisable(GL_BLEND);
-    }
-
-    void OpenglRenderer::drawModels(const FrameContext &frameContext) {
-        modelPipeline.use();
-
-        auto &es = frameContext.getEntityManager();
-
-        es.each<components::Renderable, components::Transform, components::Model>([this](
-                ex::Entity entity,
-                components::Renderable &,
-                components::Transform &transform,
-                components::Model &model
-        ) {
-            entityx::ComponentHandle<components::Skin> skin = entity.component<components::Skin>();
-
-            uint renderFlags = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Material;
-
-            const ModelMeshes &meshes = model.getMeshes();
-            for (auto &mesh : meshes) {
-                if (skin) {
-                    renderFlags |= Mesh_Draw_Bones;
-                }
-
-                modelPipeline.setTransform(transform); // todo: pass pointer instead of copy
-                modelPipeline.draw(*mesh, renderFlags);
-
-                stats.increaseDrawCall();
-            }
-        });
-
-        es.each<components::Renderable, components::Transform, components::Meshes>([this](
-                ex::Entity entity,
-                components::Renderable &,
-                components::Transform &transform,
-                components::Meshes &meshes
-        ) {
-            entityx::ComponentHandle<components::Skin> skin = entity.component<components::Skin>();
-
-            uint renderFlags = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Material;
-
-            const std::vector<std::shared_ptr<Mesh>> items = meshes.items();
-            for (auto &mesh : items) {
-                if (skin) {
-                    renderFlags |= Mesh_Draw_Bones;
-                }
-
-                modelPipeline.setTransform(transform); // todo: pass pointer instead of copy
-                modelPipeline.draw(*mesh, renderFlags);
-
-                stats.increaseDrawCall();
-            }
-        });
     }
 
     void OpenglRenderer::destroy() {
-        for (auto &handle : geometryHandles) {
-            destroyGeometryHandle(handle);
-        }
+        Renderer::destroy();
 
-        geometryHandles.erase(geometryHandles.begin(), geometryHandles.end());
 
-        for (auto &handle : textureHandles) {
-            destroyTextureHandle(handle);
-        }
-
-        textureHandles.erase(textureHandles.begin(), textureHandles.end());
-
-        console::info("opengl renderer destroyed");
     }
 
-    void OpenglRenderer::updateMesh(std::shared_ptr<Mesh> mesh) {
+    void OpenglRenderer::forwardShading(const FrameContext &frameContext) {
+        forwardShader.process(frameContext);
+    }
+
+    void OpenglRenderer::deferredShading(const FrameContext &frameContext) {
+        deferredShader.process(frameContext);
+    }
+
+
+    void OpenglRenderer::createMesh(std::shared_ptr<::Mesh> &mesh) {
+        if (!mesh) return;
+
+        createGeometry(&mesh->geometry);
+        createMaterial(mesh->material.get());
+    }
+
+    void OpenglRenderer::updateMesh(std::shared_ptr<::Mesh> &mesh) {
         if (mesh->geometry.renderHandle == nullptr) {
             return;
         }
 
-        const auto *handle = dynamic_cast<renderer::Opengl::GeometryHandle *>(mesh->geometry.renderHandle);
+        const auto *handle = dynamic_cast<Opengl::GeometryHandle *>(mesh->geometry.renderHandle);
 
         if (handle->vbo == 0) {
             return;
@@ -372,172 +74,47 @@ namespace renderer {
 
         glBindVertexArray(0);
         OpenglCheckErrors();
-    };
-
-    void OpenglRenderer::destroyMesh(std::shared_ptr<Mesh> mesh) {
-        if (mesh->geometry.renderHandle == nullptr) {
-            return;
-        }
-
-        const auto *handle = dynamic_cast<renderer::Opengl::GeometryHandle *>(mesh->geometry.renderHandle);
-
-        if (handle->vbo != 0) glDeleteBuffers(1, &handle->vbo);
-        if (handle->ebo != 0) glDeleteBuffers(1, &handle->ebo);
-        if (handle->vao != 0) glDeleteVertexArrays(1, &handle->vao);
     }
 
-    void OpenglRenderer::registerShader(std::string name) {}
-
-    void OpenglRenderer::unregisterShader(size_t id) {}
-
-    void OpenglRenderer::regenerateBuffer() {
-        const renderer::Params &renderParams = getParams();
-        gbuffer.setWidth(renderParams.width);
-        gbuffer.setHeight(renderParams.height);
-        gbuffer.generateTextures();
+    void OpenglRenderer::destroyMesh(std::shared_ptr<::Mesh> &mesh) {
+        destroyGeometryHandle(dynamic_cast<Opengl::GeometryHandle*>(mesh->geometry.renderHandle));
     }
 
-    void OpenglRenderer::setRequiredShaders(std::vector<ShaderDescription> list) {
-        for (auto &shaderDescription : list) {
-            requiredPrograms.emplace(
-                    std::piecewise_construct,
-                    std::forward_as_tuple(shaderDescription.getName()),
-                    std::forward_as_tuple(shaderDescription)
-            );
-        }
-    }
 
-    void OpenglRenderer::setShaders(std::vector<ShaderDescription> list) {
-
-    }
-
-    void OpenglRenderer::addShaders(std::vector<ShaderDescription> list) {
-
-    }
-
-    void OpenglRenderer::initRequiredShaders() {
-        for (auto &it : requiredPrograms) {
-            Opengl::Program &program = it.second;
-            program.init();
-            program.bindBlock("Matrices", 0);
-            program.initUniformCache();
-            OpenglCheckErrors();
-        }
-
-        skyboxDeferredProgram = &requiredPrograms["skybox_deferred"];
-        geometryPassProgram = &requiredPrograms["geometry_pass"];
-        forwardProgram = &requiredPrograms["forward"];
-        skyboxProgram = &requiredPrograms["skybox"];
-        lightPassProgram = &requiredPrograms["light_pass"];
-        nullProgram = &requiredPrograms["null"];
-        shadowProgram = &requiredPrograms["shadow_volume"];
-        shadowMapProgram = &requiredPrograms["shadow_map"];
-
-        skyboxPipeline.setProgram(skyboxDeferredProgram);
-        modelPipeline.setProgram(geometryPassProgram);
-        nullPipeline.setProgram(nullProgram);
-        shadowPipeline.setProgram(shadowMapProgram);
-
-        console::info("geometryPass success: %i", geometryPassProgram->isSuccess());
-        console::info("lightPass success: %i", lightPassProgram->isSuccess());
-        console::info("null success: %i", nullProgram->isSuccess());
-
-        console::info("pipelines inited");
-    }
-
-    void OpenglRenderer::setupMesh(std::shared_ptr<Mesh> mesh) {
-        if (!mesh) return;
-
-        setupGeometry(&mesh->geometry);
-        setupMaterial(mesh->material.get());
-    }
-
-    void OpenglRenderer::setupGeometry(Geometry *geometry) {
-        if (geometry == nullptr) return;
-        if (geometry->renderHandle != nullptr) return;
-
-        auto *handle = createGeometryHandle();
-
-        glGenVertexArrays(1, &handle->vao);
-        glGenBuffers(1, &handle->vbo);
-
-        glBindVertexArray(handle->vao);
-
-        GeometryVertices *vertices = geometry->getVertices();
-
-        switch (geometry->getType()) {
-            case Geometry::Geometry_Static:
-                handle->draw = GL_STATIC_DRAW;
-                break;
-            case Geometry::Geometry_Dynamic:
-                handle->draw = GL_DYNAMIC_DRAW;
-                break;
-            default:
-                console::warn("Unknown draw type");
-                handle->draw = GL_STATIC_DRAW;
-        }
-
-        glBindBuffer(GL_ARRAY_BUFFER, handle->vbo);
-        glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vertex), &vertices->front(), handle->draw);
-
-        GeometryIndices *indices = geometry->getIndices();
-
-        glGenBuffers(1, &handle->ebo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(MeshIndex), &indices->front(), handle->draw);
-
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
-
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Normal));
-
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, TexCoords));
-
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Tangent));
-
-        glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Bitangent));
-
-        glEnableVertexAttribArray(5);
-        glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void *) offsetof(Vertex, BonedIDs));
-
-        glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, Weights));
-
-        glBindVertexArray(0);
-
-        geometry->renderHandle = handle;
-        handle->ready = true;
-    }
-
-    void OpenglRenderer::setupMaterial(Material *material) {
+    void OpenglRenderer::createMaterial(::Material *material) {
         if (material == nullptr) return;
 
         const std::shared_ptr<::Texture> &diffuseMap = material->getDiffuseMap();
         if (diffuseMap) {
-            setupTexture(diffuseMap.get());
+            createTexture(diffuseMap.get());
         }
 
         const std::shared_ptr<::Texture> &normalMap = material->getNormalMap();
         if (normalMap) {
-            setupTexture(normalMap.get());
+            createTexture(normalMap.get());
         }
 
         const std::shared_ptr<::Texture> &specularMap = material->getSpecularMap();
         if (specularMap) {
-            setupTexture(specularMap.get());
+            createTexture(specularMap.get());
         }
 
         const std::shared_ptr<::Texture> &heightMap = material->getHeightMap();
         if (heightMap) {
-            setupTexture(specularMap.get());
+            createTexture(specularMap.get());
         }
     }
 
-    void OpenglRenderer::setupTexture(::Texture *texture) {
+    void OpenglRenderer::updateMaterial(::Material *material) {
+
+    }
+
+    void OpenglRenderer::destroyMaterial(::Material *material) {
+
+    }
+
+
+    void OpenglRenderer::createTexture(::Texture *texture) {
         switch (texture->getType()) {
             case ::Texture::Type::Diffuse:
             case ::Texture::Type::Specular:
@@ -551,6 +128,23 @@ namespace renderer {
             default:
                 console::warn("unknown texture type");
         }
+    }
+
+    void OpenglRenderer::updateTexture(::Texture *texture) {
+
+    }
+
+    void OpenglRenderer::destroyTexture(::Texture *texture) {
+        destroyTextureHandle(dynamic_cast<Opengl::TextureHandle*>(texture->renderHandle));
+    }
+
+    void OpenglRenderer::createGeometry(Geometry *geometry) {
+        if (geometry == nullptr) return;
+        if (geometry->renderHandle != nullptr) return;
+
+        auto handle = new Opengl::GeometryHandle(geometry);
+
+        context.addHandle(handle);
     }
 
     void OpenglRenderer::setupTexture2d(::Texture *texture) {
@@ -613,27 +207,15 @@ namespace renderer {
         texture->renderHandle = handle;
     }
 
-    void OpenglRenderer::destroyTexture(renderer::Renderer::TextureId textureId) {
-
-    }
-
-    Opengl::GeometryHandle *OpenglRenderer::createGeometryHandle() {
-        auto *handle = new Opengl::GeometryHandle();
-
-        geometryHandles.push_back(handle);
-
-        return handle;
-    }
-
     Opengl::TextureHandle *OpenglRenderer::createTextureHandle() {
         auto *handle = new Opengl::TextureHandle();
 
-        textureHandles.push_back(handle);
+        context.addHandle(handle);
 
         return handle;
     }
 
-    void OpenglRenderer::destroyGeometryHandle(renderer::Opengl::GeometryHandle *handle) {
+    void OpenglRenderer::destroyGeometryHandle(Opengl::GeometryHandle *handle) {
         if (handle->vbo != 0) glDeleteBuffers(1, &handle->vbo);
         if (handle->ebo != 0) glDeleteBuffers(1, &handle->ebo);
         if (handle->vao != 0) glDeleteVertexArrays(1, &handle->vao);
@@ -641,7 +223,7 @@ namespace renderer {
         handle->ready = false;
     }
 
-    void OpenglRenderer::destroyTextureHandle(renderer::Opengl::TextureHandle *handle) {
+    void OpenglRenderer::destroyTextureHandle(Opengl::TextureHandle *handle) {
         if (handle->textureId != 0) {
             glDeleteTextures(1, &handle->textureId);
         }
@@ -649,106 +231,22 @@ namespace renderer {
         handle->ready = false;
     }
 
-    void OpenglRenderer::shadowPass(const FrameContext &frameContext) {
-        if (shadowBuffer.isCompleted()) {
-            shadowBuffer.bindForWriting();
-            shadowPipeline.use();
+    void OpenglRenderer::registerProgram(const RawProgram &rawProgram) {
+        const std::string &name = rawProgram.getName();
 
-            glDrawBuffer(GL_NONE);
-            glDepthMask(GL_TRUE);
-            glEnable(GL_DEPTH_TEST);
+        assert(name.empty() && "program should has name");
 
-            glClear(GL_DEPTH_BUFFER_BIT);
-
-            auto &es = frameContext.getEntityManager();
-
-            const mat4 &cameraRotateMat = frameContext.getCameraRotationMat();
-
-            ex::ComponentHandle<components::LightPoint> light;
-            ex::ComponentHandle<components::Transform> lightTransform;
-
-            for (ex::Entity lightEntity : es.entities_with_components(light, lightTransform)) {
-                ex::ComponentHandle<components::Renderable> objectRenderable;
-                ex::ComponentHandle<components::Transform> objectTransform;
-                ex::ComponentHandle<components::Meshes> objectMeshes;
-
-                const mat4 proj = frameContext.getProjection();
-                const mat4 transM = glm::translate(mat4(1.0f), lightTransform->getPosition() * -1.0f);
-                const mat4 lightCameraView = cameraRotateMat * transM; // for 3d person reverse operands
-                const mat4 m_WorldTransformation = mat4(1.0f);
-                const mat4 gWVP = proj * lightCameraView * m_WorldTransformation;
-
-                for (ex::Entity objectEntity : es.entities_with_components(objectRenderable, objectTransform, objectMeshes)) {
-                    shadowPipeline.setWVP(gWVP);
-
-                    const std::vector<std::shared_ptr<Mesh>> items = objectMeshes->items();
-                    for (auto &mesh : items) {
-                        shadowPipeline.setTransform(*objectTransform); // todo: pass pointer instead of copy
-                        shadowPipeline.draw(*mesh, Mesh_Draw_Base);
-
-                        stats.increaseDrawCall();
-                    }
-                }
-            }
-
-
-            OpenglCheckErrors();
+        if (context.hasProgram(name)) {
+            console::warn("program %s already added", name);
+            return;
         }
-    }
 
-    void OpenglRenderer::geometryPass(const FrameContext &frameContext) {
-        const renderer::Params &renderParams = getParams();
+        context.createNewProgram(name);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        // Geometry pass
-        gbuffer.geometryPass();
-
-        glDepthMask(GL_TRUE);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
+        auto &program = context.getProgram(name);
+        program.init(rawProgram);
+        program.bindBlock("Matrices", 0);
+        program.initUniformCache();
         OpenglCheckErrors();
-
-        drawModels(frameContext);
-
-        OpenglCheckErrorsSilent();
-
-        glDepthMask(GL_FALSE);
-        OpenglCheckErrors();
-    }
-
-    void OpenglRenderer::lightPass(const FrameContext &frameContext) {
-        const renderer::Params &renderParams = getParams();
-
-        // Light pass
-        const vec3 screenSize = vec3(static_cast<float>(renderParams.width), static_cast<float>(renderParams.height), 0.0f);
-
-        lightPassProgram->use();
-        lightPassProgram->setInt("gPositionMap", 0);
-        lightPassProgram->setInt("gNormalMap", 1);
-        lightPassProgram->setInt("gAlbedoMap", 2);
-        lightPassProgram->setVec("gScreenSize", screenSize); // fix to vec2
-//        lightPassProgram->setVec("viewDir", cameraPosition);
-
-        glStencilFunc(GL_ALWAYS, 0, 0);
-        glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-        glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
-
-        // Point light
-        gbuffer.lightPass();
-        lightPassProgram->use();
-        lightPassProgram->setMat("projection", frameContext.getProjection());
-        lightPassProgram->setMat("view", frameContext.getView());
-
-        const std::vector<GLuint> &bufferTextures = gbuffer.getTextures();
-        for (uint i = 0; i < bufferTextures.size(); i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, bufferTextures[i]);
-        }
-        OpenglCheckErrors();
-
-        renderPointLights(frameContext);
-        renderSpotLights(frameContext);
-        renderDirLights(frameContext);
     }
 }

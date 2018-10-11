@@ -245,7 +245,7 @@ namespace game {
                 transform.setPosition(px::toVec3(pxPos));
             });
 
-            if (drawDebug) {
+            if (drawDebug && false) {
                 drawDebugBuffer(events);
             }
         }

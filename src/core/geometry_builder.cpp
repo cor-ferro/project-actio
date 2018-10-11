@@ -3,15 +3,7 @@
 
 #define MAX_BONES 4
 
-void GeometryBuilder::Box(
-        Geometry &geometry,
-        float width,
-        float height,
-        float depth,
-        int widthSegments,
-        int heightSegments,
-        int depthSegments
-) {
+void GeometryBuilder::Box(Geometry &geometry, const BoxDescription &desc) {
     // helper variables
     int numberOfVertices = 0;
 
@@ -78,12 +70,12 @@ void GeometryBuilder::Box(
 #define y_axis 1
 #define z_axis 2
 
-    buildPlane(z_axis, y_axis, x_axis, -1.0f, -1.0f, depth, height, width, depthSegments, heightSegments);
-    buildPlane(z_axis, y_axis, x_axis, 1.0f, -1.0f, depth, height, -width, depthSegments, heightSegments);
-    buildPlane(x_axis, z_axis, y_axis, 1.0f, 1.0f, width, depth, height, widthSegments, depthSegments);
-    buildPlane(x_axis, z_axis, y_axis, 1.0f, -1.0f, width, depth, -height, widthSegments, depthSegments);
-    buildPlane(x_axis, y_axis, z_axis, 1.0f, -1.0f, width, height, depth, widthSegments, heightSegments);
-    buildPlane(x_axis, y_axis, z_axis, -1.0f, -1.0f, width, height, -depth, widthSegments, heightSegments);
+    buildPlane(z_axis, y_axis, x_axis, -1.0f, -1.0f, desc.depth, desc.height, desc.width, desc.depthSegments, desc.heightSegments);
+    buildPlane(z_axis, y_axis, x_axis, 1.0f, -1.0f, desc.depth, desc.height, -desc.width, desc.depthSegments, desc.heightSegments);
+    buildPlane(x_axis, z_axis, y_axis, 1.0f, 1.0f, desc.width, desc.depth, desc.height, desc.widthSegments, desc.depthSegments);
+    buildPlane(x_axis, z_axis, y_axis, 1.0f, -1.0f, desc.width, desc.depth, -desc.height, desc.widthSegments, desc.depthSegments);
+    buildPlane(x_axis, y_axis, z_axis, 1.0f, -1.0f, desc.width, desc.height, desc.depth, desc.widthSegments, desc.heightSegments);
+    buildPlane(x_axis, y_axis, z_axis, -1.0f, -1.0f, desc.width, desc.height, -desc.depth, desc.widthSegments, desc.heightSegments);
 
 #undef x_axis
 #undef y_axis
@@ -93,24 +85,18 @@ void GeometryBuilder::Box(
 
 }
 
-void GeometryBuilder::Plane(
-        Geometry &geometry,
-        uint width,
-        uint height,
-        uint widthSegments,
-        uint heightSegments
-) {
-    float width_half = (float) width / 2.0f;
-    float height_half = (float) height / 2.0f;
+void GeometryBuilder::Plane(Geometry &geometry, const PlaneDescription &desc) {
+    float width_half = (float) desc.width / 2.0f;
+    float height_half = (float) desc.height / 2.0f;
 
-    uint gridX = widthSegments;
-    uint gridY = heightSegments;
+    uint gridX = desc.widthSegments;
+    uint gridY = desc.heightSegments;
 
     uint gridX1 = gridX + 1;
     uint gridY1 = gridY + 1;
 
-    float segment_width = (float) width / (float) gridX;
-    float segment_height = (float) height / (float) gridY;
+    float segment_width = (float) desc.width / (float) gridX;
+    float segment_height = (float) desc.height / (float) gridY;
 
     geometry.allocVertices(gridY1 * gridX1);
     geometry.allocIndices(gridY * gridX);
@@ -145,23 +131,14 @@ void GeometryBuilder::Plane(
     geometry.computeBoundingBox();
 }
 
-void GeometryBuilder::Sphere(
-        Geometry &geometry,
-        float radius,
-        uint widthSegments,
-        uint heightSegments,
-        float phiStart,
-        float phiLength,
-        float thetaStart,
-        float thetaLength
-) {
+void GeometryBuilder::Sphere(Geometry &geometry, const SphereDescription &desc) {
     uint minWidthSegments = 3;
     uint minHeightSegments = 2;
 
-    widthSegments = glm::max(minWidthSegments, widthSegments);
-    heightSegments = glm::max(minHeightSegments, heightSegments);
+    uint widthSegments = glm::max(minWidthSegments, desc.widthSegments);
+    uint heightSegments = glm::max(minHeightSegments, desc.heightSegments);
 
-    float thetaEnd = thetaStart + thetaLength;
+    float thetaEnd = desc.thetaStart + desc.thetaLength;
 
     uint index = 0;
     std::vector<std::vector<uint>> grid;
@@ -176,9 +153,9 @@ void GeometryBuilder::Sphere(
             Vertex vertex;
 
             vertex.Position = vec3(
-                    -radius * glm::cos(phiStart + u * phiLength) * glm::sin(thetaStart + v * thetaLength),
-                    radius * glm::cos(thetaStart + v * thetaLength),
-                    radius * glm::sin(phiStart + u * phiLength) * glm::sin(thetaStart + v * thetaLength)
+                    -desc.radius * glm::cos(desc.phiStart + u * desc.phiLength) * glm::sin(desc.thetaStart + v * desc.thetaLength),
+                    desc.radius * glm::cos(desc.thetaStart + v * desc.thetaLength),
+                    desc.radius * glm::sin(desc.phiStart + u * desc.phiLength) * glm::sin(desc.thetaStart + v * desc.thetaLength)
             );
 
             vertex.Normal = glm::normalize(vec3(
@@ -205,7 +182,7 @@ void GeometryBuilder::Sphere(
             uint c = grid[iy + 1][ix];
             uint d = grid[iy + 1][ix + 1];
 
-            if (iy != 0 || thetaStart > 0) {
+            if (iy != 0 || desc.thetaStart > 0) {
                 geometry.addFace(a, b, d);
             }
 
@@ -218,15 +195,9 @@ void GeometryBuilder::Sphere(
     geometry.computeBoundingBox();
 }
 
-void GeometryBuilder::Circle(
-        Geometry &geometry,
-        float radius,
-        uint segments,
-        float thetaStart,
-        float thetaLength
-) {
+void GeometryBuilder::Circle(Geometry &geometry, const CircleDescription& desc) {
     uint minSegments = 3;
-    segments = glm::max(minSegments, segments);
+    uint segments = glm::max(minSegments, desc.segments);
 
     /*thetaStart = thetaStart !== undefined ? thetaStart : 0;
     thetaLength = thetaLength !== undefined ? thetaLength : Math.PI * 2;*/
@@ -238,12 +209,12 @@ void GeometryBuilder::Circle(
     geometry.addVertex(centerVertex);
 
     for (uint s = 0, i = 3; s <= segments; s++, i += 3) {
-        float segment = thetaStart + (float) s / (float) segments * thetaLength;
+        float segment = desc.thetaStart + (float) s / (float) segments * desc.thetaLength;
 
         Vertex vertex;
         vertex.Position = vec3(
-                radius * glm::cos(segment),
-                radius * glm::sin(segment),
+                desc.radius * glm::cos(segment),
+                desc.radius * glm::sin(segment),
                 0.0f
         );
         vertex.Normal = vec3(
@@ -253,8 +224,8 @@ void GeometryBuilder::Circle(
         );
 
         vertex.TexCoords = vec2(
-             (vertex.Position.x / radius + 1.0f) * 0.5f,
-             (vertex.Position.y / radius + 1.0f) * 0.5f
+             (vertex.Position.x / desc.radius + 1.0f) * 0.5f,
+             (vertex.Position.y / desc.radius + 1.0f) * 0.5f
         );
 
         geometry.addVertex(vertex);
@@ -267,10 +238,7 @@ void GeometryBuilder::Circle(
     geometry.computeBoundingBox();
 }
 
-void GeometryBuilder::CylinderTorso(
-        Geometry &geometry,
-        GeometryCone &params
-) {
+void GeometryBuilder::CylinderTorso(Geometry &geometry, GeometryCone &params) {
     std::vector<std::vector<uint>> indexArray;
     float halfHeight = params.height / 2.0f;
     float slope = (params.radiusBottom - params.radiusTop) / params.height;
@@ -327,16 +295,12 @@ void GeometryBuilder::CylinderTorso(
     geometry.computeBoundingBox();
 }
 
-void GeometryBuilder::CylinderCap(
-        Geometry &geometry,
-        GeometryCone &params,
-        bool top
-) {
+void GeometryBuilder::CylinderCap(Geometry &geometry, GeometryCone &params, const CylinderCapDescription &desc) {
     uint centerIndexStart, centerIndexEnd;
 
     float halfHeight = params.height / 2.0f;
-    float radius = (top == true) ? params.radiusTop : params.radiusBottom;
-    float sign = (top == true) ? 1.0 : -1.0;
+    float radius = (desc.top == true) ? params.radiusTop : params.radiusBottom;
+    float sign = (desc.top == true) ? 1.0 : -1.0;
 
     uint index = geometry.getCountVertices();
 
@@ -375,7 +339,7 @@ void GeometryBuilder::CylinderCap(
         uint c = centerIndexStart + x;
         uint i = centerIndexEnd + x;
 
-        if (top == true) {
+        if (desc.top == true) {
             geometry.addFace(i, i + 1, c);
         } else {
             geometry.addFace(i + 1, i, c);
@@ -385,67 +349,49 @@ void GeometryBuilder::CylinderCap(
     geometry.computeBoundingBox();
 }
 
-void GeometryBuilder::Cylinder(
-        Geometry &geometry,
-        float radiusTop,
-        float radiusBottom,
-        float height,
-        uint radialSegments,
-        uint heightSegments,
-        bool openEnded,
-        float thetaStart,
-        float thetaLength
-) {
+void GeometryBuilder::Cylinder(Geometry &geometry, const CylinderDescription &desc) {
     GeometryCone params = {
-            .radiusTop = radiusTop,
-            .radiusBottom = radiusBottom,
-            .height = height,
-            .radialSegments = radialSegments,
-            .heightSegments = heightSegments,
-            .openEnded = openEnded,
-            .thetaStart = thetaStart,
-            .thetaLength = thetaLength
+            .radiusTop = desc.radiusTop,
+            .radiusBottom = desc.radiusBottom,
+            .height = desc.height,
+            .radialSegments = desc.radialSegments,
+            .heightSegments = desc.heightSegments,
+            .openEnded = desc.openEnded,
+            .thetaStart = desc.thetaStart,
+            .thetaLength = desc.thetaLength
     };
 
     CylinderTorso(geometry, params);
 
-    if (!openEnded) {
-        if (radiusTop > 0) CylinderCap(geometry, params, true);
-        if (radiusBottom > 0) CylinderCap(geometry, params, false);
+    if (!desc.openEnded) {
+        if (desc.radiusTop > 0) CylinderCap(geometry, params, {.top = true});
+        if (desc.radiusBottom > 0) CylinderCap(geometry, params, {.top = false});
     }
 
     geometry.computeBoundingBox();
 }
 
-void GeometryBuilder::Cone(
-        Geometry &geometry,
-        float radius,
-        float height,
-        uint radialSegments,
-        uint heightSegments,
-        bool openEnded,
-        float thetaStart,
-        float thetaLength
-) {
-    GeometryBuilder::Cylinder(geometry, 0.0f, radius, height, radialSegments, heightSegments, openEnded, thetaStart,
-                                thetaLength);
+void GeometryBuilder::Cone(Geometry &geometry, const ConeDescription &desc) {
+    CylinderDescription cylinderDescription;
+    cylinderDescription.radiusTop = 0.0f;
+    cylinderDescription.radiusBottom = desc.radius;
+    cylinderDescription.height = desc.height;
+    cylinderDescription.radialSegments = desc.radialSegments;
+    cylinderDescription.heightSegments = desc.heightSegments;
+    cylinderDescription.openEnded = desc.openEnded;
+    cylinderDescription.thetaStart = desc.thetaStart;
+    cylinderDescription.thetaLength = desc.thetaLength;
+
+    GeometryBuilder::Cylinder(geometry, cylinderDescription);
 }
 
-void GeometryBuilder::Ring(
-        Geometry &geometry,
-        float innerRadius,
-        float outerRadius,
-        uint thetaSegments,
-        uint phiSegments,
-        float thetaStart,
-        float thetaLength
-) {
-    float radius = innerRadius;
-    float radiusStep = ((outerRadius - innerRadius) / (float) phiSegments);
+void GeometryBuilder::Ring(Geometry &geometry, const RingDescription &desc) {
+    float radius = desc.innerRadius;
+    float radiusStep = ((desc.outerRadius - desc.innerRadius) / (float) desc.phiSegments);
 
-    for (uint j = 0; j <= phiSegments; j++) {
-        for (uint i = 0; i <= thetaSegments; i++) {
-            float segment = thetaStart + (float) i / (float) thetaSegments * thetaLength;
+    for (uint j = 0; j <= desc.phiSegments; j++) {
+        for (uint i = 0; i <= desc.thetaSegments; i++) {
+            float segment = desc.thetaStart + (float) i / (float) desc.thetaSegments * desc.thetaLength;
 
             Vertex vertex;
             vertex.Position = vec3(
@@ -458,7 +404,7 @@ void GeometryBuilder::Ring(
                     0.0f,
                     1.0f
             );
-            vertex.TexCoords = vec2((vertex.Position.x / outerRadius + 1.0f) / 2.0f, (vertex.Position.y / outerRadius + 1.0f) / 2.0f);
+            vertex.TexCoords = vec2((vertex.Position.x / desc.outerRadius + 1.0f) / 2.0f, (vertex.Position.y / desc.outerRadius + 1.0f) / 2.0f);
 
             geometry.addVertex(vertex);
         }
@@ -466,14 +412,14 @@ void GeometryBuilder::Ring(
         radius += radiusStep;
     }
 
-    for (uint j = 0; j < phiSegments; j++) {
-        uint thetaSegmentLevel = j * (thetaSegments + 1);
-        for (uint i = 0; i < thetaSegments; i++) {
+    for (uint j = 0; j < desc.phiSegments; j++) {
+        uint thetaSegmentLevel = j * (desc.thetaSegments + 1);
+        for (uint i = 0; i < desc.thetaSegments; i++) {
             uint segment = i + thetaSegmentLevel;
 
             uint a = segment;
-            uint b = segment + thetaSegments + 1;
-            uint c = segment + thetaSegments + 2;
+            uint b = segment + desc.thetaSegments + 1;
+            uint c = segment + desc.thetaSegments + 2;
             uint d = segment + 1;
 
             geometry.addFace(a, b, d);
@@ -484,51 +430,44 @@ void GeometryBuilder::Ring(
     geometry.computeBoundingBox();
 }
 
-void GeometryBuilder::Torus(
-        Geometry &geometry,
-        float radius,
-        float tube,
-        uint radialSegments,
-        uint tubularSegments,
-        float arc
-) {
+void GeometryBuilder::Torus(Geometry &geometry, const TorusDescription &desc) {
     // generate vertices, normals and uvs
-    for (uint j = 0; j <= radialSegments; j++) {
-        for (uint i = 0; i <= tubularSegments; i++) {
+    for (uint j = 0; j <= desc.radialSegments; j++) {
+        for (uint i = 0; i <= desc.tubularSegments; i++) {
 
-            float u = (float) i / (float) tubularSegments * arc;
-            float v = (float) j / (float) radialSegments * glm::two_pi<float>();
+            float u = (float) i / (float) desc.tubularSegments * desc.arc;
+            float v = (float) j / (float) desc.radialSegments * glm::two_pi<float>();
 
             Vertex vertex;
             vertex.Position = vec3(
-                    (radius + tube * glm::cos(v)) * glm::cos(u),
-                    (radius + tube * glm::cos(v)) * glm::sin(u),
-                    tube * glm::sin(v)
+                    (desc.radius + desc.tube * glm::cos(v)) * glm::cos(u),
+                    (desc.radius + desc.tube * glm::cos(v)) * glm::sin(u),
+                    desc.tube * glm::sin(v)
             );
 
             vec3 center(
-                    radius * glm::cos(u),
-                    radius * glm::sin(u),
+                    desc.radius * glm::cos(u),
+                    desc.radius * glm::sin(u),
                     0.0f
             );
 
             vertex.Normal = glm::normalize(center - vertex.Position);
 
             vertex.TexCoords = vec2(
-                static_cast<float>(i) / static_cast<float>(tubularSegments),
-                static_cast<float>(j) / static_cast<float>(radialSegments)
+                static_cast<float>(i) / static_cast<float>(desc.tubularSegments),
+                static_cast<float>(j) / static_cast<float>(desc.radialSegments)
             );
 
             geometry.addVertex(vertex);
         }
     }
 
-    for (uint j = 1; j <= radialSegments; j++) {
-        for (uint i = 1; i <= tubularSegments; i++) {
-            uint a = (tubularSegments + 1) * j + i - 1;
-            uint b = (tubularSegments + 1) * (j - 1) + i - 1;
-            uint c = (tubularSegments + 1) * (j - 1) + i;
-            uint d = (tubularSegments + 1) * j + i;
+    for (uint j = 1; j <= desc.radialSegments; j++) {
+        for (uint i = 1; i <= desc.tubularSegments; i++) {
+            uint a = (desc.tubularSegments + 1) * j + i - 1;
+            uint b = (desc.tubularSegments + 1) * (j - 1) + i - 1;
+            uint c = (desc.tubularSegments + 1) * (j - 1) + i;
+            uint d = (desc.tubularSegments + 1) * j + i;
 
             geometry.addFace(a, b, d);
             geometry.addFace(b, c, d);
@@ -538,7 +477,7 @@ void GeometryBuilder::Torus(
     geometry.computeBoundingBox();
 }
 
-void GeometryBuilder::Octahedron(Geometry &geometry, float radius) {
+void GeometryBuilder::Octahedron(Geometry &geometry, const OctahedronDescription &desc) {
     float vertices[] = {
             1.0f, 0.0f, 0.0f,
             -1.0f, 0.0f, 0.0f,
@@ -564,7 +503,7 @@ void GeometryBuilder::Octahedron(Geometry &geometry, float radius) {
 
     for (uint i = 0; i < countVertices; i += 3) {
         Vertex vertex;
-        vertex.Position = vec3(vertices[i] * radius, vertices[i + 1] * radius, vertices[i + 2] * radius);
+        vertex.Position = vec3(vertices[i] * desc.radius, vertices[i + 1] * desc.radius, vertices[i + 2] * desc.radius);
         vertex.Normal = glm::normalize(vec3(vertex.Position.x, vertex.Position.y, vertex.Position.z));
 
         geometry.addVertex(vertex);

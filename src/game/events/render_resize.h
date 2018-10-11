@@ -5,17 +5,17 @@
 #ifndef ACTIO_RENDER_RESIZE_H
 #define ACTIO_RENDER_RESIZE_H
 
-#include "../../renderer/renderer_types.h"
+#include "../../renderer/params.h"
 
 namespace game {
     namespace events {
         struct RenderResize {
-            explicit RenderResize(renderer::ScreenSize width, renderer::ScreenSize height)
+            explicit RenderResize(renderer::Dimension width, renderer::Dimension height)
                     : width(width)
                     , height(height) {}
 
-            renderer::ScreenSize width;
-            renderer::ScreenSize height;
+            renderer::Dimension width;
+            renderer::Dimension height;
         };
     }
 }

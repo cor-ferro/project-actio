@@ -14,7 +14,7 @@
 #include "../resources/resources.h"
 #include "../math/Box3.h"
 #include "../math/Sphere.h"
-#include "../renderer/handler.h"
+#include "../renderer/handle.h"
 #include "vertex.h"
 
 typedef unsigned int MeshIndex;

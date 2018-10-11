@@ -10,7 +10,7 @@
 #include "../lib/colors.h"
 #include "texture.h"
 #include "../resources/resources.h"
-#include "../renderer/handler.h"
+#include "../renderer/handle.h"
 
 class Material {
 public:

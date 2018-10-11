@@ -1,241 +1,78 @@
-#ifndef RENDERER_OPENGL_H_
-#define RENDERER_OPENGL_H_
+#ifndef ACTIO_OPENGL_RENDERER_NEW_H
+#define ACTIO_OPENGL_RENDERER_NEW_H
 
-#include <vector>
-#include <memory>
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include "../base_renderer.h"
-#include "../shader_content.h"
-#include "../../lib/console.h"
-#include "../../cameras/camera.h"
-#include "../../lib/types.h"
-#include "../../core/geometry.h"
-#include "../../core/mesh.h"
-#include "../../core/material.h"
-#include "shader.h"
-#include "program.h"
-#include "g-buffer.h"
-#include "shadow-buffer.h"
-#include "u-buffer.h"
-#include "uniforms.h"
-#include "utils.h"
-#include "pipelines/mesh_pipeline.h"
-#include "pipelines/shadow_pipeline.h"
-
-#include "../../game/components/camera.h"
-#include "../../game/components/transform.h"
-#include "../../game/components/target.h"
-#include "../../game/components/renderable.h"
-#include "../../game/components/light_directional.h"
-#include "../../game/components/light_point.h"
-#include "../../game/components/light_spot.h"
-
+#include <set>
+#include "../renderer.h"
+#include "../params.h"
 #include "handle.h"
+#include "utils.h"
+#include "program.h"
+#include "shading.h"
+#include "context.h"
+#include "forward_shading.h"
+#include "deferred_shading.h"
+#include "u-buffer.h"
 
 namespace renderer {
-    using namespace game;
-    namespace ex = entityx;
-
-    static void GLAPIENTRY MessageCallback(GLenum source,
-                                           GLenum type,
-                                           GLuint id,
-                                           GLenum severity,
-                                           GLsizei length,
-                                           const GLchar *message,
-                                           const void *userParam);
-
-    struct OpenglRenderer : Renderer {
-        struct RenderGeometry {
-            enum GeometryType {
-                Geometry_Static = 1,
-                Geometry_Dynamic = 2,
-            };
-
-            GLuint VAO = 0;
-            GLuint VBO = 0;
-            GLuint EBO = 0;
-
-            GeometryType type = Geometry_Static;
-        };
-
-        struct RenderTexture {
-            GLuint id;
-            GLenum target;
-        };
-
-        struct FrameContext {
-            explicit FrameContext(const renderer::Params &renderParams, entityx::EntityManager &es) : es(es) {
-                setScreenHeight(renderParams.height);
-                setScreenWidth(renderParams.width);
-
-                ex::ComponentHandle<components::Camera> camera;
-                ex::ComponentHandle<components::Transform> cameraTransform;
-                ex::ComponentHandle<components::Target> cameraTarget;
-
-                for (ex::Entity entity : es.entities_with_components(camera, cameraTransform, cameraTarget)) {
-                    setView(camera->getView());
-                    setProjection(camera->getProjection());
-                    setCameraPosition(camera->getPosition());
-                    setCameraRotation(camera->getRotation());
-                    setCameraRotationMat(camera->getRotationMat());
-                    break;
-                }
-            };
-
-            mat4 view;
-            mat4 projection;
-            vec3 cameraPosition;
-            vec3 cameraRotation;
-            mat4 cameraRotationMat;
-            entityx::EntityManager &es;
-            renderer::ScreenSize screenHeight = 0;
-            renderer::ScreenSize screenWidth = 0;
-
-            const renderer::ScreenSize &getScreenWidth() const {
-                return screenWidth;
-            }
-
-            void setScreenWidth(ScreenSize screenWidth) {
-                FrameContext::screenWidth = screenWidth;
-            }
-
-            const renderer::ScreenSize &getScreenHeight() const {
-                return screenHeight;
-            }
-
-            void setScreenHeight(renderer::ScreenSize screenHeight) {
-                FrameContext::screenHeight = screenHeight;
-            }
-
-            void setView(const mat4 &value) { view = value; }
-
-            void setProjection(const mat4 &value) { projection = value; };
-
-            void setCameraPosition(const vec3 &value) { cameraPosition = value; }
-
-            void setCameraRotation(const vec3 &value) { cameraRotation = value; }
-
-            void setCameraRotationMat(const mat4 &value) { cameraRotationMat = value; };
-
-            const mat4 &getView() const { return view; }
-
-            const mat4 &getProjection() const { return projection; }
-
-            const vec3 &getCameraPosition() const { return cameraPosition; }
-
-            const vec3 &getCameraRotation() const { return cameraRotation; }
-
-            const mat4 &getCameraRotationMat() const { return cameraRotationMat; }
-
-            entityx::EntityManager &getEntityManager() const { return es; };
-        };
-
-        explicit OpenglRenderer(renderer::Params);
+    class OpenglRenderer : public Renderer {
+    public:
+        explicit OpenglRenderer(Params &params);
 
         ~OpenglRenderer() override;
 
-        bool init() override;
+        void init() override;
 
-        void draw(entityx::EntityManager &es) override;
+        void destroy();
 
-        void destroy() override;
+        void forwardShading(const FrameContext &frameContext) override;
 
-        void destroyGeometryHandle(renderer::Opengl::GeometryHandle *handle);
+        void deferredShading(const FrameContext &frameContext) override;
 
-        void destroyTextureHandle(renderer::Opengl::TextureHandle *handle);
+        void registerProgram(const RawProgram &program) override;
 
-        void drawModels(const FrameContext &frameContext);
+        void createMesh(std::shared_ptr<::Mesh> &mesh) override;
 
-        void deferredRender(const FrameContext &frameContext);
+        void updateMesh(std::shared_ptr<::Mesh> &mesh) override;
 
-        void renderPointLights(const FrameContext &frameContext);
+        void destroyMesh(std::shared_ptr<::Mesh> &mesh) override;
 
-        void renderSpotLights(const FrameContext &frameContext);
+        void createMaterial(::Material *material) override;
 
-        void renderDirLights(const FrameContext &frameContext);
+        void updateMaterial(::Material *material) override;
 
-        void updateMesh(std::shared_ptr<Mesh>) override;
+        void destroyMaterial(::Material *material) override;
 
-        void destroyMesh(std::shared_ptr<Mesh>) override;
+        void createTexture(::Texture *texture) override;
 
-        void registerShader(std::string name) override;
+        void updateTexture(::Texture *texture) override;
 
-        void unregisterShader(size_t id) override;
+        void destroyTexture(::Texture *texture) override;
 
-        void regenerateBuffer() override;
+    private:
+        void initMatricesBuffer();
 
-        void setRequiredShaders(std::vector<ShaderDescription> list) override;
-
-        void setShaders(std::vector<ShaderDescription> list) override;
-
-        void addShaders(std::vector<ShaderDescription> list) override;
-
-        void setupMesh(std::shared_ptr<Mesh>) override;
-
-        void setupGeometry(Geometry *geometry) override;
-
-        void setupMaterial(Material *material) override;
-
-        void setupTexture(::Texture *texture) override;
+        void createGeometry(Geometry *geometry);
 
         void setupTexture2d(::Texture *texture);
 
         void setupTextureCube(::Texture *texture);
 
-        void destroyTexture(TextureId textureId) override;
+        Opengl::TextureHandle *createTextureHandle(); // @todo: remove
 
-        GLuint depthMapFBO;
-        GLuint depthMap;
+        void destroyGeometryHandle(Opengl::GeometryHandle *handle);
 
-        Opengl::GBuffer gbuffer;
-        Opengl::ShadowBuffer shadowBuffer;
-        Opengl::UBuffer matricesBuffer;
-        Opengl::UBuffer lightBuffer;
-    private:
-        void initMatricesBuffer();
+        void destroyTextureHandle(Opengl::TextureHandle *handle);
 
-        void initRequiredShaders();
+//        std::set<Opengl::GeometryHandle *> geometryHandles;
+//        std::set<Opengl::TextureHandle *> textureHandles;
+//
+//        std::map<std::string, Opengl::Program> programs;
 
-        void shadowPass(const FrameContext &frameContext);
+        Opengl::Context context;
 
-        void geometryPass(const FrameContext &frameContext);
-
-        void lightPass(const FrameContext &frameContext);
-
-        Opengl::GeometryHandle *createGeometryHandle();
-
-        Opengl::TextureHandle *createTextureHandle();
-
-        Opengl::Program *forwardProgram;
-        Opengl::Program *skyboxProgram;
-        Opengl::Program *skyboxDeferredProgram;
-        Opengl::Program *geometryPassProgram;
-        Opengl::Program *lightPassProgram;
-        Opengl::Program *nullProgram;
-        Opengl::Program *shadowProgram;
-        Opengl::Program *shadowMapProgram;
-
-        std::unordered_map<size_t, Opengl::Program> programs;
-
-        renderer::Opengl::MeshDrawPipeline modelPipeline;
-        renderer::Opengl::MeshDrawPipeline skyboxPipeline;
-        renderer::Opengl::MeshDrawPipeline nullPipeline;
-        renderer::Opengl::ShadowDrawPipeline shadowPipeline;
-
-        std::shared_ptr<Mesh> lightQuad = nullptr;
-        std::shared_ptr<Mesh> lightSphere = nullptr;
-        std::shared_ptr<Mesh> lightCylinder = nullptr;
-
-        std::unordered_map<std::string, Opengl::Program> requiredPrograms;
-        std::unordered_map<std::string, Opengl::Program> optionalPrograms;
-
-        std::vector<Opengl::GeometryHandle *> geometryHandles;
-        std::vector<Opengl::TextureHandle *> textureHandles;
+        Opengl::DeferredShading deferredShader;
+        Opengl::ForwardShading forwardShader;
     };
-
 }
 
-#endif
+#endif //ACTIO_OPENGL_RENDERER_NEW_H

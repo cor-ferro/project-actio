@@ -14,7 +14,7 @@
 #include "../../lib/types.h"
 #include "../../lib/path.h"
 #include "../../app/app.h"
-#include "../shader_description.h"
+#include "../raw_program.h"
 
 #include <sys/inotify.h>
 
@@ -88,11 +88,11 @@ namespace renderer {
 
             Program();
 
-            explicit Program(renderer::ShaderDescription &);
+            Program(const std::string &name);
 
             ~Program();
 
-            void init();
+            void init(const renderer::RawProgram &rawProgram);
 
             void use();
 

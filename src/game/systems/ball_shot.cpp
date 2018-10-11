@@ -35,7 +35,9 @@ namespace game {
                 std::shared_ptr<Material> material = assetMaterial->getMaterial();
                 std::shared_ptr<Mesh> mesh = Mesh::Create(material);
 
-                GeometryBuilder::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+                GeometryBuilder::SphereDescription sphereDesc;
+                sphereDesc.radius = 1.0f;
+                GeometryBuilder::Sphere(mesh->geometry, sphereDesc);
 
                 vec3 target = glm::normalize(context->mouseWorldPosition - charPosition);
 

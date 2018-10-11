@@ -61,6 +61,7 @@ file(GLOB actio_src
         src/math/*.cpp
         src/memory/*.cpp
         src/renderer/*.cpp
+        src/renderer/opengl/pipelines/*.cpp
         src/renderer/opengl/*.cpp
         src/resources/*.cpp
         src/scenes/*.cpp

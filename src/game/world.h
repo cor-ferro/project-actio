@@ -19,7 +19,7 @@
 #include "../lib/profiling.h"
 #include "../lib/assets.h"
 #include "../resources/file_resource.h"
-#include "../renderer/base_renderer.h"
+#include "../renderer/renderer.h"
 #include "../core/model_builder.h"
 #include "../core/skin_builder.h"
 #include "systems/physic.h"
@@ -72,8 +72,6 @@ namespace game {
          */
         World();
 
-        void setupRenderer(renderer::Renderer *);
-
         void destroyRenderer();
 
         void setup();
@@ -83,6 +81,8 @@ namespace game {
         void update(ex::TimeDelta dt);
 
         void render(ex::TimeDelta dt);
+
+        void setRenderer(renderer::Renderer *renderer);
 
         bool registerWeapon(strategy::WeaponsBase *system);
 
@@ -104,7 +104,7 @@ namespace game {
 
         void cameraLookAt(vec3 target);
 
-        void setRenderSize(renderer::ScreenSize width, renderer::ScreenSize height);
+        void setRenderSize(renderer::Dimension width, renderer::Dimension height);
 
         void setInput(int place, InputHandler *ih);
 

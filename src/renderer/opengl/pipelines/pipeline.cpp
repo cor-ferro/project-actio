@@ -32,11 +32,11 @@ namespace renderer {
         }
 
         void Pipeline::draw(Mesh &mesh, uint flags) {
-            draw(program, mesh, flags);
+            draw(*program, mesh, flags);
         }
 
-        void Pipeline::draw(Program *drawProgram, Mesh &mesh, uint flags) {
-            assert(drawProgram->isSuccess() && "cannot set program");
+        void Pipeline::draw(Program &drawProgram, Mesh &mesh, uint flags) {
+            assert(drawProgram.isSuccess() && "cannot set program");
 
             if ((flags & Mesh_Draw_Textures) != 0) {
                 unsigned int textureIndex = 0;
@@ -46,7 +46,7 @@ namespace renderer {
                     const auto *handle = dynamic_cast<renderer::Opengl::TextureHandle *>(diffuseTexture->renderHandle);
                     if (handle->ready) {
                         OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
-                        drawProgram->setInt(diffuseTexture->name, textureIndex);
+                        drawProgram.setInt(diffuseTexture->name, textureIndex);
                         textureIndex++;
                     }
                 }
@@ -57,7 +57,7 @@ namespace renderer {
 
                     if (handle->ready) {
                         OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
-                        drawProgram->setInt(normalTexture->name, textureIndex);
+                        drawProgram.setInt(normalTexture->name, textureIndex);
                         textureIndex++;
                     }
                 }
@@ -68,7 +68,7 @@ namespace renderer {
 
                     if (handle->ready) {
                         OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
-                        drawProgram->setInt(specularTexture->name, textureIndex);
+                        drawProgram.setInt(specularTexture->name, textureIndex);
                         textureIndex++;
                     }
                 }
@@ -79,25 +79,25 @@ namespace renderer {
 
                     if (handle->ready) {
                         OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
-                        drawProgram->setInt(heightTexture->name, textureIndex);
+                        drawProgram.setInt(heightTexture->name, textureIndex);
                         textureIndex++;
                     }
                 }
             }
 
             if ((flags & Mesh_Draw_Material) != 0) {
-                drawProgram->setVec("material.ambient", mesh.material->getAmbient());
-                drawProgram->setVec("material.diffuse", mesh.material->getDiffuse());
-                drawProgram->setVec("material.specular", mesh.material->getSpecular());
-                drawProgram->setFloat("material.shininess", mesh.material->getShininess());
+                drawProgram.setVec("material.ambient", mesh.material->getAmbient());
+                drawProgram.setVec("material.diffuse", mesh.material->getDiffuse());
+                drawProgram.setVec("material.specular", mesh.material->getSpecular());
+                drawProgram.setFloat("material.shininess", mesh.material->getShininess());
             }
 
             if ((flags & Mesh_Draw_Bones) != 0) {
-                drawProgram->enableVertexSubroutine("getBoneTransform", "BoneTransformEnabled");
-                drawProgram->setMat("boneTransforms[]", &mesh.bones.transforms);
-                drawProgram->setMat("boneOffsets[]", &mesh.bones.offsets);
+                drawProgram.enableVertexSubroutine("getBoneTransform", "BoneTransformEnabled");
+                drawProgram.setMat("boneTransforms[]", &mesh.bones.transforms);
+                drawProgram.setMat("boneOffsets[]", &mesh.bones.offsets);
             } else {
-                drawProgram->enableVertexSubroutine("getBoneTransform", "BoneTransformDisabled");
+                drawProgram.enableVertexSubroutine("getBoneTransform", "BoneTransformDisabled");
             }
 
             if ((flags & Mesh_Draw_Base) != 0 && mesh.geometry.renderHandle != nullptr) {
@@ -107,7 +107,7 @@ namespace renderer {
                     glBindVertexArray(handle->vao);
 
                     object.updateModelMatrix(false);
-                    drawProgram->setMat("model", object.getModelMatrix());
+                    drawProgram.setMat("model", object.getModelMatrix());
 
                     GeometryVertices *vertices = mesh.geometry.getVertices();
                     GeometryIndices *indices = mesh.geometry.getIndices();

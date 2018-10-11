@@ -190,47 +190,90 @@ namespace game {
 
     void Script::GeometryLib::createBox(Mesh *mesh, float width, float height) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Box(geometry, width, height, 1, 1, 1);
+
+        GeometryBuilder::BoxDescription boxDesc;
+        boxDesc.width = width;
+        boxDesc.height = height;
+        GeometryBuilder::Box(geometry, boxDesc);
     }
 
     void Script::GeometryLib::createPlane(Mesh *mesh, uint width, uint height) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Plane(geometry, width, height, 1, 1);
+
+        GeometryBuilder::PlaneDescription planeDesc;
+        planeDesc.width = width;
+        planeDesc.height = height;
+        GeometryBuilder::Plane(geometry, planeDesc);
     }
 
     void Script::GeometryLib::createSphere(Mesh *mesh, float radius, uint widthSegments, uint heightSegments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Sphere(geometry, radius, widthSegments, heightSegments, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+
+        GeometryBuilder::SphereDescription sphereDesc;
+        sphereDesc.radius = radius;
+        sphereDesc.widthSegments = widthSegments;
+        sphereDesc.heightSegments = heightSegments;
+        GeometryBuilder::Sphere(geometry, sphereDesc);
     }
 
     void Script::GeometryLib::createCircle(Mesh *mesh, float radius, uint segments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Circle(geometry, radius, segments, 0.0f, glm::two_pi<float>());
+
+        GeometryBuilder::CircleDescription circleDesc;
+        circleDesc.radius = radius;
+        circleDesc.segments = segments;
+        GeometryBuilder::Circle(geometry, circleDesc);
     }
 
     void Script::GeometryLib::createCone(Mesh *mesh, float radius, float height, uint radialSegments, uint heightSegments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Cone(geometry, radius, height, radialSegments, heightSegments, true, 0.0f, glm::two_pi<float>());
+
+        GeometryBuilder::ConeDescription coneDesc;
+        coneDesc.radius = radius;
+        coneDesc.height = height;
+        coneDesc.radialSegments = radialSegments;
+        coneDesc.heightSegments = heightSegments;
+        GeometryBuilder::Cone(geometry, coneDesc);
     }
 
     void Script::GeometryLib::createCylinder(Mesh *mesh, float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Cylinder(geometry, radiusTop, radiusBottom, height, radialSegments, heightSegments, false, 0.0f, glm::two_pi<float>());
+
+        GeometryBuilder::CylinderDescription cylinderDesc;
+        cylinderDesc.radiusTop = radiusTop;
+        cylinderDesc.radiusBottom = radiusBottom;
+        cylinderDesc.height = height;
+        cylinderDesc.radialSegments = radialSegments;
+        cylinderDesc.heightSegments = heightSegments;
+        GeometryBuilder::Cylinder(geometry, cylinderDesc);
     }
 
     void Script::GeometryLib::createRing(Mesh *mesh, float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Ring(geometry, innerRadius, outerRadius, thetaSegments, phiSegments, 0.0f, glm::two_pi<float>());
+
+        GeometryBuilder::RingDescription ringDesc;
+        ringDesc.innerRadius = innerRadius;
+        ringDesc.outerRadius = outerRadius;
+        ringDesc.thetaSegments = thetaSegments;
+        ringDesc.phiSegments = phiSegments;
+        GeometryBuilder::Ring(geometry, ringDesc);
     }
 
     void Script::GeometryLib::createTorus(Mesh *mesh, float radius, float tube, uint radialSegments, uint tubularSegments, float arc) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Torus(geometry, radius, tube, radialSegments, tubularSegments, arc);
+
+        GeometryBuilder::TorusDescription torusDesc;
+        torusDesc.radius = radius;
+        torusDesc.tube = tube;
+        torusDesc.radialSegments = radialSegments;
+        torusDesc.tubularSegments = tubularSegments;
+        torusDesc.arc = arc;
+        GeometryBuilder::Torus(geometry, torusDesc);
     }
 
     void Script::GeometryLib::createOctahedron(Mesh *mesh, float radius) {
         Geometry &geometry = mesh->getGeometry();
-        GeometryBuilder::Octahedron(geometry, radius);
+        GeometryBuilder::Octahedron(geometry, {.radius = radius});
     }
 
     void Script::GeometryLib::createQuad2d(Mesh *mesh) {

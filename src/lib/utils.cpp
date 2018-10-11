@@ -105,12 +105,14 @@ namespace utils {
         throw(errno);
     }
 
-    void getFileContents(Path path, std::shared_ptr<std::string> &data, size_t *size) {
+    void getFileContents(const Path &path, std::shared_ptr<std::string> &data, size_t *size) {
+        getFileContents(path, data.get(), size);
+    }
+
+    void getFileContents(const Path &path, std::string *str, size_t *size) {
         std::ifstream in(path.string());
 
         if (in) {
-            std::string *str = data.get();
-
             in.seekg(0, std::ios::end);
             str->reserve(in.tellg());
             *size = static_cast<size_t>(in.tellg());

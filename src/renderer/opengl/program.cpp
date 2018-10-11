@@ -58,12 +58,16 @@ namespace renderer {
                 , success(false)
                 , isUsed(false) {}
 
-        Program::Program(renderer::ShaderDescription &shaderDescription) : Program() {
-            name = shaderDescription.getName();
+        Program::Program(const std::string& name) : Program() {
+            this->name = name;
+        }
 
-            const renderer::ShaderContent &vertexContent = shaderDescription.getVertexContent();
-            const renderer::ShaderContent &fragmentContent = shaderDescription.getFragmentContent();
-            const renderer::ShaderContent &geometryContent = shaderDescription.getGeometryContent();
+        void Program::init(const renderer::RawProgram &rawProgram) {
+            name = rawProgram.getName();
+
+            const renderer::ShaderContent &vertexContent = rawProgram.getVertexShader();
+            const renderer::ShaderContent &fragmentContent = rawProgram.getFragmentShader();
+            const renderer::ShaderContent &geometryContent = rawProgram.getGeometryShader();
 
             vertexShader.reset();
             fragmentShader.reset();
@@ -80,9 +84,7 @@ namespace renderer {
             if (!geometryContent.empty()) {
                 geometryShader.reset(new Shader(Shader::GEOMETRY, geometryContent));
             }
-        }
 
-        void Program::init() {
             isUsed = false;
 
             handle = glCreateProgram();

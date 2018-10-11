@@ -27,7 +27,7 @@ namespace renderer {
 			}
 		}
 
-		bool GBuffer::init(renderer::ScreenSize newWidth, renderer::ScreenSize newHeight)
+		bool GBuffer::init(renderer::Dimension newWidth, renderer::Dimension newHeight)
 		{
 			width = newWidth;
 			height = newHeight;
@@ -167,11 +167,7 @@ namespace renderer {
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 			glReadBuffer(GL_COLOR_ATTACHMENT4);
 
-			glBlitFramebuffer(
-					0, 0, width, height,
-					0, 0, width, height,
-					GL_COLOR_BUFFER_BIT, GL_LINEAR
-			);
+			copyToDefaultBuffer();
 		}
 
 		void GBuffer::bindForWriting() { glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo); }
@@ -187,20 +183,44 @@ namespace renderer {
 			return textures;
 		}
 
-		renderer::ScreenSize GBuffer::getWidth() {
+		renderer::Dimension GBuffer::getWidth() {
 			return width;
 		}
 
-		renderer::ScreenSize GBuffer::getHeight() {
+		renderer::Dimension GBuffer::getHeight() {
 			return height;
 		}
 
-		void GBuffer::setWidth(renderer::ScreenSize newWidth) {
+		void GBuffer::setWidth(renderer::Dimension newWidth) {
 			width = newWidth;
 		}
 
-		void GBuffer::setHeight(renderer::ScreenSize newHeight) {
+		void GBuffer::setHeight(renderer::Dimension newHeight) {
 			height = newHeight;
+		}
+
+		void GBuffer::copyToDefaultBuffer() {
+			glBlitFramebuffer(
+					0, 0, width, height,
+					0, 0, width, height,
+					GL_COLOR_BUFFER_BIT, GL_LINEAR
+			);
+		}
+
+		void GBuffer::setFinalTexture(const GBuffer::GBUFFER_TEXTURE_TYPE& type) {
+			switch (type) {
+				case GBUFFER_TEXTURE_TYPE_POSITION:
+					finalTextureType = GL_COLOR_ATTACHMENT0;
+					break;
+				case GBUFFER_TEXTURE_TYPE_NORMAL:
+					finalTextureType =  GL_COLOR_ATTACHMENT1;
+					break;
+				case GBUFFER_TEXTURE_TYPE_ALBEDO:
+					finalTextureType = GL_COLOR_ATTACHMENT2;
+					break;
+				default:
+					finalTextureType = GL_COLOR_ATTACHMENT4;
+			}
 		}
 
 	}

@@ -98,7 +98,11 @@ namespace game {
                     float radius = 0.3f;
                     std::shared_ptr<Mesh> mesh = Mesh::Create();
 
-                    GeometryBuilder::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+                    GeometryBuilder::SphereDescription desc;
+                    desc.radius = radius;
+                    desc.widthSegments = 16;
+                    desc.heightSegments = 16;
+                    GeometryBuilder::Sphere(mesh->geometry, desc);
                     mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
                     game::WorldObject *object = world->createDynamicObject();

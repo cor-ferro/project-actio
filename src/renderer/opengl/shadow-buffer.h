@@ -2,7 +2,7 @@
 #define ACTIO_SHADOW_BUFFER_H
 
 #include <glad/glad.h>
-#include "../renderer_types.h"
+#include "../params.h"
 
 namespace renderer {
     namespace Opengl {

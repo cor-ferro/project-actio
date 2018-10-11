@@ -4,27 +4,110 @@
 #include "geometry.h"
 
 struct GeometryBuilder {
-    static void Box(Geometry&, float width = 1.0f, float height = 1.0f, float depth = 1.0f, int widthSegments = 1, int heightSegments = 1, int depthSegments = 1);
+    struct BoxDescription {
+        float width = 1.0f;
+        float height = 1.0f;
+        float depth = 1.0f;
+        int widthSegments = 1;
+        int heightSegments = 1;
+        int depthSegments = 1;
+    };
 
-    static void Plane(Geometry&, uint width, uint height, uint widthSegments, uint heightSegments);
+    struct PlaneDescription {
+        uint width = 1;
+        uint height = 1;
+        uint widthSegments = 1;
+        uint heightSegments = 1;
+    };
 
-    static void Sphere(Geometry&, float radius, uint widthSegments, uint heightSegments, float phiStart, float phiLength, float thetaStart, float thetaLength);
+    struct SphereDescription {
+        float radius = 1.0f;
+        uint widthSegments = 1;
+        uint heightSegments = 1;
+        float phiStart = 0.0f;
+        float phiLength = glm::two_pi<float>();
+        float thetaStart = 0.0f;
+        float thetaLength = glm::pi<float>();
+    };
 
-    static void Circle(Geometry&, float radius, uint segments, float thetaStart, float thetaLength);
+    struct CircleDescription {
+        float radius = 1.0f;
+        uint segments = 1;
+        float thetaStart = 0.0f;
+        float thetaLength = glm::two_pi<float>();
+    };
 
-    static void Cone(Geometry&, float radius, float height, uint radialSegments, uint heightSegments, bool openEnded, float thetaStart, float thetaLength);
+    struct ConeDescription {
+        float radius = 1.0f;
+        float height = 1.0f;
+        uint radialSegments = 1;
+        uint heightSegments = 1;
+        bool openEnded = true;
+        float thetaStart = 0.0f;
+        float thetaLength = glm::two_pi<float>();
+    };
+
+    struct CylinderCapDescription {
+        bool top;
+    };
+
+    struct CylinderDescription {
+        float radiusTop = 1.0f;
+        float radiusBottom = 1.0f;
+        float height = 1.0f;
+        uint radialSegments = 1;
+        uint heightSegments = 1;
+        bool openEnded = false;
+        float thetaStart = 0.0f;
+        float thetaLength = glm::two_pi<float>();
+    };
+
+    struct RingDescription {
+        float innerRadius = 1.0f;
+        float outerRadius = 1.0f;
+        uint thetaSegments = 1;
+        uint phiSegments = 1;
+        float thetaStart = 0.0f;
+        float thetaLength = glm::two_pi<float>();
+    };
+
+    struct TorusDescription {
+        float radius = 1.0f;
+        float tube = 1.0f;
+        uint radialSegments = 1;
+        uint tubularSegments = 1;
+        float arc = 1.0f;
+    };
+
+    struct OctahedronDescription {
+        float radius;
+    };
+
+    struct A {
+        float x;
+    };
+
+    static void Box(Geometry&, const BoxDescription &description);
+
+    static void Plane(Geometry&, const PlaneDescription &description);
+
+    static void Sphere(Geometry&, const SphereDescription &description);
+
+    static void Circle(Geometry&, const CircleDescription& description);
+
+    static void Cone(Geometry&, const ConeDescription &description);
 
     static void CylinderTorso(Geometry&, GeometryCone& params);
 
-    static void CylinderCap(Geometry&, GeometryCone& params, bool top);
+    static void CylinderCap(Geometry&, GeometryCone& params, const CylinderCapDescription &description);
 
-    static void Cylinder(Geometry&, float radiusTop, float radiusBottom, float height, uint radialSegments, uint heightSegments, bool openEnded, float thetaStart, float thetaLength);
+    static void Cylinder(Geometry&, const CylinderDescription &description);
 
-    static void Ring(Geometry&, float innerRadius, float outerRadius, uint thetaSegments, uint phiSegments, float thetaStart, float thetaLength);
+    static void Ring(Geometry&, const RingDescription &description);
 
-    static void Torus(Geometry&, float radius, float tube, uint radialSegments, uint tubularSegments, float arc);
+    static void Torus(Geometry&, const TorusDescription &description);
 
-    static void Octahedron(Geometry&, float radius);
+    static void Octahedron(Geometry&, const OctahedronDescription &description);
 
     static void Quad2d(Geometry&);
 

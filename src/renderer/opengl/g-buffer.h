@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <glad/glad.h>
-#include "../renderer_types.h"
+#include "../params.h"
 #include "../../lib/console.h"
 #include "../../lib/utils.h"
 
@@ -21,7 +21,7 @@ namespace renderer {
 			GBuffer();
 			~GBuffer();
 
-			bool init(renderer::ScreenSize width, renderer::ScreenSize height);
+			bool init(renderer::Dimension width, renderer::Dimension height);
 
 			const std::vector<GLuint>& getTextures();
 
@@ -37,22 +37,28 @@ namespace renderer {
 
 			void generateTextures();
 
-			renderer::ScreenSize getWidth();
-			renderer::ScreenSize getHeight();
+			renderer::Dimension getWidth();
+			renderer::Dimension getHeight();
 
-			void setWidth(renderer::ScreenSize newWidth);
-			void setHeight(renderer::ScreenSize newHeight);
+			void setWidth(renderer::Dimension newWidth);
+			void setHeight(renderer::Dimension newHeight);
+
+			void setFinalTexture(const GBUFFER_TEXTURE_TYPE& type);
 
 			GLuint fbo;
 
 		private:
-			renderer::ScreenSize width;
-			renderer::ScreenSize height;
+			void copyToDefaultBuffer();
+
+			renderer::Dimension width;
+			renderer::Dimension height;
 
 			std::vector<GLuint> textures;
 			GLuint rboDepth;
 			GLuint depthTexture = 0;
 			GLuint finalTexture = 0;
+
+			GLenum finalTextureType = GL_COLOR_ATTACHMENT4;
 
 		};
 	}

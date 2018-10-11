@@ -26,7 +26,9 @@ namespace utils {
 
     std::string getFileContents(Path path);
 
-    void getFileContents(Path path, std::shared_ptr<std::string> &data, size_t *size);
+    void getFileContents(const Path &path, std::string *data, size_t *size);
+
+    void getFileContents(const Path &path, std::shared_ptr<std::string> &data, size_t *size);
 
     float scaleNumber(float x, float y, float value);
 

@@ -24,7 +24,12 @@ namespace game {
                     vec3 position = light->getPosition();
 
                     std::shared_ptr<Mesh> mesh = Mesh::Create();
-                    GeometryBuilder::Sphere(mesh->geometry, radius, 16, 16, 0.0f, glm::two_pi<float>(), 0.0f, 3.14f);
+
+                    GeometryBuilder::SphereDescription sphereDesc;
+                    sphereDesc.radius = radius;
+                    sphereDesc.widthSegments = 16;
+                    sphereDesc.heightSegments = 16;
+                    GeometryBuilder::Sphere(mesh->geometry, sphereDesc);
                     mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
                     mesh->material->setWireframe(true);
 

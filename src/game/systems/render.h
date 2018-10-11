@@ -63,11 +63,13 @@ namespace game {
             };
 
         public:
-            explicit Render(World *world, renderer::Renderer *newRenderer);
+            explicit Render(World *world);
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
             void configure(entityx::EventManager &event_manager) override;
+
+            void setRenderer(renderer::Renderer *newRenderer);
 
             void receive(const events::RenderResize &event);
 

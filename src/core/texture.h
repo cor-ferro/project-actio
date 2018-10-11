@@ -13,7 +13,7 @@
 #include "../lib/console.h"
 #include "../app/app.h"
 #include "../resources/resources.h"
-#include "../renderer/handler.h"
+#include "../renderer/handle.h"
 
 struct Texture {
     enum class Type {

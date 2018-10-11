@@ -1,8 +1,9 @@
 #include <future>
 #include "main.h"
-#include "renderer/renderer_types.h"
+#include "renderer/init.h"
+//#include "renderer_old/renderer_types.h"
 #include "renderer/renderer.h"
-#include "renderer/shader_description.h"
+//#include "renderer_old/shader_description.h"
 #include "game/world_importer.h"
 #include "lib/tweaker.h"
 #include "game/story_importer.h"
@@ -35,22 +36,9 @@ int main(int argc, char **argv) {
     meshAllocator->Init();
 
     const Monitor *const monitor = app.getPrimaryMonitor();
-    uint windowWidth = monitor->getWidth() / 1.5;
-    uint windowHeight = monitor->getHeight() / 1.5;
 
-    renderer::Params rendererParams;
-    rendererParams.width = windowWidth;
-    rendererParams.height = windowHeight;
-    rendererParams.calcAspectRatio();
-
-    std::vector<renderer::ShaderDescription> requiredShaderDescriptions;
-    loadRequiredShaders(&requiredShaderDescriptions);
-
-    // init renderer before scene loading
-    renderer::Renderer *renderer = new renderer::OpenglRenderer(rendererParams);
-    renderer->setShadersFolder(app.shadersPath());
-    renderer->setType(renderer::RenderDeferred);
-    renderer->setRequiredShaders(requiredShaderDescriptions);
+    renderer::Dimension windowWidth = monitor->getWidth() / 1.5;
+    renderer::Dimension windowHeight = monitor->getHeight() / 1.5;
 
     printMemoryStatus();
 
@@ -60,7 +48,6 @@ int main(int argc, char **argv) {
 
 
     game::World *world = game::createWorld();
-    world->setupRenderer(renderer);
     world->setup();
     world->setLightDebug(guiSettings.debugLight.getRef());
 
@@ -96,12 +83,20 @@ int main(int argc, char **argv) {
         mainContext.setAsCurrent();
         mainContext.enableVSync();
 
+        renderer::Params rendererParams;
+        rendererParams.setWidth(windowWidth);
+        rendererParams.setHeight(windowHeight);
+
+        renderer::Renderer *renderer = renderer::create(rendererParams);
+        renderer->setShadingType(renderer::Shading::Deferred);
         renderer->init();
+
+        world->setRenderer(renderer);
 
         mainContext.onResize.connect([&renderer, &world](int width, int height) {
             console::info("resize: %i, %i", width, height);
-            renderer->setViewSize(static_cast<renderer::ScreenSize>(width), static_cast<renderer::ScreenSize>(height));
-            renderer->regenerateBuffer();
+//            renderer->setViewSize(static_cast<renderer::Dimension>(width), static_cast<renderer::Dimension>(height));
+//            renderer->regenerateBuffer();
 
             world->setRenderSize(width, height);
         });
@@ -118,60 +113,59 @@ int main(int argc, char **argv) {
 
             world->render(elapsedTime);
 
-            const renderer::Stats& renderStats = renderer->getStats();
-
-            {
-                if (guiSettings.debugLight.isChanged(true)) world->setLightDebug(guiSettings.debugLight.getRef());
-                if (guiSettings.debugPhysics.isChanged(true)) world->setPhysicsDebug(guiSettings.debugPhysics.getRef());
-                if (guiSettings.cameraFov.isChanged(true) ||
-                    guiSettings.cameraAspect.isChanged(true) ||
-                    guiSettings.cameraNear.isChanged(true) ||
-                    guiSettings.cameraFar.isChanged(true)) {
-                    world->setCameraSettings(
-                            guiSettings.cameraFov.getRef(),
-                            guiSettings.cameraAspect.getRef(),
-                            guiSettings.cameraNear.getRef(),
-                            guiSettings.cameraFar.getRef()
-                    );
-                }
-
-                ImGui_ImplGlfwGL3_NewFrame();
-                ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
-
-                ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
-                                         | ImGuiWindowFlags_NoMove
-                                         | ImGuiWindowFlags_NoResize
-                                         | ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-                ImGui::Begin("Metrics", nullptr, flags);
-                ImGui::Text("%.3f ms, %.1f fps", renderStats.getMsFrame(), renderStats.getFps());
-                ImGui::Text("draw calls: %i", renderStats.getDrawCalls());
-                ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
-                ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
-                ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
-                ImGui::Separator();
-                ImGui::Checkbox("Debug physics", guiSettings.debugPhysics.get());
-                ImGui::Checkbox("Debug light", guiSettings.debugLight.get());
-                ImGui::Separator();
-                ImGui::SliderFloat("fow", guiSettings.cameraFov.get(), 0.0f, 180.0f, "fow = %.3f");
-                ImGui::SliderFloat("aspect", guiSettings.cameraAspect.get(), 0.0f, 5.0f, "aspect = %.3f");
-                ImGui::SliderFloat("near", guiSettings.cameraNear.get(), 0.0f, 500.0f, "near = %.3f");
-                ImGui::SliderFloat("far", guiSettings.cameraFar.get(), 0.0f, 500.0f, "far = %.3f");
-
-                const profiling::ProfileTimings &worldSystemProfiler = world->getSystemProfiler();
-                const profiling::TimePrecision physicDuration = worldSystemProfiler.getDuration("Physic", profiling::Milliseconds);
-                const profiling::TimePrecision renderDuration = worldSystemProfiler.getDuration("Render", profiling::Milliseconds);
-                const profiling::TimePrecision worldUpdateDuration = worldSystemProfiler.getDuration("WorldUpdate", profiling::Milliseconds);
-
-                ImGui::Separator();
-                ImGui::Text("world: %.2f", worldUpdateDuration);
-                ImGui::Text("physic: %.2f", physicDuration);
-                ImGui::Text("render: %.2f", renderDuration);
-
-                ImGui::SetWindowSize(ImVec2(200.0f, 350.0f));
-                ImGui::End();
-                ImGui::Render();
-            }
+//            const renderer::Stats& renderStats = renderer->getStats();
+//            {
+//                if (guiSettings.debugLight.isChanged(true)) world->setLightDebug(guiSettings.debugLight.getRef());
+//                if (guiSettings.debugPhysics.isChanged(true)) world->setPhysicsDebug(guiSettings.debugPhysics.getRef());
+//                if (guiSettings.cameraFov.isChanged(true) ||
+//                    guiSettings.cameraAspect.isChanged(true) ||
+//                    guiSettings.cameraNear.isChanged(true) ||
+//                    guiSettings.cameraFar.isChanged(true)) {
+//                    world->setCameraSettings(
+//                            guiSettings.cameraFov.getRef(),
+//                            guiSettings.cameraAspect.getRef(),
+//                            guiSettings.cameraNear.getRef(),
+//                            guiSettings.cameraFar.getRef()
+//                    );
+//                }
+//
+//                ImGui_ImplGlfwGL3_NewFrame();
+//                ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
+//
+//                ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
+//                                         | ImGuiWindowFlags_NoMove
+//                                         | ImGuiWindowFlags_NoResize
+//                                         | ImGuiWindowFlags_NoBringToFrontOnFocus;
+//
+//                ImGui::Begin("Metrics", nullptr, flags);
+//                ImGui::Text("%.3f ms, %.1f fps", renderStats.getMsFrame(), renderStats.getFps());
+//                ImGui::Text("draw calls: %i", renderStats.getDrawCalls());
+//                ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
+//                ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
+//                ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
+//                ImGui::Separator();
+//                ImGui::Checkbox("Debug physics", guiSettings.debugPhysics.get());
+//                ImGui::Checkbox("Debug light", guiSettings.debugLight.get());
+//                ImGui::Separator();
+//                ImGui::SliderFloat("fow", guiSettings.cameraFov.get(), 0.0f, 180.0f, "fow = %.3f");
+//                ImGui::SliderFloat("aspect", guiSettings.cameraAspect.get(), 0.0f, 5.0f, "aspect = %.3f");
+//                ImGui::SliderFloat("near", guiSettings.cameraNear.get(), 0.0f, 500.0f, "near = %.3f");
+//                ImGui::SliderFloat("far", guiSettings.cameraFar.get(), 0.0f, 500.0f, "far = %.3f");
+//
+//                const profiling::ProfileTimings &worldSystemProfiler = world->getSystemProfiler();
+//                const profiling::TimePrecision physicDuration = worldSystemProfiler.getDuration("Physic", profiling::Milliseconds);
+//                const profiling::TimePrecision renderDuration = worldSystemProfiler.getDuration("Render", profiling::Milliseconds);
+//                const profiling::TimePrecision worldUpdateDuration = worldSystemProfiler.getDuration("WorldUpdate", profiling::Milliseconds);
+//
+//                ImGui::Separator();
+//                ImGui::Text("world: %.2f", worldUpdateDuration);
+//                ImGui::Text("physic: %.2f", physicDuration);
+//                ImGui::Text("render: %.2f", renderDuration);
+//
+//                ImGui::SetWindowSize(ImVec2(200.0f, 350.0f));
+//                ImGui::End();
+//                ImGui::Render();
+//            }
 
             inputHandler->onFrame();
 
@@ -189,15 +183,15 @@ int main(int argc, char **argv) {
         renderExec = false;
     });
 
-    std::mutex m;
-    std::condition_variable cv;
-
-    auto appSecondThread = std::thread([&]() {
-        std::unique_lock<std::mutex> lk(m);
-
-
-    });
-
+//    std::mutex m;
+//    std::condition_variable cv;
+//
+//    auto appSecondThread = std::thread([&]() {
+//        std::unique_lock<std::mutex> lk(m);
+//
+//
+//    });
+//
     std::map<std::thread::id, bool> workingSecondaryThreads;
 
     auto appThread = std::thread([&]() {
@@ -243,7 +237,7 @@ int main(int argc, char **argv) {
 
     // wait all loops finish
     renderThread.join();
-    appSecondThread.join();
+//    appSecondThread.join();
     appThread.join();
 
     while (!workingSecondaryThreads.empty()) {

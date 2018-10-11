@@ -40,14 +40,11 @@
 #include "world_importer.h"
 #include "../math/Box3.h"
 #include "../core/material_builder.h"
+#include "components/light_spot.h"
 
 namespace game {
     World::World() : name("") {
 
-    }
-
-    void World::setupRenderer(renderer::Renderer *renderer) {
-        systems.add<game::systems::Render>(this, renderer);
     }
 
     void World::destroyRenderer() {
@@ -55,6 +52,7 @@ namespace game {
     }
 
     void World::setup() {
+        systems.add<systems::Render>(this);
         systems.add<systems::Input>(this);
         systems.add<systems::Camera>(this);
         systems.add<systems::CharControl>(this);
@@ -155,7 +153,7 @@ namespace game {
         console::info("world %s destroyed", name);
     }
 
-    void World::setRenderSize(renderer::ScreenSize width, renderer::ScreenSize height) {
+    void World::setRenderSize(renderer::Dimension width, renderer::Dimension height) {
         events.emit<events::RenderResize>(width, height);
     }
 
@@ -242,7 +240,8 @@ namespace game {
     void World::addLight(desc::LightSpotDesc lightDescription) {
         entityx::Entity entity = entities.create();
 
-        c::LightSpot light;
+
+        game::components::LightSpot light;
         light.setAmbient(lightDescription.ambient);
         light.setDiffuse(lightDescription.diffuse);
         light.setSpecular(lightDescription.specular);
@@ -251,8 +250,8 @@ namespace game {
         light.setAttenuation(lightDescription.constant, lightDescription.linear, lightDescription.quadratic);
         light.setCutoff(lightDescription.cutOff, lightDescription.outerCutOff);
 
-        entity.assign<c::LightSpot>(light);
-        entity.assign<c::Transform>(lightDescription.position);
+        entity.assign<game::components::LightSpot>(light);
+        entity.assign<game::components::Transform>(lightDescription.position);
 
         events.emit<events::LightAdd>(entity);
     }
@@ -603,5 +602,9 @@ namespace game {
 //        }
 
         setupRenderMesh(entity);
+    }
+
+    void World::setRenderer(renderer::Renderer *renderer) {
+        this->renderer->setRenderer(renderer);
     }
 }
