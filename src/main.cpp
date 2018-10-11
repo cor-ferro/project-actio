@@ -114,58 +114,58 @@ int main(int argc, char **argv) {
             world->render(elapsedTime);
 
 //            const renderer::Stats& renderStats = renderer->getStats();
-//            {
-//                if (guiSettings.debugLight.isChanged(true)) world->setLightDebug(guiSettings.debugLight.getRef());
-//                if (guiSettings.debugPhysics.isChanged(true)) world->setPhysicsDebug(guiSettings.debugPhysics.getRef());
-//                if (guiSettings.cameraFov.isChanged(true) ||
-//                    guiSettings.cameraAspect.isChanged(true) ||
-//                    guiSettings.cameraNear.isChanged(true) ||
-//                    guiSettings.cameraFar.isChanged(true)) {
-//                    world->setCameraSettings(
-//                            guiSettings.cameraFov.getRef(),
-//                            guiSettings.cameraAspect.getRef(),
-//                            guiSettings.cameraNear.getRef(),
-//                            guiSettings.cameraFar.getRef()
-//                    );
-//                }
-//
-//                ImGui_ImplGlfwGL3_NewFrame();
-//                ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
-//
-//                ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
-//                                         | ImGuiWindowFlags_NoMove
-//                                         | ImGuiWindowFlags_NoResize
-//                                         | ImGuiWindowFlags_NoBringToFrontOnFocus;
-//
-//                ImGui::Begin("Metrics", nullptr, flags);
+            {
+                if (guiSettings.debugLight.isChanged(true)) world->setLightDebug(guiSettings.debugLight.getRef());
+                if (guiSettings.debugPhysics.isChanged(true)) world->setPhysicsDebug(guiSettings.debugPhysics.getRef());
+                if (guiSettings.cameraFov.isChanged(true) ||
+                    guiSettings.cameraAspect.isChanged(true) ||
+                    guiSettings.cameraNear.isChanged(true) ||
+                    guiSettings.cameraFar.isChanged(true)) {
+                    world->setCameraSettings(
+                            guiSettings.cameraFov.getRef(),
+                            guiSettings.cameraAspect.getRef(),
+                            guiSettings.cameraNear.getRef(),
+                            guiSettings.cameraFar.getRef()
+                    );
+                }
+
+                ImGui_ImplGlfwGL3_NewFrame();
+                ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
+
+                ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
+                                         | ImGuiWindowFlags_NoMove
+                                         | ImGuiWindowFlags_NoResize
+                                         | ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+                ImGui::Begin("Metrics", nullptr, flags);
 //                ImGui::Text("%.3f ms, %.1f fps", renderStats.getMsFrame(), renderStats.getFps());
 //                ImGui::Text("draw calls: %i", renderStats.getDrawCalls());
-//                ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
-//                ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
-//                ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
-//                ImGui::Separator();
-//                ImGui::Checkbox("Debug physics", guiSettings.debugPhysics.get());
-//                ImGui::Checkbox("Debug light", guiSettings.debugLight.get());
-//                ImGui::Separator();
-//                ImGui::SliderFloat("fow", guiSettings.cameraFov.get(), 0.0f, 180.0f, "fow = %.3f");
-//                ImGui::SliderFloat("aspect", guiSettings.cameraAspect.get(), 0.0f, 5.0f, "aspect = %.3f");
-//                ImGui::SliderFloat("near", guiSettings.cameraNear.get(), 0.0f, 500.0f, "near = %.3f");
-//                ImGui::SliderFloat("far", guiSettings.cameraFar.get(), 0.0f, 500.0f, "far = %.3f");
-//
-//                const profiling::ProfileTimings &worldSystemProfiler = world->getSystemProfiler();
-//                const profiling::TimePrecision physicDuration = worldSystemProfiler.getDuration("Physic", profiling::Milliseconds);
-//                const profiling::TimePrecision renderDuration = worldSystemProfiler.getDuration("Render", profiling::Milliseconds);
-//                const profiling::TimePrecision worldUpdateDuration = worldSystemProfiler.getDuration("WorldUpdate", profiling::Milliseconds);
-//
-//                ImGui::Separator();
-//                ImGui::Text("world: %.2f", worldUpdateDuration);
-//                ImGui::Text("physic: %.2f", physicDuration);
-//                ImGui::Text("render: %.2f", renderDuration);
-//
-//                ImGui::SetWindowSize(ImVec2(200.0f, 350.0f));
-//                ImGui::End();
-//                ImGui::Render();
-//            }
+                ImGui::Text("images: %s", utils::formatMemorySize(imageAllocator->getUsed()).c_str());
+                ImGui::Text("models: %s", utils::formatMemorySize(modelsAllocator->getUsed()).c_str());
+                ImGui::Text("meshes: %s", utils::formatMemorySize(meshAllocator->getUsed()).c_str());
+                ImGui::Separator();
+                ImGui::Checkbox("Debug physics", guiSettings.debugPhysics.get());
+                ImGui::Checkbox("Debug light", guiSettings.debugLight.get());
+                ImGui::Separator();
+                ImGui::SliderFloat("fow", guiSettings.cameraFov.get(), 0.0f, 180.0f, "fow = %.3f");
+                ImGui::SliderFloat("aspect", guiSettings.cameraAspect.get(), 0.0f, 5.0f, "aspect = %.3f");
+                ImGui::SliderFloat("near", guiSettings.cameraNear.get(), 0.0f, 500.0f, "near = %.3f");
+                ImGui::SliderFloat("far", guiSettings.cameraFar.get(), 0.0f, 500.0f, "far = %.3f");
+
+                const profiling::ProfileTimings &worldSystemProfiler = world->getSystemProfiler();
+                const profiling::TimePrecision physicDuration = worldSystemProfiler.getDuration("Physic", profiling::Milliseconds);
+                const profiling::TimePrecision renderDuration = worldSystemProfiler.getDuration("Render", profiling::Milliseconds);
+                const profiling::TimePrecision worldUpdateDuration = worldSystemProfiler.getDuration("WorldUpdate", profiling::Milliseconds);
+
+                ImGui::Separator();
+                ImGui::Text("world: %.2f", worldUpdateDuration);
+                ImGui::Text("physic: %.2f", physicDuration);
+                ImGui::Text("render: %.2f", renderDuration);
+
+                ImGui::SetWindowSize(ImVec2(200.0f, 350.0f));
+                ImGui::End();
+                ImGui::Render();
+            }
 
             inputHandler->onFrame();
 
