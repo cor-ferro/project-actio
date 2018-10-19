@@ -69,6 +69,7 @@ int main(int argc, char **argv) {
 
     world->load();
     world->generateBaseTerrain();
+    world->setPhysicsDebug(false);
 
     bool renderExec = true;
 
@@ -89,6 +90,7 @@ int main(int argc, char **argv) {
 
         renderer::Renderer *renderer = renderer::create(rendererParams);
         renderer->setShadingType(renderer::Shading::Deferred);
+        renderer->enableShadows();
         renderer->init();
 
         world->setRenderer(renderer);

@@ -45,44 +45,48 @@ namespace renderer {
                 if (diffuseTexture && diffuseTexture->renderHandle != nullptr) {
                     const auto *handle = dynamic_cast<renderer::Opengl::TextureHandle *>(diffuseTexture->renderHandle);
                     if (handle->ready) {
-                        OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
+                        utils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
                         drawProgram.setInt(diffuseTexture->name, textureIndex);
                         textureIndex++;
                     }
                 }
+                OpenglCheckErrors();
 
                 const std::shared_ptr<Texture> &normalTexture = mesh.material->getNormalMap();
                 if (normalTexture && normalTexture->renderHandle != nullptr) {
                     const auto *handle = dynamic_cast<renderer::Opengl::TextureHandle *>(normalTexture->renderHandle);
 
                     if (handle->ready) {
-                        OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
+                        utils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
                         drawProgram.setInt(normalTexture->name, textureIndex);
                         textureIndex++;
                     }
                 }
+                OpenglCheckErrors();
 
                 const std::shared_ptr<Texture> &specularTexture = mesh.material->getSpecularMap();
                 if (specularTexture && specularTexture->renderHandle != nullptr) {
                     const auto *handle = dynamic_cast<renderer::Opengl::TextureHandle *>(specularTexture->renderHandle);
 
                     if (handle->ready) {
-                        OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
+                        utils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
                         drawProgram.setInt(specularTexture->name, textureIndex);
                         textureIndex++;
                     }
                 }
+                OpenglCheckErrors();
 
                 const std::shared_ptr<Texture> &heightTexture = mesh.material->getHeightMap();
                 if (heightTexture && heightTexture->renderHandle != nullptr) {
                     const auto *handle = dynamic_cast<renderer::Opengl::TextureHandle *>(heightTexture->renderHandle);
 
                     if (handle->ready) {
-                        OpenglUtils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
+                        utils::bindTexture(GL_TEXTURE0 + textureIndex, handle);
                         drawProgram.setInt(heightTexture->name, textureIndex);
                         textureIndex++;
                     }
                 }
+                OpenglCheckErrors();
             }
 
             if ((flags & Mesh_Draw_Material) != 0) {
@@ -90,14 +94,17 @@ namespace renderer {
                 drawProgram.setVec("material.diffuse", mesh.material->getDiffuse());
                 drawProgram.setVec("material.specular", mesh.material->getSpecular());
                 drawProgram.setFloat("material.shininess", mesh.material->getShininess());
+                OpenglCheckErrors();
             }
 
             if ((flags & Mesh_Draw_Bones) != 0) {
                 drawProgram.enableVertexSubroutine("getBoneTransform", "BoneTransformEnabled");
-                drawProgram.setMat("boneTransforms[]", &mesh.bones.transforms);
-                drawProgram.setMat("boneOffsets[]", &mesh.bones.offsets);
+                drawProgram.setMat("boneTransforms[]", mesh.bones.transforms);
+                drawProgram.setMat("boneOffsets[]", mesh.bones.offsets);
+                OpenglCheckErrors();
             } else {
                 drawProgram.enableVertexSubroutine("getBoneTransform", "BoneTransformDisabled");
+                OpenglCheckErrors();
             }
 
             if ((flags & Mesh_Draw_Base) != 0 && mesh.geometry.renderHandle != nullptr) {
@@ -105,9 +112,11 @@ namespace renderer {
 
                 if (handle->ready) {
                     glBindVertexArray(handle->vao);
+                    OpenglCheckErrors();
 
                     object.updateModelMatrix(false);
                     drawProgram.setMat("model", object.getModelMatrix());
+                    OpenglCheckErrors();
 
                     GeometryVertices *vertices = mesh.geometry.getVertices();
                     GeometryIndices *indices = mesh.geometry.getIndices();
@@ -136,21 +145,25 @@ namespace renderer {
                     MeshDrawMode drawMode = indices->empty() ? Mesh_Draw_Arrays : Mesh_Draw_Elements;
 
                     if (mesh.material->isWireframe()) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                    OpenglCheckErrors();
 
                     switch (drawMode) {
                         case Mesh_Draw_Arrays:
                             if (!vertices->empty()) {
                                 glDrawArrays(primitiveType, 0, static_cast<int>(vertices->size()));
+                                OpenglCheckErrors();
                             }
                             break;
                         case Mesh_Draw_Elements:
                             glDrawElements(primitiveType, static_cast<int>(indices->size()), GL_UNSIGNED_INT, nullptr);
+                            OpenglCheckErrors();
                             break;
                         default:
                             console::warn("unknown draw mode: %i", drawMode);
                     }
 
                     if (mesh.material->isWireframe()) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                    OpenglCheckErrors();
 
                     glBindVertexArray(0);
                 }

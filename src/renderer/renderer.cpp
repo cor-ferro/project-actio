@@ -34,6 +34,7 @@ namespace renderer {
 
         frameContext.setHeight(params.getHeight());
         frameContext.setWidth(params.getWidth());
+        frameContext.setShadowsEnabled(shadows);
 
         return frameContext;
     }

@@ -37,6 +37,11 @@
 #include "world_object.h"
 #include "world_tasks.h"
 
+/**
+ * \defgroup World
+ * \brief World namespace
+ */
+
 namespace game {
     namespace ex = entityx;
     namespace c = components;
@@ -87,6 +92,9 @@ namespace game {
         bool registerWeapon(strategy::WeaponsBase *system);
 
         World::Weapon createWeapon();
+
+
+
 
         void addLight(desc::LightPointDesc);
 
@@ -162,6 +170,12 @@ namespace game {
         game::WorldObject *createDynamicObject(const glm::vec3 &pos);
 
         game::WorldObject *createCharacterObject();
+
+        game::WorldObject *createLightObject(const desc::LightDirectionalDesc &description);
+
+        game::WorldObject *createLightObject(const game::desc::LightPointDesc &description);
+
+        game::WorldObject *createLightObject(const game::desc::LightSpotDesc &description);
 
         void setObjectMesh(game::WorldObject *object, std::shared_ptr<Mesh> &mesh);
 

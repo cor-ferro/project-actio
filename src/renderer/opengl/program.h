@@ -117,7 +117,7 @@ namespace renderer {
 
             void setMat(const std::string &, const mat2 &) const;
 
-            void setMat(const std::string &, const std::vector<mat4> *mats) const;
+            void setMat(const std::string &, const std::vector<mat4> &mats) const;
 
             void setMat(const std::string &, int size, const mat4 *mats) const;
 

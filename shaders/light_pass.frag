@@ -4,8 +4,12 @@ uniform sampler2D gPositionMap;
 uniform sampler2D gNormalMap;
 uniform sampler2D gAlbedoMap;
 
+uniform samplerCube depthMap;
+
 uniform vec3 gScreenSize;
 uniform vec3 gEyePosition;
+
+uniform float farPlane;
 
 out vec4 FragColor;
 
@@ -48,6 +52,21 @@ const float Epsilon = 0.0000001;
 subroutine vec3 LightType(vec3, vec3, vec3, vec4);
 subroutine uniform LightType getLightColor;
 
+float ShadowValue(vec3 fragPos, vec3 lightPos) {
+    vec3 fragToLight = fragPos - lightPos;
+
+    float closestDepth = texture(depthMap, fragToLight).r;
+
+    closestDepth *= farPlane;
+
+    float curentDepth = length(fragToLight);
+
+    float bias = 0.05;
+    float shadow = curentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+    return shadow;
+}
+
 subroutine (LightType)
 vec3 UnknownLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
     return albedo.xyz * vec3(0.0, 1.0, 0.0);
@@ -82,6 +101,10 @@ vec3 PointLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) 
 	vec3 diffuse  = pointLight.diffuse * diff * albedo.xyz * attenuation;
 	vec3 specular = pointLight.specular * spec * albedo.w * attenuation;
 
+    float shadow = ShadowValue(worldPos, pointLight.position);
+
+    ambient = ambient * shadow;
+
     return ambient + diffuse + specular;
 }
 
@@ -93,13 +116,13 @@ vec3 SpotLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) {
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 0.01);
 	float distance = length(spotLight.position - worldPos);
 	float attenuation = 1.0 / (spotLight.constant + spotLight.linear * distance + spotLight.quadratic * (distance * distance));
-	float theta = dot(lightDir, normalize(-spotLight.direction));
+	float theta = dot(lightDir, normalize(spotLight.direction));
 	float epsilon = spotLight.cutOff - spotLight.outerCutOff;
-	float intensity = clamp((theta - spotLight.outerCutOff) / epsilon, 0.0, 1.0);
+	float intensity = clamp((theta - (spotLight.outerCutOff / epsilon)), 0.0, 1.0);
 
-	vec3 ambient = spotLight.ambient * albedo.xyz * attenuation/* * intensity*/;
+	vec3 ambient = spotLight.ambient * albedo.xyz * attenuation * intensity;
 	vec3 diffuse = spotLight.diffuse * diff * albedo.xyz * attenuation * intensity;
-	vec3 specular = spotLight.specular * spec * albedo.w * attenuation/* * intensity*/;
+	vec3 specular = spotLight.specular * spec * albedo.w * attenuation * intensity;
 
 	return ambient + diffuse + specular;
 }

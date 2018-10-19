@@ -12,39 +12,52 @@
 #include "../lib/types.h"
 
 namespace Light {
-	struct Spot {
-		Spot();
-		Spot(vec3 ambient, vec3 diffuse, vec3 specular);
+    struct Spot {
+        Spot();
 
-		void setAmbient(vec3 ambient);
-		void setAmbient(float r, float g, float b);
+        Spot(vec3 ambient, vec3 diffuse, vec3 specular);
 
-		void setDiffuse(vec3 diffuse);
-		void setDiffuse(float r, float g, float b);
+        void setAmbient(const vec3& ambient);
 
-		void setSpecular(vec3 specular);
-		void setSpecular(float r, float g, float b);
+        void setAmbient(float r, float g, float b);
 
-		vec3 getAmbient();
-		vec3 getDiffuse();
-		vec3 getSpecular();
+        void setDiffuse(const vec3& diffuse);
 
-		void setPosition(vec3 position);
-		void setDirection(vec3 direction);
-		void setAttenuation(float constant, float linear, float quadratic);
-		void setCutoff(float cutOff, float outerCutOff);
+        void setDiffuse(float r, float g, float b);
 
-		vec3 ambient;
-		vec3 diffuse;
-		vec3 specular;
-		vec3 position;
-		vec3 direction;
-		float constant;
-		float linear;
-		float quadratic;
-		float cutOff;
-		float outerCutOff;
-	};
+        void setSpecular(const vec3& specular);
+
+        void setSpecular(float r, float g, float b);
+
+        const vec3& getAmbient();
+
+        const vec3& getDiffuse();
+
+        const vec3& getSpecular();
+
+        const vec3& getPosition();
+
+        const vec3& getDirection();
+
+        void setPosition(const vec3& position);
+
+        void setDirection(const vec3& direction);
+
+        void setAttenuation(float constant, float linear, float quadratic);
+
+        void setCutoff(float cutOff, float outerCutOff);
+
+        vec3 ambient;
+        vec3 diffuse;
+        vec3 specular;
+        vec3 position;
+        vec3 direction;
+        float constant;
+        float linear;
+        float quadratic;
+        float cutOff;
+        float outerCutOff;
+    };
 }
 
 

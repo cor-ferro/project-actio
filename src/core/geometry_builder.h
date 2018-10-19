@@ -14,8 +14,8 @@ struct GeometryBuilder {
     };
 
     struct PlaneDescription {
-        uint width = 1;
-        uint height = 1;
+        float width = 1;
+        float height = 1;
         uint widthSegments = 1;
         uint heightSegments = 1;
     };

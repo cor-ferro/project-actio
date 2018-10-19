@@ -51,6 +51,10 @@ namespace renderer {
 
             GeometryBuilder::CylinderDescription cylinderDesc;
             cylinderDesc.radiusTop = 4.0f;
+            cylinderDesc.radiusBottom = 0.0f;
+            cylinderDesc.height = 30.0f;
+            cylinderDesc.radialSegments = 16;
+            cylinderDesc.heightSegments = 16;
             GeometryBuilder::Cylinder(mesh->geometry, cylinderDesc);
         }
 
@@ -97,7 +101,102 @@ namespace renderer {
         }
 
         void DeferredShading::shadowPass(const FrameContext& frameContext) {
+            if (frameContext.isShadowsEnabled() && shadowBuffer.isCompleted()) {
+                shadowBuffer.bindForWriting();
+                shadowPipeline.use();
 
+                glDrawBuffer(GL_NONE);
+                glDepthMask(GL_TRUE);
+                glEnable(GL_DEPTH_TEST);
+
+                glClear(GL_DEPTH_BUFFER_BIT);
+
+                auto& es = frameContext.getEntityManager();
+
+                float aspect = static_cast<float>(frameContext.width) / static_cast<float>(frameContext.height);
+                float near = 1.0f;
+                float far = 65.0f;
+                mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
+
+                shadowPipeline.setFarPlane(far);
+                OpenglCheckErrors();
+
+                ex::ComponentHandle<components::LightPoint> light;
+                ex::ComponentHandle<components::Transform> lightTransform;
+
+                for (ex::Entity lightEntity : es.entities_with_components(light, lightTransform)) {
+                    const vec3& lightPos = lightTransform->getPosition();
+
+//                    std::vector<mat4> shadowTransforms;
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3( 0.0,-1.0, 0.0), vec3(0.0, 0.0,-1.0)));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3( 0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0)));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3( 0.0, 0.0, 1.0), vec3(0.0,-1.0, 0.0)));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3(-1.0, 0.0, 0.0), vec3(0.0,-1.0, 0.0)));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3( 1.0, 0.0, 0.0), vec3(0.0,-1.0, 0.0)));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3( 0.0, 0.0,-1.0), vec3(0.0,-1.0, 0.0)));
+
+
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, -1.0f, 0.0f) ));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3(-1.0f, 0.0f, 0.0f),vec3(0.0f, -1.0f, 0.0f) ));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f) ));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3(0.0f, -1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) ));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, -1.0f, 0.0f) ));
+//                    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + vec3(0.0f, 0.0f, -1.0f), vec3(0.0f, -1.0f, 0.0f)));
+
+
+                    OpenglCheckErrors();
+
+                    ex::ComponentHandle<components::Renderable> objectRenderable;
+                    ex::ComponentHandle<components::Transform> objectTransform;
+                    ex::ComponentHandle<components::Meshes> objectMeshes;
+
+                    shadowPipeline.setShadowTransforms(shadowProj * glm::lookAt(lightPos, lightPos + vec3(0.0,0.0,1.0), vec3(0.0, 0.0,1.0)));
+                    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+                    for (ex::Entity objectEntity : es.entities_with_components(objectRenderable, objectTransform, objectMeshes)) {
+                        const std::vector<std::shared_ptr<Mesh>> items = objectMeshes->items();
+                        for (auto &mesh : items) {
+                            shadowPipeline.setTransform(*objectTransform); // todo: pass pointer instead of copy
+                            OpenglCheckErrors();
+                            shadowPipeline.draw(*mesh, Mesh_Draw_Base);
+                            OpenglCheckErrors();
+                        }
+                    }
+
+
+                }
+
+
+
+
+//                const mat4 &cameraRotateMat = frameContext.getCameraRotationMat();
+//
+//                ex::ComponentHandle<components::LightPoint> light;
+//                ex::ComponentHandle<components::Transform> lightTransform;
+//
+//                for (ex::Entity lightEntity : es.entities_with_components(light, lightTransform)) {
+//                    // try move from loop
+//                    ex::ComponentHandle<components::Renderable> objectRenderable;
+//                    ex::ComponentHandle<components::Transform> objectTransform;
+//                    ex::ComponentHandle<components::Meshes> objectMeshes;
+//
+//                    const mat4 proj = frameContext.getProjection();
+//                    const mat4 transM = glm::translate(mat4(1.0f), lightTransform->getPosition() * -1.0f);
+//                    const mat4 lightCameraView = cameraRotateMat * transM; // for 3d person reverse operands
+//                    const mat4 m_WorldTransformation = mat4(1.0f);
+//                    const mat4 gWVP = proj * lightCameraView * m_WorldTransformation;
+//
+//                    for (ex::Entity objectEntity : es.entities_with_components(objectRenderable, objectTransform, objectMeshes)) {
+//                        shadowPipeline.setWVP(gWVP);
+//
+//                        const std::vector<std::shared_ptr<Mesh>> items = objectMeshes->items();
+//                        for (auto &mesh : items) {
+//                            shadowPipeline.setTransform(*objectTransform); // todo: pass pointer instead of copy
+//                            shadowPipeline.draw(*mesh, Mesh_Draw_Base);
+//                        }
+//                    }
+//                }
+            }
         }
 
         void DeferredShading::geometryPass(const FrameContext& frameContext) {
@@ -179,7 +278,7 @@ namespace renderer {
         }
 
         void DeferredShading::initShadowBuffer() {
-            shadowBuffer.init(width, height);
+            shadowBuffer.init(800, 800);
         }
 
         void DeferredShading::initLightHelpers() {
@@ -287,6 +386,15 @@ namespace renderer {
                 glCullFace(GL_FRONT);
                 OpenglCheckErrors();
 
+                if (frameContext.isShadowsEnabled()) {
+                    glActiveTexture(GL_TEXTURE10);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, shadowBuffer.getShadowMap());
+                    lightPassProgram.setInt("depthMap", 10);
+                    OpenglCheckErrors();
+                }
+
+                lightPassProgram.setFloat("farPlane", radius);
+                OpenglCheckErrors();
                 lightPassProgram.setVec("gEyePosition", frameContext.getCameraPosition());
                 lightPassProgram.setVec("pointLight.ambient", light->ambient);
                 lightPassProgram.setVec("pointLight.diffuse", light->diffuse);
@@ -322,20 +430,21 @@ namespace renderer {
 
             for (ex::Entity entity : es.entities_with_components(light, transform)) {
                 // Stencil
-                //		nullProgram.use();
-                //		gbuffer.stencilPass();
-                //
-                //		glEnable(GL_DEPTH_TEST);
-                //		glDisable(GL_CULL_FACE);
-                //		glClear(GL_STENCIL_BUFFER_BIT);
-                //
-                //		glStencilFunc(GL_ALWAYS, 0, 0);
-                //		glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-                //		glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
-                //		checkGlError(__FILE__, __LINE__);
-                //
-                //		lightCylinder->draw(nullProgram, Mesh_Draw_Base);
-                //		checkGlError(__FILE__, __LINE__, true);
+//                		nullProgram.use();
+//                		gBuffer.stencilPass();
+//
+//                		glEnable(GL_DEPTH_TEST);
+//                		glDisable(GL_CULL_FACE);
+//                		glClear(GL_STENCIL_BUFFER_BIT);
+//
+//                		glStencilFunc(GL_ALWAYS, 0, 0);
+//                		glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+//                		glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+//                		OpenglCheckErrors();
+//
+//                        modelPipeline.setTransform(*transform);
+//                        modelPipeline.draw(lightPassProgram, *lightHelperCylinder.mesh.get(), Mesh_Draw_Base);
+//                		OpenglCheckErrorsSilent();
 
                 // Light
                 gBuffer.lightPass();
@@ -345,8 +454,8 @@ namespace renderer {
                 glEnable(GL_BLEND);
                 glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_ONE, GL_ONE);
-                //		glEnable(GL_CULL_FACE);
-                //		glCullFace(GL_FRONT);
+                glEnable(GL_CULL_FACE);
+                glCullFace(GL_FRONT);
                 OpenglCheckErrors();
 
                 lightPassProgram.enableFragmentSubroutine("getLightColor", "SpotLightType");
@@ -367,8 +476,8 @@ namespace renderer {
                 OpenglCheckErrorsSilent();
 
                 glDisable(GL_BLEND);
-                //		glCullFace(GL_BACK);
-                //		glDisable(GL_CULL_FACE);
+//                		glCullFace(GL_BACK);
+//                		glDisable(GL_CULL_FACE);
                 OpenglCheckErrors();
             }
         }

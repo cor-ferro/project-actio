@@ -27,6 +27,9 @@ extern "C" {
 #include "world_object.h"
 #include "context.h"
 
+/**
+ * \brief Script
+ */
 
 namespace game {
     namespace ex = entityx;
@@ -60,11 +63,11 @@ namespace game {
         struct WorldLib {
             explicit WorldLib(World *world) : world(world) {}
 
-            void addDirectionalLight(desc::LightDirectionalDesc &description);
+            game::WorldObject *createDirectionalLight(desc::LightDirectionalDesc& description);
 
-            void addPointLight(desc::LightPointDesc &description);
+            game::WorldObject *createPointLight(desc::LightPointDesc& description);
 
-            void addSpotLight(desc::LightSpotDesc &description);
+            game::WorldObject *createSpotLight(desc::LightSpotDesc& description);
 
             std::shared_ptr<Mesh> createMesh();
 

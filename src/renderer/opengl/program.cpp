@@ -300,8 +300,8 @@ namespace renderer {
         }
 
         /* Mat 4x4 vector */
-        void Program::setMat(const std::string &name, const std::vector<glm::mat4> *mats) const {
-            glUniformMatrix4fv(getUniformCacheLoc(name), mats->size(), GL_FALSE, &mats->front()[0][0]);
+        void Program::setMat(const std::string &name, const std::vector<glm::mat4> &mats) const {
+            glUniformMatrix4fv(getUniformCacheLoc(name), mats.size(), GL_FALSE, &mats.front()[0][0]);
         }
 
         void Program::setMat(const std::string &name, const int size, const glm::mat4 *mats) const {

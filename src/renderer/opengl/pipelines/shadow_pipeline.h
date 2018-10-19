@@ -12,7 +12,13 @@ namespace renderer {
 
             ~ShadowDrawPipeline() = default;
 
-            void setWVP(const mat4 &mat);
+            void setWVP(const mat4& mat);
+
+//            void setShadowTransforms(const std::vector<mat4>& transforms);
+
+            void setShadowTransforms(const mat4& transform);
+
+            void setFarPlane(const float& value);
         };
     }
 }

@@ -12,16 +12,16 @@ namespace game {
         }
     };
 
-    void Script::WorldLib::addDirectionalLight(desc::LightDirectionalDesc &description) {
-        world->addLight(description);
+    game::WorldObject *Script::WorldLib::createDirectionalLight(desc::LightDirectionalDesc& description) {
+        world->createLightObject(description);
     };
 
-    void Script::WorldLib::addPointLight(game::desc::LightPointDesc &description) {
-        world->addLight(description);
+    game::WorldObject *Script::WorldLib::createPointLight(game::desc::LightPointDesc& description) {
+        world->createLightObject(description);
     }
 
-    void Script::WorldLib::addSpotLight(game::desc::LightSpotDesc &description) {
-        world->addLight(description);
+    game::WorldObject *Script::WorldLib::createSpotLight(game::desc::LightSpotDesc& description) {
+        world->createLightObject(description);
     }
 
     std::shared_ptr<Mesh> Script::WorldLib::createMesh() {
@@ -487,7 +487,7 @@ namespace game {
 
         luabridge::getGlobalNamespace(L)
             .beginNamespace("light")
-                .beginClass<desc::LightDirectionalDesc>("Directional")
+                .beginClass<desc::LightDirectionalDesc>("DirectionalDesc")
                     .addConstructor<void (*) ()>()
                     .addProperty("ambient", &desc::LightDirectionalDesc::getAmbient, &desc::LightDirectionalDesc::setAmbient)
                     .addProperty("diffuse", &desc::LightDirectionalDesc::getDiffuse, &desc::LightDirectionalDesc::setDiffuse)
@@ -495,7 +495,7 @@ namespace game {
                     .addProperty("position", &desc::LightDirectionalDesc::getPosition, &desc::LightDirectionalDesc::setPosition)
                     .addProperty("direction", &desc::LightDirectionalDesc::getDirection, &desc::LightDirectionalDesc::setDirection)
                 .endClass()
-                .beginClass<desc::LightPointDesc>("Point")
+                .beginClass<desc::LightPointDesc>("PointDesc")
                 .addConstructor<void (*) ()>()
                     .addProperty("ambient", &desc::LightPointDesc::getAmbient, &desc::LightPointDesc::setAmbient)
                     .addProperty("diffuse", &desc::LightPointDesc::getDiffuse, &desc::LightPointDesc::setDiffuse)
@@ -505,8 +505,9 @@ namespace game {
                     .addProperty("constant", &desc::LightPointDesc::getConstant, &desc::LightPointDesc::setConstant)
                     .addProperty("linear", &desc::LightPointDesc::getLinear, &desc::LightPointDesc::setLinear)
                     .addProperty("quadratic", &desc::LightPointDesc::getQuadratic, &desc::LightPointDesc::setQuadratic)
+                    .addFunction("setPosition", &WorldObject::setPosition)
                 .endClass()
-                .beginClass<desc::LightSpotDesc>("Spot")
+                .beginClass<desc::LightSpotDesc>("SpotDesc")
                     .addConstructor<void (*) ()>()
                     .addProperty("ambient", &desc::LightSpotDesc::getAmbient, &desc::LightSpotDesc::setAmbient)
                     .addProperty("diffuse", &desc::LightSpotDesc::getDiffuse, &desc::LightSpotDesc::setDiffuse)
@@ -534,9 +535,9 @@ namespace game {
                     .addVariable("windowHeight", const_cast<float*>(&worldContext.windowHeight), false)
                 .endNamespace()
                 .beginClass<Script::WorldLib>("Script::WorldLib")
-                    .addFunction("addDirectionalLight", &Script::WorldLib::addDirectionalLight)
-                    .addFunction("addPointLight", &Script::WorldLib::addPointLight)
-                    .addFunction("addSpotLight", &Script::WorldLib::addSpotLight)
+                    .addFunction("createDirectionalLight", &Script::WorldLib::createDirectionalLight)
+                    .addFunction("createPointLight", &Script::WorldLib::createPointLight)
+                    .addFunction("createSpotLight", &Script::WorldLib::createSpotLight)
                     .addFunction("createMaterial", &Script::WorldLib::createMaterial)
 //                    .addFunction("createMesh", static_cast<Mesh *(game::Script::WorldLib::*)()>(&Script::WorldLib::createMesh))
 //                    .addFunction("createMeshWithMaterial", static_cast<Mesh* (game::Script::WorldLib::*)(const std::string &)>(&Script::WorldLib::createMesh))

@@ -11,7 +11,9 @@
 #include "../events/light_remove.h"
 #include "../events/light_helper_show.h"
 #include "../events/render_setup_model.h"
+#include "../components/light_spot.h"
 #include "../components/light_point.h"
+#include "../components/light_directional.h"
 #include "../components/model.h"
 #include "../components/base.h"
 #include "../components/transform.h"
@@ -53,7 +55,15 @@ namespace game {
 
             void updateHelperPositions(ex::EntityManager &es);
 
-            std::stack<entityx::Entity> newEntities;
+            void setupDirectionalLight(ex::Entity &entity);
+
+            void setupPointLight(ex::Entity &entity);
+
+            void setupSpotLight(ex::Entity &entity);
+
+            std::stack<entityx::Entity> newDirectionalEntities;
+            std::stack<entityx::Entity> newPointEntities;
+            std::stack<entityx::Entity> newSpotEntities;
             bool isChangeStatus = false;
             bool isShowHelpers = false;
         };

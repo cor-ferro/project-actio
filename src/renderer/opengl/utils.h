@@ -1,7 +1,3 @@
-//
-// Created by demitriy on 10/6/18.
-//
-
 #ifndef ACTIO_RENDERER_OPENGL_UTILS_H
 #define ACTIO_RENDERER_OPENGL_UTILS_H
 
@@ -10,13 +6,37 @@
 #include "../../core/geometry.h"
 #include "handle.h"
 
-namespace OpenglUtils {
-    void bindTexture(const renderer::Opengl::TextureHandle *handle);
-    void bindTexture(GLenum targetUnit, const renderer::Opengl::TextureHandle *handle);
-    bool checkErrors(const char * file, int line, bool silent = false);
+namespace renderer {
+    namespace Opengl {
+        namespace utils {
+            void bindTexture(const renderer::Opengl::TextureHandle *handle);
+
+            void bindTexture(GLenum targetUnit, const renderer::Opengl::TextureHandle *handle);
+
+            bool checkErrors(const char *file, int line, bool silent = false);
+
+            void fillParam(const GLenum& param, GLboolean& value);
+
+            void fillParam(const GLenum& param, GLdouble& value);
+
+            void fillParam(const GLenum& param, GLfloat& value);
+
+            void fillParam(const GLenum& param, GLint& value);
+
+            void fillParam(const GLenum& param, GLint64& value);
+
+            template<typename T>
+            const T getParam(const GLenum& param) {
+                T value;
+                fillParam(param, value);
+
+                return value;
+            }
+        }
+    }
 }
 
-#define OpenglCheckErrors() OpenglUtils::checkErrors(__FILE__, __LINE__)
-#define OpenglCheckErrorsSilent() OpenglUtils::checkErrors(__FILE__, __LINE__, true)
+#define OpenglCheckErrors() renderer::Opengl::utils::checkErrors(__FILE__, __LINE__)
+#define OpenglCheckErrorsSilent() renderer::Opengl::utils::checkErrors(__FILE__, __LINE__, true)
 
 #endif //ACTIO_RENDERER_OPENGL_UTILS_H

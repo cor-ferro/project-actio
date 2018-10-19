@@ -1,6 +1,6 @@
 #include "utils.h"
 
-bool OpenglUtils::checkErrors(const char *file, int line, bool silent) {
+bool renderer::Opengl::utils::checkErrors(const char *file, int line, bool silent) {
     GLenum err = glGetError();
 
     if (err == GL_NO_ERROR) return false;
@@ -35,12 +35,32 @@ bool OpenglUtils::checkErrors(const char *file, int line, bool silent) {
     return true;
 }
 
-void OpenglUtils::bindTexture(const renderer::Opengl::TextureHandle *handle) {
+void renderer::Opengl::utils::bindTexture(const renderer::Opengl::TextureHandle *handle) {
     glBindTexture(handle->target, handle->textureId);
 }
 
-void OpenglUtils::bindTexture(GLenum targetUnit, const renderer::Opengl::TextureHandle *handle) {
+void renderer::Opengl::utils::bindTexture(GLenum targetUnit, const renderer::Opengl::TextureHandle *handle) {
     glActiveTexture(targetUnit);
     bindTexture(handle);
 }
 
+
+void renderer::Opengl::utils::fillParam(const GLenum& param, GLboolean& value) {
+    glGetBooleanv(param, &value);
+}
+
+void renderer::Opengl::utils::fillParam(const GLenum& param, GLdouble& value) {
+    glGetDoublev(param, &value);
+}
+
+void renderer::Opengl::utils::fillParam(const GLenum& param, GLfloat& value) {
+    glGetFloatv(param, &value);
+}
+
+void renderer::Opengl::utils::fillParam(const GLenum& param, GLint& value) {
+    glGetIntegerv(param, &value);
+}
+
+void renderer::Opengl::utils::fillParam(const GLenum& param, GLint64& value) {
+    glGetInteger64v(param, &value);
+}

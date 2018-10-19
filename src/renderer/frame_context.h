@@ -23,6 +23,12 @@ namespace renderer {
         Dimension height = 0;
         Dimension width = 0;
 
+        bool shadowsEnabled = false;
+
+        bool isShadowsEnabled() const;
+
+        void setShadowsEnabled(bool shadowsEnabled);
+
         size_t drawCalls = 0;
 
         const Dimension &getWidth() const;

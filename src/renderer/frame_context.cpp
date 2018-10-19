@@ -64,5 +64,13 @@ namespace renderer {
 
     entityx::EntityManager &FrameContext::getEntityManager() const {
         return es;
-    };
+    }
+
+    bool FrameContext::isShadowsEnabled() const {
+        return shadowsEnabled;
+    }
+
+    void FrameContext::setShadowsEnabled(bool shadowsEnabled) {
+        FrameContext::shadowsEnabled = shadowsEnabled;
+    }
 }

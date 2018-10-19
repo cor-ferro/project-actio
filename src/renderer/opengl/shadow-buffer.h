@@ -18,10 +18,22 @@ namespace renderer {
 
             bool isCompleted();
 
+            GLuint getShadowMap();
+
         private:
+            void generateShadowDepthTexture();
+            void generateShadowMapTexture();
+
+            void destroyShadowDepthTexture();
+            void destroyShadowMapTexture();
+
             GLuint fbo = 0;
+            GLuint shadowDepth = 0;
             GLuint shadowMap = 0;
             GLenum status = GL_FALSE;
+
+            GLsizei width = 0;
+            GLsizei height = 0;
         };
     }
 }
