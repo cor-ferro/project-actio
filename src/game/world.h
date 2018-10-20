@@ -56,15 +56,15 @@ namespace game {
          */
         class Weapon : public WorldObject {
         public:
-            Weapon(ex::Entity &fromEntity, desc::Weapon description, strategy::WeaponsBase *weaponStrategy)
+            Weapon(ex::Entity& fromEntity, desc::Weapon description, strategy::WeaponsBase *weaponStrategy)
                     : WorldObject(fromEntity) {
                 weapon = entity_.assign<c::Weapon>(description);
                 strategy = entity_.assign<c::WeaponStrategy>(weaponStrategy);
             }
 
-            Weapon(const Weapon &other) = default;
+            Weapon(const Weapon& other) = default;
 
-            Weapon &operator=(const Weapon &other) = default;
+            Weapon& operator=(const Weapon& other) = default;
 
             ex::ComponentHandle<c::Weapon> weapon;
             ex::ComponentHandle<c::WeaponStrategy> strategy;
@@ -94,8 +94,6 @@ namespace game {
         World::Weapon createWeapon();
 
 
-
-
         void addLight(desc::LightPointDesc);
 
         void addLight(desc::LightDirectionalDesc);
@@ -122,13 +120,13 @@ namespace game {
 
         void impactWave(vec3 position, vec3 direction);
 
-        std::shared_ptr<Material> findMaterial(const std::string &name);
+        std::shared_ptr<Material> findMaterial(const std::string& name);
 
         game::WorldObject *getUserControlCharacter();
 
-        game::Context &getContext();
+        game::Context& getContext();
 
-        void importAssets(std::shared_ptr<Assets> &newAssets);
+        void importAssets(std::shared_ptr<Assets>& newAssets);
 
         std::shared_ptr<Assets> getAssets();
 
@@ -136,7 +134,7 @@ namespace game {
 
         void unload();
 
-        const profiling::ProfileTimings &getSystemProfiler() const;
+        const profiling::ProfileTimings& getSystemProfiler() const;
 
         void generateBaseTerrain();
 
@@ -153,41 +151,45 @@ namespace game {
 
         void flush();
 
-        void setupRenderMesh(const ex::Entity &entity);
+        void setupRenderMesh(const ex::Entity& entity);
 
         /* ----- API v2 ----- */
 
         game::WorldObject *createObject();
 
-        game::WorldObject *createObject(const glm::vec3 &pos);
+        game::WorldObject *createObject(const glm::vec3& pos);
 
         game::WorldObject *createStaticObject();
 
         game::WorldObject *createDynamicObject();
 
-        game::WorldObject *createStaticObject(const glm::vec3 &pos);
+        game::WorldObject *createStaticObject(const glm::vec3& pos);
 
-        game::WorldObject *createDynamicObject(const glm::vec3 &pos);
+        game::WorldObject *createStaticObject(const game::WorldObject::Description& description);
+
+        game::WorldObject *createDynamicObject(const glm::vec3& pos);
+
+        game::WorldObject *createDynamicObject(const game::WorldObject::Description& description);
 
         game::WorldObject *createCharacterObject();
 
-        game::WorldObject *createLightObject(const desc::LightDirectionalDesc &description);
+        game::WorldObject *createLightObject(const desc::LightDirectionalDesc& description);
 
-        game::WorldObject *createLightObject(const game::desc::LightPointDesc &description);
+        game::WorldObject *createLightObject(const game::desc::LightPointDesc& description);
 
-        game::WorldObject *createLightObject(const game::desc::LightSpotDesc &description);
+        game::WorldObject *createLightObject(const game::desc::LightSpotDesc& description);
 
-        void setObjectMesh(game::WorldObject *object, std::shared_ptr<Mesh> &mesh);
+        void setObjectMesh(game::WorldObject *object, std::shared_ptr<Mesh>& mesh);
 
         void setObjectModel(game::WorldObject *object, assets::Model *);
 
         void destroyObject(game::WorldObject *object);
 
-        ex::Entity createTerrain(const std::shared_ptr<ImageData> &image);
+        ex::Entity createTerrain(const std::shared_ptr<ImageData>& image);
 
-        void hideObject(ex::Entity &entity);
+        void hideObject(ex::Entity& entity);
 
-        void showObject(ex::Entity &entity);
+        void showObject(ex::Entity& entity);
 
         void hideObject(game::WorldObject *object);
 
@@ -195,13 +197,15 @@ namespace game {
 
         void spawn(game::WorldObject *object);
 
-        void spawn(game::WorldObject *object, const vec3 &position);
+        void spawn(game::WorldObject *object, const vec3& position);
 
         void makeControlled(game::WorldObject *object);
 
         void makeUnControlled(game::WorldObject *object);
 
-        assets::Model *findAssetModel(const std::string &name);
+        void forcePush(game::WorldObject *object, const vec3& direction, const float& force);
+
+        assets::Model *findAssetModel(const std::string& name);
 
     private:
         std::string name;

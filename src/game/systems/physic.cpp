@@ -629,7 +629,7 @@ namespace game {
             entity.assign<c::Physic>(actor);
         }
 
-        void Physic::makeDynamic(game::WorldObject *object, const GeometryType &geometryType) {
+        void Physic::makeDynamic(game::WorldObject *object, const game::WorldObject::Description& description) {
             ex::Entity entity = object->getEntity();
             auto transform = object->getComponent<c::Transform>();
 
@@ -647,19 +647,19 @@ namespace game {
             px::PxRigidDynamic* actor = gPhysics->createRigidDynamic(pxTransform);
 
             // @todo: iterate over all meshes
-            switch (geometryType) {
-                case GeometryType::Box: {
-                    const px::PxBoxGeometry pxGeometry(1.0f, 1.0f, 1.0f);
+            switch (description.boundingType) {
+                case game::WorldObject::Description::BOUNDING_BOX: {
+                    const px::PxBoxGeometry pxGeometry(description.boundingSize.x, description.boundingSize.y, description.boundingSize.z);
                     px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
                     break;
                 }
-                case GeometryType::Sphere: {
-                    const px::PxSphereGeometry pxGeometry(1.0f);
+                case game::WorldObject::Description::BOUNDING_SPHERE: {
+                    const px::PxSphereGeometry pxGeometry(description.boundingSize.x);
                     px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
                     break;
                 }
-                case GeometryType::Capsule: {
-                    const px::PxCapsuleGeometry pxGeometry(1.0f, 1.0f);
+                case game::WorldObject::Description::BOUNDING_CAPSULE: {
+                    const px::PxCapsuleGeometry pxGeometry(description.boundingSize.x, description.boundingSize.y);
                     px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
                     break;
                 }

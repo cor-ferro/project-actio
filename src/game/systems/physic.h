@@ -143,7 +143,7 @@ namespace game {
 
             void makeStatic(game::WorldObject *object);
 
-            void makeDynamic(game::WorldObject *object, const GeometryType &geometryType = GeometryType::Box);
+            void makeDynamic(game::WorldObject *object, const game::WorldObject::Description& description);
 
             void wave(vec3 position, vec3 direction);
 

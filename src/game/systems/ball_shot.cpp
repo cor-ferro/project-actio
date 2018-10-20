@@ -44,12 +44,17 @@ namespace game {
                 float yAxis = glm::clamp(glm::abs(context->mouseWorldPosition.y - charPosition.y), 1.0f, 5.0f);
                 float zAxis = glm::clamp(context->mouseWorldPosition.z - charPosition.z, -3.0f, 3.0f);
 
-                game::WorldObject *object = world->createDynamicObject(); // sphere
+                game::WorldObject::Description objectDescription;
+                objectDescription.position = charPosition + (vec3(0.0f, 1.0f + yAxis, zAxis) + target);
+                objectDescription.boundingType = game::WorldObject::Description::BOUNDING_SPHERE;
+                objectDescription.boundingSize = vec3(sphereDesc.radius);
+
+                game::WorldObject *object = world->createDynamicObject(objectDescription);
 
                 world->setObjectMesh(object, mesh);
                 world->spawn(object, charPosition + (vec3(0.0f, 1.0f + yAxis, zAxis) + target));
                 world->setupRenderMesh(object->getEntity());
-//                world->forcePush(object, target, 5.0f)
+                world->forcePush(object, target, 9.0f);
             }
         }
 

@@ -376,38 +376,38 @@ namespace game {
 //        std::shared_ptr<Material> material = assetMaterial->getMaterial();
 //        assets::Material *assetMaterial = assets->createMaterial("waterball");
 
-        auto assetMaterial = assets->createMaterial("ground");
+//        auto assetMaterial = assets->createMaterial("ground");
 //        auto material = std::make_shared<::Material>();
 
-        std::shared_ptr<::Material> material;
-        material.reset(new ::Material(*assetMaterial->getMaterial()));
-
-        auto mesh = Mesh::Create(material);
-
-        GeometryBuilder::PlaneDescription planeDescription;
-        planeDescription.width = 50.0f;
-        planeDescription.height = 50.0f;
-        planeDescription.widthSegments = 16;
-        planeDescription.heightSegments = 16;
-        GeometryBuilder::Plane(mesh->geometry, planeDescription);
-
-        game::WorldObject *object = createStaticObject();
-
-        object->rotate(vec3(0.0f, 1.0f, 0.0f), glm::radians(90.0f));
-        object->rotate(vec3(1.0f, 0.0f, 0.0f), glm::radians(90.0f));
-
-        setObjectMesh(object, mesh);
-        spawn(object, vec3(0.0f));
-        setupRenderMesh(object->getEntity());
-
-
-//        assets::Texture *texture = assets->getTexture("terrain");
+//        std::shared_ptr<::Material> material;
+//        material.reset(new ::Material(*assetMaterial->getMaterial()));
 //
-//        if (texture != nullptr) {
-//            ex::Entity baseTerrain = createTerrain(texture->getImage());
-//            showObject(baseTerrain);
-//            events.emit<events::RenderSetupModel>(baseTerrain);
-//        }
+//        auto mesh = Mesh::Create(material);
+//
+//        GeometryBuilder::PlaneDescription planeDescription;
+//        planeDescription.width = 50.0f;
+//        planeDescription.height = 50.0f;
+//        planeDescription.widthSegments = 16;
+//        planeDescription.heightSegments = 16;
+//        GeometryBuilder::Plane(mesh->geometry, planeDescription);
+//
+//        game::WorldObject *object = createStaticObject();
+//
+//        object->rotate(vec3(0.0f, 1.0f, 0.0f), glm::radians(90.0f));
+//        object->rotate(vec3(1.0f, 0.0f, 0.0f), glm::radians(90.0f));
+//
+//        setObjectMesh(object, mesh);
+//        spawn(object, vec3(0.0f));
+//        setupRenderMesh(object->getEntity());
+
+
+        assets::Texture *texture = assets->getTexture("terrain");
+
+        if (texture != nullptr) {
+            ex::Entity baseTerrain = createTerrain(texture->getImage());
+            showObject(baseTerrain);
+            events.emit<events::RenderSetupModel>(baseTerrain);
+        }
     }
 
 
@@ -442,9 +442,27 @@ namespace game {
         return object;
     }
 
+    game::WorldObject *World::createStaticObject(const game::WorldObject::Description& description) {
+        auto *object = createObject(description.position);
+
+        physic->makeStatic(object);
+
+        return object;
+    }
+
     game::WorldObject *World::createDynamicObject(const glm::vec3 &pos) {
+        game::WorldObject::Description description(pos);
+
         auto *object = createObject(pos);
-        physic->makeDynamic(object);
+        physic->makeDynamic(object, description);
+
+        return object;
+    }
+
+    game::WorldObject *World::createDynamicObject(const game::WorldObject::Description& description) {
+        auto *object = createObject(description.position);
+
+        physic->makeDynamic(object, description);
 
         return object;
     }
@@ -616,6 +634,11 @@ namespace game {
 
     void World::makeUnControlled(game::WorldObject *object) {
         events.emit<events::MakeUnControlled>(object->getEntity());
+    }
+
+    void World::forcePush(game::WorldObject *object, const vec3 &direction, const float &force) {
+        auto entity = object->getEntity();
+        events.emit<events::PhysicForce>(entity, direction, force);
     }
 
     void World::asyncLoad(assets::Model *asset) {

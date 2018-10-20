@@ -17,6 +17,17 @@ namespace game {
 
     class WorldObject {
     public:
+        struct Description {
+            Description() = default;
+            explicit Description(const vec3& position);
+
+            enum Bounding {BOUNDING_BOX, BOUNDING_SPHERE, BOUNDING_CAPSULE};
+
+            vec3 position = vec3(0.0f);
+            vec3 boundingSize = vec3(1.0f);
+            Bounding boundingType = BOUNDING_BOX;
+        };
+
         typedef ex::Entity::Id Id;
 
         explicit WorldObject(ex::Entity &fromEntity);

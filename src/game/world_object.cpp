@@ -1,6 +1,9 @@
 #include "world_object.h"
 
 namespace game {
+    WorldObject::Description::Description(const vec3& position) : position(position) {}
+
+
     WorldObject::WorldObject(entityx::Entity &fromEntity) {
         assert(fromEntity.valid());
 
@@ -68,5 +71,4 @@ namespace game {
         transform->setQuaternion(quat);
         transform->dirty = true;
     }
-
 }
