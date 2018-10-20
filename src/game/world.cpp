@@ -89,7 +89,7 @@ namespace game {
         PROFILE(systemProfiler, "CharControl", systems.update<game::systems::CharControl>(dt));
         PROFILE(systemProfiler, "Physic", systems.update<game::systems::Physic>(dt));
         PROFILE(systemProfiler, "DayTime", systems.update<game::systems::DayTime>(dt));
-        PROFILE(systemProfiler, "DayTime", systems.update<game::systems::Sky>(dt));
+        PROFILE(systemProfiler, "Sky", systems.update<game::systems::Sky>(dt));
 
         // main update
         PROFILE(systemProfiler, "Weapons", systems.update<game::systems::Weapons>(dt));
@@ -123,20 +123,6 @@ namespace game {
 
     bool World::registerWeapon(strategy::WeaponsBase *system) {
         return weapons->registerStrategy(system);
-    }
-
-    World::Weapon World::createWeapon() {
-        ex::Entity entity = entities.create();
-
-        desc::Weapon description;
-        description.name = "rocket launcher";
-        description.fireRate = 0.1f;
-
-        strategy::WeaponsBase *strategy = weapons->getWeaponStrategy("RocketLauncher");
-
-        World::Weapon weapon(entity, description, strategy);
-
-        return weapon;
     }
 
     void World::destroy() {

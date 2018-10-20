@@ -91,9 +91,6 @@ namespace game {
 
         bool registerWeapon(strategy::WeaponsBase *system);
 
-        World::Weapon createWeapon();
-
-
         void addLight(desc::LightPointDesc);
 
         void addLight(desc::LightDirectionalDesc);
