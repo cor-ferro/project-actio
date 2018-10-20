@@ -52,17 +52,26 @@ const float Epsilon = 0.0000001;
 subroutine vec3 LightType(vec3, vec3, vec3, vec4);
 subroutine uniform LightType getLightColor;
 
-float ShadowValue(vec3 fragPos, vec3 lightPos) {
+subroutine float Shadows(vec3, vec3);
+subroutine uniform Shadows getShadowValue;
+
+subroutine (Shadows)
+float ShadowsDisabled(vec3 fragPos, vec3 lightPos) {
+    return 0.0;
+}
+
+subroutine (Shadows)
+float ShadowsEnabled(vec3 fragPos, vec3 lightPos) {
     vec3 fragToLight = fragPos - lightPos;
 
     float closestDepth = texture(depthMap, fragToLight).r;
 
     closestDepth *= farPlane;
 
-    float curentDepth = length(fragToLight);
+    float currentDepth = length(fragToLight);
 
     float bias = 0.05;
-    float shadow = curentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     return shadow;
 }
@@ -101,7 +110,7 @@ vec3 PointLightType(vec3 worldPos, vec3 worldNormal, vec3 viewDir, vec4 albedo) 
 	vec3 diffuse  = pointLight.diffuse * diff * albedo.xyz * attenuation;
 	vec3 specular = pointLight.specular * spec * albedo.w * attenuation;
 
-    float shadow = ShadowValue(worldPos, pointLight.position);
+    float shadow = getShadowValue(worldPos, pointLight.position);
 
     ambient = ambient * shadow;
 

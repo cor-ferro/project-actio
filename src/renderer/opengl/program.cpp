@@ -412,5 +412,36 @@ namespace renderer {
                 i++;
             } while (i < numActiveSubroutines);
         }
+
+        void Program::enableFragmentSubroutines(const std::vector<std::pair<std::string, std::string>>& subroutines) {
+            auto numActiveUniforms = static_cast<GLsizei>(fragmentSubroutineUniforms.size());
+
+            assert(locationOfFunction < numActiveUniforms);
+            assert(subroutines.size() == numActiveUniforms);
+
+            std::unique_ptr<GLuint> indices(new GLuint[numActiveUniforms]);
+
+            for (const auto& pair : subroutines) {
+                auto itUniform = fragmentSubroutineUniforms.find(pair.first);
+                auto itSubroutine = fragmentSubroutines.find(pair.second);
+
+                if (itUniform == fragmentSubroutineUniforms.end()) {
+                    console::warn("unknown fragment uniform subroutine: %s, %s", name, pair.first);
+                    return;
+                }
+
+                if (itSubroutine == fragmentSubroutines.end()) {
+                    console::warn("unknown fragment subroutine: %s, %s", name, pair.second);
+                    return;
+                }
+
+                GLint locationOfFunction = itUniform->second;
+                GLuint indexFunc1 = itSubroutine->second;
+                indices.get()[locationOfFunction] = indexFunc1;
+            }
+
+            glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, numActiveUniforms, indices.get());
+            OpenglCheckErrors();
+        }
     }
 }

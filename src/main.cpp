@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 
         renderer::Renderer *renderer = renderer::create(rendererParams);
         renderer->setShadingType(renderer::Shading::Deferred);
-        renderer->enableShadows();
+        renderer->disableShadows();
         renderer->init();
 
         world->setRenderer(renderer);

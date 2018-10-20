@@ -229,6 +229,9 @@ namespace renderer {
             Opengl::Program& lightPassProgram = context->getProgram("light_pass");
 
             lightPassProgram.use();
+            glActiveTexture(GL_TEXTURE10);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, shadowBuffer.getShadowMap());
+            lightPassProgram.setInt("depthMap", 10);
             lightPassProgram.setInt("gPositionMap", 0);
             lightPassProgram.setInt("gNormalMap", 1);
             lightPassProgram.setInt("gAlbedoMap", 2);
@@ -340,7 +343,6 @@ namespace renderer {
         }
 
         void DeferredShading::renderPointLights(const FrameContext& frameContext) {
-//        console::info("renderPointLights");
             gBuffer.lightPass();
 
             auto& es = frameContext.getEntityManager();
@@ -350,6 +352,8 @@ namespace renderer {
 
             ex::ComponentHandle<components::LightPoint> light;
             ex::ComponentHandle<components::Transform> transform;
+
+            OpenglCheckErrors();
 
             for (ex::Entity entity : es.entities_with_components(light, transform)) {
                 float radius = light->getRadius();
@@ -376,6 +380,10 @@ namespace renderer {
                 // Light
                 gBuffer.lightPass();
                 lightPassProgram.use();
+                lightPassProgram.enableFragmentSubroutines({
+                    std::make_pair("getLightColor", "PointLightType"),
+                    std::make_pair("getShadowValue", "ShadowsDisabled")
+                });
 
                 glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
                 glDisable(GL_DEPTH_TEST);
@@ -394,7 +402,6 @@ namespace renderer {
                 }
 
                 lightPassProgram.setFloat("farPlane", radius);
-                OpenglCheckErrors();
                 lightPassProgram.setVec("gEyePosition", frameContext.getCameraPosition());
                 lightPassProgram.setVec("pointLight.ambient", light->ambient);
                 lightPassProgram.setVec("pointLight.diffuse", light->diffuse);
@@ -403,7 +410,6 @@ namespace renderer {
                 lightPassProgram.setFloat("pointLight.constant", light->constant);
                 lightPassProgram.setFloat("pointLight.linear", light->linear);
                 lightPassProgram.setFloat("pointLight.quadratic", light->quadratic);
-                lightPassProgram.enableFragmentSubroutine("getLightColor", "PointLightType");
                 OpenglCheckErrors();
 
                 modelPipeline.setTransform(*transform);
@@ -449,6 +455,10 @@ namespace renderer {
                 // Light
                 gBuffer.lightPass();
                 lightPassProgram.use();
+                lightPassProgram.enableFragmentSubroutines({
+                    std::make_pair("getLightColor", "SpotLightType"),
+                    std::make_pair("getShadowValue", "ShadowsDisabled")
+                });
                 glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
                 glDisable(GL_DEPTH_TEST);
                 glEnable(GL_BLEND);
@@ -458,8 +468,6 @@ namespace renderer {
                 glCullFace(GL_FRONT);
                 OpenglCheckErrors();
 
-                lightPassProgram.enableFragmentSubroutine("getLightColor", "SpotLightType");
-                OpenglCheckErrors();
                 lightPassProgram.setVec("spotLight.ambient", light->ambient);
                 lightPassProgram.setVec("spotLight.diffuse", light->diffuse);
                 lightPassProgram.setVec("spotLight.specular", light->specular);
@@ -490,9 +498,15 @@ namespace renderer {
             Opengl::Program& lightPassProgram = context->getProgram("light_pass");
 
             lightPassProgram.use();
+            lightPassProgram.enableFragmentSubroutines({
+                std::make_pair("getLightColor", "DirLightType"),
+                std::make_pair("getShadowValue", "ShadowsDisabled")
+            });
+
             lightPassProgram.setMat("projection", mat4(1.0f));
             lightPassProgram.setMat("view", mat4(1.0f));
-            lightPassProgram.enableFragmentSubroutine("getLightColor", "DirLightType");
+
+            OpenglCheckErrors();
 
             glDisable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);

@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <map>
 #include <functional>
+#include <utility>
 #include "uniforms.h"
 #include "shader.h"
 #include <glm/gtc/type_ptr.hpp>
@@ -132,6 +133,8 @@ namespace renderer {
             void enableVertexSubroutine(std::string f, std::string subroutineName);
 
             void enableFragmentSubroutine(std::string f, std::string subroutineName);
+
+            void enableFragmentSubroutines(const std::vector<std::pair<std::string, std::string>> &subroutines);
 
             void bindBlock(const char *blockName, GLuint point);
 
