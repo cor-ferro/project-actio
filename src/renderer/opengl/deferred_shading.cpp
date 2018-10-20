@@ -162,40 +162,7 @@ namespace renderer {
                             OpenglCheckErrors();
                         }
                     }
-
-
                 }
-
-
-
-
-//                const mat4 &cameraRotateMat = frameContext.getCameraRotationMat();
-//
-//                ex::ComponentHandle<components::LightPoint> light;
-//                ex::ComponentHandle<components::Transform> lightTransform;
-//
-//                for (ex::Entity lightEntity : es.entities_with_components(light, lightTransform)) {
-//                    // try move from loop
-//                    ex::ComponentHandle<components::Renderable> objectRenderable;
-//                    ex::ComponentHandle<components::Transform> objectTransform;
-//                    ex::ComponentHandle<components::Meshes> objectMeshes;
-//
-//                    const mat4 proj = frameContext.getProjection();
-//                    const mat4 transM = glm::translate(mat4(1.0f), lightTransform->getPosition() * -1.0f);
-//                    const mat4 lightCameraView = cameraRotateMat * transM; // for 3d person reverse operands
-//                    const mat4 m_WorldTransformation = mat4(1.0f);
-//                    const mat4 gWVP = proj * lightCameraView * m_WorldTransformation;
-//
-//                    for (ex::Entity objectEntity : es.entities_with_components(objectRenderable, objectTransform, objectMeshes)) {
-//                        shadowPipeline.setWVP(gWVP);
-//
-//                        const std::vector<std::shared_ptr<Mesh>> items = objectMeshes->items();
-//                        for (auto &mesh : items) {
-//                            shadowPipeline.setTransform(*objectTransform); // todo: pass pointer instead of copy
-//                            shadowPipeline.draw(*mesh, Mesh_Draw_Base);
-//                        }
-//                    }
-//                }
             }
         }
 
