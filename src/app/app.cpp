@@ -60,7 +60,7 @@ Path App::resourcePath()
 	return createPath(path_, RESOURCE_DIR);
 }
 
-Path App::resourcePath(std::string fromPath)
+Path App::resourcePath(const std::string& fromPath)
 {
 	return createPath(path_, RESOURCE_DIR, fromPath);
 }
@@ -70,12 +70,12 @@ Path App::shadersPath()
 	return createPath(path_, "/shaders");
 }
 
-Path App::shadersPath(std::string fromPath)
+Path App::shadersPath(const std::string& fromPath)
 {
 	return createPath(path_, "/shaders", fromPath);
 }
 
-const Resource::File App::resource(std::string path)
+const Resource::File App::resource(const std::string& path)
 {
 	Path resourceFilePath = resourcePath(path);
 
@@ -84,7 +84,7 @@ const Resource::File App::resource(std::string path)
 	return file;
 }
 
-void App::setName(std::string name)
+void App::setName(const std::string& name)
 {
 	name_ = name;
 }

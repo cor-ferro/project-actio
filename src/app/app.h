@@ -32,13 +32,13 @@ struct App {
 	std::string getName();
 	Path getPath();
 	Path resourcePath();
-	Path resourcePath(std::string fromPath);
+	Path resourcePath(const std::string& fromPath);
 	Path shadersPath();
-	Path shadersPath(std::string fromPath);
+	Path shadersPath(const std::string& fromPath);
 
-	const Resource::File resource(std::string path);
+	const Resource::File resource(const std::string& path);
 
-	void setName(std::string name);
+	void setName(const std::string& name);
 
 	const Monitor * const getPrimaryMonitor();
 	const Monitors& getMonitors();
