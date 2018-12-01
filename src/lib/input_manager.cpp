@@ -1,6 +1,6 @@
-#include "input_handler.h"
+#include "input_manager.h"
 
-InputHandler::InputHandler(WindowContext &windowContext)
+InputManager::InputManager(WindowContext &windowContext)
         : keyboardKeys_(0)
         , keyboardModifiers_(0)
         , mouseKeys_(0)
@@ -24,60 +24,60 @@ InputHandler::InputHandler(WindowContext &windowContext)
     setMouseStartPosition(static_cast<ScreenCoord>(xpos), static_cast<ScreenCoord>(ypos));
 }
 
-void InputHandler::onFrame() {
+void InputManager::onFrameUpdate() {
     setMouseMovedPosition(mouseStart.x - mouse.x, mouseStart.y - mouse.y);
     setMouseStartPosition(mouse.x, mouse.y); // reset start position
 }
 
-bool InputHandler::isPress(KeyboardKey key) {
+bool InputManager::isPress(KeyboardKey key) {
     return keyboardKeys_.test(key);
 }
 
-bool InputHandler::isPress(KeyboardKey key1, KeyboardKey key2) {
+bool InputManager::isPress(KeyboardKey key1, KeyboardKey key2) {
     return isPress(key1) && isPress(key2);
 }
 
-bool InputHandler::isPress(KeyboardModifier modifier, KeyboardKey key) {
+bool InputManager::isPress(KeyboardModifier modifier, KeyboardKey key) {
     return keyboardModifiers_.test(modifier) && isPress(key);
 }
 
-bool InputHandler::isPress(MouseButton button) {
+bool InputManager::isPress(MouseButton button) {
     return mouseKeys_.test(button);
 }
 
-void InputHandler::setMousePosition(ScreenCoord x, ScreenCoord y) {
+void InputManager::setMousePosition(ScreenCoord x, ScreenCoord y) {
     mouse.x = x;
     mouse.y = y;
 }
 
-void InputHandler::setMouseStartPosition(ScreenCoord x, ScreenCoord y) {
+void InputManager::setMouseStartPosition(ScreenCoord x, ScreenCoord y) {
     mouseStart.x = x;
     mouseStart.y = y;
 }
 
-void InputHandler::setMouseMovedPosition(ScreenCoord x, ScreenCoord y) {
+void InputManager::setMouseMovedPosition(ScreenCoord x, ScreenCoord y) {
     mouseMoved.x = x;
     mouseMoved.y = y;
 }
 
-void InputHandler::calcSensetivity(int width, int height, double dpi) {
+void InputManager::calcSensetivity(int width, int height, double dpi) {
     sensetivity.speedFactor = static_cast<float>(dpi) / 1000.0f;
     sensetivity.sensetivity = static_cast<float>(dpi) / 10000.0f;
 }
 
-void InputHandler::subscribeMouseMove(const std::function<void(double, double)>& f) {
+void InputManager::subscribeMouseMove(const std::function<void(double, double)>& f) {
     window->onMouseMove.connect(f);
 }
 
-void InputHandler::subscribeMousePress(const std::function<void(int, int, int)>& f) {
+void InputManager::subscribeMousePress(const std::function<void(int, int, int)>& f) {
     window->onMousePress.connect(f);
 }
 
-void InputHandler::subscribeKeyPress(const std::function<void(int, int, int, int)>& f) {
+void InputManager::subscribeKeyPress(const std::function<void(int, int, int, int)>& f) {
     window->onKeyPress.connect(f);
 }
 
-void InputHandler::onKeyPress(int key, int scancode, int action, int mods) {
+void InputManager::onKeyPress(int key, int scancode, int action, int mods) {
     bool keyState = false;
 
     switch (action) {
@@ -98,11 +98,11 @@ void InputHandler::onKeyPress(int key, int scancode, int action, int mods) {
     }
 }
 
-void InputHandler::onMouseMove(double x, double y) {
+void InputManager::onMouseMove(double x, double y) {
     setMousePosition(static_cast<ScreenCoord>(x), static_cast<ScreenCoord>(y));
 }
 
-void InputHandler::onMouseClick(int button, int action, int mods) {
+void InputManager::onMouseClick(int button, int action, int mods) {
     bool state = false;
 
     switch (action) {

@@ -6,12 +6,12 @@
 #define ACTIO_ASSETS_SCRIPT_H
 
 #include "assets_base.h"
-#include "assets_resource.h"
+#include "resource.h"
 
 namespace assets {
     class Script : public BaseAsset {
     public:
-        explicit Script(assets::Resource *resource);
+        explicit Script(Resource *resource);
 
         void setContent(Resource::Content newContent);
 

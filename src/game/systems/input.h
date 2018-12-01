@@ -10,7 +10,7 @@
 #include "../components/camera.h"
 #include "../components/target.h"
 #include "../../lib/console.h"
-#include "../../lib/input_handler.h"
+#include "../../lib/input_manager.h"
 #include "../events/mouse_press.h"
 #include "../context.h"
 #include "base.h"
@@ -33,29 +33,29 @@ namespace game {
             };
 
             enum Key {
-                KEY_SPACE = InputHandler::KEY_SPACE,
-                KEY_ENTER = InputHandler::KEY_ENTER,
-                KEY_W = InputHandler::KEY_W,
-                KEY_A = InputHandler::KEY_A,
-                KEY_S = InputHandler::KEY_S,
-                KEY_D = InputHandler::KEY_D,
-                KEY_C = InputHandler::KEY_C,
-                KEY_ESC = InputHandler::KEY_ESC
+                KEY_SPACE = InputManager::KEY_SPACE,
+                KEY_ENTER = InputManager::KEY_ENTER,
+                KEY_W = InputManager::KEY_W,
+                KEY_A = InputManager::KEY_A,
+                KEY_S = InputManager::KEY_S,
+                KEY_D = InputManager::KEY_D,
+                KEY_C = InputManager::KEY_C,
+                KEY_ESC = InputManager::KEY_ESC
             };
 
             enum KeyAction {
-                KEY_PRESS = InputHandler::KEY_PRESS,
-                KEY_RELEASE = InputHandler::KEY_RELEASE,
-                KEY_REPEAT = InputHandler::KEY_REPEAT
+                KEY_PRESS = InputManager::KEY_PRESS,
+                KEY_RELEASE = InputManager::KEY_RELEASE,
+                KEY_REPEAT = InputManager::KEY_REPEAT
             };
 
             enum MouseButton {
-                MOUSE_LEFT = InputHandler::MOUSE_BUTTON_LEFT,
-                MOUSE_MIDDLE = InputHandler::MOUSE_BUTTON_MIDDLE,
-                MOUSE_RIGHT = InputHandler::MOUSE_BUTTON_RIGHT
+                MOUSE_LEFT = InputManager::MOUSE_BUTTON_LEFT,
+                MOUSE_MIDDLE = InputManager::MOUSE_BUTTON_MIDDLE,
+                MOUSE_RIGHT = InputManager::MOUSE_BUTTON_RIGHT
             };
 
-            explicit Input(World *world);
+            explicit Input(Context& context);
 
             void configure(entityx::EventManager &events) override;
 
@@ -67,15 +67,15 @@ namespace game {
 
             inline bool isPress(InputPlace place, MouseButton key) const;
 
-            InputHandler *getHandler(InputPlace place);
+            InputManager *getHandler(InputPlace place);
 
         private:
-            void configureInput(InputHandler *inputHandler);
+            void configureInput(InputManager *inputHandler);
 
             std::queue<events::MousePress> inputMouseQueue;
             std::queue<events::KeyPress> inputKeyboardQueue;
-            InputHandler *input1 = nullptr;
-            InputHandler *input2 = nullptr;
+            InputManager *input1 = nullptr;
+            InputManager *input2 = nullptr;
         };
     }
 }

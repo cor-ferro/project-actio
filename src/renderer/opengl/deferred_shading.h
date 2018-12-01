@@ -22,6 +22,7 @@
 #include "../params.h"
 #include "../../core/mesh.h"
 #include "../../core/geometry_builder.h"
+#include "../../lib/mesh_manager.h"
 
 namespace renderer {
     namespace Opengl {
@@ -41,7 +42,7 @@ namespace renderer {
 
                 virtual ~LightHelper() = 0;
 
-                void init();
+                void init(std::shared_ptr<Mesh> &ptr);
 
                 virtual void initMesh() = 0;
 
@@ -101,6 +102,8 @@ namespace renderer {
             Pipeline modelPipeline;
             Pipeline nullPipeline;
             ShadowDrawPipeline shadowPipeline;
+
+            MeshManager meshManager;
         };
     }
 }

@@ -18,7 +18,7 @@
 #include "../components/transform.h"
 #include "../components/controlled.h"
 #include "../components/base.h"
-#include "../../lib/input_handler.h"
+#include "../../lib/input_manager.h"
 #include "../context.h"
 #include "base.h"
 
@@ -33,7 +33,7 @@ namespace game {
                   , public entityx::System<CharacterControl>
                   , public entityx::Receiver<CharacterControl> {
         public:
-            explicit CharacterControl(World *world);
+            explicit CharacterControl(Context& context);
 
             void configure(ex::EventManager &event_manager) override;
 

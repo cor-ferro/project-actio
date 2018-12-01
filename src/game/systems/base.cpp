@@ -1,5 +1,5 @@
 #include "base.h"
-#include "../world.h"
+#include "../../lib/console.h"
 
 namespace game {
     struct World;
@@ -7,9 +7,18 @@ namespace game {
     namespace systems {
         namespace ex = entityx;
 
-        BaseSystem::BaseSystem(game::World *world)
-            : world(world)
-            , context(&world->getContext())
-        {}
+        BaseSystem::BaseSystem(Context& context) : m_context(context) {}
+
+        void BaseSystem::start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
+            console::info("start system");
+        }
+
+        void BaseSystem::setMaxItemsPerQueue(int count) {
+            maxItemsPerQueue = count;
+        }
+
+        const int BaseSystem::getMaxItemsPerQueue() const {
+            return maxItemsPerQueue;
+        }
     }
 }

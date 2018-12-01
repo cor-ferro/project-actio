@@ -1,6 +1,8 @@
 #ifndef WINDOW_CONTEXT_H
 #define WINDOW_CONTEXT_H
 
+#include <string>
+#include <utility>
 #include <cstdint>
 #include <boost/signals2.hpp>
 #include <glad/glad.h>
@@ -11,17 +13,24 @@
 
 
 struct WindowContext {
+    struct Size {
+        int width;
+        int height;
+    };
+
     WindowContext();
 
-    bool init(unsigned int width, unsigned int height);
+    bool init(int width, int height);
 
     void setAsCurrent();
 
     void destroy();
 
-    void setTitle(const char *text);
+    void setTitle(const std::string &title);
 
-    void setSize(unsigned int width, unsigned int height);
+    Size getSize() const;
+
+    void setSize(int width, int height);
 
     void setMousePosition(unsigned int x, unsigned int y);
 

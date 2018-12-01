@@ -4,7 +4,7 @@ namespace assets {
     /**
  * -------------------- base --------------------
  */
-    BaseAsset::BaseAsset(assets::Resource *resource) : resource(resource) {};
+    BaseAsset::BaseAsset(Resource *resource) : resource(resource) {};
 
     BaseAsset::~BaseAsset() {
         if (resource != nullptr) {
@@ -13,7 +13,7 @@ namespace assets {
         }
     }
 
-    const assets::Resource *BaseAsset::getResource() {
+    const Resource *BaseAsset::getResource() {
         return resource;
     }
 }

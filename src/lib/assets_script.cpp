@@ -4,7 +4,7 @@ namespace assets {
     /**
      * -------------------- Script --------------------
      */
-    Script::Script(assets::Resource *resource) : BaseAsset(resource) {
+    Script::Script(Resource *resource) : BaseAsset(resource) {
         content = nullptr;
     };
 

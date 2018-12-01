@@ -12,7 +12,7 @@
 #include <boost/filesystem/path.hpp>
 #include "../lib/console.h"
 
-namespace Resource {
+namespace resources {
 
 	struct File {
 		File();

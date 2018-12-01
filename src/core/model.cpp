@@ -19,7 +19,7 @@ Model::Node::Node(aiNode *node) : name(std::string(node->mName.C_Str())) {
 	transformation = libAi::toNativeType(node->mTransformation);
 }
 
-void Model::Node::add(Mesh *mesh) {
+void Model::Node::add(MeshHandle &mesh) {
 	meshes.push_back(mesh);
 }
 
@@ -29,7 +29,7 @@ void Model::Node::add(Model::Node *node) {
 
 Model::Model() : name_() {}
 
-Model::Model(Mesh *mesh) : Model() {
+Model::Model(MeshHandle &mesh) : Model() {
 	add(mesh);
 }
 
@@ -53,10 +53,6 @@ void Model::setName(const std::string &newName) {
 void Model::freeMeshes() {
 	console::info("destroy model %s", name_);
 
-	for (auto mesh : meshes_) {
-		Mesh::Destroy(mesh);
-	}
-
 	meshes_.clear();
 }
 
@@ -64,22 +60,12 @@ void Model::freeNodes() {
 	nodes_.clear();
 }
 
-void Model::add(Mesh *mesh) {
+void Model::add(MeshHandle &mesh) {
 	meshes_.push_back(mesh);
 }
 
 void Model::add(Node *node) {
 	nodes_.insert({node->name, std::shared_ptr<Node>(node)});
-}
-
-void Model::remove(Mesh *mesh) {
-	auto it = std::find_if(meshes_.begin(), meshes_.end(), [&mesh](const Mesh *ptr) {
-		return ptr == mesh;
-	});
-
-	if (it != meshes_.end()) {
-		meshes_.erase(it);
-	}
 }
 
 void Model::remove(Node *node) {
@@ -94,7 +80,7 @@ const ModelMeshes &Model::getMeshes() {
 	return meshes_;
 }
 
-Mesh *Model::getMesh() {
+MeshHandle &Model::getMesh() {
 	return meshes_.at(0);
 }
 

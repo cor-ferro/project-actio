@@ -17,14 +17,14 @@
 #include <string>
 
 #include "app/app.h"
-#include "imgui_impl_glfw_gl3.h"
+
 
 #include "renderer/window_context.h"
 //#include "renderer_old/shader_content.h"
 //#include "renderer_old/shader_description.h"
 #include "lib/types.h"
 #include "lib/cycle.h"
-#include "lib/input_handler.h"
+#include "lib/input_manager.h"
 #include "lib/console.h"
 #include "lib/utils.h"
 #include "lib/value_handler.h"
@@ -42,11 +42,29 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
+struct ProgramContext {
+    explicit ProgramContext(App& app, std::shared_ptr<game::Engine>& engine) : m_engine(engine), m_app(app) {}
+
+    App& getApp() {
+        return m_app;
+    };
+
+    std::shared_ptr<game::Engine> &getEngine() {
+        return m_engine;
+    }
+
+    bool shouldWork = true;
+
+private:
+    App& m_app;
+    std::shared_ptr<game::Engine> m_engine;
+};
+
 int main(int argc, char **argv);
 
-// void cleanupScene(Scene * scene);
+void renderHandler(ProgramContext& context);
 
-void printMemoryStatus();
+void appHandler(ProgramContext& context);
 
 struct WorldSettings {
     WorldSettings() {
@@ -58,7 +76,7 @@ struct WorldSettings {
         cameraFar = 500.0f;
     }
 
-    WorldSettings(const WorldSettings &other) {
+    WorldSettings(const WorldSettings& other) {
         debugPhysics = other.debugPhysics;
         debugLight = other.debugLight;
         cameraFov = other.cameraFov;
@@ -76,5 +94,3 @@ struct WorldSettings {
 };
 
 memory::FreeListAllocator *imageAllocator = nullptr;
-memory::PoolAllocator *modelsAllocator = nullptr;
-memory::PoolAllocator *meshAllocator = nullptr;

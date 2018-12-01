@@ -8,7 +8,7 @@
 #include <cassert>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
-#include "assets_resource.h"
+#include "resource.h"
 #include "console.h"
 #include "data_loader.h"
 #include "../core/texture.h"
@@ -17,6 +17,7 @@
 #include "assets_texture.h"
 #include "assets_material.h"
 #include "assets_model.h"
+#include "app_paths.h"
 
 class Assets {
 public:
@@ -24,7 +25,7 @@ public:
 
     static const Id InvalidId = 0;
 
-    Assets() = default;
+    explicit Assets(const AppPaths& appPaths) : appPaths(appPaths) {};
 
     ~Assets();
 
@@ -38,19 +39,19 @@ public:
 
     std::map<Id, assets::Material> &getMaterials();
 
-    assets::Model *addModel(assets::Resource *resource, const std::unordered_map<std::string, std::string> &options);
+    assets::Model *addModel(Resource *resource, const std::unordered_map<std::string, std::string> &options);
 
-    assets::Model *addModel(const std::string &name, assets::Resource *resource, const std::unordered_map<std::string, std::string> &options);
+    assets::Model *addModel(const std::string &name, Resource *resource, const std::unordered_map<std::string, std::string> &options);
 
     assets::Model *getModel(std::string name);
 
     assets::Model *getModel(Id id);
 
-    void addScript(assets::Resource *resource);
+    void addScript(Resource *resource);
 
-    assets::Texture *addTexture(assets::Resource *resource);
+    assets::Texture *addTexture(Resource *resource);
 
-    assets::Texture *addTexture(const std::string &name, assets::Resource *resource);
+    assets::Texture *addTexture(const std::string &name, Resource *resource);
 
     assets::Texture *getTexture(std::string name);
 
@@ -60,7 +61,7 @@ public:
 
     assets::Material *addMaterial(const std::string &name, Material *material);
 
-    assets::Material *getMaterial(const Id id);
+    assets::Material *getMaterial(const Id& id);
 
     assets::Material *getMaterial(const std::string &name);
 
@@ -86,6 +87,8 @@ private:
     Id idCounter = 1;
 
     Id genId();
+
+    const AppPaths& appPaths;
 };
 
 #endif //ACTIO_LIB_ASSETS_H

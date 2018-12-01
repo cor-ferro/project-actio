@@ -1,5 +1,4 @@
 #include "assets.h"
-#include "assets_resource.h"
 #include "assets_loader.h"
 #include "image_parser.h"
 #include "console.h"
@@ -10,18 +9,18 @@ Assets::~Assets() {
     free();
 }
 
-void Assets::addScript(assets::Resource *resource) {
+void Assets::addScript(Resource *resource) {
     scripts.emplace(std::piecewise_construct,
                     std::forward_as_tuple(genId()),
                     std::forward_as_tuple(resource)
     );
 }
 
-assets::Texture *Assets::addTexture(assets::Resource *resource) {
+assets::Texture *Assets::addTexture(Resource *resource) {
     return addTexture("", resource);
 }
 
-assets::Texture * Assets::addTexture(const std::string &name, assets::Resource *resource) {
+assets::Texture * Assets::addTexture(const std::string &name, Resource *resource) {
     Id id = genId();
 
     if (!name.empty()) {
@@ -71,9 +70,9 @@ void Assets::free() {
 }
 
 void Assets::loadDefaultResources() {
-    assets::Loader assetsLoader(App::instance().resourcePath());
+    assets::Loader assetsLoader(appPaths.resources);
 
-    const std::vector<std::pair<std::string, std::string>> defaultTextures = {
+    const std::vector<std::pair<std::string, Path>> defaultTextures = {
         {"DefaultDiffuseTexture", "default-diffuse.png"},
         {"DefaultNormalTexture", "default-normal.jpg"},
         {"DefaultSpecularTexture", "default-specular.png"},
@@ -82,10 +81,9 @@ void Assets::loadDefaultResources() {
 
     for (const auto &it : defaultTextures) {
         const std::string &textureName = it.first;
-        const std::string &texturePath = it.second;
+        const Path &texturePath = it.second;
 
-        Path defaultTexturePath(texturePath);
-        assets::Resource *defaultTextureResource = assetsLoader.createResource(defaultTexturePath);
+        Resource *defaultTextureResource = assetsLoader.createResource(texturePath);
 
         if (defaultTextureResource != nullptr) {
             addTexture(textureName, defaultTextureResource);
@@ -138,7 +136,7 @@ assets::Material *Assets::getMaterial(const std::string &name) {
     return &idIt->second;
 }
 
-assets::Material *Assets::getMaterial(const Assets::Id id) {
+assets::Material *Assets::getMaterial(const Assets::Id& id) {
     return nullptr;
 }
 
@@ -191,11 +189,11 @@ assets::Texture *Assets::getDefaultTexture(Texture &texture) {
     }
 }
 
-assets::Model *Assets::addModel(assets::Resource *resource, const std::unordered_map<std::string, std::string> &options) {
+assets::Model *Assets::addModel(Resource *resource, const std::unordered_map<std::string, std::string> &options) {
     return addModel("", resource, options);
 }
 
-assets::Model *Assets::addModel(const std::string &name, assets::Resource *resource, const std::unordered_map<std::string, std::string> &options) {
+assets::Model *Assets::addModel(const std::string &name, Resource *resource, const std::unordered_map<std::string, std::string> &options) {
     Id id = genId();
 
     if (!name.empty()) {

@@ -1,9 +1,8 @@
 #include "input.h"
-#include "../world.h"
 
 namespace game {
     namespace systems {
-        Input::Input(World *world) : systems::BaseSystem(world) {}
+        Input::Input(Context& context) : systems::BaseSystem(context) {}
 
         void Input::configure(entityx::EventManager &events) {
             events.subscribe<events::InputSetHandler>(*this);
@@ -27,8 +26,8 @@ namespace game {
             }
 
             if (input1 != nullptr) {
-                context->mousePosition.x = input1->mouse.x;
-                context->mousePosition.y = input1->mouse.y;
+                m_context.data.mousePosition.x = input1->mouse.x;
+                m_context.data.mousePosition.y = input1->mouse.y;
 
                 es.each<c::UserControl>([&](ex::Entity entity, c::UserControl &userControl) {
                     userControl.setLeftPress(isPress(Input1, KEY_A));
@@ -65,12 +64,13 @@ namespace game {
             switch (place) {
                 case Input1:
                     if (input1 == nullptr) return false;
-                    return input1->isPress(static_cast<InputHandler::KeyboardKey>(key));
+                    return input1->isPress(static_cast<InputManager::KeyboardKey>(key));
                 case Input2:
                     if (input2 == nullptr) return false;
-                    return input2->isPress(static_cast<InputHandler::KeyboardKey>(key));
+                    return input2->isPress(static_cast<InputManager::KeyboardKey>(key));
                 default:
                     console::warn("unknown input place");
+                    return false;
             }
         }
 
@@ -78,16 +78,16 @@ namespace game {
             switch (place) {
                 case Input1:
                     if (input1 == nullptr) return false;
-                    return input1->isPress(static_cast<InputHandler::MouseButton>(key));
+                    return input1->isPress(static_cast<InputManager::MouseButton>(key));
                 case Input2:
                     if (input2 == nullptr) return false;
-                    return input2->isPress(static_cast<InputHandler::MouseButton>(key));
+                    return input2->isPress(static_cast<InputManager::MouseButton>(key));
                 default:
                     console::warn("unknown input place");
             }
         }
 
-        InputHandler *Input::getHandler(InputPlace place) {
+        InputManager *Input::getHandler(InputPlace place) {
             switch (place) {
                 case Input1: return input1;
                 case Input2: return input2;
@@ -96,9 +96,9 @@ namespace game {
             }
         }
 
-        void Input::configureInput(InputHandler *inputHandler) {
+        void Input::configureInput(InputManager *inputHandler) {
 //                inputHandler->subscribeKeyPress([&event_manager](int key, int scancode, int action, int mods) {
-//                    if (action == InputHandler::KEY_REPEAT) return;
+//                    if (action == InputManager::KEY_REPEAT) return;
 //                    event_manager.emit<events::KeyPress>(key, scancode, action, mods);
 //                });
 //

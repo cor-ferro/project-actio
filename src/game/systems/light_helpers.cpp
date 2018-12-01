@@ -1,46 +1,93 @@
 #include "light_helpers.h"
-#include "../world.h"
+#include "../components/mesh.h"
+#include "../events/object_create.h"
 
 namespace game {
     namespace systems {
-        LightHelpers::LightHelpers(World *world) : systems::BaseSystem(world) {}
+        LightHelpers::LightHelpers(Context& context) : systems::BaseSystem(context) {}
 
-        void LightHelpers::configure(entityx::EventManager &event_manager) {
+        void LightHelpers::configure(entityx::EventManager& event_manager) {
             event_manager.subscribe<events::LightAdd>(*this);
             event_manager.subscribe<events::LightRemove>(*this);
             event_manager.subscribe<events::LightHelperShow>(*this);
         }
 
-        void LightHelpers::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
-//            while (!newDirectionalEntities.empty()) {
-//                entityx::Entity lightEntity = newDirectionalEntities.top();
-//
-//                newDirectionalEntities.pop();
-//
-//                if (lightEntity.valid()) {
-//                    setupDirectionalLight(lightEntity);
-//                }
-//            }
+        void LightHelpers::update(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
+            processQueue<entityx::Entity>(newDirectionalEntities, [this, &es, &events](entityx::Entity& lightEntity) {
 
-            while (!newPointEntities.empty()) {
-                entityx::Entity lightEntity = newPointEntities.top();
+            });
 
-                newPointEntities.pop();
+            processQueue<entityx::Entity>(newPointEntities, [this, &es, &events](entityx::Entity& lightEntity) {
+                auto light = components::get<components::LightPoint>(lightEntity);
 
-                if (lightEntity.valid()) {
-                    setupPointLight(lightEntity);
+                float radius = light->getRadius();
+                const vec3& position = light->getPosition();
+
+                MeshHandle mesh = m_context.meshes().create();
+
+                GeometryBuilder::SphereDescription sphereDesc;
+                sphereDesc.radius = 1.0f;
+                sphereDesc.widthSegments = 4;
+                sphereDesc.heightSegments = 4;
+                GeometryBuilder::Sphere(mesh->geometry, sphereDesc);
+                mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
+                mesh->material->setWireframe(true);
+
+                auto entity = m_context.createObject(es);
+
+                entity.assign<components::LightHelper>(lightEntity);
+
+                if (isShowHelpers) {
+                    entity.assign<components::Renderable>();
                 }
-            }
 
-//            while (!newSpotEntities.empty()) {
-//                entityx::Entity lightEntity = newSpotEntities.top();
-//
-//                newSpotEntities.pop();
-//
-//                if (lightEntity.valid()) {
-//                    setupSpotLight(lightEntity);
-//                }
-//            }
+                lightEntity.assign<components::Helper>(entity);
+
+                auto physicActor = m_context.physic().createStaticActor(position);
+
+                entity.assign<components::Mesh>(mesh);
+                entity.assign<components::PhysicActor>(physicActor);
+
+                events.emit<events::ObjectCreate>(entity);
+            });
+
+            processQueue<entityx::Entity>(newSpotEntities, [this, &es, &events](entityx::Entity& lightEntity) {
+                if (lightEntity.valid()) {
+                    auto light = components::get<components::LightSpot>(lightEntity);
+
+                    const vec3& position = light->getPosition();
+                    const vec3& direction = light->getDirection();
+
+                    MeshHandle mesh = m_context.meshes().create();
+
+                    GeometryBuilder::ConeDescription coneDesc;
+                    coneDesc.radius = 2.0f;
+                    coneDesc.height = 2.0f;
+                    coneDesc.radialSegments = 16;
+                    coneDesc.heightSegments = 16;
+                    GeometryBuilder::Cone(mesh->geometry, coneDesc);
+
+                    mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
+                    mesh->material->setWireframe(true);
+
+                    auto entity = m_context.createObject(es);
+
+                    entity.assign<components::LightHelper>(lightEntity);
+
+                    if (isShowHelpers) {
+                        entity.assign<components::Renderable>();
+                    }
+
+                    lightEntity.assign<components::Helper>(entity);
+
+                    auto physicActor = m_context.physic().createStaticActor(position);
+
+                    entity.assign<components::Mesh>(mesh);
+                    entity.assign<components::PhysicActor>(physicActor);
+
+                    events.emit<events::ObjectCreate>(entity);
+                }
+            });
 
             if (isChangeStatus) {
                 if (isShowHelpers) {
@@ -57,7 +104,7 @@ namespace game {
             }
         }
 
-        void LightHelpers::receive(const events::LightAdd &event) {
+        void LightHelpers::receive(const events::LightAdd& event) {
             entityx::Entity lightEntity = event.entity;
 
             bool a = lightEntity.has_component<components::LightDirectional>();
@@ -77,7 +124,7 @@ namespace game {
 //            }
         }
 
-        void LightHelpers::receive(const events::LightRemove &event) {
+        void LightHelpers::receive(const events::LightRemove& event) {
             entityx::Entity lightEntity = event.entity;
 
             if (lightEntity.has_component<components::LightPoint>()) {
@@ -86,12 +133,11 @@ namespace game {
             }
         }
 
-        void LightHelpers::receive(const events::LightHelperShow &event) {
-            isChangeStatus = true;
-            isShowHelpers = event.value;
+        void LightHelpers::receive(const events::LightHelperShow& event) {
+            show(event.value);
         }
 
-        void LightHelpers::showHelpers(ex::EntityManager &es) {
+        void LightHelpers::showHelpers(ex::EntityManager& es) {
             ex::ComponentHandle<components::LightHelper> helper;
 
             for (ex::Entity entity : es.entities_with_components(helper)) {
@@ -99,7 +145,7 @@ namespace game {
             }
         }
 
-        void LightHelpers::hideHelpers(ex::EntityManager &es) {
+        void LightHelpers::hideHelpers(ex::EntityManager& es) {
             ex::ComponentHandle<components::LightHelper> helper;
             ex::ComponentHandle<components::Renderable> renderable;
 
@@ -108,86 +154,22 @@ namespace game {
             }
         }
 
-        void LightHelpers::updateHelperPositions(ex::EntityManager &es) {
-            ex::ComponentHandle<components::LightHelper> helper;
-            ex::ComponentHandle<components::Transform> helperTransform;
-            ex::ComponentHandle<components::Renderable> renderable;
+        void LightHelpers::updateHelperPositions(ex::EntityManager& es) {
+            es.each<components::LightHelper, components::PhysicActor, components::Renderable>([](
+                    ex::Entity entity,
+                    components::LightHelper& helper,
+                    components::PhysicActor& physicActor,
+                    components::Renderable&
+            ) {
+                auto lightPhysicActor = components::get<components::PhysicActor>(helper.entity);
 
-            for (ex::Entity entity : es.entities_with_components(helper, helperTransform, renderable)) {
-                auto lightTransform = components::get<components::Transform>(helper->entity);
-                helperTransform->setPosition(lightTransform->getPosition());
-            }
+                physicActor.setPosition(lightPhysicActor->getPosition());
+            });
         }
 
-        void LightHelpers::setupDirectionalLight(ex::Entity& lightEntity) {
-
-        }
-
-        void LightHelpers::setupPointLight(ex::Entity& lightEntity) {
-            auto light = components::get<components::LightPoint>(lightEntity);
-
-            float radius = light->getRadius();
-            const vec3 &position = light->getPosition();
-
-            std::shared_ptr<Mesh> mesh = Mesh::Create();
-
-            GeometryBuilder::SphereDescription sphereDesc;
-            sphereDesc.radius = 1.0f;
-            sphereDesc.widthSegments = 4;
-            sphereDesc.heightSegments = 4;
-            GeometryBuilder::Sphere(mesh->geometry, sphereDesc);
-            mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
-            mesh->material->setWireframe(true);
-
-            game::WorldObject *helper = world->createObject();
-            ex::Entity entity = helper->getEntity();
-
-            helper->addComponent<components::LightHelper>(lightEntity);
-
-            if (isShowHelpers) {
-                world->showObject(helper);
-            }
-
-            lightEntity.assign<components::Helper>(entity);
-
-            world->setObjectMesh(helper, mesh);
-            world->spawn(helper, position);
-            world->setupRenderMesh(entity);
-        }
-
-        void LightHelpers::setupSpotLight(ex::Entity& lightEntity) {
-            auto light = components::get<components::LightSpot>(lightEntity);
-
-//            float radius = light->getRadius();
-             const vec3 &position = light->getPosition();
-             const vec3 &direction = light->getDirection();
-
-            std::shared_ptr<Mesh> mesh = Mesh::Create();
-
-            GeometryBuilder::ConeDescription coneDesc;
-            coneDesc.radius = 2.0f;
-            coneDesc.height = 2.0f;
-            coneDesc.radialSegments = 16;
-            coneDesc.heightSegments = 16;
-            GeometryBuilder::Cone(mesh->geometry, coneDesc);
-
-            mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
-            mesh->material->setWireframe(true);
-
-            game::WorldObject *helper = world->createObject();
-            ex::Entity entity = helper->getEntity();
-
-            helper->addComponent<components::LightHelper>(lightEntity);
-
-            if (isShowHelpers) {
-                world->showObject(helper);
-            }
-
-            lightEntity.assign<components::Helper>(entity);
-
-            world->setObjectMesh(helper, mesh);
-            world->spawn(helper, position);
-            world->setupRenderMesh(entity);
+        void LightHelpers::show(bool value) {
+            isChangeStatus = true;
+            isShowHelpers = value;
         }
     }
 }

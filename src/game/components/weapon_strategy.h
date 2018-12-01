@@ -13,9 +13,9 @@
 namespace game {
     namespace components {
         struct WeaponStrategy {
-            explicit WeaponStrategy(strategy::WeaponsBase *strategy) : handler(strategy) {}
+            explicit WeaponStrategy(strategy::WeaponStrategy *strategy) : handler(strategy) {}
 
-            strategy::WeaponsBase *handler = nullptr;
+            strategy::WeaponStrategy *handler = nullptr;
         };
     }
 }

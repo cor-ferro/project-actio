@@ -19,32 +19,8 @@ Mesh::Mesh(const Mesh &other) {
     primitive = other.primitive;
 }
 
-std::shared_ptr<Mesh> Mesh::Create() {
-    void *place = meshAllocator->Allocate(sizeof(Mesh), 8);
-    Mesh *mesh = new(place) Mesh();
-    mesh->material.reset(new Material());
-
-    std::shared_ptr<Mesh> ptr(mesh, &Mesh::Destroy);
-
-    return ptr;
-}
-
-std::shared_ptr<Mesh> Mesh::Create(std::shared_ptr<Material> &material) {
-    void *place = meshAllocator->Allocate(sizeof(Mesh), 8);
-    Mesh *mesh = new(place) Mesh();
-    mesh->material = material;
-
-    std::shared_ptr<Mesh> ptr(mesh, &Mesh::Destroy);
-
-    return ptr;
-}
-
-void Mesh::Destroy(Mesh *mesh) {
-    if (mesh == nullptr) return;
-
-    mesh->destroy();
-    mesh->~Mesh();
-    meshAllocator->Free((void *) mesh);
+Mesh::~Mesh() {
+    destroy();
 }
 
 void Mesh::destroy() {

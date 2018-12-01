@@ -16,11 +16,38 @@ namespace game {
 
         class BaseSystem {
         public:
-            explicit BaseSystem(game::World *world);
+            explicit BaseSystem(Context& context);
+
+            void start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt);
 
         protected:
-            game::World *world = nullptr;
-            game::Context *context = nullptr;
+            template<class T>
+            void processQueue(std::stack<T> &items, const std::function<void (T&)> &handler) {
+                int i = 0;
+
+                while (!items.empty()) {
+                    T& item = items.top();
+
+                    handler(item);
+
+                    items.pop();
+
+                    i++;
+
+                    if (i > maxItemsPerQueue) {
+                        break;
+                    }
+                }
+            };
+
+            void setMaxItemsPerQueue(int count);
+
+            const int getMaxItemsPerQueue() const;
+
+            Context& m_context;
+
+        private:
+            int maxItemsPerQueue = 50;
         };
     }
 }

@@ -1,10 +1,9 @@
 #include "character_control.h"
-#include "../world.h"
 #include "../../lib/utils.h"
 
 namespace game {
     namespace systems {
-        CharacterControl::CharacterControl(World *world) : systems::BaseSystem(world) {}
+        CharacterControl::CharacterControl(Context& context) : systems::BaseSystem(context) {}
 
         void CharacterControl::configure(ex::EventManager &event_manager) {
             event_manager.subscribe<events::KeyPress>(*this);
@@ -111,47 +110,47 @@ namespace game {
         }
 
         void CharacterControl::receive(const events::KeyPress &event) {
-            bool isMovingKey = event.key == InputHandler::KEY_W ||
-                               event.key == InputHandler::KEY_S ||
-                               event.key == InputHandler::KEY_A ||
-                               event.key == InputHandler::KEY_D;
+            bool isMovingKey = event.key == InputManager::KEY_W ||
+                               event.key == InputManager::KEY_S ||
+                               event.key == InputManager::KEY_A ||
+                               event.key == InputManager::KEY_D;
 
             if (isMovingKey) {
                 isMovingKeyPress =
-                        event.action == InputHandler::KEY_PRESS || event.action == InputHandler::KEY_REPEAT;
+                        event.action == InputManager::KEY_PRESS || event.action == InputManager::KEY_REPEAT;
             }
 
 
-            bool isJumpKey = event.key == InputHandler::KEY_SPACE;
+            bool isJumpKey = event.key == InputManager::KEY_SPACE;
 
-            if (event.key == InputHandler::KEY_W) {
-                isForwardPress = event.action != InputHandler::KEY_RELEASE;
+            if (event.key == InputManager::KEY_W) {
+                isForwardPress = event.action != InputManager::KEY_RELEASE;
             }
 
-            if (event.key == InputHandler::KEY_S) {
-                isBackwardPress = event.action != InputHandler::KEY_RELEASE;
+            if (event.key == InputManager::KEY_S) {
+                isBackwardPress = event.action != InputManager::KEY_RELEASE;
             }
 
-            if (event.key == InputHandler::KEY_A) {
-                if (event.action == InputHandler::KEY_PRESS) {
+            if (event.key == InputManager::KEY_A) {
+                if (event.action == InputManager::KEY_PRESS) {
                     isLeftPress = true;
                     isRightPress = false;
-                } else if (event.action == InputHandler::KEY_RELEASE) {
+                } else if (event.action == InputManager::KEY_RELEASE) {
                     isLeftPress = false;
                 }
             }
 
-            if (event.key == InputHandler::KEY_D) {
+            if (event.key == InputManager::KEY_D) {
 
-                if (event.action == InputHandler::KEY_PRESS) {
+                if (event.action == InputManager::KEY_PRESS) {
                     isRightPress = true;
                     isLeftPress = false;
-                } else if (event.action == InputHandler::KEY_RELEASE) {
+                } else if (event.action == InputManager::KEY_RELEASE) {
                     isRightPress = false;
                 }
             }
 
-            if (isJumpKey && event.action == InputHandler::KEY_PRESS) {
+            if (isJumpKey && event.action == InputManager::KEY_PRESS) {
                 isJumpPress = true;
             }
         }

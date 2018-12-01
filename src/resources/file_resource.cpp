@@ -5,7 +5,7 @@
 #error "undefined RESOURCE_DIR"
 #endif
 
-namespace Resource {
+namespace resources {
 	File::File() {};
 
 	File::File(const File& other)

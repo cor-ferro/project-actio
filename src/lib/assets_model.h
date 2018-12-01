@@ -10,7 +10,7 @@
 #include <assimp/scene.h>
 #include <boost/signals2.hpp>
 #include "assets_base.h"
-#include "assets_resource.h"
+#include "resource.h"
 #include "../resources/assimp_resource.h"
 #include "../core/model.h"
 #include "../core/skin.h"
@@ -21,7 +21,7 @@ namespace assets {
     public:
         typedef std::unordered_map<std::string, std::string> Options;
 
-        explicit Model(assets::Resource *resource, const Options &options);
+        explicit Model(Resource *resource, const Options &options);
 
         ~Model();
 
@@ -39,7 +39,7 @@ namespace assets {
 
         const aiScene *getScene();
 
-        const ::Resource::Assimp *getAiResource();
+        const ::resources::Assimp *getAiResource();
 
         void addMesh(std::shared_ptr<::Mesh> &mesh);
 
@@ -50,7 +50,7 @@ namespace assets {
     private:
         Assimp::Importer importer;
         const aiScene *scene = nullptr;
-        ::Resource::Assimp *assimpResource = nullptr;
+        ::resources::Assimp *assimpResource = nullptr;
 
         bool loaded = false;
         Options options;

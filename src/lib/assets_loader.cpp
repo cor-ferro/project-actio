@@ -1,4 +1,6 @@
 #include "assets_loader.h"
+#include "filesystem_resource.h"
+#include "package_resource.h"
 
 namespace assets {
     Loader::Loader(const std::string &entryPoint) : entryPoint(entryPoint) {}

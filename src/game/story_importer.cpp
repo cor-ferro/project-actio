@@ -6,7 +6,7 @@
 #include "../resources/resources.h"
 
 namespace game {
-    game::Story StoryImporter::import(const Resource::File &file) {
+    game::Story StoryImporter::import(const resources::File &file) {
         console::info("-----------------------------------------------");
 
         rootPath = file.getPath();
@@ -187,7 +187,7 @@ namespace game {
 
         const std::vector<Chapter::ResourceScript> &scripts = chapter->getScripts();
         for (const auto &chapterResource : scripts) {
-            assets::Resource *resource = assetsLoader.createResource(chapterResource.path);
+            Resource *resource = assetsLoader.createResource(chapterResource.path);
 
             if (resource != nullptr) {
                 assets->addScript(resource);
@@ -196,7 +196,7 @@ namespace game {
 
         const std::vector<Chapter::ResourceTexture> &textures = chapter->getTextures();
         for (const auto &chapterResource : textures) {
-            assets::Resource *resource = assetsLoader.createResource(chapterResource.path);
+            Resource *resource = assetsLoader.createResource(chapterResource.path);
 
             if (resource != nullptr) {
                 assets->addTexture(chapterResource.name, resource);
@@ -205,7 +205,7 @@ namespace game {
 
         const std::vector<Chapter::ResourceModel> &models = chapter->getModels();
         for (const auto &modelResource : models) {
-            assets::Resource *resource = assetsLoader.createResource(modelResource.path);
+            Resource *resource = assetsLoader.createResource(modelResource.path);
 
             assets->addModel(modelResource.name, resource, modelResource.options);
         }
@@ -250,7 +250,7 @@ namespace game {
                     chapterTextureResource.path = materialResource.diffuseTexture;
                     chapterTextureResource.name = chapterTextureResource.path;
 
-                    assets::Resource *resource = assetsLoader.createResource(chapterTextureResource.path);
+                    Resource *resource = assetsLoader.createResource(chapterTextureResource.path);
 
                     if (resource != nullptr) {
                         assetTexture = assets->addTexture(chapterTextureResource.name, resource);

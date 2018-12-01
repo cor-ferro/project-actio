@@ -8,7 +8,7 @@
 #include <entityx/entityx/System.h>
 #include "../components/model.h"
 #include "../components/transform.h"
-#include "../events/render_setup_model.h"
+#include "../events/render_update_mesh.h"
 #include "../../core/mesh.h"
 #include "../../core/geometry_builder.h"
 #include "../../lib/console.h"
@@ -26,7 +26,7 @@ namespace game {
                   , public entityx::System<Sky>
                   , public entityx::Receiver<Sky> {
         public:
-            explicit Sky(World *world);
+            explicit Sky(Context& context);
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
         };

@@ -12,7 +12,7 @@ namespace game {
     namespace components {
         struct Model : ::Model {
             Model() : ::Model() {}
-            Model(Mesh *mesh) : ::Model(mesh) {}
+            explicit Model(MeshHandle &mesh) : ::Model(mesh) {}
         };
     }
 }

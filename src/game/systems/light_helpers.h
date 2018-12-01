@@ -10,7 +10,7 @@
 #include "../events/light_add.h"
 #include "../events/light_remove.h"
 #include "../events/light_helper_show.h"
-#include "../events/render_setup_model.h"
+#include "../events/render_update_mesh.h"
 #include "../components/light_spot.h"
 #include "../components/light_point.h"
 #include "../components/light_directional.h"
@@ -36,7 +36,7 @@ namespace game {
                   , public entityx::System<LightHelpers>
                   , public entityx::Receiver<LightHelpers> {
         public:
-            explicit LightHelpers(World *world);
+            explicit LightHelpers(Context& context);
 
             void configure(entityx::EventManager &event_manager) override;
 
@@ -48,18 +48,14 @@ namespace game {
 
             void receive(const events::LightHelperShow &event);
 
+            void show(bool value);
+
         private:
             void showHelpers(ex::EntityManager &es);
 
             void hideHelpers(ex::EntityManager &es);
 
             void updateHelperPositions(ex::EntityManager &es);
-
-            void setupDirectionalLight(ex::Entity &entity);
-
-            void setupPointLight(ex::Entity &entity);
-
-            void setupSpotLight(ex::Entity &entity);
 
             std::stack<entityx::Entity> newDirectionalEntities;
             std::stack<entityx::Entity> newPointEntities;

@@ -23,7 +23,7 @@ namespace game {
                   , public entityx::System<DayTime>
                   , public entityx::Receiver<DayTime> {
         public:
-            explicit DayTime(World *World);
+            explicit DayTime(Context& context);
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 

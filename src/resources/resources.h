@@ -8,7 +8,6 @@
 #ifndef RESOURCES_H_
 #define RESOURCES_H_
 
-#include "buffer_resource.h"
 #include "file_resource.h"
 #include "assimp_resource.h"
 

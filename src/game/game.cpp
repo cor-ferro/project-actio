@@ -1,10 +1,9 @@
 #include "game.h"
 
 namespace game {
-    World* createWorld()
-    {
-        World* world = new World();
+    std::shared_ptr<Engine> createEngine(App& app) {
+        std::shared_ptr<Engine> ptr(new Engine(app));
 
-        return world;
+        return ptr;
     }
 }

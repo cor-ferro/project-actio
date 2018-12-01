@@ -5,7 +5,7 @@
 #ifndef ACTIO_GAME_COMPONENTS_EQUIPMENT_H
 #define ACTIO_GAME_COMPONENTS_EQUIPMENT_H
 
-#include <unordered_set>
+#include <set>
 #include <entityx/entityx/entityx.h>
 
 namespace game {
@@ -44,7 +44,7 @@ namespace game {
             ex::Entity primaryItem;
             ex::Entity secondaryItem;
 
-            std::unordered_set<ex::Entity> items;
+            std::set<ex::Entity> items;
         };
     }
 }

@@ -4,7 +4,7 @@ namespace assets {
     /**
      * -------------------- Shader --------------------
      */
-    Shader::Shader(assets::Resource *resource) : BaseAsset(resource) {};
+    Shader::Shader(Resource *resource) : BaseAsset(resource) {};
 
     const char *const Shader::getVertexContent() const {
         return data.getRaw("vertex");

@@ -6,13 +6,13 @@
 #define ACTIO_ASSETS_SHADER_H
 
 #include "assets_base.h"
-#include "assets_resource.h"
+#include "resource.h"
 #include "text_set.h"
 
 namespace assets {
     class Shader : public BaseAsset {
     public:
-        explicit Shader(assets::Resource *resource);
+        explicit Shader(Resource *resource);
 
         ~Shader() = default;
 

@@ -17,7 +17,7 @@ namespace game {
     public:
         StoryImporter() = default;
 
-        game::Story import(const Resource::File &file);
+        game::Story import(const resources::File &file);
 
         void loadScripts(const std::vector<std::string> &scripts, const boost::filesystem::path &fromPath);
 

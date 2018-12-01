@@ -8,17 +8,18 @@
 #include <entityx/entityx/System.h>
 #include <stack>
 #include <glm/glm/gtc/random.inl>
-#include "../components/physic.h"
+#include "../components/physic_actor.h"
 #include "../components/transform.h"
 #include "../components/camera.h"
 #include "../components/model.h"
 #include "../components/renderable.h"
 #include "../components/user_control.h"
+#include "../components/mesh.h"
 #include "../events/key_press.h"
-#include "../events/physic_create.h"
-#include "../events/render_setup_model.h"
+#include "../events/render_update_mesh.h"
 #include "../events/mouse_press.h"
 #include "../events/physic_force.h"
+#include "../events/object_create.h"
 #include "../../lib/console.h"
 #include "../../lib/types.h"
 #include "../../core/mesh.h"
@@ -38,18 +39,25 @@ namespace game {
                   , public ex::System<BallShot>
                   , public ex::Receiver<BallShot> {
         public:
-            explicit BallShot(World *world);
+            explicit BallShot(Context& context);
 
-            void configure(ex::EventManager &event_manager) override;
+            void configure(ex::EventManager &events) override;
+
+            void start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt);
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
             void receive(const events::KeyPress &event);
 
-            void receive(const events::MousePress &event);
-
         private:
-            std::stack<int> newItems;
+            struct BallDescription {
+                float radius = 1.0f;
+                float pushForce = 15.0f;
+            };
+
+            std::stack<BallDescription> newBalls;
+            std::shared_ptr<Mesh> ballMesh;
+            std::shared_ptr<Material> ballMaterial;
         };
     }
 }

@@ -11,7 +11,7 @@
 #include "../components/camera.h"
 #include "../components/target.h"
 #include "../../lib/console.h"
-#include "../../lib/input_handler.h"
+#include "../../lib/input_manager.h"
 #include "../events/mouse_press.h"
 #include "../components/model.h"
 #include "../components/controlled.h"
@@ -33,7 +33,7 @@ namespace game {
                   , public entityx::System<Camera>
                   , public entityx::Receiver<Camera> {
         public:
-            explicit Camera(World *world);
+            explicit Camera(Context& context);
 
             void configure(ex::EntityManager &es, entityx::EventManager &events) override;
 

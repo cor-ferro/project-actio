@@ -12,7 +12,7 @@
 #include "../components/skin.h"
 #include "../components/model.h"
 #include "../events/key_press.h"
-#include "../../lib/input_handler.h"
+#include "../../lib/input_manager.h"
 #include "../context.h"
 #include "base.h"
 
@@ -27,7 +27,7 @@ namespace game {
                   , public ex::System<Animations>
                   , public ex::Receiver<Animations> {
         public:
-            explicit Animations(game::World *world);
+            explicit Animations(Context& context);
 
             void configure(ex::EventManager &event_manager) override;
 

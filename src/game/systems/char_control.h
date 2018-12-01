@@ -22,7 +22,7 @@
 #include "../components/inventory.h"
 #include "../components/user_control.h"
 #include "../components/ai_control.h"
-#include "../../lib/input_handler.h"
+#include "../../lib/input_manager.h"
 #include "../context.h"
 #include "base.h"
 
@@ -34,7 +34,7 @@ namespace game {
         namespace c = components;
 
         class CharControl
-                : systems::BaseSystem
+                : public systems::BaseSystem
                   , public entityx::System<CharControl>
                   , public ex::Receiver<CharControl> {
         public:
@@ -42,7 +42,7 @@ namespace game {
                 ExecWeapon
             };
 
-            explicit CharControl(World *world);
+            explicit CharControl(Context& context);
 
             void configure(ex::EntityManager &es, entityx::EventManager &events) override;
 

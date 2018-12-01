@@ -1,7 +1,7 @@
 #include "deferred_shading.h"
 #include "../../game/components/transform.h"
 #include "../../game/components/renderable.h"
-#include "../../game/components/meshes.h"
+#include "../../game/components/mesh.h"
 #include "../../game/components/model.h"
 #include "../../game/components/skin.h"
 #include "../../game/components/light_directional.h"
@@ -18,7 +18,9 @@ namespace renderer {
 
         DeferredShading::LightHelper::~LightHelper() {}
 
-        void DeferredShading::LightHelper::init() {
+        void DeferredShading::LightHelper::init(std::shared_ptr<Mesh> &ptr) {
+            mesh = ptr;
+
             initMesh();
             initHandle();
         }
@@ -32,14 +34,10 @@ namespace renderer {
         }
 
         void DeferredShading::LightHelperQuad::initMesh() {
-            mesh = Mesh::Create();
-
             GeometryBuilder::Quad2d(mesh->geometry);
         }
 
         void DeferredShading::LightHelperSphere::initMesh() {
-            mesh = Mesh::Create();
-
             GeometryBuilder::SphereDescription sphereDesc;
             sphereDesc.widthSegments = 64;
             sphereDesc.heightSegments = 64;
@@ -47,8 +45,6 @@ namespace renderer {
         }
 
         void DeferredShading::LightHelperCylinder::initMesh() {
-            mesh = Mesh::Create();
-
             GeometryBuilder::CylinderDescription cylinderDesc;
             cylinderDesc.radiusTop = 4.0f;
             cylinderDesc.radiusBottom = 0.0f;
@@ -148,20 +144,20 @@ namespace renderer {
 
                     ex::ComponentHandle<components::Renderable> objectRenderable;
                     ex::ComponentHandle<components::Transform> objectTransform;
-                    ex::ComponentHandle<components::Meshes> objectMeshes;
+                    ex::ComponentHandle<components::Mesh> objectMeshes;
 
                     shadowPipeline.setShadowTransforms(shadowProj * glm::lookAt(lightPos, lightPos + vec3(0.0,0.0,1.0), vec3(0.0, 0.0,1.0)));
                     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
                     for (ex::Entity objectEntity : es.entities_with_components(objectRenderable, objectTransform, objectMeshes)) {
-                        const std::vector<std::shared_ptr<Mesh>> items = objectMeshes->items();
+                        const std::vector<std::shared_ptr<Mesh>> items = objectMeshes->getAll();
                         for (auto &mesh : items) {
                             shadowPipeline.setTransform(*objectTransform); // todo: pass pointer instead of copy
-                            OpenglCheckErrors();
                             shadowPipeline.draw(*mesh, Mesh_Draw_Base);
-                            OpenglCheckErrors();
                         }
                     }
+
+                    OpenglCheckErrors();
                 }
             }
         }
@@ -252,9 +248,13 @@ namespace renderer {
         }
 
         void DeferredShading::initLightHelpers() {
-            lightHelperQuad.init();
-            lightHelperSphere.init();
-            lightHelperCylinder.init();
+            auto lightHelperQuadMesh = meshManager.create();
+            auto lightHelperSphereMesh = meshManager.create();
+            auto lightHelperCylinderMesh = meshManager.create();
+
+            lightHelperQuad.init(lightHelperQuadMesh);
+            lightHelperSphere.init(lightHelperSphereMesh);
+            lightHelperCylinder.init(lightHelperCylinderMesh);
         }
 
         void DeferredShading::drawModels(const FrameContext& frameContext) {
@@ -285,17 +285,17 @@ namespace renderer {
                 }
             });
 
-            es.each<components::Renderable, components::Transform, components::Meshes>([this](
+            es.each<components::Renderable, components::Transform, components::Mesh>([this](
                     ex::Entity entity,
                     components::Renderable&,
                     components::Transform& transform,
-                    components::Meshes& meshes
+                    components::Mesh& meshes
             ) {
                 entityx::ComponentHandle<components::Skin> skin = entity.component<components::Skin>();
 
                 uint renderFlags = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Material;
 
-                const std::vector<std::shared_ptr<Mesh>> items = meshes.items();
+                const std::vector<std::shared_ptr<Mesh>> items = meshes.getAll();
                 for (auto& mesh : items) {
                     if (skin) {
                         renderFlags |= Mesh_Draw_Bones;

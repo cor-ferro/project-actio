@@ -2,12 +2,11 @@
 
 WindowContext::WindowContext() : window(nullptr) {}
 
-bool WindowContext::init(unsigned int width, unsigned int height) {
+bool WindowContext::init(int width, int height) {
     window = glfwCreateWindow(width, height, "Window", nullptr, nullptr);
 
     if (window == nullptr) {
         console::info("Failed to create GLFW window");
-        glfwTerminate();
         return false;
     }
 
@@ -15,8 +14,8 @@ bool WindowContext::init(unsigned int width, unsigned int height) {
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
     glfwSetWindowUserPointer(window, this);
-//        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-//        glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
+//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//    glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 
     ImGui_ImplGlfwGL3_Init(window, true);
 
@@ -38,11 +37,11 @@ void WindowContext::destroy() {
     window = nullptr;
 }
 
-void WindowContext::setTitle(const char *text) {
-    glfwSetWindowTitle(window, text);
+void WindowContext::setTitle(const std::string &title) {
+    glfwSetWindowTitle(window, title.c_str());
 }
 
-void WindowContext::setSize(unsigned int width, unsigned int height) {
+void WindowContext::setSize(int width, int height) {
     glfwSetWindowSize(window, width, height);
 }
 
@@ -81,3 +80,12 @@ void WindowContext::onMouseMoveCallback(GLFWwindow *window, double x, double y) 
 void WindowContext::onMousePressCallback(GLFWwindow *window, int button, int action, int mods) {
         ((WindowContext *) glfwGetWindowUserPointer(window))->onMousePress(button, action, mods);
     }
+
+WindowContext::Size WindowContext::getSize() const {
+    assert(window != nullptr);
+
+    WindowContext::Size size;
+    glfwGetWindowSize(window, &size.width, &size.height);
+
+    return size;
+}

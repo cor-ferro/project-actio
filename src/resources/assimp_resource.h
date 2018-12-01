@@ -16,15 +16,13 @@
 #include "../app/app.h"
 #include "../lib/path.h"
 
-namespace Resource {
+namespace resources {
     struct Assimp {
         Assimp(const aiScene *scene, std::string path);
 
         ~Assimp();
 
         std::string getTexturePath(const aiMaterial *mat, aiTextureType type, unsigned int index) const;
-
-        std::string getDefaultTexturePath() const;
 
         std::unordered_set<std::string> getTexturePaths() const;
 

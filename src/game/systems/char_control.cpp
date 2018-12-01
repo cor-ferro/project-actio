@@ -1,11 +1,10 @@
 #include "char_control.h"
-#include "../world.h"
 #include "../components/equipment.h"
 #include "../../lib/utils.h"
 
 namespace game {
     namespace systems {
-        CharControl::CharControl(World *world) : systems::BaseSystem(world) {}
+        CharControl::CharControl(Context& context) : systems::BaseSystem(context) {}
 
         void CharControl::configure(ex::EntityManager &es, entityx::EventManager &events) {
             events.subscribe<events::MousePress>(*this);
@@ -110,7 +109,7 @@ namespace game {
         }
 
         void CharControl::receive(const events::MousePress &event) {
-            if (event.button == InputHandler::MOUSE_BUTTON_LEFT && event.action == InputHandler::KEY_PRESS) {
+            if (event.button == InputManager::MOUSE_BUTTON_LEFT && event.action == InputManager::KEY_PRESS) {
 
                 entityManager->each<c::Character, c::Equipment, c::Inventory, c::UserControl>([&](
                         ex::Entity entity,
@@ -140,7 +139,7 @@ namespace game {
 //                        return;
 //                    }
 //
-//                    auto handler = static_cast<WeaponHandler*>(weapon.get());
+//                    auto handler = static_cast<Weapon*>(weapon.get());
 //
 //                    strategy->handler->onWeaponFire(handler);
 //                }

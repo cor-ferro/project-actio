@@ -1,20 +1,20 @@
 #ifndef ACTIO_ASSETS_BASE_H
 #define ACTIO_ASSETS_BASE_H
 
-#include "assets_resource.h"
+#include "resource.h"
 
 namespace assets {
     class BaseAsset {
     public:
-        explicit BaseAsset(assets::Resource *resource);
+        explicit BaseAsset(Resource *resource);
 
         ~BaseAsset();
 
-        const assets::Resource *getResource();
+        const Resource *getResource();
 
     protected:
         bool isLoaded = false;
-        assets::Resource *resource = nullptr;
+        Resource *resource = nullptr;
     };
 
 }

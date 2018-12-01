@@ -9,7 +9,7 @@
 #include "geometry_builder.h"
 #include "material_builder.h"
 
-void ModelBuilder::FromAi(Model *model, Resource::Assimp *assimpResource, Assets *assets)  {
+void ModelBuilder::FromAi(Model *model, resources::Assimp *assimpResource, Assets *assets)  {
 //    model->freeMeshes();
 //
 //    boost::lockfree::stack<Model::Node*> setupNodes(128);

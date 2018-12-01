@@ -6,7 +6,7 @@ namespace assets {
     /**
  * -------------------- Model --------------------
  */
-    Model::Model(assets::Resource *resource, const Options &options) : BaseAsset(resource), options(options) {}
+    Model::Model(Resource *resource, const Options &options) : BaseAsset(resource), options(options) {}
 
     Model::~Model() {
         onDestroy();
@@ -61,13 +61,13 @@ namespace assets {
             flags |= aiProcess_FlipUVs;
         }
 
-        const assets::Resource *resource = getResource();
+        const Resource *resource = getResource();
         const Path &path = resource->getPath();
 
         scene = importer.ReadFile(path.string().c_str(), flags);
 
         if (scene != nullptr) {
-            assimpResource = new ::Resource::Assimp(scene, path.string());
+            assimpResource = new ::resources::Assimp(scene, path.string());
         }
     }
 
@@ -88,7 +88,7 @@ namespace assets {
         meshes.push_back(mesh);
     }
 
-    const ::Resource::Assimp *Model::getAiResource() {
+    const ::resources::Assimp *Model::getAiResource() {
         return assimpResource;
     }
 }

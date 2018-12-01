@@ -1,6 +1,6 @@
 #include "camera_control.h"
 
-CameraControl::CameraControl(Camera * camera, InputHandler * ih)
+CameraControl::CameraControl(Camera * camera, InputManager * ih)
 	: camera_(camera)
 	, ih_(ih)
 {
@@ -45,12 +45,12 @@ void CameraControl::update()
 
 	vec3 left = glm::normalize(glm::cross(front, cameraUp));
 
-	if (ih_->isPress(InputHandler::KEY_W)) cameraPosition-= speed * front;
-	if (ih_->isPress(InputHandler::KEY_S)) cameraPosition+= speed * front;
-	if (ih_->isPress(InputHandler::KEY_A)) cameraPosition+= left * speed;
-	if (ih_->isPress(InputHandler::KEY_D)) cameraPosition-= left * speed;
-	if (ih_->isPress(InputHandler::KEY_C)) cameraPosition-= vec3(0.0f, 0.1f, 0.0f);
-	if (ih_->isPress(InputHandler::KEY_SPACE)) cameraPosition+= vec3(0.0f, 0.1f, 0.0f);
+	if (ih_->isPress(InputManager::KEY_W)) cameraPosition-= speed * front;
+	if (ih_->isPress(InputManager::KEY_S)) cameraPosition+= speed * front;
+	if (ih_->isPress(InputManager::KEY_A)) cameraPosition+= left * speed;
+	if (ih_->isPress(InputManager::KEY_D)) cameraPosition-= left * speed;
+	if (ih_->isPress(InputManager::KEY_C)) cameraPosition-= vec3(0.0f, 0.1f, 0.0f);
+	if (ih_->isPress(InputManager::KEY_SPACE)) cameraPosition+= vec3(0.0f, 0.1f, 0.0f);
 
 	camera_->setRotation(cameraRotation);
 	camera_->setPosition(cameraPosition);

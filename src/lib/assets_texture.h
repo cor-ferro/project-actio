@@ -2,13 +2,13 @@
 #define ACTIO_ASSETS_TEXTURE_H
 
 #include "assets_base.h"
-#include "assets_resource.h"
+#include "resource.h"
 #include "image_data.h"
 
 namespace assets {
     class Texture : public BaseAsset {
     public:
-        explicit Texture(assets::Resource *resource);
+        explicit Texture(Resource *resource);
 
         std::shared_ptr<ImageData> getImage();
 

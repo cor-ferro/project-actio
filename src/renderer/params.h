@@ -6,7 +6,7 @@
 #define ACTIO_PARAMS_H
 
 namespace renderer {
-    typedef unsigned int Dimension;
+    typedef int Dimension;
 
     struct Params {
     private:

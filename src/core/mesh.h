@@ -62,13 +62,13 @@ struct Mesh : Object3D {
         }
     };
 
-    static std::shared_ptr<Mesh> Create();
+    Mesh();
 
-    static std::shared_ptr<Mesh> Create(std::shared_ptr<Material> &material);
+    Mesh(const Mesh& mesh);
 
-    static void Destroy(Mesh *mesh);
+    ~Mesh();
 
-    ~Mesh() = default;
+    void destroy();
 
     std::string getName();
 
@@ -82,23 +82,20 @@ struct Mesh : Object3D {
 
     MeshPrimitiveType getPrimitiveType();
 
-    const Geometry &getGeometry() const;
+    const Geometry& getGeometry() const;
 
-    Geometry &getGeometry();
+    Geometry& getGeometry();
 
     std::shared_ptr<Material> material;
     Geometry geometry;
     BonesMap bones;
+
 private:
-    Mesh();
-
-    Mesh(const Mesh &mesh);
-
-    void destroy();
-
     std::size_t id;
     std::string name;
     MeshPrimitiveType primitive;
 };
+
+using MeshHandle = std::shared_ptr<Mesh>;
 
 #endif

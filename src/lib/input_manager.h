@@ -19,7 +19,7 @@ struct MousePosition {
     ScreenCoord y;
 };
 
-struct InputHandler {
+struct InputManager {
     enum KeyboardKey {
         KEY_W = GLFW_KEY_W,
         KEY_A = GLFW_KEY_A,
@@ -94,7 +94,7 @@ struct InputHandler {
         float speed = 1.0f;
     };
 
-    explicit InputHandler(WindowContext &windowContext);
+    explicit InputManager(WindowContext &windowContext);
 
     bool isPress(KeyboardKey key);
 
@@ -116,7 +116,7 @@ struct InputHandler {
 
     void onMouseClick(int button, int action, int mods);
 
-    void onFrame();
+    void onFrameUpdate();
 
     void calcSensetivity(int width, int height, double dpi);
 

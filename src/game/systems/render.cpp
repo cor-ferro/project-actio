@@ -1,25 +1,28 @@
 #include "render.h"
-#include "../world.h"
-#include "../components/meshes.h"
+#include "../components/mesh.h"
 
 #include "../../renderer/init.h"
+#include "../components/camera.h"
+#include "../components/target.h"
+
+#include "../../imgui_impl_glfw_gl3.h"
 
 namespace game {
     namespace systems {
-        Render::Render(World *world) : systems::BaseSystem(world) {}
+        Render::Render(Context& context) : systems::BaseSystem(context) {}
 
         void Render::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
             if (renderer == nullptr) return;
 
-            processShaders();
             processTextures();
             processMeshes();
+            processUi();
 
             renderer::FrameContext frameContext = renderer->createFrameContext(es);
 
-            entityx::ComponentHandle<game::components::Camera> camera;
-            entityx::ComponentHandle<game::components::Transform> cameraTransform;
-            entityx::ComponentHandle<game::components::Target> cameraTarget;
+            entityx::ComponentHandle<components::Camera> camera;
+            entityx::ComponentHandle<components::Transform> cameraTransform;
+            entityx::ComponentHandle<components::Target> cameraTarget;
 
             for (ex::Entity entity : es.entities_with_components(camera, cameraTransform, cameraTarget)) {
                 frameContext.setView(camera->getView());
@@ -34,8 +37,9 @@ namespace game {
         }
 
         void Render::configure(entityx::EventManager &event_manager) {
-            event_manager.subscribe<events::RenderSetupModel>(*this);
+            event_manager.subscribe<events::RenderUpdateMesh>(*this);
             event_manager.subscribe<events::RenderResize>(*this);
+            event_manager.subscribe<events::ObjectCreate>(*this);
             event_manager.subscribe<ex::EntityDestroyedEvent>(*this);
         }
 
@@ -44,39 +48,26 @@ namespace game {
 
             // @todo: handle resize
             const renderer::Params &params = renderer->getParams();
-            context->windowHeight = static_cast<float>(params.getHeight());
-            context->windowWidth = static_cast<float>(params.getWidth());
+//            context->windowHeight = static_cast<float>(params.getHeight());
+//            context->windowWidth = static_cast<float>(params.getWidth());
         }
 
         void Render::receive(const events::RenderResize &event) {
-            context->windowWidth = static_cast<float>(event.width);
-            context->windowHeight = static_cast<float>(event.height);
+//            setSize(static_cast<float>(event.width), static_cast<float>(event.height));
         }
 
-        void Render::receive(const events::RenderSetupModel &event) {
+        void setSize(float width, float height) {
+//            context->windowWidth = width;
+//            context->windowHeight = height;
+        }
+
+        void Render::receive(const events::RenderUpdateMesh &event) {
             ex::Entity entity = event.entity;
-            events::RenderSetupModel::Action eventAction = event.action;
+            auto meshComponent = components::get<components::Mesh>(entity);
 
-            ex::ComponentHandle<c::Meshes> meshes = components::get<c::Meshes>(entity);
-
-            if (meshes) {
-                switch (eventAction) {
-                    case events::RenderSetupModel::Action::Add:
-                        for (auto &mesh : meshes->items()) {
-                            addMesh(mesh);
-                        }
-                        entity.assign<c::Renderable>();
-                        break;
-                    case events::RenderSetupModel::Action::Update:
-                        for (auto &mesh : meshes->items()) {
-                            updateMesh(mesh);
-                        }
-                        break;
-                    case events::RenderSetupModel::Action::Remove:
-                        for (auto &mesh : meshes->items()) {
-                            removeMesh(mesh);
-                        }
-                        entity.remove<c::Renderable>();
+            if (meshComponent) {
+                for (auto &mesh : meshComponent->getAll()) {
+                    updateMesh(mesh);
                 }
             }
         }
@@ -84,26 +75,42 @@ namespace game {
         void Render::receive(const ex::EntityDestroyedEvent &event) {
             ex::Entity entity = event.entity;
 
-            auto meshes = components::get<c::Meshes>(entity);
+            auto meshes = components::get<c::Mesh>(entity);
 
             if (meshes) {
-                for (auto &mesh : meshes->items()) {
+                for (auto &mesh : meshes->getAll()) {
                     removeMesh(mesh);
                 }
                 entity.remove<c::Renderable>();
             }
         }
 
+        void Render::receive(const events::ObjectCreate &event) {
+            if (event.entity.has_component<components::Renderable>()) {
+                ex::Entity entity = event.entity;
+
+                auto meshes = components::get<components::Mesh>(entity);
+
+                if (meshes) {
+                    for (auto &mesh : meshes->getAll()) {
+                        if (mesh->geometry.renderHandle == nullptr) {
+                            addMesh(mesh);
+                        }
+                    }
+                }
+            }
+        }
+
         void Render::addMesh(std::shared_ptr<Mesh> &mesh) {
-            setupMesh.push(std::make_tuple(MeshAction::Add, mesh));
+            queueCreateMesh.push(mesh);
         }
 
         void Render::updateMesh(std::shared_ptr<Mesh> &mesh) {
-            setupMesh.push(std::make_tuple(MeshAction::Update, mesh));
+            queueUpdateMesh.push(mesh);
         }
 
         void Render::removeMesh(std::shared_ptr<Mesh> &mesh) {
-            setupMesh.push(std::make_tuple(MeshAction::Remove, mesh));
+            queueDestroyMesh.push(mesh);
         }
 
         void Render::addShader(assets::Shader *asset) {
@@ -111,73 +118,56 @@ namespace game {
         }
 
         void Render::addTexture(assets::Texture *asset) {
-            setupTextures.push({ asset, TextureAction::Add });
+            queueCreateTexture.push(asset);
         }
 
         void Render::removeTexture(assets::Texture *asset) {
-            setupTextures.push({ asset, TextureAction::Remove });
+            queueDestroyTexture.push(asset);
         }
 
         void Render::addMaterial(assets::Material *asset) {
             setupMaterials.push(asset);
         }
 
-        void Render::destroy() {
-            renderer->destroy();
-            renderer = nullptr;
-        }
+        void Render::processMeshes() {
+            processQueue<MeshHandle>(queueCreateMesh, [this](MeshHandle& mesh) {
+                renderer->createMesh(mesh);
+            });
 
-        void Render::processShaders() {
-            while (!setupShaders.empty()) {
-                assets::Shader *asset = setupShaders.top();
-                setupShaders.pop();
-            }
+            processQueue<MeshHandle>(queueUpdateMesh, [this](MeshHandle& mesh) {
+                renderer->updateMesh(mesh);
+            });
+
+            processQueue<MeshHandle>(queueDestroyMesh, [this](MeshHandle& mesh) {
+                renderer->destroyMesh(mesh);
+            });
         }
 
         void Render::processTextures() {
-            while (!setupTextures.empty()) {
-                std::pair<assets::Texture*, TextureAction> &process = setupTextures.top();
-                setupTextures.pop();
+            processQueue<assets::Texture*>(queueCreateTexture, [this](assets::Texture *&asset) {
+//                renderer->createTexture(asset->getImage());
+            });
 
-                assets::Texture *asset = process.first;
-                TextureAction &action = process.second;
-
-                if (action == TextureAction::Add) {
-//                        renderer->createTexture(asset->getImage());
-                } else if (action == TextureAction::Remove) {
-//                        renderer->destroyTexture();
-                } else {
-                    console::warn("unknown process texture action");
-                }
-            }
+            processQueue<assets::Texture*>(queueDestroyTexture, [this](assets::Texture *&asset) {
+//                renderer->destroyTexture();
+            });
         }
 
-        void Render::processMeshes() {
-            size_t counter = 0;
+        void Render::processUi() {
+            ImGui_ImplGlfwGL3_NewFrame();
+            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
 
-            while (!setupMesh.empty() && counter < updatePerTick) {
-                std::tuple<MeshAction, std::shared_ptr<Mesh>> &item = setupMesh.top();
+            ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
+                                     | ImGuiWindowFlags_NoMove
+                                     | ImGuiWindowFlags_NoResize
+                                     | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-                MeshAction action = std::get<0>(item);
-                std::shared_ptr<Mesh> mesh = std::get<1>(item);
+            ImGui::Begin("Metrics", nullptr, flags);
 
-                switch (action) {
-                    case MeshAction::Add:
-                        renderer->createMesh(mesh);
-                        break;
-                    case MeshAction::Remove:
-                        renderer->destroyMesh(mesh);
-                        break;
-                    case MeshAction ::Update:
-                        renderer->updateMesh(mesh);
-                        break;
-                    default:
-                        console::warn("unknown mesh action");
-                }
 
-                setupMesh.pop();
-                counter++;
-            }
+            ImGui::SetWindowSize(ImVec2(200.0f, 350.0f));
+            ImGui::End();
+            ImGui::Render();
         }
     }
 }

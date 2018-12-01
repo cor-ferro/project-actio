@@ -7,7 +7,7 @@
 
 class ModelBuilder {
 public:
-    static void FromAi(Model *model, Resource::Assimp *assimpResource, Assets *assets);
+    static void FromAi(Model *model, resources::Assimp *assimpResource, Assets *assets);
 };
 
 #endif //ACTIO_MODEL_BUILDER_H

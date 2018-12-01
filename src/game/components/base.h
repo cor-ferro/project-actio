@@ -13,7 +13,7 @@ namespace game {
     namespace components {
         template <typename T>
         inline entityx::ComponentHandle<T> get(entityx::Entity &entity) {
-            entityx::ComponentHandle<T> model = entity.component<T>();
+            return entity.component<T>();
         }
     }
 }

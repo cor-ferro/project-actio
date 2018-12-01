@@ -11,8 +11,9 @@
 #include "../components/renderable.h"
 #include "../components/transform.h"
 #include "../components/model.h"
+#include "../events/object_create.h"
 #include "../events/render_resize.h"
-#include "../events/render_setup_model.h"
+#include "../events/render_update_mesh.h"
 #include "../../lib/console.h"
 #include "../../lib/assets_shader.h"
 #include "../../lib/assets_texture.h"
@@ -36,17 +37,11 @@ namespace game {
         namespace c = components;
 
         class Render
-                : systems::BaseSystem
+                : public systems::BaseSystem
                   , public entityx::System<Render>
                   , public ex::Receiver<Render> {
         private:
             enum class ModelAction {
-                Add = 1,
-                Remove = 2,
-                Update = 3
-            };
-
-            enum class MeshAction {
                 Add = 1,
                 Remove = 2,
                 Update = 3
@@ -63,7 +58,7 @@ namespace game {
             };
 
         public:
-            explicit Render(World *world);
+            explicit Render(Context& context);
 
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
@@ -73,9 +68,13 @@ namespace game {
 
             void receive(const events::RenderResize &event);
 
-            void receive(const events::RenderSetupModel &event);
+            void receive(const events::RenderUpdateMesh &event);
+
+            void receive(const events::ObjectCreate &event);
 
             void receive(const ex::EntityDestroyedEvent &event);
+
+            void setSize(float width, float height);
 
             void addMesh(std::shared_ptr<Mesh> &mesh);
 
@@ -91,22 +90,23 @@ namespace game {
 
             void addMaterial(assets::Material *asset);
 
-            void destroy();
-
         private:
-            void processShaders();
-
             void processTextures();
 
             void processMeshes();
 
-            int updatePerTick = 30;
+            void processUi();
 
             renderer::Renderer *renderer = nullptr;
 
-            std::stack<std::tuple<MeshAction, std::shared_ptr<Mesh>>> setupMesh;
+            std::stack<MeshHandle> queueCreateMesh;
+            std::stack<MeshHandle> queueUpdateMesh;
+            std::stack<MeshHandle> queueDestroyMesh;
+
+            std::stack<assets::Texture*> queueCreateTexture;
+            std::stack<assets::Texture*> queueDestroyTexture;
+
             std::stack<assets::Shader*> setupShaders;
-            std::stack<std::pair<assets::Texture*, TextureAction>> setupTextures;
             std::stack<assets::Material*> setupMaterials;
         };
     }

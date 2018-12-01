@@ -5,6 +5,7 @@
 #ifndef ACTIO_STRATEGIES_WEAPONS_BASE_H
 #define ACTIO_STRATEGIES_WEAPONS_BASE_H
 
+#include <stack>
 #include <entityx/entityx/Entity.h>
 #include <entityx/entityx/System.h>
 #include <entityx/entityx/Event.h>
@@ -24,25 +25,21 @@ namespace game {
         namespace ex = entityx;
         namespace c = components;
 
-        class WeaponsBase {
+        class WeaponStrategy {
         public:
-            WeaponsBase(std::string name) : name(name) {
+            explicit WeaponStrategy(const std::string& name) : name(name) {};
 
-            };
+            virtual ~WeaponStrategy() = default;
 
-            virtual ~WeaponsBase() = default;
+            virtual void onWeaponUpdate(float dt, game::Weapon *weaponHandler) = 0;
 
-            void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {}
-
-            virtual void onWeaponUpdate(float dt, game::WeaponHandler *weaponHandler) = 0;
-
-            virtual void onWeaponFire(game::World *world, game::WeaponHandler *weaponHandler) = 0;
+            virtual void onWeaponFire(game::World *world, game::Weapon *weaponHandler) = 0;
 
             virtual void onWeaponOverheat() = 0;
 
             virtual void onProjectileCreate() = 0;
 
-            virtual void onProjectileUpdate(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) = 0;
+            virtual void onProjectileUpdate(ex::Entity entity, c::WeaponProjectile &projectile) = 0;
 
             virtual void onProjectileCollision(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) = 0;
 

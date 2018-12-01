@@ -5,7 +5,7 @@ namespace assets {
     /**
      * -------------------- Texture --------------------
      */
-    Texture::Texture(assets::Resource *resource) : BaseAsset(resource) {};
+    Texture::Texture(Resource *resource) : BaseAsset(resource) {};
 
     std::shared_ptr<ImageData> Texture::getImage() {
         if (!image) {

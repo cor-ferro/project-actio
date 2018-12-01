@@ -10,6 +10,7 @@ namespace Math {
 
     bool Box3::isEmpty()
     {
-        // return size == 0.0f;
+//        return size == 0.0f;
+        return false;
     }
 }

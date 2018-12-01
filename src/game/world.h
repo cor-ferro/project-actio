@@ -1,243 +1,109 @@
-#ifndef GAME_WORLD_H
-#define GAME_WORLD_H
+//
+// Created by demitriy on 11/9/18.
+//
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <map>
-#include <list>
-#include <glm/glm.hpp>
+#ifndef ACTIO_GAME_WORLD_H
+#define ACTIO_GAME_WORLD_H
+
 #include <entityx/entityx.h>
-#include <boost/lockfree/queue.hpp>
+
 #include "context.h"
-#include "character.h"
-#include "script.h"
-#include "../lib/console.h"
-#include "../lib/watch.h"
-#include "../lib/input_handler.h"
-#include "../lib/ini_loader.h"
-#include "../lib/profiling.h"
-#include "../lib/assets.h"
-#include "../resources/file_resource.h"
-#include "../renderer/renderer.h"
-#include "../core/model_builder.h"
-#include "../core/skin_builder.h"
+
 #include "systems/physic.h"
 #include "systems/camera.h"
-#include "systems/input.h"
-#include "systems/weapons.h"
 #include "systems/render.h"
-#include "components/weapon.h"
-#include "components/weaponStrategy.h"
-#include "desc/light_point.h"
-#include "desc/light_directional.h"
-#include "desc/light_spot.h"
-#include "desc/weapon.h"
-#include "weapon_handler.h"
-#include "world_object.h"
-#include "world_tasks.h"
+#include "systems/ball_shot.h"
+#include "systems/animations.h"
+#include "systems/character_control.h"
+#include "systems/input.h"
+#include "systems/char_control.h"
+#include "systems/lights.h"
+#include "systems/light_helpers.h"
+#include "systems/day_time.h"
+#include "systems/weapons.h"
+#include "systems/sky.h"
 
-/**
- * \defgroup World
- * \brief World namespace
- */
+#include "../lib/profiling.h"
 
 namespace game {
     namespace ex = entityx;
-    namespace c = components;
 
-    typedef glm::vec3 vec3;
-    typedef glm::vec2 vec2;
-    typedef glm::mat4 mat4;
-
-    struct World : ex::EntityX {
-        /**
-         * Base weapon of world
-         */
-        class Weapon : public WorldObject {
-        public:
-            Weapon(ex::Entity& fromEntity, desc::Weapon description, strategy::WeaponsBase *weaponStrategy)
-                    : WorldObject(fromEntity) {
-                weapon = entity_.assign<c::Weapon>(description);
-                strategy = entity_.assign<c::WeaponStrategy>(weaponStrategy);
-            }
-
-            Weapon(const Weapon& other) = default;
-
-            Weapon& operator=(const Weapon& other) = default;
-
-            ex::ComponentHandle<c::Weapon> weapon;
-            ex::ComponentHandle<c::WeaponStrategy> strategy;
-        private:
-            explicit Weapon() = default;
-        };
-
-        /**
-         * World constructor
-         */
-        World();
-
-        void destroyRenderer();
-
-        void setup();
-
-        void destroy();
-
-        void update(ex::TimeDelta dt);
-
-        void render(ex::TimeDelta dt);
-
-        void setRenderer(renderer::Renderer *renderer);
-
-        bool registerWeapon(strategy::WeaponsBase *system);
-
-        void addLight(desc::LightPointDesc);
-
-        void addLight(desc::LightDirectionalDesc);
-
-        void addLight(desc::LightSpotDesc);
-
-        void setPhysicsDebug(bool value);
-
-        void setLightDebug(bool value);
-
-        void setCameraSettings(float fov, float aspect, float near, float far);
-
-        void setGravity(vec3 dir);
-
-        void cameraLookAt(vec3 target);
-
-        void setRenderSize(renderer::Dimension width, renderer::Dimension height);
-
-        void setInput(int place, InputHandler *ih);
-
-        void removeInput(systems::Input::InputPlace place);
-
-        void forcePush(ex::Entity entity, vec3 direction, float force);
-
-        void impactWave(vec3 position, vec3 direction);
-
-        std::shared_ptr<Material> findMaterial(const std::string& name);
-
-        game::WorldObject *getUserControlCharacter();
-
-        game::Context& getContext();
-
-        void importAssets(std::shared_ptr<Assets>& newAssets);
-
-        std::shared_ptr<Assets> getAssets();
-
-        void load();
-
-        void unload();
-
-        const profiling::ProfileTimings& getSystemProfiler() const;
-
-        void generateBaseTerrain();
-
-
-        void asyncLoad(assets::Model *asset);
-
-        void asyncLoadModel(assets::Model *asset);
-
-        bool hasTasks();
-
-        WorldTask *popTaskToPerform();
-
-        void performTask(WorldTask *task);
-
-        void flush();
-
-        void setupRenderMesh(const ex::Entity& entity);
-
-        /* ----- API v2 ----- */
-
-        game::WorldObject *createObject();
-
-        game::WorldObject *createObject(const glm::vec3& pos);
-
-        game::WorldObject *createStaticObject();
-
-        game::WorldObject *createDynamicObject();
-
-        game::WorldObject *createStaticObject(const glm::vec3& pos);
-
-        game::WorldObject *createStaticObject(const game::WorldObject::Description& description);
-
-        game::WorldObject *createDynamicObject(const glm::vec3& pos);
-
-        game::WorldObject *createDynamicObject(const game::WorldObject::Description& description);
-
-        game::WorldObject *createCharacterObject();
-
-        game::WorldObject *createLightObject(const desc::LightDirectionalDesc& description);
-
-        game::WorldObject *createLightObject(const game::desc::LightPointDesc& description);
-
-        game::WorldObject *createLightObject(const game::desc::LightSpotDesc& description);
-
-        void setObjectMesh(game::WorldObject *object, std::shared_ptr<Mesh>& mesh);
-
-        void setObjectModel(game::WorldObject *object, assets::Model *);
-
-        void destroyObject(game::WorldObject *object);
-
-        ex::Entity createTerrain(const std::shared_ptr<ImageData>& image);
-
-        void hideObject(ex::Entity& entity);
-
-        void showObject(ex::Entity& entity);
-
-        void hideObject(game::WorldObject *object);
-
-        void showObject(game::WorldObject *object);
-
-        void spawn(game::WorldObject *object);
-
-        void spawn(game::WorldObject *object, const vec3& position);
-
-        void makeControlled(game::WorldObject *object);
-
-        void makeUnControlled(game::WorldObject *object);
-
-        void forcePush(game::WorldObject *object, const vec3& direction, const float& force);
-
-        assets::Model *findAssetModel(const std::string& name);
+    class World : ex::EntityX {
+    public:
+        explicit World(Context& context) : m_context(context) {};
+
+        void setup() {
+            systems.add<systems::Render>(m_context);
+            systems.add<systems::Input>(m_context);
+            systems.add<systems::Camera>(m_context);
+            systems.add<systems::CharControl>(m_context);
+            systems.add<systems::Animations>(m_context);
+            systems.add<systems::Physic>(m_context);
+            systems.add<systems::BallShot>(m_context);
+            systems.add<systems::Lights>(m_context);
+            systems.add<systems::LightHelpers>(m_context);
+            systems.add<systems::DayTime>(m_context);
+            systems.add<systems::Sky>(m_context);
+            systems.add<systems::Weapons>(m_context);
+
+            systems.configure();
+        }
+
+        void start() {
+            ex::TimeDelta dt = 0.16;
+
+            systems.system<systems::Render>()->start(entities, events, dt);
+            systems.system<systems::Input>()->start(entities, events, dt);
+            systems.system<systems::Camera>()->start(entities, events, dt);
+            systems.system<systems::CharControl>()->start(entities, events, dt);
+            systems.system<systems::Animations>()->start(entities, events, dt);
+            systems.system<systems::Physic>()->start(entities, events, dt);
+            systems.system<systems::BallShot>()->start(entities, events, dt);
+            systems.system<systems::Lights>()->start(entities, events, dt);
+            systems.system<systems::LightHelpers>()->start(entities, events, dt);
+            systems.system<systems::DayTime>()->start(entities, events, dt);
+            systems.system<systems::Sky>()->start(entities, events, dt);
+            systems.system<systems::Weapons>()->start(entities, events, dt);
+        }
+
+        void update(const ex::TimeDelta& dt) {
+            profiling::Mark m = profiling::mark(systemsProfiler, "EngineUpdate");
+
+            // pre update
+            PROFILE(systemsProfiler, "Input", systems.update<game::systems::Input>(dt));
+            PROFILE(systemsProfiler, "Camera", systems.update<game::systems::Camera>(dt));
+            PROFILE(systemsProfiler, "CharControl", systems.update<game::systems::CharControl>(dt));
+            PROFILE(systemsProfiler, "Physic", systems.update<game::systems::Physic>(dt));
+            PROFILE(systemsProfiler, "Lights", systems.update<game::systems::Lights>(dt));
+            PROFILE(systemsProfiler, "DayTime", systems.update<game::systems::DayTime>(dt));
+            PROFILE(systemsProfiler, "Sky", systems.update<game::systems::Sky>(dt));
+
+            // main update
+            PROFILE(systemsProfiler, "Weapons", systems.update<game::systems::Weapons>(dt));
+            PROFILE(systemsProfiler, "BallShot", systems.update<game::systems::BallShot>(dt));
+
+//    for (auto &script : scripts) {
+//        PROFILE(systemProfiler, script->getName(), script->evalUpdate(static_cast<float>(dt)));
+//    }
+
+            // post update
+            PROFILE(systemsProfiler, "Animations", systems.update<game::systems::Animations>(dt));
+            PROFILE(systemsProfiler, "LightHelpers", systems.update<game::systems::LightHelpers>(dt));
+        }
+
+        void render(const ex::TimeDelta& dt) {
+            PROFILE(systemsProfiler, "Render", systems.update<game::systems::Render>(dt));
+        }
+
+        ex::Entity createEntity() {
+            return entities.create();
+        }
 
     private:
-        std::string name;
+        profiling::ProfileTimings systemsProfiler;
 
-        std::shared_ptr<game::systems::Physic> physic = nullptr;
-        std::shared_ptr<game::systems::Camera> camera = nullptr;
-        std::shared_ptr<game::systems::Weapons> weapons = nullptr;
-        std::shared_ptr<game::systems::Render> renderer = nullptr;
-
-        std::map<game::WorldObject::Id, game::WorldObject *> objects;
-
-        InputHandler *input1 = nullptr;
-        InputHandler *input2 = nullptr;
-
-        Context context;
-
-        profiling::ProfileTimings systemProfiler;
-
-        std::vector<game::Script *> scripts;
-
-        std::shared_ptr<Assets> assets;
-
-        boost::lockfree::queue<WorldTask *> tasks;
-        boost::lockfree::queue<WorldTask *> completedTasks;
-
-        void reloadAssetsScripts();
-
-        void reloadRenderAssets();
-
-        void unloadScripts();
-
-        void unloadTextures();
-
-        void applyObjectAsset(game::WorldObject *object, assets::Model *asset);
+        Context& m_context;
     };
 }
 
-#endif
+#endif //ACTIO_WORLD_H

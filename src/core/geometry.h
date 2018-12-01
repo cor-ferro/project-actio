@@ -104,7 +104,7 @@ struct Geometry {
 
     bool isNeedUpdateIndices();
 
-    renderer::GeometryHandle *renderHandle;
+    renderer::GeometryHandle *renderHandle = nullptr;
 
 protected:
 

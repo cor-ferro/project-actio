@@ -1,218 +1,115 @@
 #include "physic.h"
-#include "../world.h"
 #include <glm/gtc/random.hpp>
 
 namespace game {
     namespace systems {
-        Physic::Physic(World *world) : systems::BaseSystem(world) {
-            gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
-            gPvd = PxCreatePvd(*gFoundation);
-            gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, px::PxTolerancesScale(), true, gPvd);
+        Physic::Physic(Context& context) : systems::BaseSystem(context) {
 
-            cpuDispatcher = px::PxDefaultCpuDispatcherCreate(4);
-
-//                PxCudaContextManagerDesc cudaContextManagerDesc;
-//                cudaContextManager = PxCreateCudaContextManager(*gFoundation, cudaContextManagerDesc);
-
-            px::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-            sceneDesc.gravity = px::PxVec3(0.0f, -9.8f, 0.0f);
-            sceneDesc.cpuDispatcher = cpuDispatcher;
-//                sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
-//                sceneDesc.flags |= px::PxSceneFlag::eENABLE_GPU_DYNAMICS;
-//                sceneDesc.gpuDispatcher = cudaContextManager->getGpuDispatcher();
-//                sceneDesc.filterShader = px::PxDefaultSimulationFilterShader;
-            sceneDesc.filterShader = PhysicFilterShader;
-            sceneDesc.flags |= px::PxSceneFlag::eENABLE_PCM;
-            sceneDesc.flags |= px::PxSceneFlag::eENABLE_STABILIZATION;
-            sceneDesc.gpuMaxNumPartitions = 8;
-            sceneDesc.simulationEventCallback = this;
-
-            gScene = gPhysics->createScene(sceneDesc);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eSCALE, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eACTOR_AXES, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eWORLD_AXES, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eBODY_AXES, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eBODY_MASS_AXES, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eBODY_LIN_VELOCITY, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eBODY_ANG_VELOCITY, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_POINT, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_NORMAL, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_ERROR, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_FORCE, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_AABBS, 1.0f);
-//                gScene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_AXES, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_EDGES, 1.0f);
-//                gScene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_STATIC, 1.0f);
-//                gScene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_DYNAMIC, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eJOINT_LIMITS, 1.0f);
-            gScene->setVisualizationParameter(px::PxVisualizationParameter::eCULL_BOX, 1.0f);
-
-            gControllerManager = PxCreateControllerManager(*gScene);
-
-            px::PxTolerancesScale scale;
-            px::PxCookingParams params(scale);
-            params.meshWeldTolerance = 0.001f;
-            params.meshPreprocessParams = px::PxMeshPreprocessingFlags(px::PxMeshPreprocessingFlag::eWELD_VERTICES);
-            params.buildGPUData = false; //Enable GRB data being produced in cooking.
-            cooking = PxCreateCooking(PX_PHYSICS_VERSION, *gFoundation, params);
-            if(!cooking)
-                console::err("PxCreateCooking failed!");
-
-            pxMaterials.insert({"default", gPhysics->createMaterial(0.2f, 0.1f, 0.2f)});
-
-            px::PxRigidStatic *groundPlane = PxCreatePlane(*gPhysics, px::PxPlane(0, 1, 0, 0),
-                                                           *(pxMaterials["default"]));
-            gScene->addActor(*groundPlane);
-
-            controlDir = px::PxVec3(0.0f);
-
-            console::info("system physics inited");
         }
 
         Physic::~Physic() {
-            console::info("destroy physic system");
-            pxMaterials.erase(pxMaterials.begin(), pxMaterials.end());
+            if (debugLinesEntity.valid()) debugLinesEntity.destroy();
+            if (debugTrianglesEntity.valid()) debugTrianglesEntity.destroy();
+            if (debugPointsEntity.valid()) debugPointsEntity.destroy();
+        }
 
-            if (gControllerManager != nullptr) {
-                console::info("destroy controller manager");
-                gControllerManager->purgeControllers();
-                gControllerManager->release();
-                gControllerManager = nullptr;
-                console::info("end destroy controller manager");
-            }
+        void Physic::configure(ex::EntityManager& entities, entityx::EventManager& events) {
+            events.subscribe<ex::EntityCreatedEvent>(*this);
+            events.subscribe<ex::EntityDestroyedEvent>(*this);
+            events.subscribe<events::ObjectCreate>(*this);
+            events.subscribe<events::PhysicForce>(*this);
+            events.subscribe<events::MakeControlled>(*this);
+            events.subscribe<events::MakeUnControlled>(*this);
 
-            if (cpuDispatcher != nullptr) {
-                cpuDispatcher->release();
-                cpuDispatcher = nullptr;
-            }
-
-            if (gpuDispatcher != nullptr) {
-//                    gpuDispatcher->release();
-            }
-
-//                if (cudaContextManager != nullptr) {
-//                    cudaContextManager->release();
-//                }
-
-            if (gScene != nullptr) {
-                gScene->release();
-                gScene = nullptr;
-            }
-
-            if (cooking != nullptr) {
-                cooking->release();
-                cooking = nullptr;
-            }
-
-            if (gPhysics != nullptr) {
-                gPhysics->release();
-                gPhysics = nullptr;
-            }
-
-            if (gFoundation != nullptr) {
-                gFoundation->release();
-                gFoundation = nullptr;
-            }
-
+//            {
+////                debugLinesObject = world->createObject();
+//                debugLinesObject = context->createObject();
 //
-//                console::info("physics released");
+//                std::shared_ptr<Mesh> mesh = Mesh::Create();
+//
+//                GeometryBuilder::Lines(mesh->geometry, {});
+//                mesh->geometry.setType(Geometry::Geometry_Dynamic);
+//                mesh->material->setDiffuse(vec3(0.0f, 1.0f, 0.0f));
+//
+//                mesh->setPrimitiveType(Mesh_Primitive_Line);
+//
+//                world->setObjectMesh(debugLinesObject, mesh);
+//            }
+
+//            {
+//                debugTrianglesObject = context->createObject();
+//
+//                std::shared_ptr<Mesh> mesh = Mesh::Create();
+//
+//                mesh->geometry.setType(Geometry::Geometry_Dynamic);
+//                mesh->material->setDiffuse(vec3(0.0f, 0.0f, 1.0f));
+//
+//                mesh->setPrimitiveType(Mesh_Primitive_Triangle);
+//
+//                world->setObjectMesh(debugTrianglesObject, mesh);
+//            }
+
+//            {
+//                debugPointsObject = context->createObject();
+//
+//                std::shared_ptr<Mesh> mesh = Mesh::Create();
+//
+//                mesh->geometry.setType(Geometry::Geometry_Dynamic);
+//                mesh->material->setDiffuse(vec3(1.0f, 0.0f, 0.0f));
+//
+//                mesh->setPrimitiveType(Mesh_Primitive_Point);
+//
+//                world->setObjectMesh(debugPointsObject, mesh);
+//            }
         }
 
-        void Physic::configure(ex::EntityManager &entities, entityx::EventManager &event_manager) {
-            event_manager.subscribe<ex::EntityCreatedEvent>(*this);
-            event_manager.subscribe<ex::EntityDestroyedEvent>(*this);
-            event_manager.subscribe<events::PhysicCreateSphere>(*this);
-            event_manager.subscribe<events::PhysicCreateBox>(*this);
-            event_manager.subscribe<events::PhysicForce>(*this);
-            event_manager.subscribe<events::MakeControlled>(*this);
-            event_manager.subscribe<events::MakeUnControlled>(*this);
-            event_manager.subscribe<events::KeyPress>(*this);
+        void Physic::start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
+            systems::BaseSystem::start(es, events, dt);
 
-            {
-//                world->createObject();
-                debugLinesObject = world->createObject();
+            debugLinesEntity = m_context.createObject(es);
+            debugTrianglesEntity = m_context.createObject(es);
+            debugPointsEntity = m_context.createObject(es);
 
-                std::shared_ptr<Mesh> mesh = Mesh::Create();
+            MeshHandle debugLinesMesh = m_context.meshes().create();
+            MeshHandle debugTrianglesMesh = m_context.meshes().create();
+            MeshHandle debugPointsMesh = m_context.meshes().create();
 
-                GeometryBuilder::Lines(mesh->geometry, {});
-                mesh->geometry.setType(Geometry::Geometry_Dynamic);
-                mesh->material->setDiffuse(vec3(0.0f, 1.0f, 0.0f));
+            debugLinesEntity.assign<components::Mesh>(debugLinesMesh);
+            debugLinesEntity.assign<components::Renderable>();
 
-                mesh->setPrimitiveType(Mesh_Primitive_Line);
+            debugTrianglesEntity.assign<components::Mesh>(debugTrianglesMesh);
+            debugTrianglesEntity.assign<components::Renderable>();
 
-                world->setObjectMesh(debugLinesObject, mesh);
-            }
+            debugPointsEntity.assign<components::Mesh>(debugPointsMesh);
+            debugPointsEntity.assign<components::Renderable>();
 
-            {
-                debugTrianglesObject = world->createObject();
-
-                std::shared_ptr<Mesh> mesh = Mesh::Create();
-
-                mesh->geometry.setType(Geometry::Geometry_Dynamic);
-                mesh->material->setDiffuse(vec3(0.0f, 0.0f, 1.0f));
-
-                mesh->setPrimitiveType(Mesh_Primitive_Triangle);
-
-                world->setObjectMesh(debugTrianglesObject, mesh);
-            }
-
-            {
-                debugPointsObject = world->createObject();
-
-                std::shared_ptr<Mesh> mesh = Mesh::Create();
-
-                mesh->geometry.setType(Geometry::Geometry_Dynamic);
-                mesh->material->setDiffuse(vec3(1.0f, 0.0f, 0.0f));
-
-                mesh->setPrimitiveType(Mesh_Primitive_Point);
-
-                world->setObjectMesh(debugPointsObject, mesh);
-            }
+            events.emit<events::ObjectCreate>(debugLinesEntity);
+            events.emit<events::ObjectCreate>(debugTrianglesEntity);
+            events.emit<events::ObjectCreate>(debugPointsEntity);
         }
 
-        void Physic::postConfigure(entityx::EventManager &events) {
-            world->spawn(debugLinesObject, vec3(0.0f));
-            world->spawn(debugTrianglesObject, vec3(0.0f));
-            world->spawn(debugPointsObject, vec3(0.0f));
-
-            world->setupRenderMesh(debugLinesObject->getEntity());
-            world->setupRenderMesh(debugTrianglesObject->getEntity());
-            world->setupRenderMesh(debugPointsObject->getEntity());
-        }
-
-        void Physic::destroy() {
-
-        }
-
-        void Physic::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
+        void Physic::update(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
             PX_UNUSED(false);
 
             auto elapsedTime = static_cast<px::PxReal>(dt / 1000.0);
 
-            gScene->collide(elapsedTime);
-            gScene->fetchCollision(true);
-            gScene->advance();
-            gScene->fetchResults(true);
+            m_context.physic().update(elapsedTime);
 
             while (!contactedActors.empty()) {
-                const std::pair<px::PxActor *, px::PxActor *> &pair = contactedActors.top();
+                const std::pair<px::PxActor *, px::PxActor *>& pair = contactedActors.top();
 
                 events.emit<events::PhysicContact>(pair.first, pair.second);
 
                 contactedActors.pop();
             }
 
-            updateObjects1(es);
-//            updateObjects2();
-
             es.each<c::Character, c::UserControl, c::Transform>([&elapsedTime, this](
                     ex::Entity entity,
-                    c::Character &character,
-                    c::UserControl &userControl,
-                    c::Transform &transform
+                    c::Character& character,
+                    c::UserControl& userControl,
+                    c::Transform& transform
             ) {
-                px::PxVec3 gravity = gScene->getGravity();
+                const px::PxVec3 gravity = m_context.physic().getSceneGravity();
 
                 if (character.isJump) {
                     character.jump += (gravity.y) * elapsedTime;
@@ -235,7 +132,7 @@ namespace game {
 //                    if (flags & px::PxControllerCollisionFlag::eCOLLISION_SIDES)
 //                        console::info("eCOLLISION_SIDES");
 
-                const px::PxExtendedVec3 &pxPos = userControl.controller->getFootPosition();
+                const px::PxExtendedVec3& pxPos = userControl.controller->getFootPosition();
 
                 if (!character.isJump && pxPos.y > 0.0) {
                     character.jump -= (gravity.y) * elapsedTime;
@@ -245,31 +142,17 @@ namespace game {
                 transform.setPosition(px::toVec3(pxPos));
             });
 
-            if (drawDebug) {
-                drawDebugBuffer(events);
+            if (isDisplayDebug) {
+                updateDebugBuffer(events);
             }
         }
 
-        void Physic::setDrawDebug(bool value) {
-            drawDebug = value;
+        void Physic::updateDebugBuffer(ex::EventManager& events) {
+            const px::PxRenderBuffer& rb = m_context.physic().getScene()->getRenderBuffer();
 
-            if (!drawDebug) {
-                world->hideObject(debugLinesObject);
-                world->hideObject(debugTrianglesObject);
-                world->hideObject(debugPointsObject);
-            } else {
-                world->showObject(debugLinesObject);
-                world->showObject(debugTrianglesObject);
-                world->showObject(debugPointsObject);
-            }
-        }
-
-        void Physic::drawDebugBuffer(ex::EventManager &events) {
-            const px::PxRenderBuffer &rb = gScene->getRenderBuffer();
-
-            std::shared_ptr<Mesh> linesMesh = debugLinesObject->getComponent<c::Meshes>()->item();
-            std::shared_ptr<Mesh> trianglesMesh = debugTrianglesObject->getComponent<c::Meshes>()->item();
-            std::shared_ptr<Mesh> pointsMesh = debugPointsObject->getComponent<c::Meshes>()->item();
+            MeshHandle& linesMesh = debugLinesEntity.component<components::Mesh>()->get();
+            MeshHandle& trianglesMesh = debugTrianglesEntity.component<components::Mesh>()->get();
+            MeshHandle& pointsMesh = debugPointsEntity.component<components::Mesh>()->get();
 
             const px::PxU32 countLines = rb.getNbLines();
             const px::PxU32 countTriangles = rb.getNbTriangles();
@@ -281,7 +164,7 @@ namespace game {
                     vertices.reserve(countLines * 2);
 
                     for (px::PxU32 i = 0; i < countLines; i++) {
-                        const px::PxDebugLine &line = rb.getLines()[i];
+                        const px::PxDebugLine& line = rb.getLines()[i];
 
                         vertices.push_back(vec3(line.pos0.x, line.pos0.y, line.pos0.z));
                         vertices.push_back(vec3(line.pos1.x, line.pos1.y, line.pos1.z));
@@ -293,12 +176,12 @@ namespace game {
                     GeometryVertices *vertices = linesMesh->geometry.getVertices();
 
                     for (px::PxU32 i = 0; i < countLines; i++) {
-                        const px::PxDebugLine &line = rb.getLines()[i];
+                        const px::PxDebugLine& line = rb.getLines()[i];
 
-                        Vertex &vertex = vertices->at(i * 2);
+                        Vertex& vertex = vertices->at(i * 2);
                         vertex.Position = vec3(line.pos0.x, line.pos0.y, line.pos0.z);
 
-                        Vertex &vertex2 = vertices->at((i * 2) + 1);
+                        Vertex& vertex2 = vertices->at((i * 2) + 1);
                         vertex2.Position = vec3(line.pos1.x, line.pos1.y, line.pos1.z);
                     }
                 }
@@ -310,7 +193,7 @@ namespace game {
                     vertices.reserve(countTriangles * 3);
 
                     for (px::PxU32 i = 0; i < countTriangles; i++) {
-                        const px::PxDebugTriangle &triangle = rb.getTriangles()[i];
+                        const px::PxDebugTriangle& triangle = rb.getTriangles()[i];
 
                         vertices.push_back(vec3(triangle.pos0.x, triangle.pos0.y, triangle.pos0.z));
                         vertices.push_back(vec3(triangle.pos1.x, triangle.pos1.y, triangle.pos1.z));
@@ -323,15 +206,15 @@ namespace game {
                     GeometryVertices *vertices = trianglesMesh->geometry.getVertices();
 
                     for (px::PxU32 i = 0; i < countTriangles; i++) {
-                        const px::PxDebugTriangle &triangle = rb.getTriangles()[i];
+                        const px::PxDebugTriangle& triangle = rb.getTriangles()[i];
 
-                        Vertex &vertex = vertices->at(i * 3);
+                        Vertex& vertex = vertices->at(i * 3);
                         vertex.Position = vec3(triangle.pos0.x, triangle.pos0.y, triangle.pos0.z);
 
-                        Vertex &vertex2 = vertices->at((i * 3) + 1);
+                        Vertex& vertex2 = vertices->at((i * 3) + 1);
                         vertex2.Position = vec3(triangle.pos1.x, triangle.pos1.y, triangle.pos1.z);
 
-                        Vertex &vertex3 = vertices->at((i * 3) + 2);
+                        Vertex& vertex3 = vertices->at((i * 3) + 2);
                         vertex3.Position = vec3(triangle.pos2.x, triangle.pos2.y, triangle.pos2.z);
                     }
                 }
@@ -343,7 +226,7 @@ namespace game {
                     vertices.reserve(countPoints);
 
                     for (px::PxU32 i = 0; i < countPoints; i++) {
-                        const px::PxDebugPoint &point = rb.getPoints()[i];
+                        const px::PxDebugPoint& point = rb.getPoints()[i];
 
                         vertices.push_back(vec3(point.pos.x, point.pos.y, point.pos.z));
                     }
@@ -354,183 +237,59 @@ namespace game {
                     GeometryVertices *vertices = pointsMesh->geometry.getVertices();
 
                     for (px::PxU32 i = 0; i < countPoints; i++) {
-                        const px::PxDebugPoint &point = rb.getPoints()[i];
+                        const px::PxDebugPoint& point = rb.getPoints()[i];
 
-                        Vertex &vertex = vertices->at(i);
+                        Vertex& vertex = vertices->at(i);
                         vertex.Position = vec3(point.pos.x, point.pos.y, point.pos.z);
                     }
                 }
             }
 
-            events.emit<events::RenderSetupModel>(debugLinesObject, events::RenderSetupModel::Action::Update);
-            events.emit<events::RenderSetupModel>(debugTrianglesObject, events::RenderSetupModel::Action::Update);
-            events.emit<events::RenderSetupModel>(debugPointsObject, events::RenderSetupModel::Action::Update);
+            events.emit<events::RenderUpdateMesh>(debugLinesEntity);
+            events.emit<events::RenderUpdateMesh>(debugTrianglesEntity);
+            events.emit<events::RenderUpdateMesh>(debugPointsEntity);
         }
 
-        void Physic::setSceneGravity(vec3 value) {
-            gScene->setGravity(PX_REST_VEC(value));
-        };
-
-        px::PxRigidDynamic * Physic::createDynamic(const px::PxTransform &t, const px::PxGeometry &geometry, const px::PxVec3 &velocity) {
-            px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
-
-            px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
-            dynamic->setAngularDamping(0.5f);
-            dynamic->setLinearVelocity(velocity);
-
-            return dynamic;
-        }
-
-        void Physic::wave(vec3 position, vec3 direction) {
-            float radius = 1.0f;
-
-            px::PxSphereGeometry geometry(5.0f);
-            px::PxTransform pose(PX_REST_VEC(position));
-//                px::PxOverlapBuffer buf;
-
-            px::PxOverlapHit hitBuffer[5];
-            px::PxMemZero(&hitBuffer, sizeof(hitBuffer));
-            px::PxFilterData fd(0, 0, 0, 0);
-            px::PxOverlapBuffer buf(hitBuffer, 5);
-
-            bool status = gScene->overlap(geometry, pose, buf, px::PxQueryFilterData(fd, px::PxQueryFlag::eDYNAMIC));
-
-            console::info("hits: %i", buf.getNbAnyHits());
-            console::info("touch: %i", buf.getNbTouches());
-            console::info("buf.hasBlock: %i", buf.hasBlock);
-
-            if (status) {
-                const px::PxU32 countHits = buf.getNbAnyHits();
-
-                for (px::PxU32 i = 0; i < countHits; i++) {
-                    const px::PxOverlapHit &hit = buf.getAnyHit(i);
-
-//                        px::PxU32 flags = hit.actor->getActorFlags();
-//                        if (flags & px::PxRigidBodyFlag::eKINEMATIC) {
-//                            console::info("skip");
-////                            continue;
-//                        }
-//
-//                        auto* body = static_cast<px::PxRigidDynamic*>(hit.actor);
-//
-//                        px::PxVec3 dir = pose.p - hit.shape->;
-//
-//                        body->addForce(px::PxVec3(0.0f, 15.0f, 0.0f), px::PxForceMode::eVELOCITY_CHANGE);
-//                        console::info("add force!");
-                }
-
-            }
-
-
-//                px::PxSweepBuffer hit;
-//                px::PxGeometry sweepShape = px::PxCreate //px::PxSphereGeometry(static_cast<px::PxReal>(radius));
-//                px::PxTransform initialPose(PX_REST_VEC(position));
-//                px::PxVec3 sweepDirection = PX_REST_VEC(direction);
-//
-//                px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
-//                px::PxRigidStatic *actor = px::PxCreateStatic(*gPhysics, initialPose, sweepShape, *gMaterial);
-
-
-
-//                const px::PxSphereGeometry &sphereGeom = static_cast<const px::PxSphereGeometry &>(sweepShape);
-//
-//                gScene->removeActor(*actor);
-
-//                PxRigidDynamic* actor = mActor->getController()->getActor();
-//                PxShape* capsuleShape = getShape( *actor );
-//                px::PxCapsuleGeometry capGeom(capsuleShape->getGeometry().capsule());
-//
-//                bool status = gScene->sweep(sweepShape, initialPose, sweepDirection, distance, hit);
-
-//                if (status) {
-//                    px::PxU32 countHits = hit.getNbTouches();
-//
-//                    for (px::PxU32 i = 0; i < countHits; i++) {
-//                        const px::PxSweepHit &h = hit.getTouch(i);
-//                        const px::PxType actorType = h.actor->getConcreteType();
-//
-//                        if (actorType == px::PxConcreteType::eRIGID_DYNAMIC) {
-//                            auto* body = reinterpret_cast<px::PxRigidDynamic*>(h.actor);
-//                            body->addForce(px::PxVec3(0.0f, 1.0f, 0.0f), px::PxForceMode::eVELOCITY_CHANGE);
-//                        }
-//                    }
-//                }
-        }
-
-        void Physic::receive(const ex::EntityCreatedEvent &event) {
+        void Physic::receive(const ex::EntityCreatedEvent& event) {
 //                const Entity& e = event.entity;
-//                event.entity.assign<c::Controlled>(gControllerManager);
+//                event.entity.assign<c::Controlled>(m_controllerManager);
         }
 
-        void Physic::receive(const ex::EntityDestroyedEvent &event) {
-//                event.entity.assign<c::Controlled>(gControllerManager);
+        void Physic::receive(const ex::EntityDestroyedEvent& event) {
+//                event.entity.assign<c::Controlled>(m_controllerManager);
         }
 
-        void Physic::receive(const events::PhysicCreateSphere &event) {
-            ex::Entity entity = event.entity;
+        void Physic::receive(const events::ObjectCreate& event) {
+            if (event.entity.has_component<components::PhysicActor>()) {
+                ex::Entity entity = event.entity;
 
-            ex::ComponentHandle<c::Transform> transform = entity.component<c::Transform>();
+                auto physic = entity.component<components::PhysicActor>();
 
-            px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
-            const px::PxTransform pxTransform(PX_REST_VEC(transform->position));
-            const px::PxSphereGeometry pxGeometry(event.radius);
+//                if (physic->isDynamic()) {
+//                    auto actor = physic->getDynamicActor();
+//
+//                    actor->setAngularVelocity(px::PxVec3(0.0f, 0.0f, 0.0f));
+//                    actor->setAngularDamping(0.0f);
+//                    px::PxRigidBodyExt::updateMassAndInertia(*actor, 100.0f);
+//                }
 
-            px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 100.0f);
-            dynamic->setAngularDamping(10.5f);
-            dynamic->setLinearVelocity(px::PxVec3(0, 0, 0));
-
-            if (entity.has_component<c::PhysicEntity>()) {
-                auto physicEntityHandle = components::get<c::PhysicEntity>(entity);
-
-                dynamic->userData = static_cast<void *>(physicEntityHandle.get());
+                m_context.physic().addToScene(physic->getActor());
             }
-
-            px::PxRigidBodyExt::updateMassAndInertia(*dynamic, 100.0f);
-
-            gScene->addActor(*dynamic);
-
-            entity.assign<c::Physic>(dynamic);
         }
 
-        void Physic::receive(const events::PhysicCreateBox &event) {
+        void Physic::receive(const events::PhysicForce& event) {
             ex::Entity entity = event.entity;
 
-            ex::ComponentHandle<c::Transform> transform = entity.component<c::Transform>();
-
-            px::PxMaterial *gMaterial = pxMaterials.find("default")->second;
-            const px::PxTransform pxTransform(PX_REST_VEC(transform->position));
-            const px::PxBoxGeometry pxGeometry(event.hx / 2.0f, event.hy / 2.0f, event.hz / 2.0f);
-
-            px::PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, pxTransform, pxGeometry, *gMaterial, 1.0f);
-            dynamic->setAngularDamping(0.5f);
-            dynamic->setLinearVelocity(px::PxVec3(0, 0, 0));
-            px::PxRigidBodyExt::updateMassAndInertia(*dynamic, 3000.0f);
-
-            gScene->addActor(*dynamic);
-
-            entity.assign<c::Physic>(dynamic);
+            m_context.physic().applyForce(entity, event.direction);
         }
 
-        void Physic::receive(const events::PhysicForce &event) {
-            ex::Entity entity = event.entity;
-
-            ex::ComponentHandle<c::Physic> physic = entity.component<c::Physic>();
-
-            px::PxVec3 dir(event.direction.x, event.direction.y, event.direction.z);
-
-            auto *actor = static_cast<px::PxRigidDynamic *>(physic->actor);
-
-//                actor->setLinearVelocity(dir * 1.0f);
-            actor->addForce(dir, px::PxForceMode::eVELOCITY_CHANGE);
-        }
-
-        void Physic::receive(const events::MakeControlled &event) {
+        void Physic::receive(const events::MakeControlled& event) {
             ex::Entity entity = event.entity;
 
             float radius = 0.0f;
 
-            if (entity.has_component<c::Meshes>()) {
-                auto meshes = components::get<c::Meshes>(entity);
+            if (entity.has_component<c::Mesh>()) {
+                auto meshes = components::get<c::Mesh>(entity);
                 auto transform = components::get<c::Transform>(entity);
 
                 Math::Box3 boundingBox = meshes->getBoundingBox();
@@ -546,7 +305,7 @@ namespace game {
             cDesc.height = 2.0f;
             cDesc.radius = radius;
             cDesc.upDirection = px::PxVec3(0.0f, 1.0f, 0.0f);
-            cDesc.material = pxMaterials["default"];
+            cDesc.material = m_context.physic().getMaterial();
             cDesc.position = px::PxExtendedVec3(0.0f, 1.0f + cDesc.height, 0.0f);
             cDesc.slopeLimit = 0.1f;
             cDesc.contactOffset = 0.01f;
@@ -557,152 +316,17 @@ namespace game {
             cDesc.maxJumpHeight = 0.0f;
 //            cDesc.reportCallback		= this;
 
-            auto *mController = static_cast<px::PxCapsuleController *>(gControllerManager->createController(cDesc));
+            auto *mController = static_cast<px::PxCapsuleController *>(m_context.physic().getControllerManager()->createController(cDesc));
 
             entity.assign<c::UserControl>(mController);
         }
 
-        void Physic::receive(const events::MakeUnControlled &event) {
+        void Physic::receive(const events::MakeUnControlled& event) {
             ex::Entity entity = event.entity;
             entity.remove<c::UserControl>();
         }
 
-        void Physic::receive(const events::KeyPress &event) {
-            if (event.key == InputHandler::KEY_W) {
-                controlDir.z = event.action != 0 ? 0.15f : 0.0f;
-            }
-
-            if (event.key == InputHandler::KEY_S) {
-                controlDir.z = event.action != 0 ? -0.15f : 0.0f;
-            }
-
-            if (event.key == InputHandler::KEY_A) {
-                controlDir.x = event.action != 0 ? -0.15f : 0.0f;
-            }
-
-            if (event.key == InputHandler::KEY_D) {
-                controlDir.x = event.action != 0 ? 0.15f : 0.0f;
-            }
-
-            if (event.key == InputHandler::KEY_SPACE) {
-                controlDir.y = event.action != 0 ? 0.15f : 0.0f;
-            }
-
-            if (event.key == InputHandler::KEY_C) {
-                controlDir.y = event.action != 0 ? -0.15f : 0.0f;
-            }
-        }
-
-        void Physic::spawn(game::WorldObject *object) {
-            auto handle = object->getComponent<c::Physic>();
-            if (handle) {
-                handle->actor->setGlobalPose(px::PxTransform(PX_REST_VEC(object->transform->position)));
-                gScene->addActor(*handle->actor);
-            }
-        }
-
-        void Physic::remove(game::WorldObject *object) {
-            auto handle = object->getComponent<c::Physic>();
-            if (handle) {
-                gScene->removeActor(*handle->actor);
-            }
-        }
-
-        void Physic::makeStatic(game::WorldObject *object) {
-            ex::Entity entity = object->getEntity();
-            auto transform = entity.component<c::Transform>();
-//            px::PxMaterial *material = findMaterial("default");
-
-            px::PxTransform pxTransform;
-            pxTransform.p.x = transform->position.x;
-            pxTransform.p.y = transform->position.y;
-            pxTransform.p.z = transform->position.z;
-            pxTransform.q.x = transform->quaternion.x;
-            pxTransform.q.y = transform->quaternion.y;
-            pxTransform.q.z = transform->quaternion.z;
-            pxTransform.q.w = transform->quaternion.w;
-
-            // setDominanceGroup
-            px::PxRigidStatic* actor = gPhysics->createRigidStatic(pxTransform);
-//            px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.0f, 1.0f, 1.0f), *material);
-
-            entity.assign<c::Physic>(actor);
-        }
-
-        void Physic::makeDynamic(game::WorldObject *object, const game::WorldObject::Description& description) {
-            ex::Entity entity = object->getEntity();
-            auto transform = object->getComponent<c::Transform>();
-
-            px::PxMaterial *material = findMaterial("default");
-
-            px::PxTransform pxTransform;
-            pxTransform.p.x = transform->position.x;
-            pxTransform.p.y = transform->position.y;
-            pxTransform.p.z = transform->position.z;
-            pxTransform.q.x = transform->quaternion.x;
-            pxTransform.q.y = transform->quaternion.y;
-            pxTransform.q.z = transform->quaternion.z;
-            pxTransform.q.w = transform->quaternion.w;
-
-            px::PxRigidDynamic* actor = gPhysics->createRigidDynamic(pxTransform);
-
-            // @todo: iterate over all meshes
-            switch (description.boundingType) {
-                case game::WorldObject::Description::BOUNDING_BOX: {
-                    const px::PxBoxGeometry pxGeometry(description.boundingSize.x, description.boundingSize.y, description.boundingSize.z);
-                    px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
-                    break;
-                }
-                case game::WorldObject::Description::BOUNDING_SPHERE: {
-                    const px::PxSphereGeometry pxGeometry(description.boundingSize.x);
-                    px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
-                    break;
-                }
-                case game::WorldObject::Description::BOUNDING_CAPSULE: {
-                    const px::PxCapsuleGeometry pxGeometry(description.boundingSize.x, description.boundingSize.y);
-                    px::PxRigidActorExt::createExclusiveShape(*actor, pxGeometry, *material);
-                    break;
-                }
-                default:
-                    px::PxRigidActorExt::createExclusiveShape(*actor, px::PxBoxGeometry(1.0f, 1.0f, 1.0f), *material);
-            }
-
-            actor->setAngularVelocity(px::PxVec3(0.0f, 0.0f, 0.0f));
-            actor->setAngularDamping(0.0f);
-            px::PxRigidBodyExt::updateMassAndInertia(*actor, 100.0f);
-
-            entity.assign<c::Physic>(actor);
-        }
-
-        px::PxMaterial *Physic::findMaterial(const std::string &name) {
-            return pxMaterials.find(name)->second;
-        }
-
-        void Physic::onContact(const px::PxContactPairHeader &pairHeader, const px::PxContactPair *pairs, px::PxU32 nbPairs) {
-            contactedActors.push({pairHeader.actors[0], pairHeader.actors[1]});
-        }
-
-        void Physic::onTrigger(px::PxTriggerPair *pairs, px::PxU32 count) {
-            console::info("onTrigger");
-        }
-
-        void Physic::onConstraintBreak(px::PxConstraintInfo *, px::PxU32) {
-            console::info("onConstraintBreak");
-        }
-
-        void Physic::onWake(px::PxActor **, px::PxU32) {
-            console::info("onWake");
-        }
-
-        void Physic::onSleep(px::PxActor **, px::PxU32) {
-            console::info("onSleep");
-        }
-
-        void Physic::onAdvance(const px::PxRigidBody *const *, const px::PxTransform *, const px::PxU32) {
-            console::info("onAdvance");
-        }
-
-        HeightMap *Physic::createHeightMap(const std::shared_ptr<ImageData> &image) {
+        HeightMap *Physic::createHeightMap(const std::shared_ptr<ImageData>& image) {
             ImageData::RawData *data = image->get();
             int width = image->getWidth();
             int height = image->getHeight();
@@ -711,9 +335,9 @@ namespace game {
             auto *heightmap = new HeightMap(width, height);
 
             for (int i = 0; i < heightmap->size; i++) {
-                int r = data[(i*step)+0];
-                int g = data[(i*step)+1];
-                int b = data[(i*step)+2];
+                int r = data[(i * step) + 0];
+                int g = data[(i * step) + 1];
+                int b = data[(i * step) + 2];
 
                 heightmap->values[i] = static_cast<px::PxI16>((r + g + b) / 3);
             }
@@ -721,11 +345,11 @@ namespace game {
             return heightmap;
         }
 
-        px::PxRigidStatic *Physic::generateTerrain(const HeightMap &heightmap, const px::PxReal &width, const px::PxReal &height) {
+        px::PxRigidStatic *
+        Physic::generateTerrain(const HeightMap& heightmap, const px::PxReal& width, const px::PxReal& height) {
             auto samples = new px::PxHeightFieldSample[heightmap.size];
 
-            for (size_t i = 0; i < heightmap.size; i ++)
-            {
+            for (size_t i = 0; i < heightmap.size; i++) {
                 samples[i].height = heightmap.values[i];
                 samples[i].materialIndex0 = 2;
                 samples[i].materialIndex1 = 3;
@@ -739,7 +363,10 @@ namespace game {
             heightFieldDesc.samples.data = samples;
             heightFieldDesc.samples.stride = sizeof(px::PxHeightFieldSample);
 
-            px::PxHeightField* pHeightField = cooking->createHeightField(heightFieldDesc, gPhysics->getPhysicsInsertionCallback());
+            px::PxHeightField *pHeightField = m_context.physic().getCooking()->createHeightField(
+                    heightFieldDesc,
+                    m_context.physic().getPhysics()->getPhysicsInsertionCallback()
+            );
 
             if (!pHeightField) {
                 console::warn("failed create highfield");
@@ -753,44 +380,44 @@ namespace game {
             px::PxTransform pose = px::PxTransform(px::PxIdentity);
             pose.p.x = -(static_cast<px::PxReal>(heightmap.rows) * hfRowsScale / 2.0f);
             pose.p.z = -(static_cast<px::PxReal>(heightmap.cols) * hfColumnScale / 2.0f);
-            px::PxRigidStatic* hfActor = gPhysics->createRigidStatic(pose);
+            px::PxRigidStatic *hfActor = m_context.physic().getPhysics()->createRigidStatic(pose);
 
-            px::PxHeightFieldGeometry hfGeom(pHeightField, px::PxMeshGeometryFlags(), heightScale, hfRowsScale, hfColumnScale);
-            px::PxShape* hfShape = px::PxRigidActorExt::createExclusiveShape(*hfActor, hfGeom, *findMaterial("default"));
-            if(!hfShape) {
+            px::PxHeightFieldGeometry hfGeom(pHeightField, px::PxMeshGeometryFlags(), heightScale, hfRowsScale,
+                                             hfColumnScale);
+            px::PxShape *hfShape = px::PxRigidActorExt::createExclusiveShape(*hfActor, hfGeom,
+                                                                             *m_context.physic().getMaterial());
+            if (!hfShape) {
                 console::warn("creating heightfield shape failed");
                 return nullptr;
             }
 
             delete[] samples;
 
-            gScene->addActor(*hfActor);
+            m_context.physic().addToScene(hfActor);
 
             return hfActor;
         }
 
-        std::shared_ptr<Mesh> Physic::generateTerrainMesh(px::PxRigidStatic *actor, const HeightMap &heightmap) {
+        std::shared_ptr<Mesh> Physic::generateTerrainMesh(px::PxRigidStatic *actor, const HeightMap& heightmap) {
             px::PxShape *shape;
             actor->getShapes(&shape, 1);
 
             physx::PxHeightFieldGeometry hfg;
             shape->getHeightFieldGeometry(hfg);
 
-            std::shared_ptr<Mesh> mesh = Mesh::Create();
+            std::shared_ptr<Mesh> mesh = m_context.meshes().create();
             mesh->geometry.allocVertices(heightmap.size);
             mesh->material->setDiffuse(0.0f, 1.0f, 0.0f);
 
             const float textureMultiplier = 16.0f;
 
-            for(px::PxU32 y = 0; y < heightmap.rows; y++)
-            {
-                for(px::PxU32 x = 0; x < heightmap.cols; x++)
-                {
+            for (px::PxU32 y = 0; y < heightmap.rows; y++) {
+                for (px::PxU32 x = 0; x < heightmap.cols; x++) {
                     Vertex vertex;
                     vertex.Position = vec3(
-                        (px::PxReal(y)) * hfg.rowScale,
-                        heightmap.values[x + y * heightmap.cols] * hfg.heightScale,
-                        px::PxReal(x) * hfg.columnScale
+                            (px::PxReal(y)) * hfg.rowScale,
+                            heightmap.values[x + y * heightmap.cols] * hfg.heightScale,
+                            px::PxReal(x) * hfg.columnScale
                     );
 
                     vertex.Normal = vec3(0.0f, 1.0f, 0.0f);
@@ -804,24 +431,22 @@ namespace game {
             }
 
             px::PxU32 numTris = 0;
-            for(px::PxU32 j = 0; j < heightmap.rows - 1; j++)
-            {
-                for(px::PxU32 i = 0; i < heightmap.cols - 1; i++)
-                {
+            for (px::PxU32 j = 0; j < heightmap.rows - 1; j++) {
+                for (px::PxU32 i = 0; i < heightmap.cols - 1; i++) {
                     mesh->geometry.addFace(
-                        (i + j * (heightmap.cols)),
-                        (i + (j+1) * (heightmap.cols)),
-                        (i + 1 + j * (heightmap.cols))
+                            (i + j * (heightmap.cols)),
+                            (i + (j + 1) * (heightmap.cols)),
+                            (i + 1 + j * (heightmap.cols))
                     );
 
                     mesh->geometry.addFace(
-                        i + (j + 1) * (heightmap.cols),
-                        i + 1 + (j + 1) * (heightmap.cols),
-                        i + 1 + j * (heightmap.cols)
+                            i + (j + 1) * (heightmap.cols),
+                            i + 1 + (j + 1) * (heightmap.cols),
+                            i + 1 + j * (heightmap.cols)
                     );
 
 
-                    numTris+=2;
+                    numTris += 2;
                 }
             }
 
@@ -829,72 +454,24 @@ namespace game {
         }
 
         void Physic::computeBoundingBox(game::WorldObject *object) {
-            if (object->hasComponent<c::Meshes>() && object->hasComponent<c::Physic>()) {
-                auto meshes = object->getComponent<c::Meshes>();
-                auto physic = object->getComponent<c::Physic>();
+            if (object->hasComponent<c::Mesh>() && object->hasComponent<c::PhysicActor>()) {
+                auto meshes = object->getComponent<c::Mesh>();
+                auto physic = object->getComponent<c::PhysicActor>();
 
                 const Math::Box3 box = meshes->getBoundingBox();
                 float height = meshes->height();
 
                 px::PxBoxGeometry geometry;
                 geometry.halfExtents = px::PxVec3(
-                    box.radius.x,
-                    box.radius.y,
-                    box.radius.z
+                        box.radius.x,
+                        box.radius.y,
+                        box.radius.z
                 );
 
-                px::PxMaterial *material = findMaterial("default");
-                px::PxRigidActorExt::createExclusiveShape(*physic->actor, geometry, *material);
+                px::PxMaterial *material = m_context.physic().getMaterial("default");
+                px::PxRigidActorExt::createExclusiveShape(*physic->getActor(), geometry, *material);
             }
         }
 
-        void Physic::updateObjects1(ex::EntityManager &es) {
-            es.each<c::Physic, components::Transform>(
-                [](
-                    ex::Entity entity,
-                    components::Physic &physic,
-                    components::Transform &transform
-                ) {
-                    if (physic.actor == nullptr) {
-                        return;
-                    }
-
-                    switch (physic.type) {
-                        case components::Physic::DynamicObject: {
-                            auto *actor = static_cast<px::PxRigidDynamic *>(physic.actor);
-                            if (actor->isSleeping()) {
-                                return;
-                            }
-                        }
-                        case components::Physic::StaticObject: {
-                            px::PxTransform newTransform = physic.actor->getGlobalPose();
-                            if (transform.dirty) {
-                                newTransform.p.x = transform.position.x;
-                                newTransform.p.y = transform.position.y;
-                                newTransform.p.z = transform.position.z;
-                                newTransform.q.w = transform.quaternion.w;
-                                newTransform.q.x = transform.quaternion.x;
-                                newTransform.q.y = transform.quaternion.y;
-                                newTransform.q.z = transform.quaternion.z;
-                                physic.actor->setGlobalPose(newTransform);
-                                transform.dirty = false;
-                            } else {
-                                transform.setTransform(newTransform);
-                            }
-                        }
-                        default: return;
-                    }
-                }
-            );
-        }
-
-        void Physic::updateObjects2() {
-            px::PxU32 nbActiveActors;
-            px::PxActor** activeActors = gScene->getActiveActors(nbActiveActors);
-
-            for (px::PxU32 i = 0; i < nbActiveActors; i++) {
-
-            }
-        }
     }
 }

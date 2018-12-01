@@ -13,9 +13,9 @@ namespace game {
 
     };
 
-    class WeaponHandler {
+    class Weapon {
     public:
-        WeaponHandler(desc::Weapon &description)
+        Weapon(const desc::Weapon &description)
                 : name(description.name)
                 , weight(description.weight)
                 , overheatPerShot(description.overheatPerShot)

@@ -2,7 +2,7 @@
 #include <assimp/scene.h>
 #include "../lib/assets_loader.h"
 
-void MaterialBuilder::FromAi(std::shared_ptr<Material> &material, const aiMaterial *assimpMaterial, const Resource::Assimp *assimpResource, Assets *assets) {
+void MaterialBuilder::FromAi(std::shared_ptr<Material> &material, const aiMaterial *assimpMaterial, const resources::Assimp *assimpResource, Assets *assets) {
     if (!assimpMaterial) {
         material->initEmptyTextures();
         return;
@@ -74,7 +74,7 @@ void MaterialBuilder::FromAi(std::shared_ptr<Material> &material, const aiMateri
         std::string path = it.first;
         Texture *textureMap = it.second;
 
-        assets::Resource *resource = assetsLoader.createResource(path);
+        Resource *resource = assetsLoader.createResource(path);
         assets::Texture *assetTexture = nullptr;
         std::shared_ptr<ImageData> image;
 

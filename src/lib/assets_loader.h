@@ -7,7 +7,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
-#include "assets_resource.h"
+#include "resource.h"
 #include "path.h"
 
 namespace assets {

@@ -1,6 +1,6 @@
 #include "assimp_resource.h"
 
-namespace Resource {
+namespace resources {
 	Assimp::Assimp(const aiScene * scene, std::string path) : scene(scene) {
 		Path basePath(path);
 
@@ -19,11 +19,6 @@ namespace Resource {
 		aiString tex;
 		mat->GetTexture(type, index, &tex);
 		return std::string(basePath_ + "/" + tex.C_Str());
-	}
-
-	std::string Assimp::getDefaultTexturePath() const {
-		Path p = App::instance().resourcePath("default2.png");
-		return p.string();
 	}
 
 	std::unordered_set<std::string> Assimp::getTexturePaths() const {

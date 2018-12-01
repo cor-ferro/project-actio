@@ -9,7 +9,6 @@
 #include <entityx/entityx/entityx.h>
 #include "../../lib/console.h"
 #include "../../lib/types.h"
-#include "weapon.h"
 
 namespace game {
     namespace components {

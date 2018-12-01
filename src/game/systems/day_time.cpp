@@ -1,9 +1,8 @@
 #include "day_time.h"
-#include "../world.h"
 
 namespace game {
     namespace systems {
-        DayTime::DayTime(World *world) : systems::BaseSystem(world) {}
+        DayTime::DayTime(Context& context) : systems::BaseSystem(context) {}
 
         void DayTime::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
             time += dt;

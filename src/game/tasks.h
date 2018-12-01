@@ -5,43 +5,49 @@
 #ifndef ACTIO_WORLD_TASKS_H
 #define ACTIO_WORLD_TASKS_H
 
+#include "context.h"
+
 namespace game {
     class World;
 
-    class WorldTaskContext {
+    class TaskContext {
     public:
-        explicit WorldTaskContext(World *world);
-        ~WorldTaskContext();
+        explicit TaskContext(Context& context);
+
+        ~TaskContext() = default;
 
         void *getData();
+
         void setData(void *data);
 
-        World *getWorld();
+        Context& getContext();
 
     private:
-        World *world = nullptr;
+        Context& m_context;
         void *data = nullptr;
     };
 
-    class WorldTask {
+    class Task {
     public:
-        explicit WorldTask(WorldTaskContext *context);
+        explicit Task(TaskContext &taskContext);
 
-        ~WorldTask();
+        ~Task() = default;
 
         virtual void onStart() = 0;
+
         virtual void onFinish() = 0;
+
         virtual void onFlush() = 0;
 
     protected:
-        WorldTaskContext *context = nullptr;
+        TaskContext &m_taskContext;
     };
 
-    class WorldModelLoadTask : public WorldTask {
+    class TaskLoadModel : public Task {
     public:
-        explicit WorldModelLoadTask(WorldTaskContext *context);
+        explicit TaskLoadModel(TaskContext &taskContext);
 
-        ~WorldModelLoadTask() = default;
+        ~TaskLoadModel() = default;
 
         void onStart() override;
 

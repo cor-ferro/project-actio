@@ -1,45 +1,31 @@
-#include "world_tasks.h"
-#include "world.h"
+#include "tasks.h"
 #include "../core/geometry_builder.h"
 #include "../core/material_builder.h"
 #include "../lib/assets_model.h"
 
 namespace game {
-    WorldTask::WorldTask(WorldTaskContext *context) : context(context) {}
+    Task::Task(TaskContext& taskContext) : m_taskContext(taskContext) {}
 
-    WorldTask::~WorldTask() {
-        if (context != nullptr) {
-            delete context;
-            context = nullptr;
-        }
-    }
+    TaskContext::TaskContext(Context& context) : m_context(context) {}
 
-    WorldTaskContext::WorldTaskContext(World *world) : world(world) {}
-
-    WorldTaskContext::~WorldTaskContext() {
-        world = nullptr;
-    }
-
-    void *WorldTaskContext::getData() {
+    void *TaskContext::getData() {
         return data;
     }
 
-    void WorldTaskContext::setData(void *data) {
-        WorldTaskContext::data = data;
+    void TaskContext::setData(void *data) {
+        TaskContext::data = data;
     }
 
-    World *WorldTaskContext::getWorld() {
-        return world;
+    Context& TaskContext::getContext() {
+        return m_context;
     }
 
-    WorldModelLoadTask::WorldModelLoadTask(WorldTaskContext *context) : WorldTask(context) {
+    TaskLoadModel::TaskLoadModel(TaskContext& taskContext) : Task(taskContext) {}
 
-    }
-
-    void WorldModelLoadTask::onStart() {
+    void TaskLoadModel::onStart() {
         assert(context != nullptr);
 
-        void *data = context->getData();
+        void *data = m_taskContext.getData();
         auto *asset = reinterpret_cast<assets::Model *>(data);
 
         if (asset == nullptr) {
@@ -49,22 +35,22 @@ namespace game {
         asset->load();
 
         const aiScene *scene = asset->getScene();
-        World *world = context->getWorld();
+        Context& context = m_taskContext.getContext();
 
         if (scene != nullptr) {
-            const ::Resource::Assimp *assimpResource = asset->getAiResource();
+            const ::resources::Assimp *assimpResource = asset->getAiResource();
 
             const unsigned int numMeshes = scene->mNumMeshes;
             for (unsigned int i = 0; i < numMeshes; i++) {
                 aiMesh *mesh = scene->mMeshes[i];
                 aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
-                std::shared_ptr<Mesh> modelMesh = Mesh::Create();
+                MeshHandle modelMesh = context.meshes().create();
 
                 modelMesh->setName(mesh->mName.C_Str());
 
                 GeometryBuilder::FromAi(modelMesh->geometry, mesh);
-                MaterialBuilder::FromAi(modelMesh->material, material, assimpResource, world->getAssets().get());
+                MaterialBuilder::FromAi(modelMesh->material, material, assimpResource, context.getAssets().get());
 
                 if (mesh->mNumBones > 0) {
                     modelMesh->bones.resize(mesh->mNumBones);
@@ -83,14 +69,14 @@ namespace game {
         asset->markLoaded();
     }
 
-    void WorldModelLoadTask::onFinish() {
+    void TaskLoadModel::onFinish() {
 
     }
 
-    void WorldModelLoadTask::onFlush() {
+    void TaskLoadModel::onFlush() {
         assert(context != nullptr);
 
-        void *data = context->getData();
+        void *data = m_taskContext.getData();
         auto *asset = reinterpret_cast<assets::Model *>(data);
 
         // trigger asset load in the app thread

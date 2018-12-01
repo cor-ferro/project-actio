@@ -10,9 +10,9 @@
 
 namespace game {
     namespace strategy {
-        class WeaponsRocketLauncher : public WeaponsBase {
+        class WeaponsRocketLauncher : public WeaponStrategy {
         public:
-            WeaponsRocketLauncher() : WeaponsBase("RocketLauncher") {
+            WeaponsRocketLauncher() : WeaponStrategy("RocketLauncher") {
 
             }
 
@@ -25,7 +25,7 @@ namespace game {
              *
              * @param weapon
              */
-            void onWeaponUpdate(float dt, game::WeaponHandler *weapon) override {
+            void onWeaponUpdate(float dt, game::Weapon *weapon) override {
 //                console::info("rocket launcher update");
 //                weapon->tickRecoil();
             }
@@ -37,7 +37,7 @@ namespace game {
              *
              * @param weapon
              */
-            void onWeaponFire(game::World *world, game::WeaponHandler *weapon) override {
+            void onWeaponFire(game::World *world, game::Weapon *weapon) override {
                 console::info("rocket launcher fire");
 
                 const game::Context &context = world->getContext();
@@ -79,8 +79,9 @@ namespace game {
 
             void onProjectileCreate() override {};
 
-            void onProjectileUpdate(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) override {
-                world->forcePush(entity, projectile.target, 1.0f * projectile.speed);
+            void onProjectileUpdate(ex::Entity entity, c::WeaponProjectile &projectile) override {
+//                world->forcePush(entity, projectile.target, 1.0f * projectile.speed);
+                context.physic()->forcePush(entity, projectile.target, 1.0f * projectile.speed);
             };
 
             void onProjectileCollision(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) override {

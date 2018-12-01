@@ -9,23 +9,23 @@
 
 namespace game {
     namespace strategy {
-        class WeaponsDefault : public WeaponsBase {
+        class WeaponsDefault : public WeaponStrategy {
         public:
-            WeaponsDefault() : WeaponsBase("Default") {
+            WeaponsDefault() : WeaponStrategy("Default") {
 
             };
 
             ~WeaponsDefault() override = default;
 
-            void onWeaponUpdate(float dt, game::WeaponHandler *weapon) override {}
+            void onWeaponUpdate(float dt, game::Weapon *weapon) override {}
 
-            void onWeaponFire(game::World *world, game::WeaponHandler *weapon) override {};
+            void onWeaponFire(game::World *world, game::Weapon *weapon) override {};
 
             void onWeaponOverheat() override {};
 
             void onProjectileCreate() override {};
 
-            void onProjectileUpdate(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) override {};
+            void onProjectileUpdate(ex::Entity entity, c::WeaponProjectile &projectile) override {};
 
             void onProjectileCollision(game::World *world, ex::Entity entity, c::WeaponProjectile &projectile) override {};
         protected:

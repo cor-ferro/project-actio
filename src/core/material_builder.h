@@ -7,7 +7,7 @@
 
 class MaterialBuilder {
 public:
-    static void FromAi(std::shared_ptr<Material> &material, const aiMaterial *assimpMaterial, const Resource::Assimp *assimpResource, Assets *assets);
+    static void FromAi(std::shared_ptr<Material> &material, const aiMaterial *assimpMaterial, const resources::Assimp *assimpResource, Assets *assets);
 };
 
 #endif //ACTIO_MATERIAL_BUILDER_H

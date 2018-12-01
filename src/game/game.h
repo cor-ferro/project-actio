@@ -1,10 +1,14 @@
 #ifndef GAME_H_
 #define GAME_H_
 
-#include "world.h"
+#include <memory>
+#include "../app/app.h"
+#include "engine.h"
 
 namespace game {
-    World* createWorld();
+//    World* createWorld();
+
+    std::shared_ptr<Engine> createEngine(App& app);
 }
 
 #endif

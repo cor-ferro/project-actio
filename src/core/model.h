@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <map>
 #include <vector>
+#include <memory>
 #include "model.h"
 #include "mesh.h"
 #include "../lib/image_loader.h"
@@ -14,13 +15,8 @@
 
 #include "../memory/poolallocator.h"
 
-extern memory::PoolAllocator * modelsAllocator;
-
 typedef std::string ModelName;
-typedef std::vector<Mesh*> ModelMeshes;
-
-typedef std::string ModelName;
-typedef std::vector<Mesh *> ModelMeshes;
+typedef std::vector<std::shared_ptr<Mesh>> ModelMeshes;
 
 class ModelBuilder;
 
@@ -34,19 +30,19 @@ struct Model {
 
 		~Node();
 
-		void add(Mesh *mesh);
+		void add(MeshHandle &mesh);
 
 		void add(Node *node);
 
 		std::string name;
 		std::vector<Node *> children;
-		std::vector<Mesh *> meshes;
+		std::vector<MeshHandle> meshes;
 		mat4 transformation;
 	};
 
 	Model();
 
-	explicit Model(Mesh *mesh);
+	explicit Model(MeshHandle &mesh);
 
 	~Model();
 
@@ -54,17 +50,15 @@ struct Model {
 
 	void setName(const std::string &newName);
 
-	void add(Mesh *mesh);
+	void add(MeshHandle &mesh);
 
 	void add(Node *node);
-
-	void remove(Mesh *mesh);
 
 	void remove(Node *node);
 
 	const ModelMeshes &getMeshes();
 
-	Mesh *getMesh();
+    MeshHandle &getMesh();
 
 	const size_t getNodesCount();
 
