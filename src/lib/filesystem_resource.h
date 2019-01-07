@@ -10,11 +10,19 @@
 
 class FilesystemResource : public Resource {
 public:
-    explicit FilesystemResource(const Path& path);
+    explicit FilesystemResource(const Path &path);
 
     ~FilesystemResource() override = default;
 
     void load() override;
+
+    const Path &getPath() const;
+
+    const void *const get() const override;
+
+private:
+    Path path;
+    mutable std::string data;
 };
 
 #endif //ACTIO_FILESYSTEM_RESOURCE_H

@@ -84,6 +84,7 @@ namespace game {
                     return input2->isPress(static_cast<InputManager::MouseButton>(key));
                 default:
                     console::warn("unknown input place");
+                    return false;
             }
         }
 

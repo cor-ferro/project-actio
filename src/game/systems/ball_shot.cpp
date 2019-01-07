@@ -11,7 +11,7 @@ namespace game {
         void BallShot::start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
             systems::BaseSystem::start(es, events, dt);
 
-            ballMaterial = m_context.getAssets()->createMaterial("waterball")->getMaterial();
+            ballMaterial = m_context.getAssets()->createMaterial("waterball");
             ballMesh = m_context.meshes().create();
 
             GeometryBuilder::SphereDescription sphereDesc;

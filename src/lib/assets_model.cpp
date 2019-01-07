@@ -1,5 +1,8 @@
 #include "assets_model.h"
 #include <assimp/include/assimp/postprocess.h>
+#include "assets_loader.h"
+#include "assets_texture.h"
+#include "filesystem_resource.h"
 
 namespace assets {
 
@@ -61,13 +64,42 @@ namespace assets {
             flags |= aiProcess_FlipUVs;
         }
 
-        const Resource *resource = getResource();
+        const auto *resource = dynamic_cast<const FilesystemResource*>(getResource());;
+
         const Path &path = resource->getPath();
 
         scene = importer.ReadFile(path.string().c_str(), flags);
 
         if (scene != nullptr) {
-            assimpResource = new ::resources::Assimp(scene, path.string());
+//            assimpResource = new ::resources::Assimp(scene, path.string());
+//
+//            Loader assetsLoader(path);
+//
+//            const unsigned int numMeshes = scene->mNumMeshes;
+//            for (unsigned int i = 0; i < numMeshes; i++) {
+//                aiMesh *mesh = scene->mMeshes[i];
+//                aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+//
+//                Resource *resource = assetsLoader.createResource(path);
+//
+//                std::string path = it.first;
+//                Image *textureMap = it.second;
+//
+//
+//                std::shared_ptr<ImageData> image;
+//
+//                if (resource != nullptr) {
+//                    assetTexture = assets->addTexture(resource);
+//                } else {
+//                    auto baseAssets = App::GetBaseAssets();
+//                    assetTexture = baseAssets->getTexture(*textureMap);
+//                }
+//
+//                if (assetTexture != nullptr) {
+//                    image = assetTexture->getImage();
+//                    textureMap->setData(image);
+//                }
+//            }
         }
     }
 

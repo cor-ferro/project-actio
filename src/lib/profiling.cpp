@@ -28,8 +28,9 @@ namespace profiling {
         mark.end = timeNow();
     }
 
-    const std::map<std::string, TimePrecision> ProfileTimings::getDurations(Time timeType) const {
-        std::map<std::string, TimePrecision> results;
+    const ProfileTimings::Durations ProfileTimings::getDurations(const Time& timeType) const {
+        Durations durations;
+        durations.total = 0;
 
         for (auto &it : timings) {
             const TimeMark &mark = it.second;
@@ -37,10 +38,11 @@ namespace profiling {
             std::chrono::duration<TimePrecision> ds = mark.end - mark.start;
             TimePrecision t = castDuration(ds, timeType);
 
-            results.insert({it.first, t});
+            durations.total += t;
+            durations.results.insert({it.first, t});
         }
 
-        return results;
+        return durations;
     };
 
     const TimePrecision ProfileTimings::getDuration(const std::string label, Time timeType) const {

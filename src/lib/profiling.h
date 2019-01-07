@@ -29,6 +29,11 @@ namespace profiling {
 
     class ProfileTimings {
     public:
+        struct Durations {
+            TimePrecision total = 0;
+            std::map<std::string, TimePrecision> results;
+        };
+
         explicit ProfileTimings(bool enabled = true);
 
         ~ProfileTimings();
@@ -37,7 +42,7 @@ namespace profiling {
 
         void timeEnd(std::string label);
 
-        const std::map<std::string, TimePrecision> getDurations(Time timeType) const;
+        const Durations getDurations(const Time& timeType) const;
 
         const TimePrecision getDuration(const std::string label, Time timeType) const;
 

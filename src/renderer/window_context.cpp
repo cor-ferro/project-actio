@@ -89,3 +89,21 @@ WindowContext::Size WindowContext::getSize() const {
 
     return size;
 }
+
+int WindowContext::getWidth() {
+    assert(window != nullptr);
+
+    WindowContext::Size size;
+    glfwGetWindowSize(window, &size.width, &size.height);
+
+    return size.width;
+}
+
+int WindowContext::getHeight() {
+    assert(window != nullptr);
+
+    WindowContext::Size size;
+    glfwGetWindowSize(window, &size.width, &size.height);
+
+    return size.height;
+}

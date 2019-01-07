@@ -1,6 +1,7 @@
 #include "assets_loader.h"
 #include "filesystem_resource.h"
 #include "package_resource.h"
+#include "memory_resource.h"
 
 namespace assets {
     Loader::Loader(const std::string &entryPoint) : entryPoint(entryPoint) {}
@@ -8,16 +9,18 @@ namespace assets {
     Loader::Loader(const Path &entryPoint) : entryPoint(entryPoint.string()) {}
 
     Resource *Loader::createResource(const Path &path) {
-        Resource *resource = nullptr;
-
         Path fullPath = createPath(entryPoint) /= path;
 
-        if (boost::filesystem::exists(fullPath)) {
-            resource = new FilesystemResource(fullPath);
-        } else if (false) {
-            resource = new PackageResource(path); // @todo
-        }
+        Resource *resource = new FilesystemResource(fullPath);
 
         return resource;
+    }
+
+    Resource *Loader::createResource() {
+        return new PackageResource();
     };
+
+    Resource *Loader::createResource(void *const memory) {
+        return new MemoryResource(memory, 0);
+    }
 }

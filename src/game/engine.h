@@ -6,6 +6,7 @@
 #include <string>
 #include <thread>
 #include <stdexcept>
+#include <queue>
 
 #include "input_output.h"
 #include "../renderer/init.h"
@@ -14,151 +15,59 @@
 #include "context.h"
 #include "story_importer.h"
 #include "../lib/input_manager.h"
+#include "../lib/task.h"
+#include "../lib/task_manager.h"
 
 namespace game {
     namespace ex = entityx;
 
     class Engine {
     public:
-        explicit Engine(App& app) : m_app(app) {}
+        explicit Engine(App &app);
 
-        void setupWorlds() {
-            for (auto& world : m_worlds) {
-                world.setup();
-            }
-        }
+        ~Engine();
 
-        void startWorlds() {
-            for (auto& world : m_worlds) {
-                world.start();
-            }
-        }
+        void setupWorlds();
 
-        void updateWorlds(float elapsedTime) {
-            for (auto& world : m_worlds) {
-                world.update(elapsedTime);
-            }
-        }
+        void startWorlds();
 
-        void destroyWorlds() {
-            m_worlds.clear();
-        }
+        void startLoadStory(const std::string &storyName, const std::string &chapterName);
 
-        void render(const ex::TimeDelta& dt) {
-            for (auto& world : m_worlds) {
-                world.render(dt);
-            }
+        void update();
 
-            io.input->onFrameUpdate();
-        }
+        void updateWorlds(float elapsedTime);
 
-        void reset() {
-            m_worlds.clear();
-        }
+        void destroyWorlds();
 
-        void setInput(InputManager *inputManager) {
-//            context->
-        }
+        void render(const ex::TimeDelta &dt);
 
-        void enablePhysicDebug() {
-//            m_physic->enableDebug();
-        }
+        void reset();
 
-        void disablePhysicDebug() {
-//            m_physic->disableDebug();
-        }
+        void enablePhysicDebug();
 
-        void initWindowContext(const Monitor *const monitor) {
-            auto windowWidth = static_cast<renderer::Dimension>(monitor->getWidth() / 1.5);
-            auto windowHeight = static_cast<renderer::Dimension>(monitor->getHeight() / 1.5);
+        void disablePhysicDebug();
 
-            io.windowContext.reset(new WindowContext());
+        void initWindowContext(const Monitor *const monitor);
 
-            if (!io.windowContext->init(windowWidth, windowHeight)) {
-                throw std::runtime_error("failed initialize OpenGL context");
-            }
+        void createRenderer();
 
-            io.windowContext->setTitle(m_app.getName());
-            io.windowContext->setAsCurrent();
-            io.windowContext->enableVSync();
+        void destroyRenderer();
 
-            io.input.reset(new InputManager(getWindowContext()));
-            io.input->calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
+        WindowContext &getWindowContext();
 
-            m_context.reset(new game::Context(io));
-        }
+        InputManager &getInput();
 
-        void createRenderer() {
-            destroyRenderer();
+        World &createWorld();
 
-            auto size = io.windowContext->getSize();
-
-            renderer::Params rendererParams;
-            rendererParams.setWidth(size.width);
-            rendererParams.setHeight(size.height);
-            io.renderer.reset(renderer::create(rendererParams));
-
-            io.windowContext->onResize.connect([this](int width, int height) {
-                console::info("resize: %i, %i", width, height);
-//            renderer->setViewSize(static_cast<renderer::Dimension>(width), static_cast<renderer::Dimension>(height));
-//            renderer->regenerateBuffer();
-//                world->setRenderSize(width, height);
-            });
-        }
-
-        void destroyRenderer() {
-            if (io.renderer) {
-                io.renderer->destroy();
-                io.renderer.reset();
-            }
-        }
-
-        WindowContext& getWindowContext() {
-            return *io.windowContext;
-        }
-
-        InputManager& getInput() {
-            return *io.input;
-        }
-
-        World& createWorld() {
-            m_worlds.emplace_back(*m_context.get());
-
-            return m_worlds.back();
-        }
-
-        void loadStory(const std::string& storyName, const std::string& chapterName) {
-            std::thread thread([this, storyName, chapterName]() {
-                std::shared_ptr<Assets> assets(new Assets(m_app.getPaths()));
-                assets->loadDefaultResources();
-//            world->importAssets(worldAssets);
-
-                const resources::File storyFile = app().resource(storyName + "/story.yaml");
-
-                StoryImporter storyImporter;
-                Story story = storyImporter.import(storyFile);
-
-                bool statusChapterLoad = storyImporter.loadChapterAssets(story, chapterName, assets.get());
-
-                if (!statusChapterLoad) {
-                    console::err("failed load chapter: %s", chapterName);
-                    return;
-                }
-            });
-
-            thread.join();
-        }
-
-        App& app() const {
-            return m_app;
-        }
+        App &app() const;
 
     private:
-        App& m_app;
+        App &m_app;
         std::list<World> m_worlds;
         std::shared_ptr<Context> m_context;
 
         InputOutput io;
+        TasksManager m_tasksManager;
     };
 }
 

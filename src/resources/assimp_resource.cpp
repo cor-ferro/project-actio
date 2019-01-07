@@ -1,4 +1,5 @@
 #include "assimp_resource.h"
+#include "../lib/console.h"
 
 namespace resources {
 	Assimp::Assimp(const aiScene * scene, std::string path) : scene(scene) {

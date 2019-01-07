@@ -8,6 +8,7 @@
 #include <cassert>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
+#include <assimp/scene.h>
 #include "resource.h"
 #include "console.h"
 #include "data_loader.h"
@@ -21,74 +22,114 @@
 
 class Assets {
 public:
-    typedef size_t Id;
+    using Id = size_t;
 
     static const Id InvalidId = 0;
 
-    explicit Assets(const AppPaths& appPaths) : appPaths(appPaths) {};
+    template<typename T>
+    class Set {
+    public:
+        std::map<Id, T> items;
+        std::map<std::string, Id> names;
 
-    ~Assets();
+        ~Set() {
+            clear();
+        }
 
-    std::map<Id, assets::Script> &getScripts();
+        void clear() {
+            items.clear();
+            names.clear();
+        }
+    };
 
-    std::map<Id, assets::Shader> &getShaders();
-
-    std::map<Id, assets::Model> &getModels();
-
-    std::map<Id, assets::Texture> &getTextures();
-
-    std::map<Id, assets::Material> &getMaterials();
-
-    assets::Model *addModel(Resource *resource, const std::unordered_map<std::string, std::string> &options);
-
-    assets::Model *addModel(const std::string &name, Resource *resource, const std::unordered_map<std::string, std::string> &options);
-
-    assets::Model *getModel(std::string name);
-
-    assets::Model *getModel(Id id);
-
-    void addScript(Resource *resource);
-
-    assets::Texture *addTexture(Resource *resource);
-
-    assets::Texture *addTexture(const std::string &name, Resource *resource);
-
-    assets::Texture *getTexture(std::string name);
-
-    assets::Texture *getTexture(Id id);
-
-    assets::Material *addMaterial(Material *material);
-
-    assets::Material *addMaterial(const std::string &name, Material *material);
-
-    assets::Material *getMaterial(const Id& id);
-
-    assets::Material *getMaterial(const std::string &name);
-
-    assets::Material *createMaterial(const std::string &name);
-
-    assets::Texture *getDefaultTexture(Texture &texture);
-
-    void free();
-
-    void loadDefaultResources();
+    enum class DefaultImage {
+        Diffuse,
+        Normal,
+        Specular,
+        Height
+    };
 
 private:
-    std::map<Id, assets::Shader> shaders;
-    std::map<Id, assets::Texture> textures;
-    std::map<Id, assets::Model> models;
-    std::map<Id, assets::Script> scripts;
-    std::map<Id, assets::Material> materials;
-
-    std::map<std::string, Id> textureNames; // @todo: use boost multi_index
-    std::map<std::string, Id> materialNames; // @todo: use boost multi_index
-    std::map<std::string, Id> modelNames; // @todo: use boost multi_index
+    Set<assets::Shader> shaders;
+    Set<assets::Image> textures;
+    Set<assets::Model> models;
+    Set<assets::Script> scripts;
+    Set<assets::Material> materials;
 
     Id idCounter = 1;
 
     Id genId();
 
-    const AppPaths& appPaths;
+    const AppPaths &appPaths;
+
+    Path getMaterialTexture(aiMaterial *const material, const aiTextureType& texType);
+
+public:
+    explicit Assets(const AppPaths &appPaths);
+
+    ~Assets();
+
+    template<typename T>
+    T *get(const std::string &name, Set<T> &set);
+
+    template<typename T>
+    T *get(const Assets::Id &id, Set<T> &set);
+
+    template<typename T>
+    T *add(Resource *resource, Set<T> &set);
+
+    template<typename T>
+    T *add(const std::string &name, Resource *resource, Set<T> &set);
+
+
+    Set<assets::Script> &getScripts();
+
+    Set<assets::Shader> &getShaders();
+
+    Set<assets::Model> &getModels();
+
+    Set<assets::Image> &getImages();
+
+    Set<assets::Material> &getMaterials();
+
+
+    assets::Model *getModel(const std::string &name);
+
+    assets::Model *getModel(const Id &id);
+
+    assets::Image *getImage(const std::string &name);
+
+    assets::Image *getImage(const Id &id);
+
+    assets::Image *getImage(const DefaultImage& defaultImageType);
+
+    assets::Material *getMaterial(const Id &id);
+
+    assets::Material *getMaterial(const std::string &name);
+
+
+
+    assets::Model *addModel(Resource *resource, const std::unordered_map<std::string, std::string> &options);
+
+    assets::Model *addModel(const std::string &name, Resource *resource, const std::unordered_map<std::string, std::string> &options);
+
+    assets::Script *addScript(Resource *resource);
+
+    assets::Script *addScript(const std::string &name, Resource *resource);
+
+    assets::Image *addImage(Resource *resource);
+
+    assets::Image *addImage(const std::string &name, Resource *resource);
+
+    assets::Material *addMaterial(Material *material);
+
+    assets::Material *addMaterial(const std::string &name, Material *material);
+
+    void loadModel(assets::Model *model);
+
+    std::shared_ptr<::Material> createMaterial(const std::string &name);
+
+    void free();
 };
 
 #endif //ACTIO_LIB_ASSETS_H

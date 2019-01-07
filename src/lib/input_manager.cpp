@@ -1,32 +1,77 @@
 #include "input_manager.h"
 
-InputManager::InputManager(WindowContext &windowContext)
-        : keyboardKeys_(0)
-        , keyboardModifiers_(0)
-        , mouseKeys_(0)
-        , window(&windowContext) {
-    windowContext.onKeyPress.connect([this](int key, int scancode, int action, int mods) {
-        onKeyPress(key, scancode, action, mods);
+//InputManager::InputManager(WindowContext &windowContext)
+//        : keyboardKeys_(0)
+//        , keyboardModifiers_(0)
+//        , mouseKeys_(0)
+//        , m_window(windowContext) {
+//    m_window.onKeyPress.connect([this](int key, int scancode, int action, int mods) {
+//        onKeyPress(key, scancode, action, mods);
+//    });
+//
+//    m_window.onMouseMove.connect([this](double x, double y) {
+//        onMouseMove(x, y);
+//    });
+//
+//    m_window.onMousePress.connect([this](int button, int action, int mods) {
+//        onMouseClick(button, action, mods);
+//    });
+//
+//    double xpos, ypos;
+//    m_window.getMousePosition(xpos, ypos);
+//
+//    setMousePosition(static_cast<ScreenCoord>(xpos), static_cast<ScreenCoord>(ypos));
+//    setMouseStartPosition(static_cast<ScreenCoord>(xpos), static_cast<ScreenCoord>(ypos));
+//}
+
+InputManager::InputManager() {
+    onKeyPress.connect([this](int key, int scancode, int action, int mods) {
+        bool keyState = false;
+
+        switch (action) {
+            case KEY_PRESS:     keyState = true; break;
+            case KEY_REPEAT:    keyState = true; break;
+            case KEY_RELEASE:   keyState = false; break;
+            default: console::warn("unknown keyboard action");
+        }
+
+        keyboardKeys_.set(static_cast<size_t>(key), keyState);
+
+        switch (mods) {
+            case MODIFIER_SHIFT:    keyboardModifiers_.set(MODIFIER_SHIFT, true); break;
+            case MODIFIER_CONTROL:  keyboardModifiers_.set(MODIFIER_CONTROL, true); break;
+            case MODIFIER_ALT:      keyboardModifiers_.set(MODIFIER_ALT, true); break;
+            case MODIFIER_SUPER:    keyboardModifiers_.set(MODIFIER_SUPER, true); break;
+            default: keyboardModifiers_.reset();
+        }
     });
 
-    windowContext.onMouseMove.connect([this](double x, double y) {
-        onMouseMove(x, y);
+    onMouseMove.connect([this](double x, double y) {
+        setMousePosition(static_cast<ScreenCoord>(x), static_cast<ScreenCoord>(y));
     });
 
-    windowContext.onMousePress.connect([this](int button, int action, int mods) {
-        onMouseClick(button, action, mods);
+    onMousePress.connect([this](int button, int action, int mods) {
+        bool state = false;
+
+        switch (action) {
+            case KEY_PRESS:     state = true; break;
+            case KEY_RELEASE:   state = false; break;
+            default: console::warn("unknown mouse action");
+        }
+
+        switch (button) {
+            case MOUSE_BUTTON_LEFT:     mouseKeys_.set(MouseButton::MOUSE_BUTTON_LEFT, state); break;
+            case MOUSE_BUTTON_MIDDLE:   mouseKeys_.set(MouseButton::MOUSE_BUTTON_MIDDLE, state); break;
+            case MOUSE_BUTTON_RIGHT:    mouseKeys_.set(MouseButton::MOUSE_BUTTON_RIGHT, state); break;
+            default: console::warn("unknown mouse button");
+        }
     });
-
-    double xpos, ypos;
-    windowContext.getMousePosition(xpos, ypos);
-
-    setMousePosition(static_cast<ScreenCoord>(xpos), static_cast<ScreenCoord>(ypos));
-    setMouseStartPosition(static_cast<ScreenCoord>(xpos), static_cast<ScreenCoord>(ypos));
 }
 
-void InputManager::onFrameUpdate() {
-    setMouseMovedPosition(mouseStart.x - mouse.x, mouseStart.y - mouse.y);
-    setMouseStartPosition(mouse.x, mouse.y); // reset start position
+InputManager::~InputManager() {
+    onKeyPress.disconnect_all_slots();
+    onMouseMove.disconnect_all_slots();
+    onMousePress.disconnect_all_slots();
 }
 
 bool InputManager::isPress(KeyboardKey key) {
@@ -66,55 +111,18 @@ void InputManager::calcSensetivity(int width, int height, double dpi) {
 }
 
 void InputManager::subscribeMouseMove(const std::function<void(double, double)>& f) {
-    window->onMouseMove.connect(f);
+//    m_window->onMouseMove.connect(f);
 }
 
 void InputManager::subscribeMousePress(const std::function<void(int, int, int)>& f) {
-    window->onMousePress.connect(f);
+//    m_window->onMousePress.connect(f);
 }
 
 void InputManager::subscribeKeyPress(const std::function<void(int, int, int, int)>& f) {
-    window->onKeyPress.connect(f);
+//    m_window->onKeyPress.connect(f);
 }
 
-void InputManager::onKeyPress(int key, int scancode, int action, int mods) {
-    bool keyState = false;
-
-    switch (action) {
-        case KEY_PRESS:     keyState = true; break;
-        case KEY_REPEAT:    keyState = true; break;
-        case KEY_RELEASE:   keyState = false; break;
-        default: console::warn("unknown keyboard action");
-    }
-
-    keyboardKeys_.set(static_cast<size_t>(key), keyState);
-
-    switch (mods) {
-        case MODIFIER_SHIFT:    keyboardModifiers_.set(MODIFIER_SHIFT, true); break;
-        case MODIFIER_CONTROL:  keyboardModifiers_.set(MODIFIER_CONTROL, true); break;
-        case MODIFIER_ALT:      keyboardModifiers_.set(MODIFIER_ALT, true); break;
-        case MODIFIER_SUPER:    keyboardModifiers_.set(MODIFIER_SUPER, true); break;
-        default: keyboardModifiers_.reset();
-    }
-}
-
-void InputManager::onMouseMove(double x, double y) {
-    setMousePosition(static_cast<ScreenCoord>(x), static_cast<ScreenCoord>(y));
-}
-
-void InputManager::onMouseClick(int button, int action, int mods) {
-    bool state = false;
-
-    switch (action) {
-        case KEY_PRESS:     state = true; break;
-        case KEY_RELEASE:   state = false; break;
-        default: console::warn("unknown mouse action");
-    }
-
-    switch (button) {
-        case MOUSE_BUTTON_LEFT:     mouseKeys_.set(MouseButton::MOUSE_BUTTON_LEFT, state); break;
-        case MOUSE_BUTTON_MIDDLE:   mouseKeys_.set(MouseButton::MOUSE_BUTTON_MIDDLE, state); break;
-        case MOUSE_BUTTON_RIGHT:    mouseKeys_.set(MouseButton::MOUSE_BUTTON_RIGHT, state); break;
-        default: console::warn("unknown mouse button");
-    }
+void InputManager::update() {
+    setMouseMovedPosition(mouseStart.x - mouse.x, mouseStart.y - mouse.y);
+    setMouseStartPosition(mouse.x, mouse.y); // reset start position
 }

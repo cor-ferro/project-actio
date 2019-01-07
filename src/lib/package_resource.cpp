@@ -1,5 +1,9 @@
 #include "package_resource.h"
 
-PackageResource::PackageResource(const Path& path) : Resource(path) {};
+PackageResource::PackageResource() : Resource() {};
 
 void PackageResource::load() {}
+
+const void *const PackageResource::get() const {
+    return nullptr;
+}

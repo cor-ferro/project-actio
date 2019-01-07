@@ -20,6 +20,8 @@ public:
     inline std::shared_ptr<Mesh> create() {
         Mesh *mesh = pool.construct();
 
+        assert(mesh != nullptr && "cannot allocate memory for mesh");
+
         mesh->material.reset(new Material());
 
         std::shared_ptr<Mesh> ptr(mesh, [this](Mesh *mesh) { this->pool.destroy(mesh); });

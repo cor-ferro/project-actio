@@ -7,18 +7,19 @@
 
 #include "assets_base.h"
 #include "resource.h"
+#include <string>
 
 namespace assets {
     class Script : public BaseAsset {
     public:
         explicit Script(Resource *resource);
 
-        void setContent(Resource::Content newContent);
+        void setContent(const std::string& newContent);
 
-        Resource::Content getContent();
+        const std::string& getContent();
 
     private:
-        Resource::Content content;
+        std::string content;
     };
 }
 

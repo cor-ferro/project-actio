@@ -13,8 +13,6 @@ namespace assets {
 
     private:
         std::shared_ptr<::Material> material;
-
-        std::vector<std::shared_ptr<Texture>> textures;
     };
 }
 

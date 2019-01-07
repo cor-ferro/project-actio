@@ -64,7 +64,7 @@ namespace game {
 
             void configure(entityx::EventManager &event_manager) override;
 
-            void setRenderer(renderer::Renderer *newRenderer);
+            void setRenderer(std::shared_ptr<renderer::Renderer>& newRenderer);
 
             void receive(const events::RenderResize &event);
 
@@ -84,9 +84,9 @@ namespace game {
 
             void addShader(assets::Shader *asset);
 
-            void addTexture(assets::Texture *asset);
+            void addTexture(assets::Image *asset);
 
-            void removeTexture(assets::Texture *asset);
+            void removeTexture(assets::Image *asset);
 
             void addMaterial(assets::Material *asset);
 
@@ -103,8 +103,8 @@ namespace game {
             std::stack<MeshHandle> queueUpdateMesh;
             std::stack<MeshHandle> queueDestroyMesh;
 
-            std::stack<assets::Texture*> queueCreateTexture;
-            std::stack<assets::Texture*> queueDestroyTexture;
+            std::stack<assets::Image*> queueCreateTexture;
+            std::stack<assets::Image*> queueDestroyTexture;
 
             std::stack<assets::Shader*> setupShaders;
             std::stack<assets::Material*> setupMaterials;

@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
+#include <memory>
 #include <boost/filesystem/path.hpp>
 #include "../lib/console.h"
 #include "../lib/path.h"
@@ -11,6 +12,8 @@
 #include "../resources/file_resource.h"
 
 #include "monitor.h"
+
+#include "../lib/assets.h"
 
 static void w1ErrorCallback(int error, const char *description) {
     console::err("GLFW error: %s", description);
@@ -34,17 +37,23 @@ public:
 
     Path getPath();
 
-    Path resourcePath();
+    Path resourcePath() const;
 
-    Path resourcePath(const std::string& fromPath);
+    Path resourcePath(const std::string& fromPath) const;
 
-    const resources::File resource(const std::string& path);
+    const resources::File resource(const std::string& path) const;
 
     void setName(const std::string& name);
 
     const Monitor *const getPrimaryMonitor();
 
-    const AppPaths& getPaths();
+    const AppPaths& getPaths() const;
+
+    static void LoadBaseAssets(const AppPaths& appPaths);
+
+    static void UnloadBaseAssets();
+
+    static std::shared_ptr<Assets>& GetBaseAssets();
 
 //    const Monitors& getMonitors();
 

@@ -9,7 +9,7 @@ MeshManager::~MeshManager() {
 }
 
 void MeshManager::init() {
-    
+
 }
 
 void MeshManager::destroy() {

@@ -7,6 +7,7 @@
 #include <map>
 #include <utility>
 #include <boost/bind.hpp>
+#include <boost/signals2.hpp>
 #include "console.h"
 #include "../renderer/window_context.h"
 
@@ -94,7 +95,13 @@ struct InputManager {
         float speed = 1.0f;
     };
 
-    explicit InputManager(WindowContext &windowContext);
+    InputManager();
+
+//    explicit InputManager(WindowContext &windowContext);
+
+    ~InputManager();
+
+    void update();
 
     bool isPress(KeyboardKey key);
 
@@ -110,14 +117,6 @@ struct InputManager {
 
     void setMouseStartPosition(ScreenCoord x, ScreenCoord y);
 
-    void onKeyPress(int key, int scancode, int action, int mods);
-
-    void onMouseMove(double x, double y);
-
-    void onMouseClick(int button, int action, int mods);
-
-    void onFrameUpdate();
-
     void calcSensetivity(int width, int height, double dpi);
 
     void subscribeMouseMove(const std::function<void(double, double)> &f);
@@ -132,12 +131,14 @@ struct InputManager {
 
     Sensetivity sensetivity;
 
+    boost::signals2::signal<void(int, int, int, int)> onKeyPress;
+    boost::signals2::signal<void(double, double)> onMouseMove;
+    boost::signals2::signal<void(int, int, int)> onMousePress;
+
 private:
     std::bitset<GLFW_KEY_LAST> keyboardKeys_;
     std::bitset<GLFW_MOD_SUPER> keyboardModifiers_;
     std::bitset<GLFW_MOUSE_BUTTON_LAST> mouseKeys_;
-
-    WindowContext *window;
 };
 
 #endif

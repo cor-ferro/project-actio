@@ -7,29 +7,22 @@
 
 class Resource {
 public:
-    typedef std::shared_ptr<std::string> Content;
-
-    explicit Resource(Path path);
+    Resource();
 
     virtual ~Resource() = default;
 
-    void reset();
+    virtual const void *const get() const = 0;
 
-    Content get();
-
-    const size_t getSize();
+    const size_t& getSize();
 
     virtual void load() = 0;
 
     bool isLoaded();
 
-    const Path &getPath() const;
-
 protected:
-    Path path;
-    bool loaded = false;
-    std::shared_ptr<std::string> data;
-    size_t size = 0;
+    mutable bool loaded = false;
+
+    mutable size_t size = 0;
 };
 
 #endif //ACTIO_LIB_RESOURCE_H

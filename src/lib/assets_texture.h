@@ -6,9 +6,9 @@
 #include "image_data.h"
 
 namespace assets {
-    class Texture : public BaseAsset {
+    class Image : public BaseAsset {
     public:
-        explicit Texture(Resource *resource);
+        explicit Image(Resource *resource);
 
         std::shared_ptr<ImageData> getImage();
 

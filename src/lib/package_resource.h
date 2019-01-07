@@ -10,11 +10,16 @@
 
 class PackageResource : public Resource {
 public:
-    explicit PackageResource(const Path& path);
+    PackageResource();
 
     ~PackageResource() override = default;
 
     void load() override;
+
+    const void *const get() const;
+
+private:
+    Path path;
 };
 
 #endif //ACTIO_LIB_PACKAGE_RESOURCE_H

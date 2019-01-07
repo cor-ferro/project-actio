@@ -4,17 +4,18 @@ namespace assets {
     /**
      * -------------------- Script --------------------
      */
-    Script::Script(Resource *resource) : BaseAsset(resource) {
-        content = nullptr;
-    };
+    Script::Script(Resource *resource) : BaseAsset(resource) {};
 
-    void Script::setContent(Resource::Content newContent) {
+    void Script::setContent(const std::string& newContent) {
         content = newContent;
     }
 
-    Resource::Content Script::getContent() {
-        if (!content) {
-            setContent(resource->get());
+    const std::string& Script::getContent() {
+        if (content.empty()) {
+            const void *data = resource->get();
+
+            content = std::string(static_cast<const char *>(data), resource->getSize()); // Каков размер? Есть ли завершающий байт
+
         }
 
         return content;

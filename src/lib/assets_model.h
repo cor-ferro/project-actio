@@ -46,6 +46,7 @@ namespace assets {
         const std::vector<std::shared_ptr<::Mesh>> &getMeshes();
 
         boost::signals2::signal<void ()> onLoad;
+
         boost::signals2::signal<void ()> onDestroy;
     private:
         Assimp::Importer importer;

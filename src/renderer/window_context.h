@@ -30,6 +30,10 @@ struct WindowContext {
 
     Size getSize() const;
 
+    int getWidth();
+
+    int getHeight();
+
     void setSize(int width, int height);
 
     void setMousePosition(unsigned int x, unsigned int y);

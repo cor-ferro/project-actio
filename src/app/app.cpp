@@ -1,4 +1,9 @@
 #include "app.h"
+#include <memory>
+
+#include "../lib/assets_loader.h"
+
+static std::shared_ptr<Assets> BaseAssets;
 
 App::App(int argc, char **argv) {
     console::warn("create app");
@@ -21,15 +26,15 @@ Path App::getPath() {
     return m_path;
 }
 
-Path App::resourcePath() {
+Path App::resourcePath() const {
     return createPath(m_path, RESOURCE_DIR);
 }
 
-Path App::resourcePath(const std::string& fromPath) {
+Path App::resourcePath(const std::string& fromPath) const {
     return createPath(m_path, RESOURCE_DIR, fromPath);
 }
 
-const resources::File App::resource(const std::string& path) {
+const resources::File App::resource(const std::string& path) const {
     Path resourceFilePath = resourcePath(path);
 
     resources::File file(resourceFilePath.string());
@@ -103,6 +108,36 @@ void App::TerminateGLFW() {
     glfwTerminate();
 }
 
-const AppPaths &App::getPaths() {
+const AppPaths &App::getPaths() const {
     return paths;
+}
+
+std::shared_ptr<Assets>& App::GetBaseAssets() {
+    return BaseAssets;
+}
+
+void App::LoadBaseAssets(const AppPaths& appPaths) {
+    console::info("load base assets");
+    BaseAssets.reset(new Assets(appPaths));
+
+    assets::Loader assetsLoader(appPaths.resources);
+
+    const std::vector<std::pair<std::string, Path>> defaultTextures = {
+            {"DefaultDiffuseTexture", "default-diffuse.png"},
+            {"DefaultNormalTexture", "default-normal.jpg"},
+            {"DefaultSpecularTexture", "default-specular.png"},
+            {"DefaultHeightTexture", "default-height.png"}
+    };
+
+    for (const auto &it : defaultTextures) {
+        const std::string &textureName = it.first;
+        const Path &texturePath = it.second;
+
+//        BaseAssets->add<assets::Image>(assetsLoader, texturePath);
+    }
+}
+
+void App::UnloadBaseAssets() {
+    BaseAssets.reset();
+    console::info("unload base assets");
 }

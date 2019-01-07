@@ -114,6 +114,7 @@ namespace utils {
 
         if (in) {
             in.seekg(0, std::ios::end);
+            str->clear();
             str->reserve(in.tellg());
             *size = static_cast<size_t>(in.tellg());
             in.seekg(0, std::ios::beg);

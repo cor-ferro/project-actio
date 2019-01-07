@@ -11,7 +11,6 @@
 #include "../lib/image_data.h"
 #include "../lib/image_loader.h"
 #include "../lib/console.h"
-#include "../app/app.h"
 #include "../resources/resources.h"
 #include "../renderer/handle.h"
 

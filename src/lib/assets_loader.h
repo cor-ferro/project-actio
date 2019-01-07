@@ -19,6 +19,10 @@ namespace assets {
 
         Resource *createResource(const Path &path);
 
+        Resource *createResource();
+
+        Resource *createResource(void *const memory);
+
     protected:
         std::string entryPoint;
     };

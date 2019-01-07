@@ -9,14 +9,13 @@
 
 namespace game {
     namespace systems {
-        Render::Render(Context& context) : systems::BaseSystem(context) {}
+        Render::Render(Context &context) : systems::BaseSystem(context) {}
 
         void Render::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
             if (renderer == nullptr) return;
 
             processTextures();
             processMeshes();
-            processUi();
 
             renderer::FrameContext frameContext = renderer->createFrameContext(es);
 
@@ -43,8 +42,8 @@ namespace game {
             event_manager.subscribe<ex::EntityDestroyedEvent>(*this);
         }
 
-        void Render::setRenderer(renderer::Renderer *newRenderer) {
-            renderer = newRenderer;
+        void Render::setRenderer(std::shared_ptr<renderer::Renderer> &newRenderer) {
+            renderer = newRenderer.get();
 
             // @todo: handle resize
             const renderer::Params &params = renderer->getParams();
@@ -117,11 +116,11 @@ namespace game {
             setupShaders.push(asset);
         }
 
-        void Render::addTexture(assets::Texture *asset) {
+        void Render::addTexture(assets::Image *asset) {
             queueCreateTexture.push(asset);
         }
 
-        void Render::removeTexture(assets::Texture *asset) {
+        void Render::removeTexture(assets::Image *asset) {
             queueDestroyTexture.push(asset);
         }
 
@@ -130,44 +129,31 @@ namespace game {
         }
 
         void Render::processMeshes() {
-            processQueue<MeshHandle>(queueCreateMesh, [this](MeshHandle& mesh) {
+            processQueue<MeshHandle>(queueCreateMesh, [this](MeshHandle &mesh) {
                 renderer->createMesh(mesh);
             });
 
-            processQueue<MeshHandle>(queueUpdateMesh, [this](MeshHandle& mesh) {
+            processQueue<MeshHandle>(queueUpdateMesh, [this](MeshHandle &mesh) {
                 renderer->updateMesh(mesh);
             });
 
-            processQueue<MeshHandle>(queueDestroyMesh, [this](MeshHandle& mesh) {
+            processQueue<MeshHandle>(queueDestroyMesh, [this](MeshHandle &mesh) {
                 renderer->destroyMesh(mesh);
             });
         }
 
         void Render::processTextures() {
-            processQueue<assets::Texture*>(queueCreateTexture, [this](assets::Texture *&asset) {
+            processQueue<assets::Image *>(queueCreateTexture, [this](assets::Image *&asset) {
 //                renderer->createTexture(asset->getImage());
             });
 
-            processQueue<assets::Texture*>(queueDestroyTexture, [this](assets::Texture *&asset) {
+            processQueue<assets::Image *>(queueDestroyTexture, [this](assets::Image *&asset) {
 //                renderer->destroyTexture();
             });
         }
 
         void Render::processUi() {
-            ImGui_ImplGlfwGL3_NewFrame();
-            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), true);
 
-            ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
-                                     | ImGuiWindowFlags_NoMove
-                                     | ImGuiWindowFlags_NoResize
-                                     | ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-            ImGui::Begin("Metrics", nullptr, flags);
-
-
-            ImGui::SetWindowSize(ImVec2(200.0f, 350.0f));
-            ImGui::End();
-            ImGui::Render();
         }
     }
 }

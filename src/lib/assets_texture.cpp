@@ -5,18 +5,21 @@ namespace assets {
     /**
      * -------------------- Texture --------------------
      */
-    Texture::Texture(Resource *resource) : BaseAsset(resource) {};
+    Image::Image(Resource *resource) : BaseAsset(resource) {};
 
-    std::shared_ptr<ImageData> Texture::getImage() {
+    std::shared_ptr<ImageData> Image::getImage() {
         if (!image) {
             resource->load();
 
             ImageParser parser;
-            Resource::Content imageResourceData = resource->get();
+            void const* imageResourceData = resource->get();
 
             if (imageResourceData != nullptr) {
-                std::shared_ptr<ImageData> newImage = parser.parse(imageResourceData->c_str(),
-                                                                   imageResourceData->length());
+                std::shared_ptr<ImageData> newImage = parser.parse(
+                        static_cast<const char *>(imageResourceData),
+                        resource->getSize()
+                );
+
                 image = newImage;
             }
         }

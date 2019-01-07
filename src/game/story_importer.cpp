@@ -199,7 +199,7 @@ namespace game {
             Resource *resource = assetsLoader.createResource(chapterResource.path);
 
             if (resource != nullptr) {
-                assets->addTexture(chapterResource.name, resource);
+                assets->addImage(chapterResource.name, resource);
             }
         }
 
@@ -240,11 +240,11 @@ namespace game {
                 std::string textureName = it.first;
                 Texture *texture = it.second;
 
-                assets::Texture *assetTexture = assets->getTexture(materialResource.diffuseTexture);
+                assets::Image *assetImage = assets->getImage(materialResource.diffuseTexture);
                 std::shared_ptr<ImageData> image;
 
-                if (assetTexture != nullptr) {
-                    image = assetTexture->getImage();
+                if (assetImage != nullptr) {
+                    image = assetImage->getImage();
                 } else {
                     Chapter::ResourceTexture chapterTextureResource;
                     chapterTextureResource.path = materialResource.diffuseTexture;
@@ -253,11 +253,11 @@ namespace game {
                     Resource *resource = assetsLoader.createResource(chapterTextureResource.path);
 
                     if (resource != nullptr) {
-                        assetTexture = assets->addTexture(chapterTextureResource.name, resource);
-                        image = assetTexture->getImage();
+                        assetImage = assets->addImage(chapterTextureResource.name, resource);
+                        image = assetImage->getImage();
                     } else {
-                        assetTexture = assets->getDefaultTexture(*texture);
-                        image = assetTexture->getImage();
+                        assetImage = assets->getImage(Assets::DefaultImage::Diffuse);
+                        image = assetImage->getImage();
                     }
                 }
 
