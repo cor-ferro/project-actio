@@ -11,6 +11,7 @@ set(RESOURCE_DIR '"./resources"')
 set(SHADERS_DIR '"./shaders"')
 set(PROJECT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
 set(PROJECT_INSTALL "${CMAKE_SOURCE_DIR}/build")
+set(SAFE_THREADS 1)
 
 option(COPY_LIBS "Copy all libs" OFF)
 
@@ -54,6 +55,7 @@ file(GLOB actio_src
         src/game/desc/*.cpp
         src/game/events/*.cpp
         src/game/systems/*.cpp
+        src/game/tasks/*.cpp
         src/helpers/*.cpp
         src/lib/*.cpp
         src/lights/*.cpp
@@ -65,9 +67,10 @@ file(GLOB actio_src
         src/renderer/opengl/*.cpp
         src/resources/*.cpp
         src/scenes/*.cpp
+        vendor/imgui/imgui_demo.cpp
         )
 
-add_executable(actio ${actio_src})
+add_executable(actio ${actio_src} src/lib/resource.h src/lib/resource.cpp src/lib/filesystem_resource.h src/lib/filesystem_resource.cpp src/lib/package_resource.h src/lib/package_resource.cpp src/lib/app_paths.h src/lib/memory_resource.h src/lib/memory_resource.cpp src/game/systems/world.h src/game/systems/world.cpp src/game/systems/loader.h src/game/systems/loader.cpp src/lib/data.h src/lib/data.cpp)
 
 target_link_libraries(actio
         ${CMAKE_SOURCE_DIR}/bin/linux64/libSOIL.a
@@ -83,7 +86,7 @@ target_link_libraries(actio
         ${CMAKE_SOURCE_DIR}/bin/linux64/libozz_animation_offline_skel_tools.a)
 
 find_package(X11 REQUIRED)
-find_package(OpenGL REQUIRED)
+find_package(OpenGL REQUIRED COMPONENTS OpenGL GLX)
 find_package(ZLIB REQUIRED)
 find_package(Threads)
 
@@ -107,7 +110,7 @@ endforeach (lib)
 
 #PhysX3Gpu
 foreach (lib PxFoundation PhysX3Common PhysX3 PhysX3Cooking PxPvdSDK PhysX3CharacterKinematic)
-    add_library(${lib} SHARED IMPORTED src/game/systems/base.cpp)
+    add_library(${lib} SHARED IMPORTED src/game/systems/base.cpp src/game/events/load_story.h src/game/events/load_story_complete.h)
     set_property(TARGET ${lib} PROPERTY IMPORTED_LOCATION "${PROJECT_INSTALL}/lib${lib}${PHYSX_CONFIGURATION}_${PHYSX_ARCH}.so")
     target_link_libraries(actio ${lib})
 endforeach (lib)

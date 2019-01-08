@@ -19,11 +19,15 @@ static void w1ErrorCallback(int error, const char *description) {
     console::err("GLFW error: %s", description);
 }
 
+class App;
+
 class App {
 public:
     typedef std::unordered_map<void *, Monitor> Monitors;
 
-    explicit App(int argc, char **argv);
+    App() = default;
+
+    void init(int argc, char **argv);
 
     App(App const&) = delete;
 
@@ -57,6 +61,8 @@ public:
 
 //    const Monitors& getMonitors();
 
+    static App* instance();
+
 private:
     std::string m_name;
     Path m_path;
@@ -73,5 +79,6 @@ private:
     AppPaths paths;
 };
 
+static App app;
 
 #endif /* APP_H_ */

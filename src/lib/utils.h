@@ -11,6 +11,7 @@
 #include <string>
 #include <cerrno>
 #include "path.h"
+#include "data.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
@@ -24,11 +25,9 @@ namespace utils {
 
     std::vector<std::string> split(std::string str, char separator);
 
-    std::string getFileContents(Path path);
+    Data getFileContents(const Path& path);
 
-    void getFileContents(const Path &path, std::string *data, size_t *size);
-
-    void getFileContents(const Path &path, std::shared_ptr<std::string> &data, size_t *size);
+    void getFileContents(const Path &path, Data& data);
 
     float scaleNumber(float x, float y, float value);
 

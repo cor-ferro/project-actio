@@ -41,7 +41,7 @@ namespace game {
 
         inline MeshManager& meshes() { return m_meshManager; };
 
-        inline InputManager& input() { return *m_io.input; };
+        inline InputManager& input() { return m_io.input; };
 
         inline WindowContext& window() { return *m_io.windowContext; };
 

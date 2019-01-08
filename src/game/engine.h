@@ -31,7 +31,7 @@ namespace game {
 
         void startWorlds();
 
-        void startLoadStory(const std::string &storyName, const std::string &chapterName);
+        void startLoadStory(World& world, const std::string &storyName, const std::string &chapterName);
 
         void update();
 
@@ -43,9 +43,9 @@ namespace game {
 
         void reset();
 
-        void enablePhysicDebug();
+        void enableDebug();
 
-        void disablePhysicDebug();
+        void disableDebug();
 
         void initWindowContext(const Monitor *const monitor);
 

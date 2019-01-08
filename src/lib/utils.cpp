@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "console.h"
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 namespace utils {
     std::string formatMemorySize(std::size_t size) {
@@ -96,30 +97,23 @@ namespace utils {
         return items;
     }
 
-    std::string getFileContents(Path path) {
-        std::ifstream in(path.string(), std::ios::in | std::ios::binary);
-        if (in)
-        {
-            return(std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>()));
+    Data getFileContents(const Path& path) {
+        std::ifstream stream(path.string(), std::ios::in | std::ios::binary);
+
+        if (boost::filesystem::exists(path)) {
+            size_t fileSize = boost::filesystem::file_size(path);
+            return Data{stream, fileSize};
         }
-        throw(errno);
+
+        return Data{};
     }
 
-    void getFileContents(const Path &path, std::shared_ptr<std::string> &data, size_t *size) {
-        getFileContents(path, data.get(), size);
-    }
+    void getFileContents(const Path &path, Data& data) {
+        std::ifstream stream(path.string(), std::ios::in | std::ios::binary);
 
-    void getFileContents(const Path &path, std::string *str, size_t *size) {
-        std::ifstream in(path.string());
-
-        if (in) {
-            in.seekg(0, std::ios::end);
-            str->clear();
-            str->reserve(in.tellg());
-            *size = static_cast<size_t>(in.tellg());
-            in.seekg(0, std::ios::beg);
-
-            str->assign((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        if (stream) {
+            size_t fileSize = boost::filesystem::file_size(path);
+            data.set(stream, fileSize);
         }
     }
 

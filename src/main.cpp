@@ -1,10 +1,15 @@
 #include <future>
 #include <algorithm>
+#include <mutex>
+#include <condition_variable>
 
 #include "main.h"
 
 #include "lib/tweaker.h"
 #include "lib/mesh_manager.h"
+
+static std::mutex app_mtx;
+static std::condition_variable app_condition;
 
 void renderHandler(ProgramContext& context) {
     console::info("start render thread");
@@ -20,6 +25,11 @@ void renderHandler(ProgramContext& context) {
     GLFWwindow *const window = engine->getWindowContext().getWindow();
 
     while (!glfwWindowShouldClose(window)) {
+        #ifdef SAFE_THREADS
+        std::unique_lock<std::mutex> lock(app_mtx);
+        app_condition.wait(lock);
+        #endif
+
         auto elapsedTime = static_cast<float>(glfwGetTime());
 
         engine->render(elapsedTime);
@@ -45,11 +55,19 @@ void appHandler(ProgramContext& context) {
 
     auto engine = context.getEngine();
 
-    engine->startLoadStory("story1", "chapter1");
+    auto &world = engine->createWorld();
+
     engine->setupWorlds();
     engine->startWorlds();
+    engine->enableDebug();
+
+    engine->startLoadStory(world, "story1", "chapter1");
 
     while (context.shouldWork) {
+        #ifdef SAFE_THREADS
+        std::unique_lock<std::mutex> lock(app_mtx);
+        #endif
+
         auto start = std::chrono::system_clock::now();
 
         engine->update();
@@ -64,6 +82,11 @@ void appHandler(ProgramContext& context) {
             wait = 0;
         }
 
+        #ifdef SAFE_THREADS
+        lock.unlock();
+        app_condition.notify_all();
+        #endif
+
         std::this_thread::sleep_for(std::chrono::microseconds(wait));
     }
 
@@ -71,16 +94,16 @@ void appHandler(ProgramContext& context) {
 }
 
 int main(int argc, char **argv) {
-    App app(argc, argv);
-    app.setName("project actio");
+    App::instance()->init(argc, argv);
+    App::instance()->setName("project actio");
 
-    console::info("start %s", app.getName());
+    console::info("start %s", App::instance()->getName());
 
 //    App::LoadBaseAssets(app.getPaths());
 
     std::shared_ptr<game::Engine> engine = game::createEngine(app);
 
-    engine->enablePhysicDebug();
+    engine->enableDebug();
     engine->createWorld();
 
     ProgramContext context(app, engine);

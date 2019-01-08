@@ -66,26 +66,29 @@ namespace game {
         void Physic::start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
             systems::BaseSystem::start(es, events, dt);
 
-            debugLinesEntity = m_context.createObject(es);
-            debugTrianglesEntity = m_context.createObject(es);
-            debugPointsEntity = m_context.createObject(es);
-
-            MeshHandle debugLinesMesh = m_context.meshes().create();
-            MeshHandle debugTrianglesMesh = m_context.meshes().create();
-            MeshHandle debugPointsMesh = m_context.meshes().create();
-
-            debugLinesEntity.assign<components::Mesh>(debugLinesMesh);
-            debugLinesEntity.assign<components::Renderable>();
-
-            debugTrianglesEntity.assign<components::Mesh>(debugTrianglesMesh);
-            debugTrianglesEntity.assign<components::Renderable>();
-
-            debugPointsEntity.assign<components::Mesh>(debugPointsMesh);
-            debugPointsEntity.assign<components::Renderable>();
-
-            events.emit<events::ObjectCreate>(debugLinesEntity);
-            events.emit<events::ObjectCreate>(debugTrianglesEntity);
-            events.emit<events::ObjectCreate>(debugPointsEntity);
+//            debugLinesEntity = m_context.createObject(es);
+//            debugTrianglesEntity = m_context.createObject(es);
+//            debugPointsEntity = m_context.createObject(es);
+//
+//            MeshHandle debugLinesMesh = m_context.meshes().create();
+//            MeshHandle debugTrianglesMesh = m_context.meshes().create();
+//            MeshHandle debugPointsMesh = m_context.meshes().create();
+//
+//            debugLinesEntity.assign<components::Mesh>(debugLinesMesh);
+//            debugLinesEntity.assign<components::Transform>();
+//            debugLinesEntity.assign<components::Renderable>();
+//
+//            debugTrianglesEntity.assign<components::Mesh>(debugTrianglesMesh);
+//            debugTrianglesEntity.assign<components::Transform>();
+//            debugTrianglesEntity.assign<components::Renderable>();
+//
+//            debugPointsEntity.assign<components::Mesh>(debugPointsMesh);
+//            debugPointsEntity.assign<components::Transform>();
+//            debugPointsEntity.assign<components::Renderable>();
+//
+//            events.emit<events::ObjectCreate>(debugLinesEntity);
+//            events.emit<events::ObjectCreate>(debugTrianglesEntity);
+//            events.emit<events::ObjectCreate>(debugPointsEntity);
         }
 
         void Physic::update(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
@@ -143,7 +146,7 @@ namespace game {
             });
 
             if (isDisplayDebug) {
-                updateDebugBuffer(events);
+//                updateDebugBuffer(events);
             }
         }
 

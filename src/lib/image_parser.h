@@ -8,10 +8,19 @@ static boost::mutex imageParserMutex;
 
 class ImageParser {
 public:
-    std::shared_ptr<ImageData> parse(const char *data, size_t size);
+    enum class Type {
+        IL,
+        SOIL
+    };
+
+    std::shared_ptr<ImageData> parse(const unsigned char *data, const size_t &size);
+
+    std::shared_ptr<ImageData> parse(const unsigned char *data, const size_t &size, const ImageParser::Type &type);
 
 private:
-    std::shared_ptr<ImageData> parseByIl(const char *data, size_t size);
+    std::shared_ptr<ImageData> parseByIl(const unsigned char *data, const size_t &size);
+
+    std::shared_ptr<ImageData> parseBySoil(const unsigned char *data, const size_t &size);
 };
 
 #endif //ACTIO_IMAGE_PARSER_H

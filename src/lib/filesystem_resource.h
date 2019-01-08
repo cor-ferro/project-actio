@@ -7,6 +7,7 @@
 
 #include "resource.h"
 #include "path.h"
+#include "data.h"
 
 class FilesystemResource : public Resource {
 public:
@@ -22,7 +23,7 @@ public:
 
 private:
     Path path;
-    mutable std::string data;
+    mutable Data data;
 };
 
 #endif //ACTIO_FILESYSTEM_RESOURCE_H

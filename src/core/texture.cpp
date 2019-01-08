@@ -3,11 +3,17 @@
 
 #include "texture.h"
 
-Texture::Texture(Texture::Type type)
+Texture::Texture(const Texture::Type& type)
         : type(type)
         , name(std::string(Texture::nameByType(type))) {}
 
-Texture::Texture(aiTextureType type)
+Texture::Texture(const Texture::Type &type, std::shared_ptr<ImageData> &image)
+        : type(type)
+        , name(std::string(Texture::nameByType(type))) {
+    setData(image);
+}
+
+Texture::Texture(const aiTextureType& type)
         : type(getType(type))
         , name("") {}
 

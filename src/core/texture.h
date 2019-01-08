@@ -26,9 +26,11 @@ struct Texture {
 
     typedef std::unordered_map<char, std::shared_ptr<ImageData>> TextureImages;
 
-    explicit Texture(Texture::Type type);
+    explicit Texture(const Texture::Type& type);
 
-    explicit Texture(aiTextureType type);
+    explicit Texture(const Texture::Type& type, std::shared_ptr<ImageData>& image);
+
+    explicit Texture(const aiTextureType& type);
 
     Texture(Texture && otherTexture) noexcept;
 

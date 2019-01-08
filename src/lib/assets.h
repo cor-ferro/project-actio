@@ -51,7 +51,7 @@ public:
 
 private:
     Set<assets::Shader> shaders;
-    Set<assets::Image> textures;
+    Set<assets::Image> images;
     Set<assets::Model> models;
     Set<assets::Script> scripts;
     Set<assets::Material> materials;

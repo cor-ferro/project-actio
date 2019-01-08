@@ -2,13 +2,22 @@
 #include <fstream>
 #include <IL/il.h>
 #include <IL/ilu.h>
+#include <SOIL.h>
 #include "../lib/console.h"
 
-std::shared_ptr<ImageData> ImageParser::parse(const char *data, size_t size) {
-    return parseByIl(data, size);
+std::shared_ptr<ImageData> ImageParser::parse(const unsigned char *data, const size_t& size) {
+    return parse(data, size, ImageParser::Type::IL);
 }
 
-std::shared_ptr<ImageData> ImageParser::parseByIl(const char *data, size_t size) {
+std::shared_ptr<ImageData> ImageParser::parse(const unsigned char *data, const size_t& size, const ImageParser::Type &type) {
+    switch (type) {
+        case ImageParser::Type::IL: return parseByIl(data, size);
+        case ImageParser::Type::SOIL: return parseBySoil(data, size);
+        default: return parseBySoil(data, size);
+    }
+}
+
+std::shared_ptr<ImageData> ImageParser::parseByIl(const unsigned char *data, const size_t& size) {
     std::shared_ptr<ImageData> imageData(new ImageData());
 
     imageParserMutex.lock();
@@ -71,6 +80,21 @@ std::shared_ptr<ImageData> ImageParser::parseByIl(const char *data, size_t size)
 
     imageParserMutex.unlock();
 
+
+    return imageData;
+}
+
+std::shared_ptr<ImageData> ImageParser::parseBySoil(const unsigned char *data, const size_t &size) {
+//    GLuint tex_2d_from_RAM = SOIL_load_OGL_texture_from_memory
+//    (
+//            data,
+//            size,
+//            SOIL_LOAD_AUTO,
+//            SOIL_CREATE_NEW_ID,
+//            SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_COMPRESS_TO_DXT
+//    );
+
+    std::shared_ptr<ImageData> imageData(new ImageData());
 
     return imageData;
 }

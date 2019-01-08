@@ -22,6 +22,8 @@
 #include "systems/day_time.h"
 #include "systems/weapons.h"
 #include "systems/sky.h"
+#include "systems/world.h"
+#include "systems/loader.h"
 
 #include "../lib/profiling.h"
 
@@ -43,6 +45,8 @@ namespace game {
         void setRenderer(std::shared_ptr<renderer::Renderer>& renderer);
 
         ex::Entity createEntity();
+
+        void startLoadStory(const std::string& storyName, const std::string& chapterName);
 
     private:
         profiling::ProfileTimings systemsProfiler;

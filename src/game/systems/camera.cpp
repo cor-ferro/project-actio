@@ -35,8 +35,9 @@ namespace game {
                 camera->position_ = newPosition;
                 camera->view_ = glm::lookAt(newPosition, newTarget, vec3(0.0f, 1.0f, 0.0f));
 
-                const vec3 original(m_context.input().mouse.x, m_context.data.windowHeight - m_context.input().mouse.y,
-                                    0.0f);
+                const InputManager& input = m_context.input();
+
+                const vec3 original(input.mouse.x, m_context.data.windowHeight - input.mouse.y, 0.0f);
                 const vec4 viewport(0.0f, 0.0f, m_context.data.windowWidth, m_context.data.windowHeight);
                 const mat4 frustum = glm::perspective(
                         glm::radians(camera->getParam(CameraParam::FOV)),
@@ -150,7 +151,7 @@ namespace game {
             }
 
             newPosition = vec3(-25.0f, sideTarget.y + 7.0f, sideTarget.z);
-            newTarget = vec3(sideTarget.x, sideTarget.y + 3.0f, sideTarget.z);
+            newTarget = vec3(sideTarget.x, sideTarget.y + 1.0f, sideTarget.z);
         }
 
         void Camera::lookAt(vec3 target) {

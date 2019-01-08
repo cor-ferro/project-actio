@@ -1,5 +1,6 @@
 #include "deferred_shading.h"
 #include "../../game/components/transform.h"
+#include "../../game/components/physic_actor.h"
 #include "../../game/components/renderable.h"
 #include "../../game/components/mesh.h"
 #include "../../game/components/model.h"
@@ -289,6 +290,7 @@ namespace renderer {
                     ex::Entity entity,
                     components::Renderable&,
                     components::Transform& transform,
+//                    components::PhysicActor& physicActor,
                     components::Mesh& meshes
             ) {
                 entityx::ComponentHandle<components::Skin> skin = entity.component<components::Skin>();

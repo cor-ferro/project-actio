@@ -10,17 +10,18 @@ namespace game {
         struct Transform : Object3D {
             Transform() = default;
 
-            explicit Transform(glm::vec3 newPosition) : Object3D() {
+            explicit Transform(const glm::vec3 &newPosition) : Object3D() {
                 position = newPosition;
             }
 
-            Transform(glm::vec3 newPosition, glm::quat newRotation, glm::vec3 newScale) : Object3D() {
+            Transform(const glm::vec3 &newPosition, const glm::quat &newRotation, const glm::vec3 &newScale) : Object3D() {
                 position = newPosition;
                 quaternion = newRotation;
                 scale = newScale;
             }
 
-            Transform(glm::vec3 newPosition, glm::vec4 newRotation, glm::vec3 newScale) : Object3D() {
+            Transform(const glm::vec3 &newPosition, const glm::vec4 &newRotation, const glm::vec3 &newScale)
+                    : Object3D() {
                 position = newPosition;
 
                 quaternion.x = newRotation[0];

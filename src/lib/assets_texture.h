@@ -10,7 +10,7 @@ namespace assets {
     public:
         explicit Image(Resource *resource);
 
-        std::shared_ptr<ImageData> getImage();
+        std::shared_ptr<ImageData>& getImage();
 
     private:
         std::shared_ptr<ImageData> image;

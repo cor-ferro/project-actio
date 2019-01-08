@@ -6,7 +6,8 @@
 FilesystemResource::FilesystemResource(const Path& path) : Resource(), path(path) {};
 
 void FilesystemResource::load() {
-    utils::getFileContents(path, &data, &size);
+    utils::getFileContents(path, data);
+    size = data.size();
     loaded = true;
 }
 
@@ -16,7 +17,8 @@ const Path &FilesystemResource::getPath() const {
 
 const void *const FilesystemResource::get() const {
     if (!loaded) {
-        utils::getFileContents(path, &data, &size);
+        utils::getFileContents(path, data);
+        size = data.size();
         loaded = true;
     }
 
@@ -24,5 +26,5 @@ const void *const FilesystemResource::get() const {
         return nullptr;
     }
 
-    return static_cast<const void*>(data.c_str());
+    return static_cast<const void*>(*data);
 }

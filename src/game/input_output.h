@@ -12,7 +12,7 @@
 
 namespace game {
     struct InputOutput {
-        std::shared_ptr<InputManager> input;
+        InputManager input;
         std::shared_ptr<renderer::Renderer> renderer;
         std::shared_ptr<WindowContext> windowContext;
     };

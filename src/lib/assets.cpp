@@ -88,7 +88,7 @@ Assets::Set<assets::Model> &Assets::getModels() {
 };
 
 Assets::Set<assets::Image> &Assets::getImages() {
-    return textures;
+    return images;
 };
 
 Assets::Set<assets::Material> &Assets::getMaterials() {
@@ -108,12 +108,12 @@ assets::Image *Assets::addImage(Resource *resource) {
 }
 
 assets::Image * Assets::addImage(const std::string &name, Resource *resource) {
-    return add(name, resource, textures);
+    return add(name, resource, images);
 }
 
 void Assets::free() {
     shaders.clear();
-    textures.clear();
+    images.clear();
     models.clear();
     scripts.clear();
     materials.clear();
@@ -124,11 +124,11 @@ Assets::Id Assets::genId() {
 }
 
 assets::Image *Assets::getImage(const std::string &name) {
-    return get<assets::Image>(name, textures);
+    return get<assets::Image>(name, images);
 }
 
 assets::Image *Assets::getImage(const Assets::Id &id) {
-    return get<assets::Image>(id, textures);
+    return get<assets::Image>(id, images);
 }
 
 assets::Image *Assets::getImage(const Assets::DefaultImage & defaultImageType) {

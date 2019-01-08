@@ -1,5 +1,6 @@
 #include "init.h"
 #include "shader_content.h"
+#include <boost/filesystem/string_file.hpp>
 
 renderer::Renderer* renderer::create(renderer::Params &params) {
     std::map<std::string, RawProgram> programs;
@@ -57,8 +58,7 @@ void renderer::loadPrograms(std::map<std::string, RawProgram> &programs) {
                 ShaderContent &shaderContent = rawProgram.getShader(type);
                 std::shared_ptr<std::string> content = shaderContent.getContent();
 
-                size_t size = 0;
-                utils::getFileContents(shaderFilePath, content, &size);
+                boost::filesystem::load_string_file(shaderFilePath, *content);
             }
         }
     }

@@ -55,19 +55,19 @@ namespace game {
             world.render(dt);
         }
 
-        io.input->update();
+        io.input.update();
     }
 
     void Engine::reset() {
         m_worlds.clear();
     }
 
-    void Engine::enablePhysicDebug() {
-//            m_physic->enableDebug();
+    void Engine::enableDebug() {
+//        m_context->physic().enableDebug();
     }
 
-    void Engine::disablePhysicDebug() {
-//            m_physic->disableDebug();
+    void Engine::disableDebug() {
+//        m_context->physic().disableDebug();
     }
 
     void Engine::initWindowContext(const Monitor *const monitor) {
@@ -84,20 +84,19 @@ namespace game {
         io.windowContext->setAsCurrent();
         io.windowContext->enableVSync();
 
-        io.input.reset(new InputManager());
-        io.input->calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
+        io.input.calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
 
-        io.windowContext->onKeyPress.connect(io.input->onKeyPress);
+        io.windowContext->onKeyPress.connect(io.input.onKeyPress);
 //    io.windowContext.onKeyPress.connect([&inputManager](int key, int scancode, int action, int mods) {
 //        inputManager.onKeyPress(key, scancode, action, mods);
 //    });
 
-        io.windowContext->onMouseMove.connect(io.input->onMouseMove);
+        io.windowContext->onMouseMove.connect(io.input.onMouseMove);
 //    io.windowContext->onMouseMove.connect([&inputManager](double x, double y) {
 //        inputManager.onMouseMove(x, y);
 //    });
 
-        io.windowContext->onMousePress.connect(io.input->onMousePress);
+        io.windowContext->onMousePress.connect(io.input.onMousePress);
 //    io.windowContext->onMousePress.connect([&inputManager](int button, int action, int mods) {
 //        inputManager.onMousePress(button, action, mods);
 //    });
@@ -140,27 +139,23 @@ namespace game {
     }
 
     InputManager& Engine::getInput() {
-        return *io.input;
+        return io.input;
     }
 
     World& Engine::createWorld() {
         m_worlds.emplace_back(*m_context.get());
 
-        return m_worlds.back();
-    }
-
-    void Engine::startLoadStory(const std::string &storyName, const std::string &chapterName) {
-        World& newWorld = createWorld();
+        auto &world = m_worlds.back();
 
         if (io.renderer) {
-            newWorld.setRenderer(io.renderer);
+            world.setRenderer(io.renderer);
         }
 
-        auto *task = new TaskLoadStory(m_app, *m_context.get());
-        task->setStoryName(storyName);
-        task->setChapterName(chapterName);
+        return world;
+    }
 
-        m_tasksManager.addNewTask(task);
+    void Engine::startLoadStory(World& world, const std::string &storyName, const std::string &chapterName) {
+        world.startLoadStory(storyName, chapterName);
     }
 
     App& Engine::app() const {

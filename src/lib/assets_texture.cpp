@@ -7,7 +7,7 @@ namespace assets {
      */
     Image::Image(Resource *resource) : BaseAsset(resource) {};
 
-    std::shared_ptr<ImageData> Image::getImage() {
+    std::shared_ptr<ImageData>& Image::getImage() {
         if (!image) {
             resource->load();
 
@@ -16,7 +16,7 @@ namespace assets {
 
             if (imageResourceData != nullptr) {
                 std::shared_ptr<ImageData> newImage = parser.parse(
-                        static_cast<const char *>(imageResourceData),
+                        static_cast<const unsigned char *>(imageResourceData),
                         resource->getSize()
                 );
 

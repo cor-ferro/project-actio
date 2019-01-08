@@ -5,7 +5,7 @@
 
 static std::shared_ptr<Assets> BaseAssets;
 
-App::App(int argc, char **argv) {
+void App::init(int argc, char **argv) {
     console::warn("create app");
     m_name = "";
 
@@ -140,4 +140,8 @@ void App::LoadBaseAssets(const AppPaths& appPaths) {
 void App::UnloadBaseAssets() {
     BaseAssets.reset();
     console::info("unload base assets");
+}
+
+App* App::instance() {
+    return &app;
 }

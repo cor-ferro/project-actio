@@ -1,13 +1,16 @@
 #include "world.h"
+#include "events/load_story.h"
 
 namespace game {
     void World::setup() {
+        systems.add<systems::Loader>(m_context);
         systems.add<systems::Render>(m_context);
         systems.add<systems::Input>(m_context);
         systems.add<systems::Camera>(m_context);
         systems.add<systems::CharControl>(m_context);
         systems.add<systems::Animations>(m_context);
         systems.add<systems::Physic>(m_context);
+        systems.add<systems::World>(m_context);
 //        systems.add<systems::BallShot>(m_context);
 //        systems.add<systems::Lights>(m_context);
 //        systems.add<systems::LightHelpers>(m_context);
@@ -21,12 +24,14 @@ namespace game {
     void World::start() {
         ex::TimeDelta dt = 0.16;
 
+        systems.system<systems::Loader>()->start(entities, events, dt);
         systems.system<systems::Render>()->start(entities, events, dt);
         systems.system<systems::Input>()->start(entities, events, dt);
         systems.system<systems::Camera>()->start(entities, events, dt);
         systems.system<systems::CharControl>()->start(entities, events, dt);
         systems.system<systems::Animations>()->start(entities, events, dt);
         systems.system<systems::Physic>()->start(entities, events, dt);
+        systems.system<systems::World>()->start(entities, events, dt);
 //        systems.system<systems::BallShot>()->start(entities, events, dt);
 //        systems.system<systems::Lights>()->start(entities, events, dt);
 //        systems.system<systems::LightHelpers>()->start(entities, events, dt);
@@ -37,10 +42,12 @@ namespace game {
 
     void World::update(const ex::TimeDelta& dt) {
         // pre update
+        PROFILE(systemsProfiler, "Loader", systems.update<game::systems::Loader>(dt));
         PROFILE(systemsProfiler, "Input", systems.update<game::systems::Input>(dt));
         PROFILE(systemsProfiler, "Camera", systems.update<game::systems::Camera>(dt));
         PROFILE(systemsProfiler, "CharControl", systems.update<game::systems::CharControl>(dt));
         PROFILE(systemsProfiler, "Physic", systems.update<game::systems::Physic>(dt));
+        PROFILE(systemsProfiler, "World", systems.update<game::systems::World>(dt));
 //        PROFILE(systemsProfiler, "Lights", systems.update<game::systems::Lights>(dt));
 //        PROFILE(systemsProfiler, "DayTime", systems.update<game::systems::DayTime>(dt));
 //        PROFILE(systemsProfiler, "Sky", systems.update<game::systems::Sky>(dt));
@@ -122,5 +129,9 @@ namespace game {
 
     ex::Entity World::createEntity() {
         return entities.create();
+    }
+
+    void World::startLoadStory(const std::string& storyName, const std::string& chapterName) {
+        events.emit<events::LoadStory>(storyName, chapterName);
     }
 }
