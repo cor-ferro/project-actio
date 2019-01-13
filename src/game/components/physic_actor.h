@@ -2,6 +2,7 @@
 #define GAME_COMPONENTS_PHYSIC_H_
 
 #include <glm/glm.hpp>
+#include <entityx/entityx/Entity.h>
 #include "PxScene.h"
 #include "PxRigidDynamic.h"
 #include "PxRigidStatic.h"
@@ -23,7 +24,9 @@ namespace game {
                 Other
             };
 
-            explicit PhysicActor(px::PxRigidActor *actor) : actor(actor) {}
+            explicit PhysicActor(px::PxRigidActor *actor, entityx::Entity entity) : actor(actor), entity(entity) {
+                actor->userData = static_cast<void*>(&this->entity);
+            }
 
             ~PhysicActor() {
                 if (actor != nullptr) {
@@ -91,8 +94,13 @@ namespace game {
                 return actor->is<px::PxRigidStatic>() != NULL;
             }
 
+            entityx::Entity *getEntity() {
+                return static_cast<entityx::Entity *>(actor->userData);
+            }
+
         private:
             px::PxRigidActor *actor = nullptr;
+            entityx::Entity entity;
             Type type = Other;
         };
     }

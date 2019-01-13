@@ -13,6 +13,7 @@
 #include "../lib/console.h"
 #include "../resources/resources.h"
 #include "../renderer/handle.h"
+#include "../lib/types.h"
 
 struct Texture {
     enum class Type {
@@ -41,6 +42,8 @@ struct Texture {
     void destroy();
 
     static Texture Empty(Texture::Type type, unsigned char color);
+
+    static Texture Empty(Texture::Type type, unsigned char r, unsigned char g, unsigned char b);
 
     static Texture White(Texture::Type type);
 

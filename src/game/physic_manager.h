@@ -113,6 +113,8 @@ namespace game {
 
         void removeFromScene(px::PxRigidActor *actor);
 
+        void createPlaneGeometry(px::PxRigidActor *actor);
+
         void createSphereGeometry(px::PxRigidActor *actor, const px::PxReal& radius);
 
         void createBoxGeometry(px::PxRigidActor *actor, const px::PxVec3& size);

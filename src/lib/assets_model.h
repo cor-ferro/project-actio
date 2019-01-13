@@ -15,6 +15,7 @@
 #include "../core/model.h"
 #include "../core/skin.h"
 #include "../core/mesh.h"
+#include "mesh_manager.h"
 
 namespace assets {
     class Model : public BaseAsset {
@@ -43,7 +44,7 @@ namespace assets {
 
         void addMesh(std::shared_ptr<::Mesh> &mesh);
 
-        const std::vector<std::shared_ptr<::Mesh>> &getMeshes();
+        const std::vector<std::shared_ptr<::Mesh>> createMeshes(MeshManager& meshManager);
 
         boost::signals2::signal<void ()> onLoad;
 

@@ -46,7 +46,7 @@ namespace game {
                 auto physicActor = m_context.physic().createStaticActor(position);
 
                 entity.assign<components::Mesh>(mesh);
-                entity.assign<components::PhysicActor>(physicActor);
+                entity.assign<components::PhysicActor>(physicActor, entity);
 
                 events.emit<events::ObjectCreate>(entity);
             });
@@ -83,7 +83,7 @@ namespace game {
                     auto physicActor = m_context.physic().createStaticActor(position);
 
                     entity.assign<components::Mesh>(mesh);
-                    entity.assign<components::PhysicActor>(physicActor);
+                    entity.assign<components::PhysicActor>(physicActor, entity);
 
                     events.emit<events::ObjectCreate>(entity);
                 }

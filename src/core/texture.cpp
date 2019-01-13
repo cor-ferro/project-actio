@@ -44,6 +44,16 @@ Texture Texture::Empty(Texture::Type type = Texture::Type::Diffuse, unsigned cha
     return texture;
 }
 
+Texture Texture::Empty(Texture::Type type, unsigned char r, unsigned char g, unsigned char b) {
+    auto *image = new ImageLoader::RawData[3]{r, g, b};
+    std::shared_ptr<ImageData> imageData(new ImageData(image, 1, 1, GL_RGB));
+
+    Texture texture(type);
+    texture.setData(imageData);
+
+    return texture;
+}
+
 Texture Texture::White(Texture::Type type) {
     return Texture::Empty(type, 255);
 }

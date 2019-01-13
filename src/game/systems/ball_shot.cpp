@@ -50,7 +50,7 @@ namespace game {
                 m_context.physic().createSphereGeometry(physicActor, description.radius);
 
                 ball.assign<components::Mesh>(ballMesh);
-                ball.assign<components::PhysicActor>(physicActor);
+                ball.assign<components::PhysicActor>(physicActor, ball);
                 ball.assign<components::Renderable>();
 
                 events.emit<events::ObjectCreate>(ball);

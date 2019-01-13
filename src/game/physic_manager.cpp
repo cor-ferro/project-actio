@@ -19,7 +19,7 @@ void game::PhysicManager::init() {
 //    cudaContextManager = PxCreateCudaContextManager(*m_foundation, cudaContextManagerDesc);
 
     px::PxSceneDesc sceneDesc(m_physics->getTolerancesScale());
-    sceneDesc.gravity = px::PxVec3(0.0f, -9.8f, 0.0f);
+    sceneDesc.gravity = px::PxVec3(0.0f, -0.1f, 0.0f);
     sceneDesc.cpuDispatcher = m_cpuDispatcher;
 //    sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
 //    sceneDesc.flags |= px::PxSceneFlag::eENABLE_GPU_DYNAMICS;
@@ -28,6 +28,7 @@ void game::PhysicManager::init() {
     sceneDesc.filterShader = PhysicFilterShader;
     sceneDesc.flags |= px::PxSceneFlag::eENABLE_PCM;
     sceneDesc.flags |= px::PxSceneFlag::eENABLE_STABILIZATION;
+    sceneDesc.flags |= px::PxSceneFlag::eENABLE_ACTIVE_ACTORS;
     sceneDesc.gpuMaxNumPartitions = 8;
     sceneDesc.simulationEventCallback = this;
 
@@ -40,18 +41,18 @@ void game::PhysicManager::init() {
     m_scene->setVisualizationParameter(px::PxVisualizationParameter::eBODY_MASS_AXES, 1.0f);
     m_scene->setVisualizationParameter(px::PxVisualizationParameter::eBODY_LIN_VELOCITY, 1.0f);
     m_scene->setVisualizationParameter(px::PxVisualizationParameter::eBODY_ANG_VELOCITY, 1.0f);
-    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_POINT, 1.0f);
-    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_NORMAL, 1.0f);
-    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_ERROR, 1.0f);
-    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_FORCE, 1.0f);
-    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_AABBS, 1.0f);
-//    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
+//    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_POINT, 1.0f);
+//    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_NORMAL, 1.0f);
+//    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_ERROR, 1.0f);
+//    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCONTACT_FORCE, 1.0f);
+//    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_AABBS, 1.0f);
+    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
     m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_AXES, 1.0f);
     m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_EDGES, 1.0f);
 //    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_STATIC, 1.0f);
 //    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCOLLISION_DYNAMIC, 1.0f);
     m_scene->setVisualizationParameter(px::PxVisualizationParameter::eJOINT_LIMITS, 1.0f);
-    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCULL_BOX, 1.0f);
+//    m_scene->setVisualizationParameter(px::PxVisualizationParameter::eCULL_BOX, 1.0f);
 
     m_controllerManager = PxCreateControllerManager(*m_scene);
 
@@ -67,7 +68,7 @@ void game::PhysicManager::init() {
 
     m_materials.insert({"default", m_physics->createMaterial(0.2f, 0.1f, 0.2f)});
 
-    px::PxRigidStatic *groundPlane = PxCreatePlane(*m_physics, px::PxPlane(0, 1, 0, 0), *(m_materials["default"]));
+    px::PxRigidStatic *groundPlane = PxCreatePlane(*m_physics, px::PxPlane({0, 1, 0}, 0), *(m_materials["default"]));
 
     m_scene->addActor(*groundPlane);
 
@@ -306,6 +307,10 @@ void game::PhysicManager::addToScene(physx::PxRigidActor *actor) {
 
 void game::PhysicManager::removeFromScene(physx::PxRigidActor *actor) {
     m_scene->removeActor(*actor);
+}
+
+void game::PhysicManager::createPlaneGeometry(physx::PxRigidActor *actor) {
+    px::PxRigidActorExt::createExclusiveShape(*actor, px::PxPlaneGeometry(), *getMaterial());
 }
 
 void game::PhysicManager::createSphereGeometry(physx::PxRigidActor *actor, const px::PxReal& radius) {

@@ -3,6 +3,7 @@
 #include "assets_loader.h"
 #include "assets_texture.h"
 #include "filesystem_resource.h"
+#include "../core/geometry_builder.h"
 
 namespace assets {
 
@@ -69,38 +70,6 @@ namespace assets {
         const Path &path = resource->getPath();
 
         scene = importer.ReadFile(path.string().c_str(), flags);
-
-        if (scene != nullptr) {
-//            assimpResource = new ::resources::Assimp(scene, path.string());
-//
-//            Loader assetsLoader(path);
-//
-//            const unsigned int numMeshes = scene->mNumMeshes;
-//            for (unsigned int i = 0; i < numMeshes; i++) {
-//                aiMesh *mesh = scene->mMeshes[i];
-//                aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-//
-//                Resource *resource = assetsLoader.createResource(path);
-//
-//                std::string path = it.first;
-//                Image *textureMap = it.second;
-//
-//
-//                std::shared_ptr<ImageData> image;
-//
-//                if (resource != nullptr) {
-//                    assetTexture = assets->addTexture(resource);
-//                } else {
-//                    auto baseAssets = App::GetBaseAssets();
-//                    assetTexture = baseAssets->getTexture(*textureMap);
-//                }
-//
-//                if (assetTexture != nullptr) {
-//                    image = assetTexture->getImage();
-//                    textureMap->setData(image);
-//                }
-//            }
-        }
     }
 
     const aiScene *Model::getScene() {
@@ -112,7 +81,24 @@ namespace assets {
         return scene;
     }
 
-    const std::vector <std::shared_ptr<::Mesh>> &Model::getMeshes() {
+    const std::vector <std::shared_ptr<::Mesh>> Model::createMeshes(MeshManager& meshManager) {
+        std::vector <std::shared_ptr<::Mesh>> meshes;
+
+        assert(loaded && "scene must be loaded");
+
+        if (scene) {
+            meshes.reserve(scene->mNumMeshes);
+
+            for (uint i = 0; i < scene->mNumMeshes; i++) {
+                const aiMesh* ai_mesh = scene->mMeshes[i];
+                auto mesh = meshManager.create();
+
+                GeometryBuilder::FromAi(mesh->geometry, ai_mesh);
+
+                meshes.push_back(mesh);
+            }
+        }
+
         return meshes;
     }
 

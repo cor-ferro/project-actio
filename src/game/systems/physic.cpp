@@ -1,5 +1,8 @@
 #include "physic.h"
 #include <glm/gtc/random.hpp>
+#include <entityx/entityx/Entity.h>
+#include "../components/transform.h"
+#include <memory>
 
 namespace game {
     namespace systems {
@@ -66,29 +69,42 @@ namespace game {
         void Physic::start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
             systems::BaseSystem::start(es, events, dt);
 
-//            debugLinesEntity = m_context.createObject(es);
-//            debugTrianglesEntity = m_context.createObject(es);
-//            debugPointsEntity = m_context.createObject(es);
-//
-//            MeshHandle debugLinesMesh = m_context.meshes().create();
-//            MeshHandle debugTrianglesMesh = m_context.meshes().create();
-//            MeshHandle debugPointsMesh = m_context.meshes().create();
-//
-//            debugLinesEntity.assign<components::Mesh>(debugLinesMesh);
-//            debugLinesEntity.assign<components::Transform>();
-//            debugLinesEntity.assign<components::Renderable>();
-//
-//            debugTrianglesEntity.assign<components::Mesh>(debugTrianglesMesh);
-//            debugTrianglesEntity.assign<components::Transform>();
-//            debugTrianglesEntity.assign<components::Renderable>();
-//
-//            debugPointsEntity.assign<components::Mesh>(debugPointsMesh);
-//            debugPointsEntity.assign<components::Transform>();
-//            debugPointsEntity.assign<components::Renderable>();
-//
-//            events.emit<events::ObjectCreate>(debugLinesEntity);
-//            events.emit<events::ObjectCreate>(debugTrianglesEntity);
-//            events.emit<events::ObjectCreate>(debugPointsEntity);
+            debugLinesEntity = m_context.createObject(es);
+            debugTrianglesEntity = m_context.createObject(es);
+            debugPointsEntity = m_context.createObject(es);
+
+            MeshHandle debugLinesMesh = m_context.meshes().create();
+            MeshHandle debugTrianglesMesh = m_context.meshes().create();
+            MeshHandle debugPointsMesh = m_context.meshes().create();
+
+            auto texRed = std::make_shared<Texture>(Texture::Empty(Texture::Type::Diffuse, 255, 0, 0));
+            auto texGreen = std::make_shared<Texture>(Texture::Empty(Texture::Type::Diffuse, 0, 255, 0));
+            auto texBlue = std::make_shared<Texture>(Texture::Empty(Texture::Type::Diffuse, 0, 0, 255));
+
+            debugLinesMesh->material->setDiffuseMap(texRed);
+            debugLinesMesh->material->setWireframe(true);
+
+            debugTrianglesMesh->material->setDiffuseMap(texGreen);
+            debugTrianglesMesh->material->setWireframe(true);
+
+            debugPointsMesh->material->setDiffuseMap(texBlue);
+            debugPointsMesh->material->setWireframe(true);
+
+            debugLinesEntity.assign<components::Mesh>(debugLinesMesh);
+            debugLinesEntity.assign<components::Transform>();
+            debugLinesEntity.assign<components::Renderable>();
+
+            debugTrianglesEntity.assign<components::Mesh>(debugTrianglesMesh);
+            debugTrianglesEntity.assign<components::Transform>();
+            debugTrianglesEntity.assign<components::Renderable>();
+
+            debugPointsEntity.assign<components::Mesh>(debugPointsMesh);
+            debugPointsEntity.assign<components::Transform>();
+            debugPointsEntity.assign<components::Renderable>();
+
+            events.emit<events::ObjectCreate>(debugLinesEntity);
+            events.emit<events::ObjectCreate>(debugTrianglesEntity);
+            events.emit<events::ObjectCreate>(debugPointsEntity);
         }
 
         void Physic::update(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
@@ -97,6 +113,26 @@ namespace game {
             auto elapsedTime = static_cast<px::PxReal>(dt / 1000.0);
 
             m_context.physic().update(elapsedTime);
+
+            {
+                px::PxScene *const scene = m_context.physic().getScene();
+
+                px::PxU32 nbActiveActors;
+                px::PxActor** activeActors = scene->getActiveActors(nbActiveActors);
+
+                for (px::PxU32 i=0; i < nbActiveActors; ++i)
+                {
+                    auto actor = static_cast<px::PxRigidActor*>(activeActors[i]);
+                    auto entity = static_cast<entityx::Entity*>(actor->userData);
+
+                    if (entity->has_component<components::Transform>()) {
+                        const auto& pose = actor->getGlobalPose();
+                        auto transform = entity->component<components::Transform>();
+                        transform->setPosition(pose.p);
+                        transform->setQuaternion(pose.q);
+                    }
+                }
+            }
 
             while (!contactedActors.empty()) {
                 const std::pair<px::PxActor *, px::PxActor *>& pair = contactedActors.top();
@@ -146,7 +182,7 @@ namespace game {
             });
 
             if (isDisplayDebug) {
-//                updateDebugBuffer(events);
+                updateDebugBuffer(events);
             }
         }
 
@@ -169,8 +205,8 @@ namespace game {
                     for (px::PxU32 i = 0; i < countLines; i++) {
                         const px::PxDebugLine& line = rb.getLines()[i];
 
-                        vertices.push_back(vec3(line.pos0.x, line.pos0.y, line.pos0.z));
-                        vertices.push_back(vec3(line.pos1.x, line.pos1.y, line.pos1.z));
+                        vertices.emplace_back(line.pos0.x, line.pos0.y, line.pos0.z);
+                        vertices.emplace_back(line.pos1.x, line.pos1.y, line.pos1.z);
                     }
 
                     linesMesh->geometry.setVertices(vertices);
@@ -198,9 +234,9 @@ namespace game {
                     for (px::PxU32 i = 0; i < countTriangles; i++) {
                         const px::PxDebugTriangle& triangle = rb.getTriangles()[i];
 
-                        vertices.push_back(vec3(triangle.pos0.x, triangle.pos0.y, triangle.pos0.z));
-                        vertices.push_back(vec3(triangle.pos1.x, triangle.pos1.y, triangle.pos1.z));
-                        vertices.push_back(vec3(triangle.pos2.x, triangle.pos2.y, triangle.pos2.z));
+                        vertices.emplace_back(triangle.pos0.x, triangle.pos0.y, triangle.pos0.z);
+                        vertices.emplace_back(triangle.pos1.x, triangle.pos1.y, triangle.pos1.z);
+                        vertices.emplace_back(triangle.pos2.x, triangle.pos2.y, triangle.pos2.z);
                     }
 
                     trianglesMesh->geometry.setVertices(vertices);
@@ -231,7 +267,7 @@ namespace game {
                     for (px::PxU32 i = 0; i < countPoints; i++) {
                         const px::PxDebugPoint& point = rb.getPoints()[i];
 
-                        vertices.push_back(vec3(point.pos.x, point.pos.y, point.pos.z));
+                        vertices.emplace_back(point.pos.x, point.pos.y, point.pos.z);
                     }
 
                     pointsMesh->geometry.setVertices(vertices);
