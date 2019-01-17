@@ -9,11 +9,12 @@
 
 #include "base.h"
 #include "../events/load_story_complete.h"
+#include "extensions/PxRevoluteJoint.h"
 
 namespace game {
     namespace systems {
+        namespace px = physx;
         namespace ex = entityx;
-        namespace c = components;
 
         class World : public systems::BaseSystem, public entityx::System<World>, public ex::Receiver<World> {
         public:

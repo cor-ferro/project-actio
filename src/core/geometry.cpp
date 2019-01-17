@@ -35,7 +35,7 @@ void Geometry::setType(Geometry::GeometryType newType) {
     type = newType;
 }
 
-Geometry::GeometryType Geometry::getType() {
+const Geometry::GeometryType& Geometry::getType() const {
     return type;
 }
 

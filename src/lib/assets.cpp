@@ -137,6 +137,7 @@ assets::Image *Assets::getImage(const Assets::DefaultImage & defaultImageType) {
         case Assets::DefaultImage::Normal: return getImage("DefaultNormalTexture");
         case Assets::DefaultImage::Specular: return getImage("DefaultSpecularTexture");
         case Assets::DefaultImage::Height: return getImage("DefaultHeightTexture");
+        default: return getImage("DefaultDiffuseTexture");
     }
 }
 

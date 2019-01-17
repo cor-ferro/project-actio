@@ -10,13 +10,14 @@
 
 #include "input_output.h"
 #include "../renderer/init.h"
-#include "../app/app.h"
 #include "world.h"
 #include "context.h"
 #include "story_importer.h"
 #include "../lib/input_manager.h"
 #include "../lib/task.h"
 #include "../lib/task_manager.h"
+
+class App;
 
 namespace game {
     namespace ex = entityx;

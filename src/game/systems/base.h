@@ -1,15 +1,18 @@
-//
-// Created by demitriy on 4/20/18.
-//
-
 #ifndef ACTIO_BASE_SYSTEM_H
 #define ACTIO_BASE_SYSTEM_H
 
-#include <entityx/entityx/entityx.h>
-#include "../context.h"
+#include <entityx/entityx/config.h>
+#include <stack>
+#include <functional>
+
+namespace entityx {
+    class EntityManager;
+    class EventManager;
+}
 
 namespace game {
     class World;
+    class Context;
 
     namespace systems {
         namespace ex = entityx;

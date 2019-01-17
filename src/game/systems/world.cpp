@@ -1,5 +1,7 @@
 #include "world.h"
 #include <thread>
+#include <entityx/entityx/Event.h>
+#include <entityx/entityx/System.h>
 #include "../../core/geometry_builder.h"
 #include "../components/mesh.h"
 #include "../components/renderable.h"
@@ -7,7 +9,9 @@
 #include "../components/camera.h"
 #include "../components/target.h"
 #include "../components/light_directional.h"
+#include "../components/transform.h"
 #include "../events/object_create.h"
+#include "../context.h"
 
 namespace game {
     systems::World::World(Context &context) : systems::BaseSystem(context) {

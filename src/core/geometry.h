@@ -10,16 +10,15 @@
 #include <glm/gtc/constants.hpp>
 #include "../lib/types.h"
 #include "../lib/console.h"
-#include "../lib/mem.h"
 #include "../resources/resources.h"
 #include "../math/Box3.h"
 #include "../math/Sphere.h"
 #include "../renderer/handle.h"
 #include "vertex.h"
 
-typedef unsigned int MeshIndex;
-typedef std::vector<Vertex> GeometryVertices;
-typedef std::vector<MeshIndex> GeometryIndices;
+using MeshIndex = unsigned int;
+using GeometryVertices = std::vector<Vertex>;
+using GeometryIndices = std::vector<MeshIndex>;
 
 struct GeometryCone {
     float radiusTop;
@@ -54,7 +53,7 @@ struct Geometry {
 
     void setType(GeometryType newType);
 
-    GeometryType getType();
+    const GeometryType& getType() const;
 
     void setVertices(std::vector<vec3> vertices);
 

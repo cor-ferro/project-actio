@@ -2,6 +2,7 @@
 #include "../components/light_spot.h"
 #include "../components/light_point.h"
 #include "../components/light_directional.h"
+#include "../components/transform.h"
 
 namespace game {
     namespace systems {

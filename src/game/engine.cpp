@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "../app/app.h"
 
 #include "tasks/load_story.h"
 

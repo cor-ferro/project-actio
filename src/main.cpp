@@ -5,8 +5,8 @@
 
 #include "main.h"
 
-#include "lib/tweaker.h"
-#include "lib/mesh_manager.h"
+#include "app/app.h"
+#include "game/game.h"
 
 static std::mutex app_mtx;
 static std::condition_variable app_condition;
