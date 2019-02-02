@@ -41,7 +41,7 @@ struct Geometry {
 
     Geometry(const Geometry &geometry);
 
-    ~Geometry();
+    ~Geometry() = default;
 
     void destroy();
 
@@ -55,7 +55,7 @@ struct Geometry {
 
     const GeometryType& getType() const;
 
-    void setVertices(std::vector<vec3> vertices);
+    void setVertices(const std::vector<vec3>& vertices);
 
     void addVertex(const Vertex &vertex);
 
@@ -69,9 +69,9 @@ struct Geometry {
 
     void fillIndices();
 
-    void addIndex(unsigned int i);
+    void addIndex(const unsigned int& i);
 
-    void addFace(unsigned int i1, unsigned int i2, unsigned int i3);
+    void addFace(const unsigned int& i1, const unsigned int& i2, const unsigned int& i3);
 
     void computeBoundingBox();
 
@@ -83,9 +83,9 @@ struct Geometry {
 
     float halfHeight();
 
-    void allocVertices(unsigned int count);
+    void allocVertices(const size_t& count);
 
-    void allocIndices(unsigned int count);
+    void allocIndices(const size_t& count);
 
     size_t getCountVertices();
 
@@ -108,8 +108,8 @@ struct Geometry {
 protected:
 
     Math::Box3 boundingBox;
-    std::shared_ptr<GeometryVertices> vertices_;
-    std::shared_ptr<GeometryIndices> indices_;
+    GeometryVertices vertices_;
+    GeometryIndices indices_;
     GeometryType type = Geometry_Static;
 
 private:

@@ -2,19 +2,11 @@
 #define ACTIO_CORE_MESH_H_
 
 #include <vector>
-#include <unordered_map>
 #include <string>
 #include <memory>
 #include "material.h"
-#include "../resources/resources.h"
-#include "../memory/poolallocator.h"
 #include "geometry.h"
-#include "texture.h"
 #include "mesh_bone.h"
-#include "object3D.h"
-#include "vertex.h"
-
-extern memory::PoolAllocator *meshAllocator;
 
 typedef std::size_t MeshId;
 
@@ -45,7 +37,7 @@ enum MeshDrawFlags {
     Mesh_Draw_All = Mesh_Draw_Base | Mesh_Draw_Textures | Mesh_Draw_Bones | Mesh_Draw_Material
 };
 
-struct Mesh : Object3D {
+struct Mesh {
     struct BonesMap {
         unsigned int count;
         std::vector<mat4> transforms;
@@ -64,19 +56,17 @@ struct Mesh : Object3D {
 
     Mesh();
 
-    Mesh(const Mesh& mesh);
+    Mesh(const Mesh& mesh) = delete;
 
     ~Mesh();
 
     void destroy();
 
-    std::string getName();
+    const std::string& getName();
 
     MeshId getId();
 
-    void setName(std::string newName);
-
-    void setName(const char *newName);
+    void setName(const std::string& newName);
 
     void setPrimitiveType(MeshPrimitiveType type);
 

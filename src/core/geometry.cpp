@@ -1,9 +1,6 @@
 #include "geometry.h"
 
 Geometry::Geometry() {
-    vertices_.reset(new GeometryVertices());
-    indices_.reset(new GeometryIndices());
-
     allocVertices(1);
     allocIndices(1);
 }
@@ -15,20 +12,17 @@ Geometry::Geometry(const Geometry &other) {
     console::info("copy geometry %i %i", other.type, type);
 }
 
-Geometry::~Geometry() {
-}
-
 void Geometry::destroy() {
     freeVerties();
     freeIndices();
 }
 
 GeometryVertices *Geometry::getVertices() {
-    return vertices_.get();
+    return &vertices_;
 }
 
 GeometryIndices *Geometry::getIndices() {
-    return indices_.get();
+    return &indices_;
 }
 
 void Geometry::setType(Geometry::GeometryType newType) {
@@ -39,101 +33,101 @@ const Geometry::GeometryType& Geometry::getType() const {
     return type;
 }
 
-void Geometry::setVertices(std::vector<vec3> vertices) {
+void Geometry::setVertices(const std::vector<vec3>& vertices) {
     freeVerties();
     allocVertices(vertices.size());
 
-    for (vec3 &vertex : vertices) {
+    for (const vec3 &vertex : vertices) {
         addVertex(vertex.x, vertex.y, vertex.z);
     }
 }
 
 void Geometry::addVertex(const Vertex &vertex) {
-    vertices_->push_back(vertex);
+    vertices_.push_back(vertex);
 }
 
 void Geometry::addVertex(const Vertex &&vertex) {
-    vertices_->push_back(vertex);
+    vertices_.push_back(vertex);
 }
 
 void Geometry::addVertex(float x, float y, float z) {
     Vertex v(x, y, z);
-    vertices_->push_back(v);
+    vertices_.push_back(v);
 }
 
 void Geometry::addVertex(std::vector<float> &vertices) {
-    int verticesSize = vertices.size();
+    size_t verticesSize = vertices.size();
     for (int i = 0; i < verticesSize; i += 3) {
         addVertex(vertices[i], vertices[i + 1], vertices[i + 2]);
     }
 }
 
 Vertex &Geometry::getVertex(unsigned int index) {
-    return vertices_->at(index);
+    return vertices_.at(index);
 }
 
-void Geometry::allocVertices(unsigned int count) {
-    vertices_->reserve(count);
+void Geometry::allocVertices(const size_t& count) {
+    vertices_.reserve(count);
 }
 
-void Geometry::allocIndices(unsigned int count) {
-    indices_->reserve(count);
+void Geometry::allocIndices(const size_t& count) {
+    indices_.reserve(count);
 }
 
 void Geometry::fillIndices() {
-    allocIndices(vertices_->size());
-    for (int i = 0; i < vertices_->size(); i++) {
-        Vertex &primaryVertex = vertices_->at(i);
+    allocIndices(vertices_.size());
+    for (size_t i = 0; i < vertices_.size(); i++) {
+        Vertex &primaryVertex = vertices_.at(i);
 
-        for (int j = 0; j < vertices_->size(); j++) {
+        for (size_t j = 0; j < vertices_.size(); j++) {
             if (j == i) {
-                addIndex(i);
+                addIndex(static_cast<unsigned int>(i));
                 continue;
             }
 
-            Vertex &secondaryVertex = vertices_->at(j);
+            Vertex &secondaryVertex = vertices_.at(j);
 
             if (glm::all(glm::epsilonEqual(primaryVertex.Position, secondaryVertex.Position, 0.01f))) {
-                addIndex(i);
+                addIndex(static_cast<unsigned int>(i));
             } else {
-                addIndex(j);
+                addIndex(static_cast<unsigned int>(j));
             }
         }
     }
 
-    console::info("fillIndices: %i", indices_->size());
+    console::info("fillIndices: %i", indices_.size());
 }
 
-void Geometry::addIndex(unsigned int i) {
-    indices_->push_back(i);
+void Geometry::addIndex(const unsigned int& i) {
+    indices_.push_back(i);
 }
 
-void Geometry::addFace(unsigned int i1, unsigned int i2, unsigned int i3) {
-    indices_->push_back(i1);
-    indices_->push_back(i2);
-    indices_->push_back(i3);
+void Geometry::addFace(const unsigned int& i1, const unsigned int& i2, const unsigned int& i3) {
+    indices_.push_back(i1);
+    indices_.push_back(i2);
+    indices_.push_back(i3);
 }
 
 void Geometry::freeVerties() {
-    vertices_->clear();
+    vertices_.clear();
 }
 
 void Geometry::freeIndices() {
-    indices_->clear();
+    indices_.clear();
 }
 
 void Geometry::computeBoundingBox() {
     vec3 min(0.0f);
     vec3 max(0.0f);
 
-    const Vertex &frontVertex = vertices_->front();
+    const Vertex &frontVertex = vertices_.front();
 
     min.x = max.x = frontVertex.Position.x;
     min.y = max.y = frontVertex.Position.y;
     min.z = max.z = frontVertex.Position.z;
 
-    for (auto verticesIt = vertices_->begin(); verticesIt != vertices_->end(); verticesIt++) {
-        Vertex &vertex = *verticesIt;
+    for (const auto &verticesIt : vertices_) {
+        const Vertex &vertex = verticesIt;
 
         if (vertex.Position.x < min.x) min.x = vertex.Position.x;
         if (vertex.Position.x > max.x) max.x = vertex.Position.x;
@@ -169,11 +163,11 @@ float Geometry::halfHeight() {
 }
 
 size_t Geometry::getCountVertices() {
-    return vertices_->size();
+    return vertices_.size();
 };
 
 size_t Geometry::getCountIndices() {
-    return indices_->size();
+    return indices_.size();
 };
 
 void Geometry::setNeedUpdateVertices(bool value) {
