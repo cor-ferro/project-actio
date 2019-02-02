@@ -106,8 +106,6 @@ namespace game {
             std::stack<Story> loadedStory;
 
             std::deque<Aircraft> aircrafts;
-
-            float pos_i = 0.0f;
         };
     }
 }

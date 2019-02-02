@@ -46,19 +46,32 @@ namespace game {
     }
 
     void systems::World::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
+        px::PxVec3 dir{0.0f, 0.0f, 0.0f};
+
+        if (m_context.input().isPress(InputManager::KEY_W)) {
+            dir.z -= 0.1f;
+        }
+
+        if (m_context.input().isPress(InputManager::KEY_S)) {
+            dir.z += 0.1f;
+        }
+
+        if (m_context.input().isPress(InputManager::KEY_A)) {
+            dir.x -= 0.1f;
+        }
+
+        if (m_context.input().isPress(InputManager::KEY_D)) {
+            dir.x += 0.1f;
+        }
+
         for (auto &aircraft : aircrafts) {
-            pos_i+= 0.01f;
             auto actor = aircraft.entity.component<components::PhysicActor>()->getDynamicActor();
-            px::PxTransform target{0.0f, 0.0f, 0.0f};
-            if (actor->getKinematicTarget(target)) {
-                console::info("move");
-                target.p.z+= 0.1f;
-                actor->setKinematicTarget(target);
-            } else {
-                actor->setKinematicTarget({0.0f, 3.0f, pos_i});
-            }
 
+            px::PxTransform pose = actor->getGlobalPose();
 
+            pose.p += dir;
+
+            actor->setKinematicTarget(pose);
         }
 
         processQueue<Story>(loadedStory, [this, &es, &events](Story&){
