@@ -26,67 +26,23 @@ build_dependencies()
 	create_libs_dir
 	create_build_dir
 
-    local code_build_physx=build_physx
-    local code_build_boost=build_boost
-	local code_build_boost=build_boost
-	local code_build_assimp=build_assimp
-	local code_build_entityx=build_entityx
-	local code_build_glm=build_glm
-	local code_build_glfw=build_glfw
-	local code_build_glad=build_glad
-	local code_build_imgui=build_imgui
-	local code_build_iniparser=build_iniparser
-	local code_build_ozz_animation=build_ozz_animation
-	local code_build_soil=build_soil
-	local code_build_devIL=build_devIL
-	local code_build_jasper=build_jasper
-	local code_build_luabridge=build_luabridge
-	local code_build_yamlcpp=build_yamlcpp
-
-    local final_status=$code_build_physx &&
-                        $code_build_boost &&
-                        $code_build_boost &&
-                        $code_build_assimp &&
-                        $code_build_entityx &&
-                        $code_build_glm &&
-                        $code_build_glfw &&
-                        $code_build_glad &&
-                        $code_build_imgui &&
-                        $code_build_iniparser &&
-                        $code_build_ozz_animation &&
-                        $code_build_soil &&
-                        $code_build_devIL &&
-                        $code_build_jasper &&
-                        $code_build_luabridge &&
-                        $code_build_yamlcpp
-
-    echo 'status:'
-	echo '--------------------'
-
-	echo 'build physx:' $code_build_physx
-    echo 'build boost:' $code_build_boost
-    echo 'build boost:' $code_build_boost
-    echo 'build assimp:' $code_build_assimp
-    echo 'build entityx:' $code_build_entityx
-    echo 'build glm:' $code_build_glm
-    echo 'build glfw:' $code_build_glfw
-    echo 'build glad:' $code_build_glad
-    echo 'build imgui:' $code_build_imgui
-    echo 'build iniparser:' $code_build_iniparser
-    echo 'build ozz_animation:' $code_build_ozz_animation
-    echo 'build soil:' $code_build_soil
-    echo 'build devIL:' $code_build_devIL
-    echo 'build jasper:' $code_build_jasper
-    echo 'build luabridge:' $code_build_luabridge
-    echo 'build yamlcpp:' $code_build_yamlcpp
+    build_physx
+	build_assimp
+	build_entityx
+	build_glm
+	build_glfw
+	build_glad
+	build_imgui
+	build_iniparser
+	build_ozz_animation
+	build_soil
+	build_devIL
+	build_jasper
+	build_luabridge
+	build_yamlcpp
 
 	echo '--------------------'
 
-	if [ $final_status = 0 ]; then
-	    printf "${GREEN}build success $NC"
-    else
-        printf "${RED}build failed $NC"
-	fi
 }
 
 create_libs_dir()
@@ -172,15 +128,17 @@ build_boost()
 	local file_name="boost_1_65_1"
 
 	if [ ! -d ./"$file_name" ]; then
+		echo "not exists"
 		if [ ! -f ./"$file_name.zip" ]; then
-			#echo "download"
+			echo "download"
 			build_boost_download $version $file_name
 		else
 			build_boost_validate_zip $version $file_name
 		fi
 	else
-		echo "build libs"
-		#build_boost_libs $version $file_name
+		echo "exists"
+#		echo "build libs"
+		build_boost_libs $version $file_name
 	fi
 }
 
@@ -228,7 +186,7 @@ build_boost_libs()
 	local file_name=$2
 
 	cd ./$file_name
-	./bootstrap.sh --with-toolset=gcc --with-libraries=system,thread,timer,chrono,date_time,filesystem,regex
+	./bootstrap.sh --with-toolset=gcc --with-libraries=system,thread,timer,chrono,date_time,filesystem,regex,pool,flyweight,msm,uuid
 	./b2
 
 	copy_to_libs "./stage/lib/*.so*"
@@ -385,6 +343,7 @@ build_yamlcpp()
     cd .. &&
     rm -rf ./build
 }
+
 build_dependencies
 
 echo ""

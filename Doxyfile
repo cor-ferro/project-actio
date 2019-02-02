@@ -1,0 +1,8 @@
+PROJECT_NAME            = ACTIO
+OUTPUT_LANGUAGE         = English
+HTML_OUTPUT             = docs
+GENERATE_LATEX          = NO
+INPUT                   = ./src/game
+FILE_PATTERNS           =  *.h *.cpp
+RECURSIVE               = YES
+EXCLUDE                 =
