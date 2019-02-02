@@ -150,7 +150,7 @@ namespace game {
                 if (m_context.input().isPress(InputManager::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
             }
 
-            newPosition = vec3(-25.0f, sideTarget.y + 7.0f, sideTarget.z);
+            newPosition = vec3(0.0f, sideTarget.y + 75.0f, sideTarget.z + 25.0f);
             newTarget = vec3(sideTarget.x, sideTarget.y + 1.0f, sideTarget.z);
         }
 

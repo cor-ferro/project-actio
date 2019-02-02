@@ -25,6 +25,7 @@ void renderHandler(ProgramContext& context) {
     GLFWwindow *const window = engine->getWindowContext().getWindow();
 
     while (!glfwWindowShouldClose(window)) {
+//        console::info("start render");
         #ifdef SAFE_THREADS
         std::unique_lock<std::mutex> lock(app_mtx);
         app_condition.wait(lock);
@@ -41,6 +42,7 @@ void renderHandler(ProgramContext& context) {
 //            context.shouldWork = false;
 //            break;
 //        }
+//        console::info("stop render");
     }
 
     engine->destroyRenderer();
@@ -50,7 +52,7 @@ void renderHandler(ProgramContext& context) {
 }
 
 void appHandler(ProgramContext& context) {
-    console::info("start app thread");
+//    console::info("start app thread");
     const float elapsedTime = 16.6f;
 
     auto engine = context.getEngine();
@@ -64,6 +66,7 @@ void appHandler(ProgramContext& context) {
     engine->startLoadStory(world, "story1", "chapter1");
 
     while (context.shouldWork) {
+//        console::info("start app");
         #ifdef SAFE_THREADS
         std::unique_lock<std::mutex> lock(app_mtx);
         #endif
@@ -87,6 +90,7 @@ void appHandler(ProgramContext& context) {
         app_condition.notify_all();
         #endif
 
+//        console::info("end app");
         std::this_thread::sleep_for(std::chrono::microseconds(wait));
     }
 

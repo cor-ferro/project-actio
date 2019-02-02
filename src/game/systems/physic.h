@@ -118,7 +118,7 @@ namespace game {
 
             std::stack<std::pair<px::PxActor *, px::PxActor *>> contactedActors;
 
-            bool isDisplayDebug = true;
+            bool isDisplayDebug = false;
         };
     }
 }
