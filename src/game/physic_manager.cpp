@@ -25,7 +25,8 @@ void game::PhysicManager::init() {
 //    sceneDesc.flags |= px::PxSceneFlag::eENABLE_GPU_DYNAMICS;
 //    sceneDesc.m_gpuDispatcher = cudaContextManager->getGpuDispatcher();
 //    sceneDesc.filterShader = px::PxDefaultSimulationFilterShader;
-    sceneDesc.filterShader = PhysicFilterShader;
+//    sceneDesc.filterShader = PhysicFilterShader;
+    sceneDesc.filterShader = px::PxDefaultSimulationFilterShader;
     sceneDesc.flags |= px::PxSceneFlag::eENABLE_PCM;
     sceneDesc.flags |= px::PxSceneFlag::eENABLE_STABILIZATION;
     sceneDesc.flags |= px::PxSceneFlag::eENABLE_ACTIVE_ACTORS;
@@ -33,6 +34,14 @@ void game::PhysicManager::init() {
     sceneDesc.simulationEventCallback = this;
 
     m_scene = m_physics->createScene(sceneDesc);
+
+    px::PxPvdSceneClient* pvdClient = m_scene->getScenePvdClient();
+    if(pvdClient)
+    {
+        pvdClient->setScenePvdFlag(px::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
+        pvdClient->setScenePvdFlag(px::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
+        pvdClient->setScenePvdFlag(px::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+    }
 
     m_scene->setVisualizationParameter(px::PxVisualizationParameter::eSCALE, 1.0f);
     m_scene->setVisualizationParameter(px::PxVisualizationParameter::eACTOR_AXES, 1.0f);
@@ -122,9 +131,12 @@ void game::PhysicManager::destroy() {
 }
 
 void game::PhysicManager::update(const px::PxReal& dt) {
-    m_scene->collide(dt);
-    m_scene->fetchCollision(true);
-    m_scene->advance();
+//    m_scene->collide(dt);
+//    m_scene->fetchCollision(true);
+//    m_scene->advance();
+//    m_scene->fetchResults(true);
+
+    m_scene->simulate(1.0f/60.0f);
     m_scene->fetchResults(true);
 }
 

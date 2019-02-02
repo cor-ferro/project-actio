@@ -123,45 +123,40 @@ namespace game {
         {
             aircraft.wings.left.entity = m_context.createObject(es);
 
-            auto leftWingActor = m_context.physic().createDynamicActor(vec3(-5.0f, 2.0f, 0.0f));
+            auto leftWingActor = m_context.physic().createDynamicActor(vec3(0.0f, 0.0f, 0.0f));
             aircraft.wings.left.entity.assign<components::PhysicActor>(leftWingActor, aircraft.wings.left.entity);
             m_context.physic().createBoxGeometry(leftWingActor, {3.0f, 1.0f, 1.0f});
             aircraft.wings.left.entity.assign<components::Transform>();
             aircraft.wings.left.entity.assign<components::Mesh>(wingMesh);
             aircraft.wings.left.entity.assign<components::Renderable>();
 
-            px::PxRevoluteJoint* leftWingJoint = PxRevoluteJointCreate(
+            px::PxFixedJoint* leftWingJoint = PxFixedJointCreate(
                     *m_context.physic().getPhysics(),
-                    aircraftEntityActor, px::PxTransform(px::PxVec3(1.0f, 5.0f, 0.0f),	px::PxQuat(px::PxHalfPi, px::PxVec3(0,1,0))),
-                    leftWingActor, px::PxTransform(px::PxVec3(1.0f, 5.0f, 0.0f),		px::PxQuat(px::PxHalfPi, px::PxVec3(0,1,0)))
+                    aircraftEntityActor, px::PxTransform(px::PxVec3(2.0f, 0.0f, 0.0f),	px::PxQuat(0, px::PxVec3(0,1,0))),
+                    leftWingActor, px::PxTransform(px::PxVec3(8.0f, 0.0f, 0.0f),	px::PxQuat(0, px::PxVec3(0,1,0)))
             );
 
-            leftWingJoint->setRevoluteJointFlag(px::PxRevoluteJointFlag::eLIMIT_ENABLED, true);
-            leftWingJoint->setLimit(px::PxJointAngularLimitPair(-px::PxPi/4, px::PxPi/4, 0.1f));
             aircraft.joints.push_back(leftWingJoint);
         }
 
         {
             aircraft.wings.right.entity = m_context.createObject(es);
 
-            auto rightWingActor = m_context.physic().createDynamicActor(vec3(5.0f, 2.0f, 0.0f));
+            auto rightWingActor = m_context.physic().createDynamicActor(vec3(0.0f, 0.0f, 0.0f));
             aircraft.wings.right.entity.assign<components::PhysicActor>(rightWingActor, aircraft.wings.right.entity);
             m_context.physic().createBoxGeometry(rightWingActor, {3.0f, 1.0f, 1.0f});
             aircraft.wings.right.entity.assign<components::Transform>();
             aircraft.wings.right.entity.assign<components::Mesh>(wingMesh);
             aircraft.wings.right.entity.assign<components::Renderable>();
 
-            px::PxRevoluteJoint* rightWingJoint = PxRevoluteJointCreate(
+            px::PxFixedJoint* rightWingJoint = PxFixedJointCreate(
                     *m_context.physic().getPhysics(),
-                    aircraftEntityActor, px::PxTransform(px::PxVec3(3.0f, 5.0f, 0.0f),	px::PxQuat(px::PxHalfPi, px::PxVec3(0,1,0))),
-                    rightWingActor, px::PxTransform(px::PxVec3(3.0f, 5.0f, 0.0f),		px::PxQuat(px::PxHalfPi, px::PxVec3(0,1,0)))
+                    aircraftEntityActor, px::PxTransform(px::PxVec3(-2.0f, 5.0f, 0.0f),	px::PxQuat(0, px::PxVec3(0,1,0))),
+                    rightWingActor, px::PxTransform(px::PxVec3(-8.0f, 5.0f, 0.0f),		px::PxQuat(0, px::PxVec3(0,1,0)))
             );
 
-            rightWingJoint->setRevoluteJointFlag(px::PxRevoluteJointFlag::eLIMIT_ENABLED, true);
-            rightWingJoint->setLimit(px::PxJointAngularLimitPair(-px::PxPi/4, px::PxPi/4, 0.1f));
             aircraft.joints.push_back(rightWingJoint);
         }
-
 
         events.emit<events::ObjectCreate>(aircraft.entity);
         events.emit<events::ObjectCreate>(aircraft.wings.left.entity);

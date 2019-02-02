@@ -125,7 +125,7 @@ namespace game {
                     auto actor = static_cast<px::PxRigidActor*>(activeActors[i]);
                     auto entity = static_cast<entityx::Entity*>(actor->userData);
 
-                    if (entity->has_component<components::Transform>()) {
+                    if (entity && entity->has_component<components::Transform>()) {
                         const auto& pose = actor->getGlobalPose();
                         auto transform = entity->component<components::Transform>();
                         transform->setPosition(pose.p);
