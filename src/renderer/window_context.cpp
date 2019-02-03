@@ -23,6 +23,7 @@ bool WindowContext::init(int width, int height) {
     glfwSetWindowSizeCallback(window, WindowContext::onResizeCallback);
     glfwSetKeyCallback(window, WindowContext::onKeyPressCallback);
     glfwSetCursorPosCallback(window, WindowContext::onMouseMoveCallback);
+    glfwSetScrollCallback(window, WindowContext::onMouseScrollCallback);
     glfwSetMouseButtonCallback(window, WindowContext::onMousePressCallback);
 
     return true;
@@ -66,20 +67,24 @@ GLFWwindow *const WindowContext::getWindow() {
 }
 
 void WindowContext::onResizeCallback(GLFWwindow *window, int width, int height) {
-        ((WindowContext *) glfwGetWindowUserPointer(window))->onResize(width, height);
-    }
+    ((WindowContext *) glfwGetWindowUserPointer(window))->onResize(width, height);
+}
 
 void WindowContext::onKeyPressCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-        ((WindowContext *) glfwGetWindowUserPointer(window))->onKeyPress(key, scancode, action, mods);
-    }
+    ((WindowContext *) glfwGetWindowUserPointer(window))->onKeyPress(key, scancode, action, mods);
+}
 
 void WindowContext::onMouseMoveCallback(GLFWwindow *window, double x, double y) {
-        ((WindowContext *) glfwGetWindowUserPointer(window))->onMouseMove(x, y);
-    }
+    ((WindowContext *) glfwGetWindowUserPointer(window))->onMouseMove(x, y);
+}
 
 void WindowContext::onMousePressCallback(GLFWwindow *window, int button, int action, int mods) {
-        ((WindowContext *) glfwGetWindowUserPointer(window))->onMousePress(button, action, mods);
-    }
+    ((WindowContext *) glfwGetWindowUserPointer(window))->onMousePress(button, action, mods);
+}
+
+void WindowContext::onMouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
+    ((WindowContext *) glfwGetWindowUserPointer(window))->onMouseScroll(xoffset, yoffset);
+}
 
 WindowContext::Size WindowContext::getSize() const {
     assert(window != nullptr);

@@ -88,19 +88,9 @@ namespace game {
         io.input.calcSensetivity(monitor->getWidth(), monitor->getHeight(), monitor->getDpi());
 
         io.windowContext->onKeyPress.connect(io.input.onKeyPress);
-//    io.windowContext.onKeyPress.connect([&inputManager](int key, int scancode, int action, int mods) {
-//        inputManager.onKeyPress(key, scancode, action, mods);
-//    });
-
         io.windowContext->onMouseMove.connect(io.input.onMouseMove);
-//    io.windowContext->onMouseMove.connect([&inputManager](double x, double y) {
-//        inputManager.onMouseMove(x, y);
-//    });
-
         io.windowContext->onMousePress.connect(io.input.onMousePress);
-//    io.windowContext->onMousePress.connect([&inputManager](int button, int action, int mods) {
-//        inputManager.onMousePress(button, action, mods);
-//    });
+        io.windowContext->onMouseScroll.connect(io.input.onMouseScroll);
     }
 
     void Engine::createRenderer() {

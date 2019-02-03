@@ -119,21 +119,18 @@ struct InputManager {
 
     void calcSensetivity(int width, int height, double dpi);
 
-    void subscribeMouseMove(const std::function<void(double, double)> &f);
-
-    void subscribeMousePress(const std::function<void(int, int, int)> &f);
-
-    void subscribeKeyPress(const std::function<void(int, int, int, int)> &f);
-
     MousePosition mouse;
     MousePosition mouseStart;
     MousePosition mouseMoved;
+    MousePosition mouseScrollStart;
+    MousePosition mouseScroll;
 
     Sensetivity sensetivity;
 
     boost::signals2::signal<void(int, int, int, int)> onKeyPress;
     boost::signals2::signal<void(double, double)> onMouseMove;
     boost::signals2::signal<void(int, int, int)> onMousePress;
+    boost::signals2::signal<void(double, double)> onMouseScroll;
 
 private:
     std::bitset<GLFW_KEY_LAST> keyboardKeys_;

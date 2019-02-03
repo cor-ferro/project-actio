@@ -11,6 +11,17 @@ namespace game {
             entityManager = &es;
         }
 
+        void Camera::start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
+            newPosition = vec3(0.0f, 75.0f, -35.0f); // z-hack fix
+            newTarget = vec3(0.0f, 0.0f, 0.0f);
+
+            auto &pos = this->newPosition;
+
+            m_context.input().onMouseScroll.connect([&pos](double offsetx, double offsety) {
+                pos.y += static_cast<float>(offsety) * 3.0f;
+            });
+        }
+
         void Camera::update(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
             vec3 characterPosition(0.0f);
 
@@ -150,30 +161,21 @@ namespace game {
                 if (m_context.input().isPress(InputManager::KEY_SPACE)) cameraPosition += vec3(0.0f, 0.1f, 0.0f);
             }
 
-            newPosition = vec3(0.0f, sideTarget.y + 75.0f, sideTarget.z + 25.0f);
-            newTarget = vec3(sideTarget.x, sideTarget.y + 1.0f, sideTarget.z);
+            vec3 originalPos = camera->getPosition();
+
+            if (m_context.input().isPress(InputManager::MOUSE_BUTTON_MIDDLE)) {
+                originalPos.x += m_context.input().mouseMoved.x * 0.2f;
+                originalPos.z += m_context.input().mouseMoved.y;
+
+                newPosition = vec3(originalPos.x, originalPos.y, originalPos.z);
+                newTarget = vec3(originalPos.x, 0.0f, originalPos.z - 35.0f);
+            }
+
+            auto sp = m_context.input().mouseScroll;
         }
 
         void Camera::lookAt(vec3 target) {
-//                ComponentHandle<components::Camera> camera;
-//
-//                for (Entity entity : entityManager->entities_with_components(camera)) {
-//                    newTarget = target;
-//                    camera->view_ = glm::lookAt(camera->getPosition(), target, vec3(0.0f, 1.0f, 0.0f));
-//
-//                    vec3 scale;
-//                    quat orientation;
-//                    vec3 translation;
-//                    vec3 skew;
-//                    vec4 perspective;
-//
-//                    glm::decompose(camera->view_, scale, orientation, translation, skew, perspective);
-//                    glm::vec3 euler = glm::eulerAngles(orientation);
-//
-//                    yaw = -90.0f - glm::degrees(euler.x);
-//                    pitch = glm::degrees(euler.y);
-//
-//                }
+            newTarget = target;
         }
 
         void Camera::setSettings(float fov, float aspect, float near, float far) {
@@ -193,15 +195,7 @@ namespace game {
         }
 
         void Camera::receive(const events::MousePress& event) {
-            if (event.button == InputManager::MOUSE_BUTTON_LEFT) {
-                if (event.action == InputManager::KEY_PRESS) {
-                    isCameraRotateEnabled = true;
-                    isCameraTranslationEnabled = true;
-                } else if (event.action == InputManager::KEY_RELEASE) {
-                    isCameraRotateEnabled = false;
-                    isCameraTranslationEnabled = false;
-                }
-            }
+
         }
     }
 }

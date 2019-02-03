@@ -1,29 +1,5 @@
 #include "input_manager.h"
 
-//InputManager::InputManager(WindowContext &windowContext)
-//        : keyboardKeys_(0)
-//        , keyboardModifiers_(0)
-//        , mouseKeys_(0)
-//        , m_window(windowContext) {
-//    m_window.onKeyPress.connect([this](int key, int scancode, int action, int mods) {
-//        onKeyPress(key, scancode, action, mods);
-//    });
-//
-//    m_window.onMouseMove.connect([this](double x, double y) {
-//        onMouseMove(x, y);
-//    });
-//
-//    m_window.onMousePress.connect([this](int button, int action, int mods) {
-//        onMouseClick(button, action, mods);
-//    });
-//
-//    double xpos, ypos;
-//    m_window.getMousePosition(xpos, ypos);
-//
-//    setMousePosition(static_cast<ScreenCoord>(xpos), static_cast<ScreenCoord>(ypos));
-//    setMouseStartPosition(static_cast<ScreenCoord>(xpos), static_cast<ScreenCoord>(ypos));
-//}
-
 InputManager::InputManager() {
     onKeyPress.connect([this](int key, int scancode, int action, int mods) {
         bool keyState = false;
@@ -65,6 +41,11 @@ InputManager::InputManager() {
             case MOUSE_BUTTON_RIGHT:    mouseKeys_.set(MouseButton::MOUSE_BUTTON_RIGHT, state); break;
             default: console::warn("unknown mouse button");
         }
+    });
+
+    onMouseScroll.connect([this](double offsetx, double offsety) {
+        mouseScroll.x = offsetx;
+        mouseScroll.y = offsety;
     });
 }
 
@@ -108,18 +89,6 @@ void InputManager::setMouseMovedPosition(ScreenCoord x, ScreenCoord y) {
 void InputManager::calcSensetivity(int width, int height, double dpi) {
     sensetivity.speedFactor = static_cast<float>(dpi) / 1000.0f;
     sensetivity.sensetivity = static_cast<float>(dpi) / 10000.0f;
-}
-
-void InputManager::subscribeMouseMove(const std::function<void(double, double)>& f) {
-//    m_window->onMouseMove.connect(f);
-}
-
-void InputManager::subscribeMousePress(const std::function<void(int, int, int)>& f) {
-//    m_window->onMousePress.connect(f);
-}
-
-void InputManager::subscribeKeyPress(const std::function<void(int, int, int, int)>& f) {
-//    m_window->onKeyPress.connect(f);
 }
 
 void InputManager::update() {

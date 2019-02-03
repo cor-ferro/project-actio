@@ -37,6 +37,8 @@ namespace game {
 
             void configure(ex::EntityManager &es, entityx::EventManager &events) override;
 
+            void start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt);
+
             void update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) override;
 
             void updateCamera1(ex::ComponentHandle<components::Camera> camera);

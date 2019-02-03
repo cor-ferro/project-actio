@@ -54,10 +54,13 @@ struct WindowContext {
 
     static void onMousePressCallback(GLFWwindow *window, int button, int action, int mods);
 
+    static void onMouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);
+
     boost::signals2::signal<void(int, int)> onResize;
     boost::signals2::signal<void(int, int, int, int)> onKeyPress;
     boost::signals2::signal<void(double, double)> onMouseMove;
     boost::signals2::signal<void(int, int, int)> onMousePress;
+    boost::signals2::signal<void(double, double)> onMouseScroll;
 
 private:
     GLFWwindow *window;

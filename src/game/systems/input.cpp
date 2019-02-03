@@ -50,14 +50,6 @@ namespace game {
 
             std::queue<events::MousePress> *inputMouseQueue = &this->inputMouseQueue;
             std::queue<events::KeyPress> *inputKeyboardQueue = &this->inputKeyboardQueue;
-
-            event.inputHandler->subscribeMousePress([inputMouseQueue](int button, int action, int mods) {
-                inputMouseQueue->push(events::MousePress(button, action, mods));
-            });
-
-            event.inputHandler->subscribeKeyPress([inputKeyboardQueue](int key, int scancode, int action, int mods) {
-                inputKeyboardQueue->push(events::KeyPress(key, scancode, action, mods));
-            });
         }
 
         inline bool Input::isPress(InputPlace place, Key key) const {
