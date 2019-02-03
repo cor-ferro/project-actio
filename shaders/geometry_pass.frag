@@ -28,8 +28,9 @@ void main()
 {
 	gWorldPosition = inData.worldPosition;
 	gNormal = texture(normalTexture, inData.texCoord).xyz;
-	gAlbedo = vec4(
+	gAlbedo = vec4(material.diffuse, 1.0);
+	/*gAlbedo = vec4(
 		texture(diffuseTexture, inData.texCoord).xyz + material.diffuse,
 		texture(specularTexture, inData.texCoord).x
-	);
+	);*/
 }

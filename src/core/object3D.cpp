@@ -13,7 +13,9 @@ Object3D::Object3D(const Object3D &other) = default;
 Object3D::~Object3D() = default;
 
 void Object3D::rotate(const quat &rotateQuat) {
-    modelMatrix = modelMatrix * glm::mat4_cast(rotateQuat);
+    quaternion = rotateQuat;
+
+    needUpdateMatrix = true;
 }
 
 void Object3D::setAffineTransform(const vec3 &pos, const quat &rot, const vec3 &scale) {

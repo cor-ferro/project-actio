@@ -103,6 +103,8 @@ namespace game {
 
             void buildAircraft(ex::EntityManager &es, ex::EventManager &events);
 
+            void buildHall(ex::EntityManager &es, ex::EventManager &events);
+
             std::stack<Story> loadedStory;
 
             std::deque<Aircraft> aircrafts;

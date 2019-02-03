@@ -82,12 +82,15 @@ namespace game {
             auto texBlue = std::make_shared<Texture>(Texture::Empty(Texture::Type::Diffuse, 0, 0, 255));
 
             debugLinesMesh->material->setDiffuseMap(texRed);
+            debugLinesMesh->material->setColor(color::Rgb(1.0f, 0.0f, 0.0f));
             debugLinesMesh->material->setWireframe(true);
 
             debugTrianglesMesh->material->setDiffuseMap(texGreen);
+            debugTrianglesMesh->material->setColor(color::Rgb(0.0f, 1.0f, 0.0f));
             debugTrianglesMesh->material->setWireframe(true);
 
             debugPointsMesh->material->setDiffuseMap(texBlue);
+            debugPointsMesh->material->setColor(color::Rgb(0.0f, 0.0f, 1.0f));
             debugPointsMesh->material->setWireframe(true);
 
             debugLinesEntity.assign<components::Mesh>(debugLinesMesh);

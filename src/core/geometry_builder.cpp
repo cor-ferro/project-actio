@@ -108,7 +108,7 @@ void GeometryBuilder::Plane(Geometry &geometry, const PlaneDescription &desc) {
             float x = (float) ix * segment_width - width_half;
 
             Vertex vertex;
-            vertex.Position = vec3(x, -y, 0.0f);
+            vertex.Position = vec3(x, 0.0f, -y);
             vertex.Normal = vec3(0.0f, 0.0f, -1.0f);
             vertex.TexCoords = vec2(static_cast<float>(ix) / static_cast<float>(gridX), 1.0f - (static_cast<float>(iy) / static_cast<float>(gridY)));
 
