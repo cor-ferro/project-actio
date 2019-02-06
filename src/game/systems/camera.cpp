@@ -12,7 +12,7 @@ namespace game {
         }
 
         void Camera::start(ex::EntityManager& es, ex::EventManager& events, ex::TimeDelta dt) {
-            newPosition = vec3(0.0f, 75.0f, -35.0f); // z-hack fix
+            newPosition = vec3(0.0f, 75.0f, 35.0f); // z-hack fix
             newTarget = vec3(0.0f, 0.0f, 0.0f);
 
             auto &pos = this->newPosition;
