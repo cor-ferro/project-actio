@@ -45,30 +45,118 @@ namespace game {
         }
     }
 
+    void systems::World::Aircraft::Thruster::increaseRate(float value) {
+        this->rate = glm::sin(this->rate + value);
+    }
+
+    void systems::World::Aircraft::Thruster::decreaseRate(float value) {
+        this->rate = glm::sin(this->rate - value);
+    }
+
+    void systems::World::Aircraft::Thruster::decreaseRate() {
+        this->rate = glm::sin(glm::tan(this->rate * 0.9f));
+    }
+
+    const float systems::World::Aircraft::Thruster::getPower() {
+        return glm::max(1.0f, this->rate * this->maxPower/* * (1.0f - glm::sin(glm::pow(this->overheat, 3.0f)))*/);
+    }
+
+    const float& systems::World::Aircraft::Thruster::getMaxPower() {
+        return this->maxPower;
+    }
+
+    float systems::World::Aircraft::getMass() {
+        auto actor = this->entity.component<components::PhysicActor>();
+
+        px::PxReal bodyMass = actor->getDynamicActor()->getMass();
+
+        return bodyMass;
+    }
+
     void systems::World::update(ex::EntityManager &es, ex::EventManager &events, ex::TimeDelta dt) {
-        px::PxVec3 dir{0.0f, 0.0f, 0.0f};
-
-        if (m_context.input().isPress(InputManager::KEY_W)) {
-            dir.z -= 0.1f;
-        }
-
-        if (m_context.input().isPress(InputManager::KEY_S)) {
-            dir.z += 0.1f;
-        }
-
-        if (m_context.input().isPress(InputManager::KEY_A)) {
-            dir.x -= 0.1f;
-        }
-
-        if (m_context.input().isPress(InputManager::KEY_D)) {
-            dir.x += 0.1f;
-        }
+        const px::PxVec3 gravity = m_context.physic().getSceneGravity();
 
         for (auto &aircraft : aircrafts) {
+            const float mass = aircraft.getMass();
+            const float verticalPower = aircraft.thrusters.vertical.getPower();
+
+            const float increaseRate = 0.01f;
+            const float decreaseRate = 0.07f;
+
             auto actor = aircraft.entity.component<components::PhysicActor>()->getDynamicActor();
 
             px::PxTransform pose = actor->getGlobalPose();
 
+            const float maxHeight = (aircraft.thrusters.vertical.getMaxPower() / mass) * glm::abs(gravity.y);
+            float height = 0.0f;
+
+            px::PxRaycastHit hit;
+            hit.shape = nullptr;
+            px::PxRaycastBuffer hit1;
+
+            m_context.physic().getScene()->raycast(
+                    pose.p - px::PxVec3(0.0f, 2.0f, 0.0f),
+                    px::PxVec3(0.0f, -1.0f, 0.0f),
+                    100.0f,
+                    hit1,
+                    px::PxHitFlag::eDEFAULT
+            );
+            hit = hit1.block;
+
+            if(hit.shape)
+            {
+                height = hit.distance;
+            }
+
+            if (m_context.input().isPress(InputManager::KEY_W)) {
+                aircraft.thrusters.back.increaseRate(increaseRate);
+            } else {
+                aircraft.thrusters.back.decreaseRate();
+            }
+
+            if (m_context.input().isPress(InputManager::KEY_S)) {
+                aircraft.thrusters.front.increaseRate(increaseRate);
+            } else {
+                aircraft.thrusters.front.decreaseRate();
+            }
+
+            if (m_context.input().isPress(InputManager::KEY_A)) {
+                aircraft.thrusters.left.increaseRate(increaseRate);
+            } else {
+                aircraft.thrusters.left.decreaseRate();
+            }
+
+            if (m_context.input().isPress(InputManager::KEY_D)) {
+                aircraft.thrusters.right.increaseRate(increaseRate);
+            } else {
+                aircraft.thrusters.right.decreaseRate();
+            }
+
+            if (m_context.input().isPress(InputManager::KEY_SPACE)) {
+                aircraft.thrusters.vertical.increaseRate(0.03f);
+            } else {
+                if (height > 5.0f) {
+                    aircraft.thrusters.vertical.decreaseRate(0.005);
+                }
+            }
+
+            if (height < 5.0f) {
+                aircraft.thrusters.vertical.increaseRate(0.015f);
+            }
+
+            float heightFactor = glm::max(0.0f, 1.0f - (height / maxHeight));
+            float verticalFactor = glm::max(-1.0f, aircraft.thrusters.vertical.getPower() / mass);
+
+            const float x = ((-aircraft.thrusters.left.getPower()) + aircraft.thrusters.right.getPower()) / mass;
+            const float y = verticalFactor * heightFactor;
+            const float z = ((-aircraft.thrusters.back.getPower()) + aircraft.thrusters.front.getPower()) / mass;
+
+//            console::info("vertical: %f, height: %f, y: %f", aircraft.thrusters.vertical.getPower(), height, y);
+
+            px::PxVec3 dir{x, y, z};
+            px::PxVec3 gravityDir = gravity / (1000.0f / static_cast<float>(dt));
+
+            dir+= gravityDir;
             pose.p += dir;
 
             actor->setKinematicTarget(pose);
@@ -120,8 +208,14 @@ namespace game {
 
         aircraft.entity = m_context.createObject(es);
 
-        auto aircraftEntityActor = m_context.physic().createDynamicActor(vec3(0.0f, 3.0f, 0.0f));
+        auto aircraftEntityActor = m_context.physic().createDynamicActor(vec3(0.0f, 20.0f, 0.0f));
         aircraftEntityActor->setRigidBodyFlag(px::PxRigidBodyFlag::eKINEMATIC, true);
+        aircraftEntityActor->setMass(500.0f);
+
+//        aircraftEntityActor->setAngularVelocity(px::PxVec3(0.0f));
+//        aircraftEntityActor->setAngularDamping(0.0f);
+//        px::PxRigidBodyExt::setMassAndUpdateInertia(*aircraftEntityActor, 50.0f);
+
         m_context.physic().createBoxGeometry(aircraftEntityActor, {1.0f, 1.0f, 3.0f});
         aircraft.entity.assign<components::PhysicActor>(aircraftEntityActor, aircraft.entity);
         aircraft.entity.assign<components::Transform>();
@@ -130,9 +224,6 @@ namespace game {
 
         aircraft.shields.front.power = 100.0f;
         aircraft.energy.amount = 1000.0f;
-
-        px::PxQuat y90Rote(px::PxHalfPi, px::PxVec3(0.0f,1.0f,0.0f));
-
 
         {
             aircraft.wings.left.entity = m_context.createObject(es);

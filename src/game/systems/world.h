@@ -33,7 +33,8 @@ namespace game {
         private:
             struct Story {};
 
-            struct Aircraft {
+            class Aircraft {
+            public:
                 Aircraft() = default;
 
                 Aircraft(Aircraft && other) noexcept;
@@ -47,9 +48,23 @@ namespace game {
                     float angle = 0.0f;
                 };
 
-                struct Thruster {
-                    float overheat = 0.0f;
+                class Thruster {
+                public:
+                    void increaseRate(float value);
+
+                    void decreaseRate(float value);
+
+                    void decreaseRate();
+
+                    const float getPower();
+
+                    const float& getMaxPower();
+
+                private:
+                    float overheat = 0.0f; // должно влиять на общую мощность
                     float angle = 0.0f;
+                    const float maxPower = 1000.0f;
+                    float rate = 0.0f; // 0.0f - 1.0f
                 };
 
                 struct Shield {
@@ -70,6 +85,10 @@ namespace game {
                     Thruster back;
 
                     Thruster front;
+
+                    Thruster left;
+
+                    Thruster right;
 
                     Thruster vertical;
                 };
@@ -99,6 +118,8 @@ namespace game {
                 Energy energy;
 
                 std::vector<px::PxJoint*> joints;
+
+                float getMass();
             };
 
             void buildAircraft(ex::EntityManager &es, ex::EventManager &events);

@@ -19,7 +19,7 @@ void game::PhysicManager::init() {
 //    cudaContextManager = PxCreateCudaContextManager(*m_foundation, cudaContextManagerDesc);
 
     px::PxSceneDesc sceneDesc(m_physics->getTolerancesScale());
-    sceneDesc.gravity = px::PxVec3(0.0f, -0.1f, 0.0f);
+    sceneDesc.gravity = px::PxVec3(0.0f, -9.8f, 0.0f);
     sceneDesc.cpuDispatcher = m_cpuDispatcher;
 //    sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
 //    sceneDesc.flags |= px::PxSceneFlag::eENABLE_GPU_DYNAMICS;
